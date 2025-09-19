@@ -54,27 +54,6 @@ export async function getActiveGalleryImages(): Promise<GalleryImage[]> {
   }
 }
 
-// Get inactive gallery images
-export async function getInactiveGalleryImages(): Promise<GalleryImage[]> {
-  try {
-    const { data, error } = await supabase
-      .from('gallery_images')
-      .select('*')
-      .eq('is_active', false)
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('Error fetching inactive gallery images:', error)
-      return []
-    }
-
-    return data || []
-  } catch (error) {
-    console.error('Error in getInactiveGalleryImages:', error)
-    return []
-  }
-}
-
 // Add new gallery image
 export async function addGalleryImage(imageData: {
   customer_name: string
@@ -100,29 +79,6 @@ export async function addGalleryImage(imageData: {
   } catch (error) {
     console.error('Error in addGalleryImage:', error)
     return null
-  }
-}
-
-// Update gallery image
-export async function updateGalleryImage(
-  id: string, 
-  updates: Partial<GalleryImage>
-): Promise<boolean> {
-  try {
-    const { error } = await supabase
-      .from('gallery_images')
-      .update(updates)
-      .eq('id', id)
-
-    if (error) {
-      console.error('Error updating gallery image:', error)
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error('Error in updateGalleryImage:', error)
-    return false
   }
 }
 
@@ -179,28 +135,17 @@ export async function deleteGalleryImage(id: string): Promise<boolean> {
   }
 }
 
-// Upload image to Supabase Storage
+// Upload image (temporary base64 solution)
 export async function uploadImage(file: File): Promise<string | null> {
   try {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-    const filePath = `gallery/${fileName}`
-
-    const { data, error } = await supabase.storage
-      .from('images')
-      .upload(filePath, file)
-
-    if (error) {
-      console.error('Error uploading image:', error)
-      return null
-    }
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('images')
-      .getPublicUrl(filePath)
-
-    return publicUrl
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        resolve(base64);
+      };
+      reader.readAsDataURL(file);
+    });
   } catch (error) {
     console.error('Error in uploadImage:', error)
     return null
