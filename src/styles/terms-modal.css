@@ -1,0 +1,111 @@
+/* Terms & Conditions Modal Styles */
+
+.tnc-section {
+  margin-bottom: 1.5rem;
+}
+
+.tnc-section h3 {
+  color: #1f2937;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.tnc-section:first-child h3 {
+  margin-top: 0;
+  color: #1e40af;
+  font-size: 1.25rem;
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e5e7eb;
+  font-weight: 700;
+}
+
+.tnc-section p {
+  color: #374151;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+  font-size: 0.875rem;
+}
+
+.tnc-section p strong {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tnc-section h3 {
+    font-size: 1rem;
+  }
+  
+  .tnc-section:first-child h3 {
+    font-size: 1.125rem;
+  }
+  
+  .tnc-section p {
+    font-size: 0.8rem;
+  }
+}
+
+/* Scrollbar styling for webkit browsers */
+.prose::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prose::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.prose::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.prose::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Enhanced placeholder text visibility */
+input::placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+input::-webkit-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+input::-moz-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+input:-ms-input-placeholder {
+  color: #6b7280 !important;
+  opacity: 1 !important;
+}
+
+/* Enhanced input field styling */
+input[type="text"],
+input[type="tel"],
+input[type="email"] {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+  color: #111827 !important; /* Very dark gray for typed text */
+}
+
+/* Ensure input text is dark when typing */
+input[type="text"]:not(:placeholder-shown),
+input[type="tel"]:not(:placeholder-shown),
+input[type="email"]:not(:placeholder-shown) {
+  color: #111827 !important;
+}
+
+/* Focus states for better visibility */
+input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}

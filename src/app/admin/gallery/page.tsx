@@ -1,0 +1,439 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  getGalleryImages,
+  GalleryImage,
+  addGalleryImage,
+  toggleImageStatus as toggleStatus,
+  deleteGalleryImage
+} from '@/data/galleryData';
+
+export default function GalleryPage() {
+  const [images, setImages] = useState<GalleryImage[]>([]);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [newImage, setNewImage] = useState({
+    customer: '',
+    camera: '',
+    location: '',
+    alt: ''
+  });
+
+  // Load images on component mount
+  useEffect(() => {
+    setImages(getGalleryImages());
+  }, []);
+
+  // Listen for storage changes (when admin updates images)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'captura_gallery_images') {
+        setImages(getGalleryImages());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processFile(file);
+    }
+  };
+
+  const processFile = (file: File) => {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB limit for localStorage)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 5MB');
+      return;
+    }
+
+    setSelectedImage(file);
+
+    // Convert to base64 for storage
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      setPreviewUrl(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
+  };
+
+  const addImage = () => {
+    if (!selectedImage) return;
+
+    const newImageData = {
+      src: previewUrl, // In real app, this would be uploaded to server
+      alt: newImage.alt || `${newImage.customer} with ${newImage.camera}`,
+      customer: newImage.customer,
+      camera: newImage.camera,
+      location: newImage.location,
+      isActive: true
+    };
+
+    const createdImage = addGalleryImage(newImageData);
+    setImages(getGalleryImages()); // Refresh from storage
+    setShowAddForm(false);
+    setSelectedImage(null);
+    setPreviewUrl('');
+    setIsDragOver(false);
+    setNewImage({ customer: '', camera: '', location: '', alt: '' });
+  };
+
+  const toggleImageStatus = (id: number) => {
+    toggleStatus(id);
+    setImages(getGalleryImages()); // Refresh from storage
+  };
+
+  const deleteImage = (id: number) => {
+    if (confirm('Are you sure you want to delete this image?')) {
+      deleteGalleryImage(id);
+      setImages(getGalleryImages()); // Refresh from storage
+    }
+  };
+
+  const activeImages = images.filter(img => img.isActive);
+  const inactiveImages = images.filter(img => !img.isActive);
+
+  return (
+    <div className="p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Gallery Management</h1>
+          <p className="text-gray-600 mt-2">Manage customer photos displayed on the main website carousel</p>
+        </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+        >
+          + Add New Image
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Images</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{images.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+              <span className="text-xl">📸</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Images</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{activeImages.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+              <span className="text-xl">✅</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Hidden Images</p>
+              <p className="text-3xl font-bold text-gray-600 mt-2">{inactiveImages.length}</p>
+            </div>
+            <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
+              <span className="text-xl">👁️</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add Image Modal */}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-2xl font-bold text-gray-900">Add New Gallery Image</h2>
+              <p className="text-gray-600 mt-1">Upload a customer photo to display on the main website</p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-medium text-gray-800 mb-2">Upload Image</label>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                    isDragOver
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 hover:border-blue-400'
+                  }`}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  {previewUrl ? (
+                    <div className="space-y-4">
+                      <img src={previewUrl} alt="Preview" className="mx-auto h-48 w-auto rounded-lg shadow-md" />
+                      <button
+                        onClick={() => {
+                          setSelectedImage(null);
+                          setPreviewUrl('');
+                        }}
+                        className="text-red-600 hover:text-red-700 text-sm font-medium"
+                      >
+                        Remove Image
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <div className="mt-4">
+                        <label htmlFor="image-upload" className="cursor-pointer">
+                          <span className={`mt-2 block text-sm font-medium ${isDragOver ? 'text-blue-600' : 'text-gray-900'}`}>
+                            {isDragOver ? 'Drop image here' : 'Click to upload or drag and drop'}
+                          </span>
+                          <span className="mt-1 block text-xs text-gray-500">
+                            PNG, JPG, GIF up to 5MB
+                          </span>
+                        </label>
+                        <input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageSelect}
+                          className="hidden"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Image Details */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">Customer Name</label>
+                  <input
+                    type="text"
+                    value={newImage.customer}
+                    onChange={(e) => setNewImage({...newImage, customer: e.target.value})}
+                    placeholder="e.g., Sarah"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">Camera Used</label>
+                  <select
+                    value={newImage.camera}
+                    onChange={(e) => setNewImage({...newImage, camera: e.target.value})}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                  >
+                    <option value="">Select camera</option>
+                    <option value="Osmo Pocket 3">Osmo Pocket 3</option>
+                    <option value="Action 5 Pro">Action 5 Pro</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">Location</label>
+                  <input
+                    type="text"
+                    value={newImage.location}
+                    onChange={(e) => setNewImage({...newImage, location: e.target.value})}
+                    placeholder="e.g., Kuala Lumpur"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-800 mb-2">Alt Text (Optional)</label>
+                  <input
+                    type="text"
+                    value={newImage.alt}
+                    onChange={(e) => setNewImage({...newImage, alt: e.target.value})}
+                    placeholder="Auto-generated if empty"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end space-x-4">
+              <button
+                onClick={() => {
+                  setShowAddForm(false);
+                  setSelectedImage(null);
+                  setPreviewUrl('');
+                  setIsDragOver(false);
+                  setNewImage({ customer: '', camera: '', location: '', alt: '' });
+                }}
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={addImage}
+                disabled={!selectedImage || !newImage.customer || !newImage.camera || !newImage.location}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+              >
+                Add Image
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Active Images Section */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Active Images ({activeImages.length})</h2>
+        <p className="text-gray-600 mb-6">These images are currently displayed on the main website carousel</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {activeImages.map((image) => (
+            <div key={image.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
+              <div className="aspect-[3/4] bg-gray-100 relative">
+                <img
+                  src={image.src}
+                  alt={image.alt}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                    Active
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4">
+                <h3 className="font-semibold text-gray-900 mb-2">{image.customer}</h3>
+                <div className="space-y-1 text-sm text-gray-600 mb-4">
+                  <p><span className="font-medium">Camera:</span> {image.camera}</p>
+                  <p><span className="font-medium">Location:</span> {image.location}</p>
+                  <p><span className="font-medium">Uploaded:</span> {new Date(image.uploadDate).toLocaleDateString()}</p>
+                </div>
+
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => toggleImageStatus(image.id)}
+                    className="flex-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Hide
+                  </button>
+                  <button
+                    onClick={() => deleteImage(image.id)}
+                    className="flex-1 bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {activeImages.length === 0 && (
+          <div className="text-center py-12 bg-gray-50 rounded-xl">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">📸</span>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Images</h3>
+            <p className="text-gray-600 mb-4">Upload some customer photos to display on your website</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+            >
+              Add First Image
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden Images Section */}
+      {inactiveImages.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Hidden Images ({inactiveImages.length})</h2>
+          <p className="text-gray-600 mb-6">These images are not displayed on the website but are saved in your gallery</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {inactiveImages.map((image) => (
+              <div key={image.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow opacity-75">
+                <div className="aspect-[3/4] bg-gray-100 relative">
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover grayscale"
+                  />
+                  <div className="absolute top-2 right-2">
+                    <span className="bg-gray-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      Hidden
+                    </span>
+                  </div>
+                </div>
+
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2">{image.customer}</h3>
+                  <div className="space-y-1 text-sm text-gray-600 mb-4">
+                    <p><span className="font-medium">Camera:</span> {image.camera}</p>
+                    <p><span className="font-medium">Location:</span> {image.location}</p>
+                    <p><span className="font-medium">Uploaded:</span> {new Date(image.uploadDate).toLocaleDateString()}</p>
+                  </div>
+
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => toggleImageStatus(image.id)}
+                      className="flex-1 bg-green-100 hover:bg-green-200 text-green-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Show
+                    </button>
+                    <button
+                      onClick={() => deleteImage(image.id)}
+                      className="flex-1 bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
