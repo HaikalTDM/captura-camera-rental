@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import {
   getGalleryImages,
-  GalleryImage,
+  getGalleryStats,
   addGalleryImage,
   toggleImageStatus as toggleStatus,
-  deleteGalleryImage
-} from '@/data/galleryData';
+  deleteGalleryImage,
+  uploadImage,
+  type GalleryImage
+} from '@/lib/api/gallery';
 
 export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -15,6 +17,9 @@ export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
   const [newImage, setNewImage] = useState({
     customer: '',
     camera: '',
@@ -22,22 +27,26 @@ export default function GalleryPage() {
     alt: ''
   });
 
-  // Load images on component mount
+  // Load images and stats on component mount
   useEffect(() => {
-    setImages(getGalleryImages());
+    loadData();
   }, []);
 
-  // Listen for storage changes (when admin updates images)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'captura_gallery_images') {
-        setImages(getGalleryImages());
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const [imagesData, statsData] = await Promise.all([
+        getGalleryImages(),
+        getGalleryStats()
+      ]);
+      setImages(imagesData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading gallery data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -53,21 +62,17 @@ export default function GalleryPage() {
       return;
     }
 
-    // Validate file size (5MB limit for localStorage)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+    // Validate file size (10MB limit for Supabase)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
       return;
     }
 
     setSelectedImage(file);
 
-    // Convert to base64 for storage
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target?.result as string;
-      setPreviewUrl(base64);
-    };
-    reader.readAsDataURL(file);
+    // Create preview URL
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -90,41 +95,85 @@ export default function GalleryPage() {
     }
   };
 
-  const addImage = () => {
-    if (!selectedImage) return;
+  const addImage = async () => {
+    if (!selectedImage || !newImage.customer || !newImage.camera || !newImage.location) {
+      alert('Please fill in all fields and select an image');
+      return;
+    }
 
-    const newImageData = {
-      src: previewUrl, // In real app, this would be uploaded to server
-      alt: newImage.alt || `${newImage.customer} with ${newImage.camera}`,
-      customer: newImage.customer,
-      camera: newImage.camera,
-      location: newImage.location,
-      isActive: true
-    };
+    setIsUploading(true);
+    try {
+      // Upload image to Supabase Storage
+      const imageUrl = await uploadImage(selectedImage);
+      if (!imageUrl) {
+        alert('Failed to upload image. Please try again.');
+        return;
+      }
 
-    const createdImage = addGalleryImage(newImageData);
-    setImages(getGalleryImages()); // Refresh from storage
-    setShowAddForm(false);
-    setSelectedImage(null);
-    setPreviewUrl('');
-    setIsDragOver(false);
-    setNewImage({ customer: '', camera: '', location: '', alt: '' });
-  };
+      // Add image record to database
+      const newImageData = {
+        customer_name: newImage.customer,
+        camera_used: newImage.camera,
+        location: newImage.location,
+        image_url: imageUrl,
+        alt_text: newImage.alt || `${newImage.customer} with ${newImage.camera}`,
+        upload_date: new Date().toISOString().split('T')[0]
+      };
 
-  const toggleImageStatus = (id: number) => {
-    toggleStatus(id);
-    setImages(getGalleryImages()); // Refresh from storage
-  };
-
-  const deleteImage = (id: number) => {
-    if (confirm('Are you sure you want to delete this image?')) {
-      deleteGalleryImage(id);
-      setImages(getGalleryImages()); // Refresh from storage
+      const createdImage = await addGalleryImage(newImageData);
+      if (createdImage) {
+        // Refresh data
+        await loadData();
+        setShowAddForm(false);
+        setSelectedImage(null);
+        setPreviewUrl('');
+        setIsDragOver(false);
+        setNewImage({ customer: '', camera: '', location: '', alt: '' });
+        alert('Image uploaded successfully!');
+      } else {
+        alert('Failed to save image data. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error adding image:', error);
+      alert('An error occurred while uploading the image.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const activeImages = images.filter(img => img.isActive);
-  const inactiveImages = images.filter(img => !img.isActive);
+  const toggleImageStatus = async (id: string) => {
+    try {
+      const success = await toggleStatus(id);
+      if (success) {
+        await loadData(); // Refresh from database
+      } else {
+        alert('Failed to update image status');
+      }
+    } catch (error) {
+      console.error('Error toggling image status:', error);
+      alert('An error occurred while updating the image');
+    }
+  };
+
+  const deleteImage = async (id: string) => {
+    if (confirm('Are you sure you want to delete this image?')) {
+      try {
+        const success = await deleteGalleryImage(id);
+        if (success) {
+          await loadData(); // Refresh from database
+          alert('Image deleted successfully');
+        } else {
+          alert('Failed to delete image');
+        }
+      } catch (error) {
+        console.error('Error deleting image:', error);
+        alert('An error occurred while deleting the image');
+      }
+    }
+  };
+
+  const activeImages = images.filter(img => img.is_active);
+  const inactiveImages = images.filter(img => !img.is_active);
 
   return (
     <div className="p-6">
@@ -148,7 +197,7 @@ export default function GalleryPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Images</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{images.length}</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{isLoading ? '...' : stats.total}</p>
             </div>
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
               <span className="text-xl">📸</span>
@@ -160,7 +209,7 @@ export default function GalleryPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Images</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">{activeImages.length}</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{isLoading ? '...' : stats.active}</p>
             </div>
             <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
               <span className="text-xl">✅</span>
@@ -172,7 +221,7 @@ export default function GalleryPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Hidden Images</p>
-              <p className="text-3xl font-bold text-gray-600 mt-2">{inactiveImages.length}</p>
+              <p className="text-3xl font-bold text-gray-600 mt-2">{isLoading ? '...' : stats.inactive}</p>
             </div>
             <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
               <span className="text-xl">👁️</span>
@@ -309,10 +358,17 @@ export default function GalleryPage() {
               </button>
               <button
                 onClick={addImage}
-                disabled={!selectedImage || !newImage.customer || !newImage.camera || !newImage.location}
-                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+                disabled={!selectedImage || !newImage.customer || !newImage.camera || !newImage.location || isUploading}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors flex items-center gap-2"
               >
-                Add Image
+                {isUploading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Uploading...
+                  </>
+                ) : (
+                  'Add Image'
+                )}
               </button>
             </div>
           </div>
@@ -329,8 +385,8 @@ export default function GalleryPage() {
             <div key={image.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow">
               <div className="aspect-[3/4] bg-gray-100 relative">
                 <img
-                  src={image.src}
-                  alt={image.alt}
+                  src={image.image_url}
+                  alt={image.alt_text}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2">
@@ -341,11 +397,11 @@ export default function GalleryPage() {
               </div>
 
               <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{image.customer}</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">{image.customer_name}</h3>
                 <div className="space-y-1 text-sm text-gray-600 mb-4">
-                  <p><span className="font-medium">Camera:</span> {image.camera}</p>
+                  <p><span className="font-medium">Camera:</span> {image.camera_used}</p>
                   <p><span className="font-medium">Location:</span> {image.location}</p>
-                  <p><span className="font-medium">Uploaded:</span> {new Date(image.uploadDate).toLocaleDateString()}</p>
+                  <p><span className="font-medium">Uploaded:</span> {new Date(image.upload_date).toLocaleDateString()}</p>
                 </div>
 
                 <div className="flex space-x-2">

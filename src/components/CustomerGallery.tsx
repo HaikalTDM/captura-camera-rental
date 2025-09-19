@@ -1,34 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getActiveImages } from '@/data/galleryData';
+import { getActiveGalleryImages, type GalleryImage } from '@/lib/api/gallery';
 
 export default function CustomerGallery() {
-  const [customerImages, setCustomerImages] = useState(getActiveImages());
+  const [customerImages, setCustomerImages] = useState<GalleryImage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Listen for storage changes (when admin updates images)
+  // Load images from database
   useEffect(() => {
-    const handleStorageChange = () => {
-      setCustomerImages(getActiveImages());
-    };
-
-    // Listen for storage events
-    window.addEventListener('storage', handleStorageChange);
-
-    // Also listen for custom storage events (same-tab updates)
-    const handleCustomStorageChange = (e: StorageEvent) => {
-      if (e.key === 'captura_gallery_images') {
-        setCustomerImages(getActiveImages());
-      }
-    };
-
-    window.addEventListener('storage', handleCustomStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('storage', handleCustomStorageChange);
-    };
+    loadImages();
   }, []);
+
+  const loadImages = async () => {
+    try {
+      const images = await getActiveGalleryImages();
+      setCustomerImages(images);
+    } catch (error) {
+      console.error('Error loading gallery images:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section id="gallery" className="py-16 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
@@ -77,14 +70,14 @@ export default function CustomerGallery() {
                         <div className="text-center text-gray-500">
                           <div className="text-4xl mb-2">📷</div>
                           <div className="text-sm font-medium">Customer Photo</div>
-                          <div className="text-xs">{image.customer}</div>
+                          <div className="text-xs">{image.customer_name}</div>
                         </div>
                       </div>
                       
                       {/* Overlay with camera info */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         <div className="absolute bottom-4 left-4 right-4 text-white">
-                          <div className="text-sm font-semibold">{image.customer}</div>
+                          <div className="text-sm font-semibold">{image.customer_name}</div>
                           <div className="text-xs opacity-90">📍 {image.location}</div>
                         </div>
                       </div>
@@ -92,7 +85,7 @@ export default function CustomerGallery() {
                       {/* Camera badge */}
                       <div className="absolute top-3 right-3">
                         <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-xs font-medium text-gray-800 shadow-lg">
-                          📷 {image.camera}
+                          📷 {image.camera_used}
                         </div>
                       </div>
 
@@ -105,15 +98,15 @@ export default function CustomerGallery() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            {image.customer.charAt(0)}
+                            {image.customer_name.charAt(0)}
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">{image.customer}</div>
+                            <div className="text-sm font-semibold text-gray-900">{image.customer_name}</div>
                             <div className="text-xs text-gray-600">📍 {image.location}</div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-xs text-blue-600 font-medium">{image.camera}</div>
+                          <div className="text-xs text-blue-600 font-medium">{image.camera_used}</div>
                           <div className="flex text-yellow-400 text-xs">
                             {'⭐'.repeat(5)}
                           </div>
