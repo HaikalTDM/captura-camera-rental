@@ -388,6 +388,10 @@ export default function GalleryPage() {
                   src={image.image_url}
                   alt={image.alt_text}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4yODQgNzAgMTAwIDcwWk0xMDAgMTMwQzEwOC4yODQgMTMwIDkxLjcxNiAxMzAgMTAwIDEzMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDEwQzI1LjUyMjggMTAgMzAgMTQuNDc3MiAzMCAyMEMzMCAyNS41MjI4IDI1LjUyMjggMzAgMjAgMzBDMTQuNDc3MiAzMCAxMCAyNS41MjI4IDEwIDIwQzEwIDE0LjQ3NzIgMTQuNDc3MiAxMCAyMCAxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+Cjwvc3ZnPgo=';
+                  }}
                 />
                 <div className="absolute top-2 right-2">
                   <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
@@ -451,9 +455,13 @@ export default function GalleryPage() {
               <div key={image.id} className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow opacity-75">
                 <div className="aspect-[3/4] bg-gray-100 relative">
                   <img
-                    src={image.src}
-                    alt={image.alt}
+                    src={image.image_url}
+                    alt={image.alt_text}
                     className="w-full h-full object-cover grayscale"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMDAgNzBDMTA4LjI4NCA3MCA5NS4yODQgNzAgMTAwIDcwWk0xMDAgMTMwQzEwOC4yODQgMTMwIDkxLjcxNiAxMzAgMTAwIDEzMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIwIDEwQzI1LjUyMjggMTAgMzAgMTQuNDc3MiAzMCAyMEMzMCAyNS41MjI4IDI1LjUyMjggMzAgMjAgMzBDMTQuNDc3MiAzMCAxMCAyNS41MjI4IDEwIDIwQzEwIDE0LjQ3NzIgMTQuNDc3MiAxMCAyMCAxMFoiIGZpbGw9IiM5Q0EzQUYiLz4KPC9zdmc+Cjwvc3ZnPgo=';
+                    }}
                   />
                   <div className="absolute top-2 right-2">
                     <span className="bg-gray-500 text-white text-xs px-2 py-1 rounded-full font-medium">
@@ -463,11 +471,11 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">{image.customer}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">{image.customer_name}</h3>
                   <div className="space-y-1 text-sm text-gray-600 mb-4">
-                    <p><span className="font-medium">Camera:</span> {image.camera}</p>
+                    <p><span className="font-medium">Camera:</span> {image.camera_used}</p>
                     <p><span className="font-medium">Location:</span> {image.location}</p>
-                    <p><span className="font-medium">Uploaded:</span> {new Date(image.uploadDate).toLocaleDateString()}</p>
+                    <p><span className="font-medium">Uploaded:</span> {new Date(image.upload_date).toLocaleDateString()}</p>
                   </div>
 
                   <div className="flex space-x-2">

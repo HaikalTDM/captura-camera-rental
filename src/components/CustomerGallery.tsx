@@ -65,12 +65,28 @@ export default function CustomerGallery() {
                   <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:scale-105 transition-all duration-300 ease-out group transform-gpu">
                     {/* Image Container */}
                     <div className="relative overflow-hidden">
-                      <div className="aspect-[3/4] bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                        {/* Placeholder for actual images */}
-                        <div className="text-center text-gray-500">
-                          <div className="text-4xl mb-2">📷</div>
-                          <div className="text-sm font-medium">Customer Photo</div>
-                          <div className="text-xs">{image.customer_name}</div>
+                      <div className="aspect-[3/4] bg-gradient-to-br from-gray-200 to-gray-300 relative">
+                        {image.image_url ? (
+                          <img
+                            src={image.image_url}
+                            alt={image.alt_text || `Photo by ${image.customer_name}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              // Fallback to placeholder if image fails to load
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const placeholder = target.nextElementSibling as HTMLElement;
+                              if (placeholder) placeholder.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        {/* Fallback placeholder */}
+                        <div className="absolute inset-0 flex items-center justify-center text-center text-gray-500" style={{ display: image.image_url ? 'none' : 'flex' }}>
+                          <div>
+                            <div className="text-4xl mb-2">📷</div>
+                            <div className="text-sm font-medium">Customer Photo</div>
+                            <div className="text-xs">{image.customer_name}</div>
+                          </div>
                         </div>
                       </div>
                       
