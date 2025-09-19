@@ -15,12 +15,6 @@ export default function CustomerGallery() {
   const loadImages = async () => {
     try {
       const images = await getActiveGalleryImages();
-      console.log('CustomerGallery: Loaded images:', images);
-      console.log('CustomerGallery: Number of images:', images.length);
-      if (images.length > 0) {
-        console.log('CustomerGallery: First image:', images[0]);
-        console.log('CustomerGallery: First image URL:', images[0].image_url);
-      }
       setCustomerImages(images);
     } catch (error) {
       console.error('Error loading gallery images:', error);
@@ -77,11 +71,7 @@ export default function CustomerGallery() {
                             src={image.image_url}
                             alt={image.alt_text || `Photo by ${image.customer_name}`}
                             className="w-full h-full object-cover"
-                            onLoad={() => {
-                              console.log('CustomerGallery: Image loaded successfully:', image.image_url);
-                            }}
                             onError={(e) => {
-                              console.error('CustomerGallery: Image failed to load:', image.image_url);
                               // Fallback to placeholder if image fails to load
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -89,9 +79,7 @@ export default function CustomerGallery() {
                               if (placeholder) placeholder.style.display = 'flex';
                             }}
                           />
-                        ) : (
-                          console.log('CustomerGallery: No image_url for:', image.customer_name)
-                        )}
+                        ) : null}
                         {/* Fallback placeholder */}
                         <div className="absolute inset-0 flex items-center justify-center text-center text-gray-500" style={{ display: image.image_url ? 'none' : 'flex' }}>
                           <div>
