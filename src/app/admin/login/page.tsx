@@ -96,14 +96,7 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-500/20 rounded-lg border border-blue-400/30">
-            <p className="text-blue-100 text-sm text-center">
-              <strong>Demo Credentials:</strong><br />
-              Username: admin<br />
-              Password: captura2024
-            </p>
-          </div>
+
         </div>
 
         {/* Footer */}
