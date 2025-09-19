@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getActiveGalleryImages, type GalleryImage } from '@/lib/api/gallery';
+import { getActiveGalleryImages, type GalleryImage } from '../lib/api/gallery';
 
 export default function CustomerGallery() {
   const [customerImages, setCustomerImages] = useState<GalleryImage[]>([]);

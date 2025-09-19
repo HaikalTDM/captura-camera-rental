@@ -9,7 +9,7 @@ import {
   deleteGalleryImage,
   uploadImage,
   type GalleryImage
-} from '@/lib/api/gallery';
+} from '../../../lib/api/gallery';
 
 export default function GalleryPage() {
   const [images, setImages] = useState<GalleryImage[]>([]);
