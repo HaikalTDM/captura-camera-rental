@@ -1,37 +1,79 @@
 'use client';
 
-import { useState } from 'react';
-import { mockBookings, type Booking } from '@/data/mockAdminData';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getAllBookings, getBookingStats } from '../../../lib/api/bookings';
+import type { Booking } from '../../../lib/supabase';
 import Link from 'next/link';
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState<Booking[]>(mockBookings);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'confirmed' | 'active' | 'completed' | 'overdue'>('all');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Filter bookings based on status and search
-  const filteredBookings = bookings.filter(booking => {
-    const matchesFilter = filter === 'all' || 
-      (filter === 'overdue' ? booking.paymentStatus === 'overdue' : booking.status === filter);
-    
-    const matchesSearch = searchTerm === '' || 
-      booking.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.customerPhone.includes(searchTerm) ||
-      booking.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesFilter && matchesSearch;
+  const router = useRouter();
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    active: 0,
+    completed: 0,
+    cancelled: 0,
+    bySource: {} as Record<string, number>
   });
 
-  const updateBookingStatus = (bookingId: string, newStatus: Booking['status']) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId ? { ...booking, status: newStatus } : booking
-    ));
+  // Filters
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sourceFilter, setSourceFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [bookings, statusFilter, sourceFilter, searchTerm]);
+
+  const loadBookings = async () => {
+    setIsLoading(true);
+    try {
+      const [bookingsData, statsData] = await Promise.all([
+        getAllBookings(),
+        getBookingStats()
+      ]);
+      setBookings(bookingsData);
+      setStats(statsData);
+    } catch (error) {
+      console.error('Error loading bookings:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const updatePaymentStatus = (bookingId: string, newPaymentStatus: Booking['paymentStatus']) => {
-    setBookings(prev => prev.map(booking => 
-      booking.id === bookingId ? { ...booking, paymentStatus: newPaymentStatus } : booking
-    ));
+  const applyFilters = () => {
+    let filtered = [...bookings];
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.status === statusFilter);
+    }
+
+    // Source filter
+    if (sourceFilter !== 'all') {
+      filtered = filtered.filter(booking => booking.booking_source === sourceFilter);
+    }
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(booking =>
+        booking.customer?.full_name?.toLowerCase().includes(term) ||
+        booking.camera?.name?.toLowerCase().includes(term) ||
+        booking.notes?.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredBookings(filtered);
   };
 
   const getStatusColor = (status: string) => {
@@ -41,21 +83,29 @@ export default function BookingsPage() {
       case 'active': return 'bg-blue-100 text-blue-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'overdue': return 'bg-red-100 text-red-800';
-      case 'deposit_paid': return 'bg-orange-100 text-orange-800';
-      case 'fully_paid': return 'bg-green-100 text-green-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filterCounts = {
-    all: bookings.length,
-    pending: bookings.filter(b => b.status === 'pending').length,
-    confirmed: bookings.filter(b => b.status === 'confirmed').length,
-    active: bookings.filter(b => b.status === 'active').length,
-    completed: bookings.filter(b => b.status === 'completed').length,
-    overdue: bookings.filter(b => b.paymentStatus === 'overdue').length,
+  const getSourceColor = (source: string) => {
+    switch (source) {
+      case 'website': return 'bg-blue-100 text-blue-800';
+      case 'phone': return 'bg-green-100 text-green-800';
+      case 'whatsapp': return 'bg-emerald-100 text-emerald-800';
+      case 'walk-in': return 'bg-purple-100 text-purple-800';
+      case 'historical': return 'bg-gray-100 text-gray-800';
+      case 'manual': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -64,13 +114,41 @@ export default function BookingsPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Booking Management</h1>
-            <p className="text-blue-100 text-lg">Track and manage all camera rentals</p>
+            <p className="text-blue-100 text-lg">Track and manage all camera rentals from all sources</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-            <p className="text-blue-100 text-sm">Total Bookings</p>
-            <p className="text-2xl font-bold">{bookings.length}</p>
+          <div className="flex gap-4">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+              <p className="text-blue-100 text-sm">Total Bookings</p>
+              <p className="text-2xl font-bold">{stats.total}</p>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+              <p className="text-blue-100 text-sm">Active</p>
+              <p className="text-2xl font-bold">{stats.active}</p>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap gap-4">
+        <button
+          onClick={() => router.push('/admin/bookings/add')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Add Manual Booking
+        </button>
+        <button
+          onClick={() => router.push('/admin/bookings/import')}
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+          </svg>
+          Import Historical Data
+        </button>
       </div>
 
       {/* Filters */}
@@ -78,32 +156,85 @@ export default function BookingsPage() {
         <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
           {/* Status Filters */}
           <div className="flex flex-wrap gap-2">
-            {Object.entries(filterCounts).map(([status, count]) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status as any)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                  filter === status
-                    ? 'bg-blue-500 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)} ({count})
-              </button>
-            ))}
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'all'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All ({stats.total})
+            </button>
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'pending'
+                  ? 'bg-yellow-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Pending ({stats.pending})
+            </button>
+            <button
+              onClick={() => setStatusFilter('confirmed')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'confirmed'
+                  ? 'bg-green-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Confirmed ({stats.confirmed})
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'active'
+                  ? 'bg-blue-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Active ({stats.active})
+            </button>
+            <button
+              onClick={() => setStatusFilter('completed')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'completed'
+                  ? 'bg-gray-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Completed ({stats.completed})
+            </button>
           </div>
 
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-            />
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              🔍
+          {/* Source Filter & Search */}
+          <div className="flex gap-4">
+            <select
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="all">All Sources</option>
+              <option value="website">Website ({stats.bySource.website || 0})</option>
+              <option value="phone">Phone ({stats.bySource.phone || 0})</option>
+              <option value="whatsapp">WhatsApp ({stats.bySource.whatsapp || 0})</option>
+              <option value="walk-in">Walk-in ({stats.bySource['walk-in'] || 0})</option>
+              <option value="historical">Historical ({stats.bySource.historical || 0})</option>
+              <option value="manual">Manual ({stats.bySource.manual || 0})</option>
+            </select>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+              />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                🔍
+              </div>
             </div>
           </div>
         </div>
@@ -116,7 +247,7 @@ export default function BookingsPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking
+                  Booking ID
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Customer
@@ -128,7 +259,10 @@ export default function BookingsPage() {
                   Dates
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Payment
+                  Amount
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Source
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -143,39 +277,43 @@ export default function BookingsPage() {
                 <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{booking.id}</div>
-                      <div className="text-sm text-gray-500">{booking.createdAt}</div>
+                      <div className="text-sm font-medium text-gray-900">#{booking.id.slice(0, 8)}</div>
+                      <div className="text-sm text-gray-500">{new Date(booking.created_at).toLocaleDateString()}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">{booking.customerName}</div>
-                      <div className="text-sm text-gray-500">{booking.customerPhone}</div>
+                      <div className="text-sm font-medium text-gray-900">{booking.customer?.full_name}</div>
+                      <div className="text-sm text-gray-500">{booking.customer?.phone}</div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-900 max-w-xs">
-                      {booking.cameraName}
+                      {booking.camera?.name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm text-gray-900">{booking.startDate}</div>
-                      <div className="text-sm text-gray-500">to {booking.endDate}</div>
-                      <div className="text-xs text-gray-400">{booking.totalDays} days</div>
+                      <div className="text-sm text-gray-900">{new Date(booking.start_date).toLocaleDateString()}</div>
+                      <div className="text-sm text-gray-500">to {new Date(booking.end_date).toLocaleDateString()}</div>
+                      <div className="text-xs text-gray-400">{booking.total_days} days</div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">RM{booking.totalAmount}</div>
-                      <div className="text-sm text-gray-500">Paid: RM{booking.depositPaid}</div>
-                      {booking.balanceDue > 0 && (
-                        <div className="text-sm text-red-600 font-medium">Due: RM{booking.balanceDue}</div>
-                      )}
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.paymentStatus)}`}>
-                        {booking.paymentStatus.replace('_', ' ')}
-                      </span>
+                      <div className="text-sm font-medium text-gray-900">RM{booking.total_amount}</div>
+                      <div className="text-sm text-gray-500">
+                        Deposit: {booking.deposit_paid ? '✅' : '❌'} RM{booking.deposit_amount}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Final: {booking.final_payment_paid ? '✅' : '❌'} RM{booking.final_payment_amount}
+                      </div>
                     </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(booking.booking_source)}`}>
+                      {booking.booking_source}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
@@ -189,14 +327,12 @@ export default function BookingsPage() {
                     >
                       View
                     </Link>
-                    {booking.paymentStatus === 'overdue' && (
-                      <button
-                        onClick={() => updatePaymentStatus(booking.id, 'fully_paid')}
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                      >
-                        Mark Paid
-                      </button>
-                    )}
+                    <button
+                      onClick={() => router.push(`/admin/bookings/${booking.id}/edit`)}
+                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                    >
+                      Edit
+                    </button>
                   </td>
                 </tr>
               ))}

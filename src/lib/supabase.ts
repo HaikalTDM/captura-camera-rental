@@ -59,6 +59,7 @@ export interface Booking {
   pickup_method: 'pickup' | 'delivery'
   pickup_address: string | null
   delivery_fee: number
+  booking_source: 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical' | 'manual'
   notes: string | null
   created_at: string
   updated_at: string

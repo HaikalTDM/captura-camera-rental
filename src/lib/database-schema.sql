@@ -60,6 +60,7 @@ CREATE TABLE bookings (
     pickup_method VARCHAR(20) CHECK (pickup_method IN ('pickup', 'delivery')) DEFAULT 'pickup',
     pickup_address TEXT,
     delivery_fee DECIMAL(10,2) DEFAULT 0,
+    booking_source VARCHAR(20) CHECK (booking_source IN ('website', 'phone', 'whatsapp', 'walk-in', 'historical', 'manual')) DEFAULT 'website',
     notes TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -144,19 +145,13 @@ CREATE TRIGGER update_business_settings_updated_at BEFORE UPDATE ON business_set
 CREATE TRIGGER update_payment_records_updated_at BEFORE UPDATE ON payment_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_maintenance_records_updated_at BEFORE UPDATE ON maintenance_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert sample data
--- Sample cameras
+-- Insert initial data
+-- Sample cameras (keep these as they represent your actual inventory)
 INSERT INTO cameras (name, brand, model, type, daily_rate, weekly_rate, monthly_rate, deposit_amount, description, specifications, image_url) VALUES
 ('DJI Osmo Pocket 3', 'DJI', 'Osmo Pocket 3', 'action', 80.00, 500.00, 1800.00, 200.00, 'Ultra-compact 4K camera with 3-axis gimbal stabilization', '{"resolution": "4K/120fps", "sensor": "1-inch CMOS", "stabilization": "3-axis mechanical gimbal", "battery": "Up to 166 minutes", "storage": "microSD up to 1TB"}', '/images/osmo-pocket-3.jpg'),
 ('DJI Action 5 Pro', 'DJI', 'Action 5 Pro', 'action', 70.00, 450.00, 1600.00, 180.00, 'Rugged action camera with superior low-light performance', '{"resolution": "4K/120fps", "sensor": "1/1.3-inch CMOS", "waterproof": "13m without housing", "battery": "Up to 4 hours", "storage": "microSD up to 1TB"}', '/images/action-5-pro.jpg');
 
--- Sample gallery images
-INSERT INTO gallery_images (customer_name, camera_used, location, image_url, alt_text, upload_date) VALUES
-('Ahmad Rahman', 'DJI Osmo Pocket 3', 'KLCC Twin Towers', '/images/gallery/klcc-night.jpg', 'Beautiful night shot of KLCC Twin Towers', '2024-01-15'),
-('Siti Nurhaliza', 'DJI Action 5 Pro', 'Langkawi Beach', '/images/gallery/langkawi-sunset.jpg', 'Stunning sunset at Langkawi Beach', '2024-01-20'),
-('David Lim', 'DJI Osmo Pocket 3', 'Cameron Highlands', '/images/gallery/cameron-tea.jpg', 'Tea plantation in Cameron Highlands', '2024-01-25'),
-('Maria Santos', 'DJI Action 5 Pro', 'Penang Street Art', '/images/gallery/penang-art.jpg', 'Colorful street art in Georgetown Penang', '2024-02-01'),
-('Raj Kumar', 'DJI Osmo Pocket 3', 'Batu Caves', '/images/gallery/batu-caves.jpg', 'Majestic Batu Caves temple', '2024-02-05');
+-- Note: Sample gallery images removed - use admin panel to add real customer photos
 
 -- Sample business settings
 INSERT INTO business_settings (setting_key, setting_value, description) VALUES
