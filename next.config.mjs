@@ -13,7 +13,33 @@ const nextConfig = {
   images: {
     domains: ['api.placeholder.com'],
     unoptimized: true
-  }
+  },
+  // Reduce console warnings
+  experimental: {
+    optimizePackageImports: ['@supabase/supabase-js']
+  },
+  // Custom headers to reduce some warnings
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'DENY',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
