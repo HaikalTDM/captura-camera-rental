@@ -1,66 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getAllCameras, getAllAccessories } from '@/lib/api/bookings';
-import type { Camera as DBCamera, Accessory } from '@/lib/supabase';
+import { useState } from 'react';
 import Image from 'next/image';
 
 export default function EquipmentSpecs() {
-  const [cameras, setCameras] = useState<DBCamera[]>([]);
-  const [accessories, setAccessories] = useState<Accessory[]>([]);
-  const [activeCamera, setActiveCamera] = useState<DBCamera | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    loadEquipmentData();
-  }, []);
-
-  const loadEquipmentData = async () => {
-    try {
-      const [camerasData, accessoriesData] = await Promise.all([
-        getAllCameras(),
-        getAllAccessories()
-      ]);
-
-      setCameras(camerasData.filter(cam => cam.is_available));
-      setAccessories(accessoriesData.filter(acc => acc.is_available));
-
-      // Set first available camera as active
-      if (camerasData.length > 0) {
-        setActiveCamera(camerasData[0]);
-      }
-    } catch (error) {
-      console.error('Error loading equipment data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading equipment specifications...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  if (cameras.length === 0) {
-    return (
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Equipment Specifications</h2>
-            <p className="text-gray-600">No equipment available at the moment.</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
+  const [activeCamera, setActiveCamera] = useState<'osmo' | 'action'>('osmo');
 
   const cameraSpecs = {
     osmo: {

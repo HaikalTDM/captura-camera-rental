@@ -24,25 +24,37 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
       // Convert database cameras to frontend camera format
       const convertedCameras: Camera[] = dbCameras
         .filter(cam => cam.is_available && cam.available_quantity > 0) // Only show available cameras
-        .map(dbCamera => ({
-          id: dbCamera.id,
-          name: dbCamera.name,
-          description: dbCamera.description || 'Professional camera equipment for your creative projects.',
-          image: dbCamera.image_url || '/images/default-camera.jpg',
-          images: [dbCamera.image_url || '/images/default-camera.jpg'],
-          dailyRate: dbCamera.daily_rate,
-          discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
-          features: [
-            `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
-            `RM${dbCamera.daily_rate}/day rental`,
-            'Professional grade equipment',
-            'Includes basic accessories',
-            'Full insurance coverage',
-            'Technical support included'
-          ],
-          specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications : {},
-          tidyCalPath: `haikaltdm46/${dbCamera.id}` // Use camera ID for TidyCal path
-        }));
+        .map(dbCamera => {
+          // Get primary image or first image
+          const primaryImage = dbCamera.camera_images?.find(img => img.is_primary);
+          const firstImage = dbCamera.camera_images?.[0];
+          const mainImage = primaryImage || firstImage;
+
+          // Get all image URLs
+          const allImages = dbCamera.camera_images
+            ?.sort((a, b) => a.order_index - b.order_index)
+            .map(img => img.image_url) || [];
+
+          return {
+            id: dbCamera.id,
+            name: dbCamera.name,
+            description: dbCamera.description || 'Professional camera equipment for your creative projects.',
+            image: mainImage?.image_url || '/images/default-camera.svg',
+            images: allImages.length > 0 ? allImages : ['/images/default-camera.svg'],
+            dailyRate: dbCamera.daily_rate,
+            discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
+            features: [
+              `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
+              `RM${dbCamera.daily_rate}/day rental`,
+              'Professional grade equipment',
+              'Includes basic accessories',
+              'Full insurance coverage',
+              'Technical support included'
+            ],
+            specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications : {},
+            tidyCalPath: `haikaltdm46/${dbCamera.id}` // Use camera ID for TidyCal path
+          };
+        });
 
       setCameras(convertedCameras);
     } catch (error) {

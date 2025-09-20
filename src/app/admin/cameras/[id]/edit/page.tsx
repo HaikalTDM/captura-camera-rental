@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getCameraById, updateCamera, getAllAccessories, linkAccessoryToCamera, removeAccessoryFromCamera } from '@/lib/api/bookings';
-import type { Camera, Accessory } from '@/lib/supabase';
+import { getCameraImages } from '@/lib/api/camera-images';
+import type { Camera, Accessory, CameraImage } from '@/lib/supabase';
 import Link from 'next/link';
+import CameraImageUpload from '@/components/CameraImageUpload';
 
 export default function EditCameraPage() {
   const params = useParams();
@@ -13,9 +15,10 @@ export default function EditCameraPage() {
 
   const [camera, setCamera] = useState<Camera | null>(null);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
+  const [cameraImages, setCameraImages] = useState<CameraImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'accessories' | 'maintenance'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'images' | 'accessories' | 'maintenance'>('details');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -45,9 +48,10 @@ export default function EditCameraPage() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [cameraData, accessoriesData] = await Promise.all([
+      const [cameraData, accessoriesData, imagesData] = await Promise.all([
         getCameraById(cameraId),
-        getAllAccessories()
+        getAllAccessories(),
+        getCameraImages(cameraId)
       ]);
 
       if (cameraData) {
@@ -74,6 +78,7 @@ export default function EditCameraPage() {
         });
       }
       setAccessories(accessoriesData);
+      setCameraImages(imagesData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -177,6 +182,7 @@ export default function EditCameraPage() {
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'details', name: 'Camera Details', icon: '📷' },
+            { id: 'images', name: 'Images', icon: '🖼️' },
             { id: 'accessories', name: 'Accessories', icon: '🔧' },
             { id: 'maintenance', name: 'Maintenance', icon: '⚙️' }
           ].map((tab) => (
@@ -323,6 +329,21 @@ export default function EditCameraPage() {
                 placeholder="https://example.com/camera-image.jpg"
               />
             </div>
+          </div>
+        )}
+
+        {activeTab === 'images' && (
+          <div className="space-y-6">
+            <h3 className="text-lg font-bold text-gray-900">Camera Images</h3>
+            <p className="text-gray-600">
+              Upload and manage images for this camera. The first image or primary image will be displayed in the camera catalog.
+            </p>
+
+            <CameraImageUpload
+              cameraId={camera.id}
+              existingImages={cameraImages}
+              onImagesUpdate={setCameraImages}
+            />
           </div>
         )}
 

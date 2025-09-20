@@ -34,6 +34,21 @@ export interface Camera {
   created_at: string
   updated_at: string
   camera_accessories?: CameraAccessory[]
+  camera_images?: CameraImage[]
+}
+
+export interface CameraImage {
+  id: string
+  camera_id: string
+  image_url: string
+  image_path: string
+  is_primary: boolean
+  alt_text?: string
+  order_index: number
+  file_size?: number
+  file_type?: string
+  created_at: string
+  updated_at: string
 }
 
 export interface Accessory {
