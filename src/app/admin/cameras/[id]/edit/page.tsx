@@ -86,12 +86,27 @@ export default function EditCameraPage() {
 
     setIsSaving(true);
     try {
-      const updatedCamera = await updateCamera(camera.id, formData);
+      // Clean up the form data to handle empty date strings
+      const cleanedFormData = {
+        ...formData,
+        // Convert empty date strings to null for PostgreSQL
+        purchase_date: formData.purchase_date || null,
+        warranty_expiry: formData.warranty_expiry || null,
+        // Ensure numeric fields are properly formatted
+        daily_rate: Number(formData.daily_rate) || 0,
+        weekly_rate: Number(formData.weekly_rate) || 0,
+        monthly_rate: Number(formData.monthly_rate) || 0,
+        deposit_amount: Number(formData.deposit_amount) || 0,
+        purchase_price: Number(formData.purchase_price) || 0
+      };
+
+      const updatedCamera = await updateCamera(camera.id, cleanedFormData);
       if (updatedCamera) {
         router.push(`/admin/cameras/${camera.id}`);
       }
     } catch (error) {
-      console.error('Error saving camera:', error);
+      console.error('Error updating camera:', error);
+      alert('Error updating camera. Please check all fields and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -240,10 +255,12 @@ export default function EditCameraPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.daily_rate}
-                  onChange={(e) => setFormData({...formData, daily_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.daily_rate || ''}
+                  onChange={(e) => setFormData({...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="50"
+                  step="0.01"
+                  min="0"
                 />
               </div>
 
@@ -251,10 +268,12 @@ export default function EditCameraPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Weekly Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.weekly_rate}
-                  onChange={(e) => setFormData({...formData, weekly_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.weekly_rate || ''}
+                  onChange={(e) => setFormData({...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="300"
+                  step="0.01"
+                  min="0"
                 />
               </div>
 
@@ -262,8 +281,8 @@ export default function EditCameraPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.monthly_rate}
-                  onChange={(e) => setFormData({...formData, monthly_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.monthly_rate || ''}
+                  onChange={(e) => setFormData({...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="1000"
                 />
@@ -274,10 +293,12 @@ export default function EditCameraPage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Deposit Amount (RM)</label>
               <input
                 type="number"
-                value={formData.deposit_amount}
-                onChange={(e) => setFormData({...formData, deposit_amount: parseFloat(e.target.value) || 0})}
+                value={formData.deposit_amount || ''}
+                onChange={(e) => setFormData({...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="200"
+                step="0.01"
+                min="0"
               />
             </div>
 
@@ -385,10 +406,12 @@ export default function EditCameraPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Price (RM)</label>
                 <input
                   type="number"
-                  value={formData.purchase_price}
-                  onChange={(e) => setFormData({...formData, purchase_price: parseFloat(e.target.value) || 0})}
+                  value={formData.purchase_price || ''}
+                  onChange={(e) => setFormData({...formData, purchase_price: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="2000"
+                  step="0.01"
+                  min="0"
                 />
               </div>
 

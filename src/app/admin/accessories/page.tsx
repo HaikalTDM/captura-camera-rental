@@ -264,11 +264,12 @@ export default function AccessoriesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.daily_rate}
-                  onChange={(e) => setFormData({...formData, daily_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.daily_rate || ''}
+                  onChange={(e) => setFormData({...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="10.00"
                   step="0.01"
+                  min="0"
                 />
               </div>
 
@@ -276,11 +277,12 @@ export default function AccessoriesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Weekly Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.weekly_rate}
-                  onChange={(e) => setFormData({...formData, weekly_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.weekly_rate || ''}
+                  onChange={(e) => setFormData({...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="60.00"
                   step="0.01"
+                  min="0"
                 />
               </div>
 
@@ -288,11 +290,12 @@ export default function AccessoriesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Rate (RM)</label>
                 <input
                   type="number"
-                  value={formData.monthly_rate}
-                  onChange={(e) => setFormData({...formData, monthly_rate: parseFloat(e.target.value) || 0})}
+                  value={formData.monthly_rate || ''}
+                  onChange={(e) => setFormData({...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="200.00"
                   step="0.01"
+                  min="0"
                 />
               </div>
 
@@ -300,11 +303,12 @@ export default function AccessoriesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Deposit (RM)</label>
                 <input
                   type="number"
-                  value={formData.deposit_amount}
-                  onChange={(e) => setFormData({...formData, deposit_amount: parseFloat(e.target.value) || 0})}
+                  value={formData.deposit_amount || ''}
+                  onChange={(e) => setFormData({...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="50.00"
                   step="0.01"
+                  min="0"
                 />
               </div>
             </div>
