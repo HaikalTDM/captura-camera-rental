@@ -103,8 +103,7 @@ export default function ReportsPage() {
       new Date(b.end_date) < new Date() &&
       b.status === 'completed'
     )
-    .reduce((sum, b) => sum + b.final_payment_amount, 0);tStatus === 'overdue')
-    .reduce((sum, b) => sum + b.balanceDue, 0);
+    .reduce((sum, b) => sum + b.final_payment_amount, 0);
 
   // Monthly trend (mock data for demo)
   const monthlyTrend = [
