@@ -1,22 +1,41 @@
-# CAPTURA - Camera Rental Web App
+# 📸 CAPTURA - Professional Camera Rental Platform
 
-A production-ready front-end for a camera rental service built with Next.js, Tailwind CSS, and TidyCal integration.
+A comprehensive camera rental website with advanced admin management system, built with modern web technologies for professional camera rental businesses.
 
-## Features
+## 🌟 Features
 
-- 🏠 **Landing Page** - Modern hero section with CAPTURA branding
-- 📷 **Camera Catalog** - Osmo Pocket 3 & Action 5 Pro with dynamic pricing
-- 💰 **Dynamic Pricing** - RM50/day, RM45/day for 3+ days with automatic calculations
-- 📅 **Booking Flow** - Complete booking system with TidyCal integration
-- 📱 **Responsive Design** - Mobile-first design with hamburger navigation
-- ✨ **Modern UI** - Professional styling with Tailwind CSS
+### 🎬 **Customer-Facing Website**
+- **Modern Landing Page** with professional hero section and glass morphism effects
+- **Dynamic Camera Catalog** with real-time pricing and availability from database
+- **Interactive Booking System** with TidyCal integration and custom calendars
+- **Customer Gallery** showcasing work done with rental equipment
+- **Responsive Design** optimized for all devices and screen sizes
+- **WhatsApp Integration** for instant customer communication
 
-## Tech Stack
+### 🔧 **Admin Management Panel**
+- **Complete Camera Management** - Add, edit, delete cameras with full specifications
+- **Booking Management** - Manual booking entry, bulk CSV import, and status tracking
+- **Accessory Management** - Full CRUD operations for camera accessories
+- **Customer Database** - Comprehensive customer relationship management
+- **Business Settings** - Configurable contact info, pricing, and policies
+- **Real-Time Synchronization** - Admin changes instantly reflect on main website
 
-- **Framework**: Next.js 15 with App Router
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Calendar**: TidyCal integration ready
+### 📊 **Advanced Features**
+- **Multiple Booking Sources** - Website, phone, WhatsApp, in-person tracking
+- **Bulk Data Import** - CSV import for historical bookings and customers
+- **Payment Tracking** - Deposit and final payment status management
+- **Maintenance Scheduling** - Equipment maintenance tracking and alerts
+- **Inventory Management** - Stock levels and availability monitoring
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 15.5.3, React, TypeScript
+- **Styling**: Tailwind CSS with custom components and glass morphism effects
+- **Database**: Supabase (PostgreSQL) with real-time features
+- **Authentication**: Supabase Auth for admin panel
+- **Deployment**: Vercel with automatic deployments
+- **Booking Integration**: TidyCal with custom calendar components
+- **Communication**: WhatsApp Business API integration
 
 ## Getting Started
 
