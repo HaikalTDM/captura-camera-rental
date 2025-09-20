@@ -53,7 +53,19 @@ export default function CamerasPage() {
       totalRentals: 0
     };
     setCameras([...cameras, camera]);
-    setNewCamera({ name: '', model: '', dailyRate: 0, condition: 'excellent' });
+    setNewCamera({
+      name: '',
+      brand: '',
+      model: '',
+      type: 'action' as Camera['type'],
+      daily_rate: 0,
+      weekly_rate: 0,
+      monthly_rate: 0,
+      deposit_amount: 0,
+      description: '',
+      specifications: {},
+      image_url: ''
+    });
     setShowAddForm(false);
   };
 
@@ -73,19 +85,20 @@ export default function CamerasPage() {
     }
   };
 
-  const getConditionColor = (condition: Camera['condition']) => {
-    switch (condition) {
-      case 'excellent': return 'bg-green-100 text-green-800';
-      case 'good': return 'bg-blue-100 text-blue-800';
-      case 'fair': return 'bg-yellow-100 text-yellow-800';
+  const getStatusColor = (status: Camera['status']) => {
+    switch (status) {
+      case 'available': return 'bg-green-100 text-green-800';
+      case 'rented': return 'bg-blue-100 text-blue-800';
+      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
+      case 'unavailable': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
   // Get current rental info for each camera
   const getCameraRentalInfo = (cameraId: string) => {
-    const activeBooking = mockBookings.find(
-      booking => booking.cameraId === cameraId && booking.status === 'active'
+    const activeBooking = bookings.find(
+      booking => booking.camera_id === cameraId && booking.status === 'active'
     );
     return activeBooking;
   };

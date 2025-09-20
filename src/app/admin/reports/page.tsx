@@ -97,8 +97,13 @@ export default function ReportsPage() {
     ).length,
   };
 
-  const overdueAmount = mockBookings
-    .filter(b => b.paymentStatus === 'overdue')
+  const overdueAmount = bookings
+    .filter(b =>
+      !b.final_payment_paid &&
+      new Date(b.end_date) < new Date() &&
+      b.status === 'completed'
+    )
+    .reduce((sum, b) => sum + b.final_payment_amount, 0);tStatus === 'overdue')
     .reduce((sum, b) => sum + b.balanceDue, 0);
 
   // Monthly trend (mock data for demo)

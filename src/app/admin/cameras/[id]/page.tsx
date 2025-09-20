@@ -61,7 +61,7 @@ export default function CameraDetailsPage() {
   }
 
   // Get camera rental history
-  const cameraBookings = mockBookings.filter(b => b.cameraId === camera.id);
+  const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
   const activeBooking = cameraBookings.find(b => b.status === 'active');
   const upcomingBookings = cameraBookings.filter(b => b.status === 'confirmed');
   const completedBookings = cameraBookings.filter(b => b.status === 'completed');

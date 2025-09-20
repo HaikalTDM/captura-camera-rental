@@ -64,11 +64,15 @@ export default function CustomerDetailsPage() {
   }
 
   // Get customer bookings
-  const customerBookings = mockBookings.filter(b => b.customerName === customer.name);
+  const customerBookings = bookings.filter(b => b.customer_id === customer.id);
   const activeBookings = customerBookings.filter(b => b.status === 'active');
   const upcomingBookings = customerBookings.filter(b => b.status === 'confirmed');
   const completedBookings = customerBookings.filter(b => b.status === 'completed');
-  const overduePayments = customerBookings.filter(b => b.paymentStatus === 'overdue');
+  const overduePayments = customerBookings.filter(b =>
+    !b.final_payment_paid &&
+    new Date(b.end_date) < new Date() &&
+    b.status === 'completed'
+  );
 
   const updateReliability = (newReliability: Customer['reliability']) => {
     setCustomer(prev => prev ? { ...prev, reliability: newReliability } : null);
