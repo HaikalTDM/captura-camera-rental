@@ -138,7 +138,7 @@ export default function EditCameraPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Edit Camera</h1>
-          <p className="text-gray-600 mt-1">Update camera details and manage accessories</p>
+          <p className="text-gray-700 mt-1">Update camera details and manage accessories</p>
         </div>
         <div className="flex gap-3">
           <Link
@@ -171,7 +171,7 @@ export default function EditCameraPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
               }`}
             >
               {tab.icon} {tab.name}
@@ -193,7 +193,7 @@ export default function EditCameraPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="DJI Osmo Pocket 3"
                 />
               </div>
@@ -204,28 +204,28 @@ export default function EditCameraPage() {
                   type="text"
                   value={formData.brand}
                   onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="DJI"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
                 <input
                   type="text"
                   value={formData.model}
                   onChange={(e) => setFormData({...formData, model: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="Osmo Pocket 3"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({...formData, type: e.target.value as Camera['type']})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   <option value="action">Action Camera</option>
                   <option value="mirrorless">Mirrorless</option>
@@ -242,29 +242,29 @@ export default function EditCameraPage() {
                   type="number"
                   value={formData.daily_rate}
                   onChange={(e) => setFormData({...formData, daily_rate: parseFloat(e.target.value) || 0})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="50"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Weekly Rate (RM)</label>
                 <input
                   type="number"
                   value={formData.weekly_rate}
                   onChange={(e) => setFormData({...formData, weekly_rate: parseFloat(e.target.value) || 0})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="300"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Rate (RM)</label>
                 <input
                   type="number"
                   value={formData.monthly_rate}
                   onChange={(e) => setFormData({...formData, monthly_rate: parseFloat(e.target.value) || 0})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="1000"
                 />
               </div>
@@ -276,7 +276,7 @@ export default function EditCameraPage() {
                 type="number"
                 value={formData.deposit_amount}
                 onChange={(e) => setFormData({...formData, deposit_amount: parseFloat(e.target.value) || 0})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="200"
               />
             </div>
@@ -287,7 +287,7 @@ export default function EditCameraPage() {
                 value={formData.description}
                 onChange={(e) => setFormData({...formData, description: e.target.value})}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="Detailed description of the camera..."
               />
             </div>
@@ -298,7 +298,7 @@ export default function EditCameraPage() {
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="https://example.com/camera-image.jpg"
               />
             </div>
@@ -318,7 +318,7 @@ export default function EditCameraPage() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <h4 className="font-medium text-gray-900">{accessory.name}</h4>
-                        <p className="text-sm text-gray-500">{accessory.type}</p>
+                        <p className="text-sm text-gray-700">{accessory.type}</p>
                         <p className="text-sm font-medium text-green-600">RM{accessory.daily_rate}/day</p>
                       </div>
                       <label className="flex items-center">
@@ -328,11 +328,11 @@ export default function EditCameraPage() {
                           onChange={(e) => handleAccessoryToggle(accessory.id, e.target.checked)}
                           className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <span className="ml-2 text-sm text-gray-600">Include</span>
+                        <span className="ml-2 text-sm text-gray-700">Include</span>
                       </label>
                     </div>
                     {accessory.description && (
-                      <p className="text-xs text-gray-600">{accessory.description}</p>
+                      <p className="text-xs text-gray-700">{accessory.description}</p>
                     )}
                   </div>
                 );
@@ -351,7 +351,7 @@ export default function EditCameraPage() {
                 <select
                   value={formData.condition}
                   onChange={(e) => setFormData({...formData, condition: e.target.value as Camera['condition']})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   <option value="excellent">Excellent</option>
                   <option value="good">Good</option>
@@ -359,56 +359,56 @@ export default function EditCameraPage() {
                   <option value="needs_repair">Needs Repair</option>
                 </select>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
                 <input
                   type="text"
                   value={formData.serial_number}
                   onChange={(e) => setFormData({...formData, serial_number: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="SN123456789"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Date</label>
                 <input
                   type="date"
                   value={formData.purchase_date}
                   onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Price (RM)</label>
                 <input
                   type="number"
                   value={formData.purchase_price}
                   onChange={(e) => setFormData({...formData, purchase_price: parseFloat(e.target.value) || 0})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="2000"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Warranty Expiry</label>
                 <input
                   type="date"
                   value={formData.warranty_expiry}
                   onChange={(e) => setFormData({...formData, warranty_expiry: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Storage Location</label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                   placeholder="Main Storage"
                 />
               </div>
@@ -420,7 +420,7 @@ export default function EditCameraPage() {
                 value={formData.notes}
                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="Additional notes about this camera..."
               />
             </div>
