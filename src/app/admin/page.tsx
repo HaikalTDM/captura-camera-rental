@@ -1,17 +1,64 @@
 'use client';
 
-import { getDashboardStats, mockBookings, mockCameras } from '@/data/mockAdminData';
+import { useState, useEffect } from 'react';
+import { getAllBookings, getBookingStats, getAllCameras } from '../../lib/api/bookings';
+import type { Booking, Camera } from '../../lib/supabase';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const stats = getDashboardStats();
-  
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    active: 0,
+    completed: 0,
+    cancelled: 0,
+    bySource: {} as Record<string, number>
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const [bookingsData, statsData, camerasData] = await Promise.all([
+        getAllBookings(),
+        getBookingStats(),
+        getAllCameras()
+      ]);
+      setBookings(bookingsData);
+      setStats(statsData);
+      setCameras(camerasData);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Get today's activities
-  const today = '2024-01-21'; // Fixed for demo
-  const todayPickups = mockBookings.filter(b => b.startDate === today && b.status === 'confirmed');
-  const todayReturns = mockBookings.filter(b => b.endDate === today && b.status === 'active');
-  const recentBookings = mockBookings.slice(0, 5);
-  const overduePayments = mockBookings.filter(b => b.paymentStatus === 'overdue');
+  const today = new Date().toISOString().split('T')[0];
+  const todayPickups = bookings.filter(b => b.start_date === today && b.status === 'confirmed');
+  const todayReturns = bookings.filter(b => b.end_date === today && b.status === 'active');
+  const recentBookings = bookings.slice(0, 5);
+  const overduePayments = bookings.filter(b =>
+    !b.final_payment_paid &&
+    new Date(b.end_date) < new Date() &&
+    b.status === 'completed'
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -44,7 +91,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Rentals</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{stats.activeRentals}</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{stats.active}</p>
               <p className="text-sm text-gray-500 mt-1">Currently rented</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -58,7 +105,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Today's Pickups</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">{stats.todayPickups}</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">{todayPickups.length}</p>
               <p className="text-sm text-gray-500 mt-1">Scheduled today</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -72,7 +119,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Pending Payments</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">{stats.pendingPayments}</p>
+              <p className="text-3xl font-bold text-red-600 mt-2">{overduePayments.length}</p>
               <p className="text-sm text-gray-500 mt-1">Need follow up</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -86,8 +133,13 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Revenue</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">RM{stats.monthlyRevenue}</p>
-              <p className="text-sm text-gray-500 mt-1">January 2024</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">RM{
+                bookings
+                  .filter(b => b.final_payment_paid && new Date(b.created_at).getMonth() === new Date().getMonth())
+                  .reduce((sum, b) => sum + b.total_amount, 0)
+                  .toFixed(0)
+              }</p>
+              <p className="text-sm text-gray-500 mt-1">{new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">📈</span>
@@ -114,11 +166,11 @@ export default function AdminDashboard() {
                 {todayPickups.map((booking) => (
                   <div key={booking.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
                     <div>
-                      <p className="font-medium text-gray-900">{booking.customerName}</p>
-                      <p className="text-sm text-gray-600">{booking.cameraName}</p>
-                      <p className="text-sm text-green-600">Pickup: {booking.pickupTime}</p>
+                      <p className="font-medium text-gray-900">{booking.customer?.full_name}</p>
+                      <p className="text-sm text-gray-600">{booking.camera?.name}</p>
+                      <p className="text-sm text-green-600">Pickup: {new Date(booking.start_date).toLocaleDateString()}</p>
                     </div>
-                    <Link 
+                    <Link
                       href={`/admin/bookings/${booking.id}`}
                       className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                     >
@@ -145,28 +197,24 @@ export default function AdminDashboard() {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {mockCameras.map((camera) => (
+              {cameras.map((camera) => (
                 <div key={camera.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900">{camera.name}</p>
                     <p className="text-sm text-gray-600">
-                      {camera.status === 'rented' && camera.currentRenter 
-                        ? `Rented by ${camera.currentRenter}` 
-                        : `Status: ${camera.status}`
+                      {camera.is_available
+                        ? `Available (${camera.available_quantity}/${camera.total_quantity})`
+                        : 'Currently rented'
                       }
                     </p>
-                    {camera.returnDate && (
-                      <p className="text-sm text-blue-600">Return: {camera.returnDate}</p>
-                    )}
+                    <p className="text-sm text-gray-500">Daily Rate: RM{camera.daily_rate}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    camera.status === 'available' 
+                    camera.is_available
                       ? 'bg-green-100 text-green-800'
-                      : camera.status === 'rented'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-yellow-100 text-yellow-800'
+                      : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {camera.status}
+                    {camera.is_available ? 'Available' : 'Rented'}
                   </span>
                 </div>
               ))}
@@ -192,16 +240,18 @@ export default function AdminDashboard() {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {recentBookings.map((booking) => (
+              {recentBookings.length > 0 ? recentBookings.map((booking) => (
                 <div key={booking.id} className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">{booking.customerName}</p>
-                    <p className="text-sm text-gray-600">{booking.cameraName}</p>
-                    <p className="text-sm text-gray-600">{booking.startDate} - {booking.endDate}</p>
+                    <p className="font-medium text-gray-900">{booking.customer?.full_name}</p>
+                    <p className="text-sm text-gray-600">{booking.camera?.name}</p>
+                    <p className="text-sm text-gray-600">
+                      {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                    </p>
                   </div>
                   <div className="text-right">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      booking.status === 'active' 
+                      booking.status === 'active'
                         ? 'bg-blue-100 text-blue-800'
                         : booking.status === 'confirmed'
                         ? 'bg-green-100 text-green-800'
@@ -211,10 +261,12 @@ export default function AdminDashboard() {
                     }`}>
                       {booking.status}
                     </span>
-                    <p className="text-sm text-gray-600 mt-1">RM{booking.totalAmount}</p>
+                    <p className="text-sm text-gray-600 mt-1">RM{booking.total_amount}</p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <p className="text-gray-600 text-center py-8">No recent bookings</p>
+              )}
             </div>
           </div>
         </div>
@@ -236,11 +288,12 @@ export default function AdminDashboard() {
                   <div key={booking.id} className="p-4 bg-red-50 rounded-lg border border-red-200">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">{booking.customerName}</p>
-                        <p className="text-sm text-gray-600">{booking.customerPhone}</p>
-                        <p className="text-sm text-red-600">Overdue: RM{booking.balanceDue}</p>
+                        <p className="font-medium text-gray-900">{booking.customer?.full_name}</p>
+                        <p className="text-sm text-gray-600">{booking.customer?.phone}</p>
+                        <p className="text-sm text-red-600">Overdue: RM{booking.final_payment_amount}</p>
+                        <p className="text-xs text-gray-500">Due: {new Date(booking.end_date).toLocaleDateString()}</p>
                       </div>
-                      <Link 
+                      <Link
                         href={`/admin/bookings/${booking.id}`}
                         className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
                       >
