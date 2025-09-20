@@ -9,7 +9,7 @@ export default function EquipmentSpecs() {
   const cameraSpecs = {
     osmo: {
       name: "DJI Osmo Pocket 3 Creator Combo",
-      image: "/images/osmo-pocket-3.jpg",
+      image: "/images/osmo-pocket-31.jpg",
       price: "RM 50/day",
       discountPrice: "RM 45/day (3+ days)",
       description: "Ultra-compact handheld camera with 4K/120fps recording and 3-axis mechanical gimbal",
@@ -39,7 +39,7 @@ export default function EquipmentSpecs() {
     },
     action: {
       name: "DJI Action 5 Pro Adventure Combo",
-      image: "/images/action-5-pro.jpg", 
+      image: "/images/dji-action-5-pro1.jpg",
       price: "RM 50/day",
       discountPrice: "RM 45/day (3+ days)",
       description: "Rugged action camera with 4K/120fps recording, 13.5m waterproof, and dual touchscreens",
@@ -165,8 +165,8 @@ export default function EquipmentSpecs() {
                   <div className="relative w-48 h-32 sm:w-56 sm:h-36 lg:w-64 lg:h-40 bg-white/10 rounded-xl p-4 backdrop-blur-sm">
                     <Image
                       src={activeCamera === 'osmo'
-                        ? '/images/osmo_pocket_3_creator_combo.jpg'
-                        : '/images/osmo_action_5_pro_adventure_combo.jpg'
+                        ? '/images/osmo-pocket-31.jpg'
+                        : '/images/dji-action-5-pro1.jpg'
                       }
                       alt={activeCamera === 'osmo'
                         ? 'DJI Osmo Pocket 3 Creator Combo'

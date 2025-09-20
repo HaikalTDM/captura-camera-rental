@@ -5,9 +5,9 @@ export const cameras: Camera[] = [
     id: 'osmo-pocket-3',
     name: 'Osmo Pocket 3',
     description: 'Ultra-compact handheld camera with 4K recording and advanced stabilization. Perfect for content creators and travel photography.',
-    image: '/images/osmo-pocket-3.jpg',
+    image: '/images/osmo-pocket-31.jpg',
     images: [
-      '/images/osmo-pocket-3.jpg'
+      '/images/osmo-pocket-31.jpg'
     ],
     dailyRate: 50,
     discountRate: 45,
@@ -33,9 +33,9 @@ export const cameras: Camera[] = [
     id: 'action-5-pro',
     name: 'Action 5 Pro',
     description: 'Rugged action camera built for extreme adventures. Waterproof design with superior image quality and stabilization.',
-    image: '/images/dji-action-5-pro.jpg',
+    image: '/images/dji-action-5-pro1.jpg',
     images: [
-      '/images/dji-action-5-pro.jpg'
+      '/images/dji-action-5-pro1.jpg'
     ],
     dailyRate: 50,
     discountRate: 45,

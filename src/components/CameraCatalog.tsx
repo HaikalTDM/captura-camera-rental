@@ -29,15 +29,15 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
           const getStaticImage = (cameraName: string) => {
             const name = cameraName.toLowerCase();
             if (name.includes('osmo') && name.includes('pocket')) {
-              return '/images/osmo-pocket-3.jpg';
+              return '/images/osmo-pocket-31.jpg';
             } else if (name.includes('action') && name.includes('5')) {
-              return '/images/dji-action-5-pro.jpg';
+              return '/images/dji-action-5-pro1.jpg';
             } else if (name.includes('action')) {
-              return '/images/dji-action-5-pro.jpg'; // Default action camera
+              return '/images/dji-action-5-pro1.jpg'; // Default action camera
             } else if (name.includes('osmo')) {
-              return '/images/osmo-pocket-3.jpg'; // Default osmo camera
+              return '/images/osmo-pocket-31.jpg'; // Default osmo camera
             }
-            return '/images/osmo-pocket-3.jpg'; // Fallback to a real camera image
+            return '/images/osmo-pocket-31.jpg'; // Fallback to a real camera image
           };
 
           const staticImage = getStaticImage(dbCamera.name);
