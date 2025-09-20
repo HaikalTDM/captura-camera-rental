@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { mockBookings } from '@/data/mockAdminData';
+import { getAllBookings } from '../../lib/api/bookings';
+import type { Booking } from '../../lib/supabase';
 
 interface CalendarDay {
   date: Date;
@@ -27,21 +28,34 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Convert bookings to calendar events
-    const calendarEvents = mockBookings.map(booking => ({
-      id: booking.id,
-      title: `${booking.cameraName}`,
-      camera: booking.cameraName,
-      customer: booking.customerName,
-      startDate: new Date(booking.startDate),
-      endDate: new Date(booking.endDate),
-      status: booking.status,
-      color: getStatusColor(booking.status)
-    }));
-    setEvents(calendarEvents);
+    loadCalendarData();
   }, []);
+
+  const loadCalendarData = async () => {
+    setIsLoading(true);
+    try {
+      const bookings = await getAllBookings();
+      // Convert bookings to calendar events
+      const calendarEvents = bookings.map(booking => ({
+        id: booking.id,
+        title: `${booking.camera?.name || 'Camera'}`,
+        camera: booking.camera?.name || 'Camera',
+        customer: booking.customer?.full_name || 'Customer',
+        startDate: new Date(booking.start_date),
+        endDate: new Date(booking.end_date),
+        status: booking.status,
+        color: getStatusColor(booking.status)
+      }));
+      setEvents(calendarEvents);
+    } catch (error) {
+      console.error('Error loading calendar data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {

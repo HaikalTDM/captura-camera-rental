@@ -1,18 +1,48 @@
 'use client';
 
-import { useState } from 'react';
-import { mockCameras, mockBookings, type Camera } from '@/data/mockAdminData';
+import { useState, useEffect } from 'react';
+import { getAllCameras, getAllBookings } from '../../lib/api/bookings';
+import type { Camera, Booking } from '../../lib/supabase';
 import Link from 'next/link';
 
 export default function CamerasPage() {
-  const [cameras, setCameras] = useState<Camera[]>(mockCameras);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCamera, setNewCamera] = useState({
     name: '',
+    brand: '',
     model: '',
-    dailyRate: 0,
-    condition: 'excellent' as Camera['condition']
+    type: 'action' as Camera['type'],
+    daily_rate: 0,
+    weekly_rate: 0,
+    monthly_rate: 0,
+    deposit_amount: 0,
+    description: '',
+    specifications: {},
+    image_url: ''
   });
+
+  useEffect(() => {
+    loadCamerasData();
+  }, []);
+
+  const loadCamerasData = async () => {
+    setIsLoading(true);
+    try {
+      const [camerasData, bookingsData] = await Promise.all([
+        getAllCameras(),
+        getAllBookings()
+      ]);
+      setCameras(camerasData);
+      setBookings(bookingsData);
+    } catch (error) {
+      console.error('Error loading cameras data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const addCamera = () => {
     const camera: Camera = {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCustomerById, getAllBookings } from '../../../lib/api/bookings';
-import type { Customer, Booking } from '../../../lib/supabase';
+import { getCustomerById, getAllBookings } from '../../../../lib/api/bookings';
+import type { Customer, Booking } from '../../../../lib/supabase';
 import Link from 'next/link';
 
 export default function CustomerDetailsPage() {

@@ -1,20 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { mockBookings, type Booking } from '@/data/mockAdminData';
+import { getAllBookings } from '../../../lib/api/bookings';
+import type { Booking } from '../../../lib/supabase';
 import Link from 'next/link';
 
 export default function BookingDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const bookingId = params.id as string;
-  
-  const [booking, setBooking] = useState<Booking | null>(
-    mockBookings.find(b => b.id === bookingId) || null
-  );
-  const [notes, setNotes] = useState(booking?.notes || '');
+
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [notes, setNotes] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadBookingData();
+  }, [bookingId]);
+
+  const loadBookingData = async () => {
+    setIsLoading(true);
+    try {
+      const bookings = await getAllBookings();
+      const foundBooking = bookings.find(b => b.id === bookingId);
+      if (foundBooking) {
+        setBooking(foundBooking);
+        setNotes(foundBooking.notes || '');
+      }
+    } catch (error) {
+      console.error('Error loading booking data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!booking) {
     return (
