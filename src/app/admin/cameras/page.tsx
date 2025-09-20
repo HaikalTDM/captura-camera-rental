@@ -44,45 +44,67 @@ export default function CamerasPage() {
     }
   };
 
-  const addCamera = () => {
-    const camera: Camera = {
-      id: `CAM${String(cameras.length + 1).padStart(3, '0')}`,
-      ...newCamera,
-      status: 'available',
-      lastMaintenance: new Date().toISOString().split('T')[0],
-      totalRentals: 0
-    };
-    setCameras([...cameras, camera]);
-    setNewCamera({
-      name: '',
-      brand: '',
-      model: '',
-      type: 'action' as Camera['type'],
-      daily_rate: 0,
-      weekly_rate: 0,
-      monthly_rate: 0,
-      deposit_amount: 0,
-      description: '',
-      specifications: {},
-      image_url: ''
-    });
-    setShowAddForm(false);
+  const addCamera = async () => {
+    try {
+      const cameraData = {
+        ...newCamera,
+        is_available: true,
+        total_quantity: 1,
+        available_quantity: 1
+      };
+
+      // In a real app, you would call createCamera API here
+      // const newCameraRecord = await createCamera(cameraData);
+
+      // For now, just add to local state (this should be replaced with API call)
+      const camera: Camera = {
+        id: `CAM${String(cameras.length + 1).padStart(3, '0')}`,
+        ...cameraData,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      setCameras([...cameras, camera]);
+      setNewCamera({
+        name: '',
+        brand: '',
+        model: '',
+        type: 'action' as Camera['type'],
+        daily_rate: 0,
+        weekly_rate: 0,
+        monthly_rate: 0,
+        deposit_amount: 0,
+        description: '',
+        specifications: {},
+        image_url: ''
+      });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding camera:', error);
+    }
   };
 
-  const updateCameraStatus = (cameraId: string, newStatus: Camera['status']) => {
-    setCameras(prev => prev.map(camera => 
-      camera.id === cameraId ? { ...camera, status: newStatus } : camera
+  const updateCameraAvailability = (cameraId: string, isAvailable: boolean) => {
+    setCameras(prev => prev.map(camera =>
+      camera.id === cameraId ? { ...camera, is_available: isAvailable } : camera
     ));
   };
 
-  const getStatusColor = (status: Camera['status']) => {
-    switch (status) {
-      case 'available': return 'bg-green-100 text-green-800 border-green-200';
-      case 'rented': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'reserved': return 'bg-purple-100 text-purple-800 border-purple-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+  const getStatusColor = (isAvailable: boolean, availableQuantity: number) => {
+    if (!isAvailable) {
+      return 'bg-red-100 text-red-800 border-red-200';
     }
+    if (availableQuantity === 0) {
+      return 'bg-blue-100 text-blue-800 border-blue-200'; // All rented
+    }
+    return 'bg-green-100 text-green-800 border-green-200'; // Available
+  };
+
+  const getStatusText = (isAvailable: boolean, availableQuantity: number, totalQuantity: number) => {
+    if (!isAvailable) return 'Unavailable';
+    if (availableQuantity === 0) return 'All Rented';
+    if (availableQuantity < totalQuantity) return `${availableQuantity}/${totalQuantity} Available`;
+    return 'Available';
   };
 
 
@@ -214,18 +236,7 @@ export default function CamerasPage() {
                 placeholder="50"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
-              <select
-                value={newCamera.condition}
-                onChange={(e) => setNewCamera({...newCamera, condition: e.target.value as Camera['condition']})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-              >
-                <option value="excellent">Excellent</option>
-                <option value="good">Good</option>
-                <option value="fair">Fair</option>
-              </select>
-            </div>
+
           </div>
           <div className="flex gap-3 mt-6">
             <button
@@ -257,11 +268,8 @@ export default function CamerasPage() {
                   <p className="text-sm text-gray-500">ID: {camera.id}</p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getStatusColor(camera.status)}`}>
-                    {camera.status}
-                  </span>
-                  <span className={`px-3 py-1 rounded-lg text-sm font-medium ${getConditionColor(camera.condition)}`}>
-                    {camera.condition}
+                  <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getStatusColor(camera.is_available, camera.available_quantity)}`}>
+                    {getStatusText(camera.is_available, camera.available_quantity, camera.total_quantity)}
                   </span>
                 </div>
               </div>
@@ -269,11 +277,11 @@ export default function CamerasPage() {
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <p className="text-sm text-gray-500">Daily Rate</p>
-                  <p className="text-lg font-semibold text-gray-900">RM{camera.dailyRate}</p>
+                  <p className="text-lg font-semibold text-gray-900">RM{camera.daily_rate}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Total Rentals</p>
-                  <p className="text-lg font-semibold text-gray-900">{camera.totalRentals}</p>
+                  <p className="text-sm text-gray-500">Quantity</p>
+                  <p className="text-lg font-semibold text-gray-900">{camera.available_quantity}/{camera.total_quantity}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Last Maintenance</p>
