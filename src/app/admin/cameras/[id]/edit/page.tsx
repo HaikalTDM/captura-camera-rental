@@ -86,12 +86,14 @@ export default function EditCameraPage() {
 
     setIsSaving(true);
     try {
-      // Clean up the form data to handle empty date strings
+      // Clean up the form data to handle empty date strings and unique constraints
       const cleanedFormData = {
         ...formData,
         // Convert empty date strings to null for PostgreSQL
         purchase_date: formData.purchase_date || null,
         warranty_expiry: formData.warranty_expiry || null,
+        // Convert empty serial number to null to avoid unique constraint violation
+        serial_number: formData.serial_number?.trim() || null,
         // Ensure numeric fields are properly formatted
         daily_rate: Number(formData.daily_rate) || 0,
         weekly_rate: Number(formData.weekly_rate) || 0,
@@ -104,9 +106,19 @@ export default function EditCameraPage() {
       if (updatedCamera) {
         router.push(`/admin/cameras/${camera.id}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating camera:', error);
-      alert('Error updating camera. Please check all fields and try again.');
+
+      // Handle specific database errors
+      if (error?.code === '23505') {
+        if (error?.details?.includes('serial_number')) {
+          alert('Error: This serial number is already in use. Please use a unique serial number or leave it empty.');
+        } else {
+          alert('Error: Duplicate value detected. Please check your input and try again.');
+        }
+      } else {
+        alert('Error updating camera. Please check all fields and try again.');
+      }
     } finally {
       setIsSaving(false);
     }

@@ -330,43 +330,67 @@ export async function bulkCreateBookings(bookings: any[]): Promise<{
 // Update camera
 export async function updateCamera(id: string, cameraData: Partial<Camera>): Promise<Camera | null> {
   try {
+    // Clean the data to handle unique constraints and empty values
+    const cleanedData = {
+      ...cameraData,
+      // Convert empty serial number to null to avoid unique constraint violation
+      serial_number: cameraData.serial_number?.trim() || null,
+      // Convert empty date strings to null
+      purchase_date: cameraData.purchase_date || null,
+      warranty_expiry: cameraData.warranty_expiry || null,
+      last_maintenance: cameraData.last_maintenance || null,
+      next_maintenance: cameraData.next_maintenance || null
+    };
+
     const { data, error } = await supabase
       .from('cameras')
-      .update(cameraData)
+      .update(cleanedData)
       .eq('id', id)
       .select()
       .single()
 
     if (error) {
       console.error('Error updating camera:', error)
-      return null
+      throw error // Throw error so it can be caught by the calling function
     }
 
     return data
   } catch (error) {
     console.error('Error in updateCamera:', error)
-    return null
+    throw error // Re-throw so the UI can handle it properly
   }
 }
 
 // Create camera
 export async function createCameraRecord(cameraData: Omit<Camera, 'id' | 'created_at' | 'updated_at'>): Promise<Camera | null> {
   try {
+    // Clean the data to handle unique constraints and empty values
+    const cleanedData = {
+      ...cameraData,
+      // Convert empty serial number to null to avoid unique constraint violation
+      serial_number: cameraData.serial_number?.trim() || null,
+      // Convert empty date strings to null
+      purchase_date: cameraData.purchase_date || null,
+      warranty_expiry: cameraData.warranty_expiry || null,
+      last_maintenance: cameraData.last_maintenance || null,
+      next_maintenance: cameraData.next_maintenance || null
+    };
+
     const { data, error } = await supabase
       .from('cameras')
-      .insert([cameraData])
+      .insert([cleanedData])
       .select()
       .single()
 
     if (error) {
       console.error('Error creating camera:', error)
-      return null
+      throw error // Throw error so it can be caught by the calling function
     }
 
     return data
   } catch (error) {
     console.error('Error in createCamera:', error)
-    return null
+    throw error // Re-throw so the UI can handle it properly
   }
 }
 
