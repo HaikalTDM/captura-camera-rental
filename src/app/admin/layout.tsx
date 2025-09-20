@@ -55,6 +55,7 @@ export default function AdminLayout({
     { name: 'Calendar', href: '/admin/calendar', icon: '📅' },
     { name: 'Bookings', href: '/admin/bookings', icon: '📋' },
     { name: 'Cameras', href: '/admin/cameras', icon: '📷' },
+    { name: 'Accessories', href: '/admin/accessories', icon: '🔧' },
     { name: 'Customers', href: '/admin/customers', icon: '👥' },
     { name: 'Gallery', href: '/admin/gallery', icon: '📸' },
     { name: 'Reports', href: '/admin/reports', icon: '📈' },

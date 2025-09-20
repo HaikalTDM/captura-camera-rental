@@ -171,7 +171,7 @@ export default function AddBookingPage() {
                 <select
                   value={bookingData.customer_id}
                   onChange={(e) => setBookingData(prev => ({ ...prev, customer_id: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 >
                   <option value="">Select a customer</option>
@@ -204,7 +204,7 @@ export default function AddBookingPage() {
                       type="text"
                       value={newCustomer.full_name}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, full_name: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       required
                     />
                   </div>
@@ -214,7 +214,7 @@ export default function AddBookingPage() {
                       type="email"
                       value={newCustomer.email}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       required
                     />
                   </div>
@@ -224,7 +224,7 @@ export default function AddBookingPage() {
                       type="tel"
                       value={newCustomer.phone}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       required
                     />
                   </div>
@@ -234,7 +234,7 @@ export default function AddBookingPage() {
                       type="tel"
                       value={newCustomer.whatsapp}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, whatsapp: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -242,7 +242,7 @@ export default function AddBookingPage() {
                     <textarea
                       value={newCustomer.address}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, address: e.target.value }))}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                       rows={2}
                     />
                   </div>
@@ -269,7 +269,7 @@ export default function AddBookingPage() {
                 <select
                   value={bookingData.camera_id}
                   onChange={(e) => setBookingData(prev => ({ ...prev, camera_id: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 >
                   <option value="">Select a camera</option>
@@ -285,7 +285,7 @@ export default function AddBookingPage() {
                 <select
                   value={bookingData.booking_source}
                   onChange={(e) => setBookingData(prev => ({ ...prev, booking_source: e.target.value as any }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 >
                   <option value="manual">Manual Entry</option>
@@ -302,7 +302,7 @@ export default function AddBookingPage() {
                   type="date"
                   value={bookingData.start_date}
                   onChange={(e) => setBookingData(prev => ({ ...prev, start_date: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
@@ -312,7 +312,7 @@ export default function AddBookingPage() {
                   type="date"
                   value={bookingData.end_date}
                   onChange={(e) => setBookingData(prev => ({ ...prev, end_date: e.target.value }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
@@ -321,7 +321,7 @@ export default function AddBookingPage() {
                 <select
                   value={bookingData.status}
                   onChange={(e) => setBookingData(prev => ({ ...prev, status: e.target.value as any }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
@@ -335,7 +335,7 @@ export default function AddBookingPage() {
                 <select
                   value={bookingData.pickup_method}
                   onChange={(e) => setBookingData(prev => ({ ...prev, pickup_method: e.target.value as any }))}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 >
                   <option value="pickup">Pickup</option>
                   <option value="delivery">Delivery</option>
@@ -350,7 +350,7 @@ export default function AddBookingPage() {
                   <textarea
                     value={bookingData.pickup_address}
                     onChange={(e) => setBookingData(prev => ({ ...prev, pickup_address: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     rows={2}
                   />
                 </div>
@@ -361,7 +361,7 @@ export default function AddBookingPage() {
                     step="0.01"
                     value={bookingData.delivery_fee}
                     onChange={(e) => setBookingData(prev => ({ ...prev, delivery_fee: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                 </div>
               </div>
@@ -378,7 +378,7 @@ export default function AddBookingPage() {
                   type="number"
                   value={bookingData.total_days}
                   readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                 />
               </div>
               <div>
@@ -388,7 +388,7 @@ export default function AddBookingPage() {
                   step="0.01"
                   value={bookingData.daily_rate}
                   readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                 />
               </div>
               <div>
@@ -398,7 +398,7 @@ export default function AddBookingPage() {
                   step="0.01"
                   value={bookingData.total_amount}
                   readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                 />
               </div>
               <div>
@@ -408,7 +408,7 @@ export default function AddBookingPage() {
                   step="0.01"
                   value={bookingData.deposit_amount}
                   readOnly
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
                 />
               </div>
               <div className="flex items-center">
@@ -430,7 +430,7 @@ export default function AddBookingPage() {
                     type="date"
                     value={bookingData.deposit_paid_date}
                     onChange={(e) => setBookingData(prev => ({ ...prev, deposit_paid_date: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                 </div>
               )}
@@ -453,7 +453,7 @@ export default function AddBookingPage() {
                     type="date"
                     value={bookingData.final_payment_paid_date}
                     onChange={(e) => setBookingData(prev => ({ ...prev, final_payment_paid_date: e.target.value }))}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   />
                 </div>
               )}
@@ -466,7 +466,7 @@ export default function AddBookingPage() {
             <textarea
               value={bookingData.notes}
               onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               rows={3}
               placeholder="Any additional notes about this booking..."
             />

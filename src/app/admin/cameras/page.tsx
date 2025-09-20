@@ -212,7 +212,7 @@ export default function CamerasPage() {
                 type="text"
                 value={newCamera.name}
                 onChange={(e) => setNewCamera({...newCamera, name: e.target.value})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="e.g., DJI Osmo Pocket 3 Creator Combo"
               />
             </div>
@@ -222,7 +222,7 @@ export default function CamerasPage() {
                 type="text"
                 value={newCamera.model}
                 onChange={(e) => setNewCamera({...newCamera, model: e.target.value})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="e.g., Osmo Pocket 3"
               />
             </div>
@@ -232,7 +232,7 @@ export default function CamerasPage() {
                 type="number"
                 value={newCamera.dailyRate}
                 onChange={(e) => setNewCamera({...newCamera, dailyRate: Number(e.target.value)})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
                 placeholder="50"
               />
             </div>
@@ -264,8 +264,8 @@ export default function CamerasPage() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-gray-900">{camera.name}</h3>
-                  <p className="text-gray-600">{camera.model}</p>
-                  <p className="text-sm text-gray-500">ID: {camera.id}</p>
+                  <p className="text-gray-700">{camera.model}</p>
+                  <p className="text-sm text-gray-600">ID: {camera.id}</p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <span className={`px-3 py-1 rounded-lg text-sm font-medium border ${getStatusColor(camera.is_available, camera.available_quantity)}`}>
