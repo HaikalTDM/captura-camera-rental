@@ -214,7 +214,15 @@ export async function getCameraById(id: string): Promise<Camera | null> {
   try {
     const { data, error } = await supabase
       .from('cameras')
-      .select('*')
+      .select(`
+        *,
+        camera_accessories (
+          id,
+          is_included,
+          quantity,
+          accessory:accessories (*)
+        )
+      `)
       .eq('id', id)
       .single();
 
@@ -315,4 +323,220 @@ export async function bulkCreateBookings(bookings: any[]): Promise<{
   }
 
   return { success, failed, errors }
+}
+
+// Enhanced Camera Management Functions
+
+// Update camera
+export async function updateCamera(id: string, cameraData: Partial<Camera>): Promise<Camera | null> {
+  try {
+    const { data, error } = await supabase
+      .from('cameras')
+      .update(cameraData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating camera:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error in updateCamera:', error)
+    return null
+  }
+}
+
+// Create camera
+export async function createCameraRecord(cameraData: Omit<Camera, 'id' | 'created_at' | 'updated_at'>): Promise<Camera | null> {
+  try {
+    const { data, error } = await supabase
+      .from('cameras')
+      .insert([cameraData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating camera:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error in createCamera:', error)
+    return null
+  }
+}
+
+// Delete camera
+export async function deleteCamera(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('cameras')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting camera:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in deleteCamera:', error)
+    return false
+  }
+}
+
+// Accessory Management Functions
+
+// Get all accessories
+export async function getAllAccessories(): Promise<any[]> {
+  try {
+    const { data, error } = await supabase
+      .from('accessories')
+      .select('*')
+      .order('name', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching accessories:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getAllAccessories:', error)
+    return []
+  }
+}
+
+// Get accessory by ID
+export async function getAccessoryById(id: string): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('accessories')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') return null
+      throw error
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error fetching accessory:', error)
+    return null
+  }
+}
+
+// Create accessory
+export async function createAccessory(accessoryData: any): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('accessories')
+      .insert([accessoryData])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creating accessory:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error in createAccessory:', error)
+    return null
+  }
+}
+
+// Update accessory
+export async function updateAccessory(id: string, accessoryData: any): Promise<any | null> {
+  try {
+    const { data, error } = await supabase
+      .from('accessories')
+      .update(accessoryData)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error updating accessory:', error)
+      return null
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error in updateAccessory:', error)
+    return null
+  }
+}
+
+// Delete accessory
+export async function deleteAccessory(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('accessories')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting accessory:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in deleteAccessory:', error)
+    return false
+  }
+}
+
+// Link accessory to camera
+export async function linkAccessoryToCamera(cameraId: string, accessoryId: string, isIncluded: boolean = true, quantity: number = 1): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('camera_accessories')
+      .insert([{
+        camera_id: cameraId,
+        accessory_id: accessoryId,
+        is_included: isIncluded,
+        quantity: quantity
+      }])
+
+    if (error) {
+      console.error('Error linking accessory to camera:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in linkAccessoryToCamera:', error)
+    return false
+  }
+}
+
+// Remove accessory from camera
+export async function removeAccessoryFromCamera(cameraId: string, accessoryId: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('camera_accessories')
+      .delete()
+      .eq('camera_id', cameraId)
+      .eq('accessory_id', accessoryId)
+
+    if (error) {
+      console.error('Error removing accessory from camera:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in removeAccessoryFromCamera:', error)
+    return false
+  }
 }

@@ -22,8 +22,60 @@ export interface Camera {
   is_available: boolean
   total_quantity: number
   available_quantity: number
+  condition?: 'excellent' | 'good' | 'fair' | 'needs_repair'
+  last_maintenance?: string
+  next_maintenance?: string
+  purchase_date?: string
+  purchase_price?: number
+  serial_number?: string
+  warranty_expiry?: string
+  location?: string
+  notes?: string
   created_at: string
   updated_at: string
+  camera_accessories?: CameraAccessory[]
+}
+
+export interface Accessory {
+  id: string
+  name: string
+  type: 'lens' | 'battery' | 'memory_card' | 'tripod' | 'case' | 'charger' | 'filter' | 'other'
+  brand?: string
+  model?: string
+  description?: string
+  daily_rate: number
+  weekly_rate: number
+  monthly_rate: number
+  deposit_amount: number
+  total_quantity: number
+  available_quantity: number
+  is_available: boolean
+  specifications: Record<string, any>
+  image_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CameraAccessory {
+  id: string
+  camera_id: string
+  accessory_id: string
+  is_included: boolean
+  quantity: number
+  created_at: string
+  accessory?: Accessory
+}
+
+export interface BookingAccessory {
+  id: string
+  booking_id: string
+  accessory_id: string
+  quantity: number
+  daily_rate: number
+  total_days: number
+  total_amount: number
+  created_at: string
+  accessory?: Accessory
 }
 
 export interface Customer {

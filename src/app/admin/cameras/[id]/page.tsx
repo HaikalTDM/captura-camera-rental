@@ -66,8 +66,8 @@ export default function CameraDetailsPage() {
   const upcomingBookings = cameraBookings.filter(b => b.status === 'confirmed');
   const completedBookings = cameraBookings.filter(b => b.status === 'completed');
 
-  const updateCameraStatus = (newStatus: Camera['status']) => {
-    setCamera(prev => prev ? { ...prev, status: newStatus } : null);
+  const updateCameraAvailability = (isAvailable: boolean) => {
+    setCamera(prev => prev ? { ...prev, is_available: isAvailable } : null);
   };
 
   const updateCameraCondition = (newCondition: Camera['condition']) => {
@@ -115,12 +115,22 @@ export default function CameraDetailsPage() {
           </div>
         </div>
         <div className="flex gap-3">
-          <span className={`px-4 py-2 rounded-lg text-sm font-medium border ${getStatusColor(camera.status)}`}>
-            {camera.status.toUpperCase()}
+          <Link
+            href={`/admin/cameras/${camera.id}/edit`}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            Edit Camera
+          </Link>
+          <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
+            camera.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}>
+            {camera.is_available ? 'AVAILABLE' : 'UNAVAILABLE'}
           </span>
-          <span className={`px-4 py-2 rounded-lg text-sm font-medium ${getConditionColor(camera.condition)}`}>
-            {camera.condition.toUpperCase()}
-          </span>
+          {camera.condition && (
+            <span className={`px-4 py-2 rounded-lg text-sm font-medium ${getConditionColor(camera.condition)}`}>
+              {camera.condition.toUpperCase()}
+            </span>
+          )}
         </div>
       </div>
 
@@ -143,15 +153,19 @@ export default function CameraDetailsPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Daily Rate</label>
-                <p className="text-lg font-semibold text-green-600">RM{camera.dailyRate}</p>
+                <p className="text-lg font-semibold text-green-600">RM{camera.daily_rate}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Total Rentals</label>
-                <p className="text-lg text-gray-900">{camera.totalRentals}</p>
+                <label className="text-sm font-medium text-gray-500">Weekly Rate</label>
+                <p className="text-lg font-semibold text-green-600">RM{camera.weekly_rate}</p>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500">Last Maintenance</label>
-                <p className="text-lg text-gray-900">{camera.lastMaintenance}</p>
+                <label className="text-sm font-medium text-gray-500">Monthly Rate</label>
+                <p className="text-lg font-semibold text-green-600">RM{camera.monthly_rate}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">Deposit Amount</label>
+                <p className="text-lg font-semibold text-blue-600">RM{camera.deposit_amount}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Total Revenue</label>
