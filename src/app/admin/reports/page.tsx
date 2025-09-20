@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllBookings, getAllCameras, getAllCustomers, getBookingStats } from '../../lib/api/bookings';
-import type { Booking, Camera, Customer } from '../../lib/supabase';
+import { getAllBookings, getAllCameras, getAllCustomers, getBookingStats } from '@/lib/api/bookings';
+import type { Booking, Camera, Customer } from '@/lib/supabase';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('month');

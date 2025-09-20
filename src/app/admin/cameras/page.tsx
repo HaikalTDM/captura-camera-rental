@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllCameras, getAllBookings } from '../../lib/api/bookings';
-import type { Camera, Booking } from '../../lib/supabase';
+import { getAllCameras, getAllBookings } from '@/lib/api/bookings';
+import type { Camera, Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function CamerasPage() {

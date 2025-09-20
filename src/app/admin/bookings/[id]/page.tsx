@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAllBookings } from '../../../lib/api/bookings';
-import type { Booking } from '../../../lib/supabase';
+import { getAllBookings } from '@/lib/api/bookings';
+import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function BookingDetailsPage() {

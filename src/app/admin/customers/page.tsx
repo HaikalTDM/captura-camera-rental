@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllCustomers, getAllBookings } from '../../lib/api/bookings';
-import type { Customer, Booking } from '../../lib/supabase';
+import { getAllCustomers, getAllBookings } from '@/lib/api/bookings';
+import type { Customer, Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function CustomersPage() {

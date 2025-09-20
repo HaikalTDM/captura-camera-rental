@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllBookings } from '../../lib/api/bookings';
-import type { Booking } from '../../lib/supabase';
+import { getAllBookings } from '@/lib/api/bookings';
+import type { Booking } from '@/lib/supabase';
 
 interface CalendarDay {
   date: Date;

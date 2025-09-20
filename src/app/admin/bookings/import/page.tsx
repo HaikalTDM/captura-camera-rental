@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { bulkCreateBookings, createCustomer, getAllCustomers, getAllCameras } from '../../../../lib/api/bookings';
+import { bulkCreateBookings, createCustomer, getAllCustomers, getAllCameras } from '@/lib/api/bookings';
 
 export default function ImportBookingsPage() {
   const router = useRouter();

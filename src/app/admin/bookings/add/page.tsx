@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  createBooking, 
-  createCustomer, 
-  getAllCustomers, 
-  getAllCameras 
-} from '../../../../lib/api/bookings';
-import type { Customer, Camera } from '../../../../lib/supabase';
+import {
+  createBooking,
+  createCustomer,
+  getAllCustomers,
+  getAllCameras
+} from '@/lib/api/bookings';
+import type { Customer, Camera } from '@/lib/supabase';
 
 export default function AddBookingPage() {
   const router = useRouter();

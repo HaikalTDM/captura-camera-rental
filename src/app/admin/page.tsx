@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllBookings, getBookingStats, getAllCameras } from '../../lib/api/bookings';
-import type { Booking, Camera } from '../../lib/supabase';
+import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
+import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
