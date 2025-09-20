@@ -248,17 +248,17 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-800">Start:</span>
-              <span className="font-medium">{startDate.toLocaleDateString()}</span>
+              <span className="font-medium text-gray-800">{startDate.toLocaleDateString()}</span>
             </div>
             {endDate && (
               <>
                 <div className="flex justify-between">
                   <span className="text-gray-800">End:</span>
-                  <span className="font-medium">{endDate.toLocaleDateString()}</span>
+                  <span className="font-medium text-gray-800">{endDate.toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between pt-2 border-t border-gray-100">
                   <span className="font-medium text-gray-800">Duration:</span>
-                  <span className="font-bold">
+                  <span className="font-bold text-gray-800">
                     {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))} days
                   </span>
                 </div>

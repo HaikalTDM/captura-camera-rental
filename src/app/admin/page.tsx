@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
+import { useNotifications } from '@/contexts/NotificationContext';
 import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -18,10 +19,51 @@ export default function AdminDashboard() {
     bySource: {} as Record<string, number>
   });
   const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useNotifications();
 
   useEffect(() => {
     loadDashboardData();
   }, []);
+
+  const testNotification = async () => {
+    try {
+      const response = await fetch('/api/test-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'new_booking',
+          title: 'Test Booking Notification',
+          message: 'This is a test notification to verify the system is working correctly.',
+          priority: 'high'
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        showToast({
+          type: 'success',
+          title: 'Test Successful',
+          message: 'Test notification created successfully!',
+          duration: 3000
+        });
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Test Failed',
+          message: result.error || 'Failed to create test notification',
+          duration: 5000
+        });
+      }
+    } catch (error) {
+      console.error('Error testing notification:', error);
+      showToast({
+        type: 'error',
+        title: 'Test Error',
+        message: 'An error occurred while testing notifications',
+        duration: 5000
+      });
+    }
+  };
 
   const loadDashboardData = async () => {
     setIsLoading(true);
@@ -69,7 +111,13 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
             <p className="text-blue-100 text-lg">Welcome back! Here's what's happening today.</p>
           </div>
-          <div className="text-right">
+          <div className="text-right flex items-center gap-4">
+            <button
+              onClick={testNotification}
+              className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-white hover:bg-white/30 transition-colors text-sm font-medium"
+            >
+              🔔 Test Notification
+            </button>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
               <p className="text-blue-100 text-sm">Today</p>
               <p className="text-xl font-bold">
