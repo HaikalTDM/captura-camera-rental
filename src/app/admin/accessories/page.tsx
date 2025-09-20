@@ -396,17 +396,17 @@ export default function AccessoriesPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleEdit(accessory)}
-                  className="text-blue-600 hover:text-blue-800 p-1"
-                  title="Edit"
+                  className="bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                  title="Edit Accessory"
                 >
-                  ✏️
+                  ✏️ Edit
                 </button>
                 <button
                   onClick={() => handleDelete(accessory.id)}
-                  className="text-red-600 hover:text-red-800 p-1"
-                  title="Delete"
+                  className="bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-900 px-3 py-1 rounded-md text-sm font-medium transition-colors"
+                  title="Delete Accessory"
                 >
-                  🗑️
+                  🗑️ Delete
                 </button>
               </div>
             </div>

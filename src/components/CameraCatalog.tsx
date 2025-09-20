@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { cameras } from '@/lib/cameras';
+import { useState, useEffect } from 'react';
+import { getAllCameras } from '@/lib/api/bookings';
+import type { Camera as DBCamera } from '@/lib/supabase';
 import { Camera, CustomerDetails } from '@/types';
 import CameraCard from './CameraCard';
 
@@ -10,6 +11,62 @@ interface CameraCatalogProps {
 }
 
 export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCameras();
+  }, []);
+
+  const loadCameras = async () => {
+    try {
+      const dbCameras = await getAllCameras();
+      // Convert database cameras to frontend camera format
+      const convertedCameras: Camera[] = dbCameras
+        .filter(cam => cam.is_available && cam.available_quantity > 0) // Only show available cameras
+        .map(dbCamera => ({
+          id: dbCamera.id,
+          name: dbCamera.name,
+          description: dbCamera.description || 'Professional camera equipment for your creative projects.',
+          image: dbCamera.image_url || '/images/default-camera.jpg',
+          images: [dbCamera.image_url || '/images/default-camera.jpg'],
+          dailyRate: dbCamera.daily_rate,
+          discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
+          features: [
+            `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
+            `RM${dbCamera.daily_rate}/day rental`,
+            'Professional grade equipment',
+            'Includes basic accessories',
+            'Full insurance coverage',
+            'Technical support included'
+          ],
+          specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications : {},
+          tidyCalPath: `haikaltdm46/${dbCamera.id}` // Use camera ID for TidyCal path
+        }));
+
+      setCameras(convertedCameras);
+    } catch (error) {
+      console.error('Error loading cameras:', error);
+      // Fallback to empty array if database fails
+      setCameras([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <section id="cameras" className="py-20 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading available cameras...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="cameras" className="py-20 bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 relative overflow-hidden">
       {/* Background decoration */}
@@ -26,20 +83,26 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
             📷 Available Cameras 🎬
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Choose from our selection of professional cameras. All equipment is regularly maintained 
+            Choose from our selection of professional cameras. All equipment is regularly maintained
             and comes with accessories for your creative projects.
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          {cameras.map((camera) => (
-            <CameraCard
-              key={camera.id}
-              camera={camera}
-              onBookNow={onBookCamera}
-            />
-          ))}
-        </div>
+
+        {cameras.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">No cameras available at the moment. Please check back later!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {cameras.map((camera) => (
+              <CameraCard
+                key={camera.id}
+                camera={camera}
+                onBookNow={onBookCamera}
+              />
+            ))}
+          </div>
+        )}
         
         {/* Additional Info */}
         <div className="mt-16 bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl border border-white/20">
