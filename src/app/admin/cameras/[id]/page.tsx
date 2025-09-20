@@ -1,18 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { mockCameras, mockBookings, type Camera } from '@/data/mockAdminData';
+import { getCameraById, getAllBookings } from '../../../lib/api/bookings';
+import type { Camera, Booking } from '../../../lib/supabase';
 import Link from 'next/link';
 
 export default function CameraDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const cameraId = params.id as string;
-  
-  const [camera, setCamera] = useState<Camera | null>(
-    mockCameras.find(c => c.id === cameraId) || null
-  );
+
+  const [camera, setCamera] = useState<Camera | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCameraData();
+  }, [cameraId]);
+
+  const loadCameraData = async () => {
+    setIsLoading(true);
+    try {
+      const [cameraData, allBookings] = await Promise.all([
+        getCameraById(cameraId),
+        getAllBookings()
+      ]);
+
+      if (cameraData) {
+        setCamera(cameraData);
+
+        // Filter bookings for this camera
+        const cameraBookings = allBookings.filter(b => b.camera_id === cameraId);
+        setBookings(cameraBookings);
+      }
+    } catch (error) {
+      console.error('Error loading camera data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!camera) {
     return (

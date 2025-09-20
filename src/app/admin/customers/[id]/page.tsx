@@ -1,20 +1,56 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { mockCustomers, mockBookings, type Customer } from '@/data/mockAdminData';
+import { getCustomerById, getAllBookings } from '../../../lib/api/bookings';
+import type { Customer, Booking } from '../../../lib/supabase';
 import Link from 'next/link';
 
 export default function CustomerDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const customerId = params.id as string;
-  
-  const [customer, setCustomer] = useState<Customer | null>(
-    mockCustomers.find(c => c.id === customerId) || null
-  );
-  const [notes, setNotes] = useState(customer?.notes || '');
+
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [notes, setNotes] = useState('');
   const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCustomerData();
+  }, [customerId]);
+
+  const loadCustomerData = async () => {
+    setIsLoading(true);
+    try {
+      const [customerData, allBookings] = await Promise.all([
+        getCustomerById(customerId),
+        getAllBookings()
+      ]);
+
+      if (customerData) {
+        setCustomer(customerData);
+        setNotes(customerData.notes || '');
+
+        // Filter bookings for this customer
+        const customerBookings = allBookings.filter(b => b.customer_id === customerId);
+        setBookings(customerBookings);
+      }
+    } catch (error) {
+      console.error('Error loading customer data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (!customer) {
     return (

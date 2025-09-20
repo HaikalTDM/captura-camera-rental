@@ -8,25 +8,25 @@ export default function TrustSection() {
 
   const testimonials = [
     {
-      name: "Sarah Chen",
-      role: "Content Creator",
-      text: "Amazing service! The Osmo Pocket 3 was in perfect condition and helped me create stunning travel content. Highly recommended!",
+      name: "Content Creator",
+      role: "Professional Creator",
+      text: "Professional equipment with excellent quality. The cameras are well-maintained and perfect for content creation projects.",
       rating: 5,
-      camera: "Osmo Pocket 3"
+      camera: "Professional Camera"
     },
     {
-      name: "Marcus Rodriguez",
-      role: "Wedding Photographer",
-      text: "Professional equipment, fair pricing, and excellent customer service. The Action 5 Pro captured incredible underwater shots!",
+      name: "Event Photographer",
+      role: "Photography Professional",
+      text: "Reliable service with fair pricing. The booking process is smooth and the equipment quality is outstanding.",
       rating: 5,
-      camera: "Action 5 Pro"
+      camera: "Professional Camera"
     },
     {
-      name: "Lisa Wong",
-      role: "YouTuber",
-      text: "Quick booking process via WhatsApp and flexible pickup. The camera quality exceeded my expectations for my vlogs!",
+      name: "Video Creator",
+      role: "Digital Creator",
+      text: "Quick and easy rental process. The cameras deliver excellent results for professional video projects.",
       rating: 5,
-      camera: "Osmo Pocket 3"
+      camera: "Professional Camera"
     }
   ];
 

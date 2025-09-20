@@ -209,6 +209,46 @@ export async function getAllCameras(): Promise<Camera[]> {
   }
 }
 
+// Get camera by ID
+export async function getCameraById(id: string): Promise<Camera | null> {
+  try {
+    const { data, error } = await supabase
+      .from('cameras')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error('Error fetching camera:', error);
+    throw error;
+  }
+}
+
+// Get customer by ID
+export async function getCustomerById(id: string): Promise<Customer | null> {
+  try {
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error('Error fetching customer:', error);
+    throw error;
+  }
+}
+
 // Get booking statistics
 export async function getBookingStats(): Promise<{
   total: number

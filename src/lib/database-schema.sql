@@ -145,15 +145,8 @@ CREATE TRIGGER update_business_settings_updated_at BEFORE UPDATE ON business_set
 CREATE TRIGGER update_payment_records_updated_at BEFORE UPDATE ON payment_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_maintenance_records_updated_at BEFORE UPDATE ON maintenance_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Insert initial data
--- Sample cameras (keep these as they represent your actual inventory)
-INSERT INTO cameras (name, brand, model, type, daily_rate, weekly_rate, monthly_rate, deposit_amount, description, specifications, image_url) VALUES
-('DJI Osmo Pocket 3', 'DJI', 'Osmo Pocket 3', 'action', 80.00, 500.00, 1800.00, 200.00, 'Ultra-compact 4K camera with 3-axis gimbal stabilization', '{"resolution": "4K/120fps", "sensor": "1-inch CMOS", "stabilization": "3-axis mechanical gimbal", "battery": "Up to 166 minutes", "storage": "microSD up to 1TB"}', '/images/osmo-pocket-3.jpg'),
-('DJI Action 5 Pro', 'DJI', 'Action 5 Pro', 'action', 70.00, 450.00, 1600.00, 180.00, 'Rugged action camera with superior low-light performance', '{"resolution": "4K/120fps", "sensor": "1/1.3-inch CMOS", "waterproof": "13m without housing", "battery": "Up to 4 hours", "storage": "microSD up to 1TB"}', '/images/action-5-pro.jpg');
-
--- Note: Sample gallery images removed - use admin panel to add real customer photos
-
--- Sample business settings
+-- Note: No sample data inserted - use admin panel to add cameras, customers, and bookings
+-- Essential business settings only
 INSERT INTO business_settings (setting_key, setting_value, description) VALUES
 ('business_name', 'CAPTURA', 'Business name'),
 ('contact_phone', '0177464121', 'Primary contact phone number'),

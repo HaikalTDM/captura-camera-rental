@@ -1,31 +1,67 @@
 'use client';
 
-import { useState } from 'react';
-import { mockBookings, mockCameras, mockCustomers } from '@/data/mockAdminData';
+import { useState, useEffect } from 'react';
+import { getAllBookings, getAllCameras, getAllCustomers, getBookingStats } from '../../lib/api/bookings';
+import type { Booking, Camera, Customer } from '../../lib/supabase';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('month');
   const [reportType, setReportType] = useState('revenue');
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadReportsData();
+  }, []);
+
+  const loadReportsData = async () => {
+    setIsLoading(true);
+    try {
+      const [bookingsData, camerasData, customersData] = await Promise.all([
+        getAllBookings(),
+        getAllCameras(),
+        getAllCustomers()
+      ]);
+      setBookings(bookingsData);
+      setCameras(camerasData);
+      setCustomers(customersData);
+    } catch (error) {
+      console.error('Error loading reports data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // Calculate revenue metrics
-  const completedBookings = mockBookings.filter(b => b.status === 'completed');
-  const totalRevenue = completedBookings.reduce((sum, b) => sum + b.totalAmount, 0);
+  const completedBookings = bookings.filter(b => b.status === 'completed');
+  const totalRevenue = completedBookings.reduce((sum, b) => sum + b.total_amount, 0);
+  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
   const monthlyRevenue = completedBookings
-    .filter(b => b.endDate.startsWith('2024-01'))
-    .reduce((sum, b) => sum + b.totalAmount, 0);
-  
+    .filter(b => b.end_date.startsWith(currentMonth))
+    .reduce((sum, b) => sum + b.total_amount, 0);
+
   // Calculate booking metrics
-  const totalBookings = mockBookings.length;
-  const activeBookings = mockBookings.filter(b => b.status === 'active').length;
-  const pendingBookings = mockBookings.filter(b => b.status === 'pending').length;
+  const totalBookings = bookings.length;
+  const activeBookings = bookings.filter(b => b.status === 'active').length;
+  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const completedBookingsCount = completedBookings.length;
 
   // Calculate camera performance
-  const cameraPerformance = mockCameras.map(camera => {
-    const cameraBookings = mockBookings.filter(b => b.cameraId === camera.id);
-    const revenue = cameraBookings.reduce((sum, b) => sum + b.totalAmount, 0);
-    const utilization = (cameraBookings.length / totalBookings) * 100;
-    
+  const cameraPerformance = cameras.map(camera => {
+    const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
+    const revenue = cameraBookings.reduce((sum, b) => sum + b.total_amount, 0);
+    const utilization = totalBookings > 0 ? (cameraBookings.length / totalBookings) * 100 : 0;
+
     return {
       ...camera,
       bookings: cameraBookings.length,
@@ -35,16 +71,30 @@ export default function ReportsPage() {
   }).sort((a, b) => b.revenue - a.revenue);
 
   // Calculate customer metrics
-  const topCustomers = mockCustomers
+  const customerMetrics = customers.map(customer => {
+    const customerBookings = bookings.filter(b => b.customer_id === customer.id);
+    const totalSpent = customerBookings.reduce((sum, b) => sum + b.total_amount, 0);
+    return {
+      ...customer,
+      totalSpent,
+      totalRentals: customerBookings.length
+    };
+  });
+
+  const topCustomers = customerMetrics
     .sort((a, b) => b.totalSpent - a.totalSpent)
     .slice(0, 5);
 
   // Payment status analysis
   const paymentAnalysis = {
-    fullyPaid: mockBookings.filter(b => b.paymentStatus === 'fully_paid').length,
-    depositPaid: mockBookings.filter(b => b.paymentStatus === 'deposit_paid').length,
-    pending: mockBookings.filter(b => b.paymentStatus === 'pending').length,
-    overdue: mockBookings.filter(b => b.paymentStatus === 'overdue').length,
+    fullyPaid: bookings.filter(b => b.final_payment_paid).length,
+    depositPaid: bookings.filter(b => b.deposit_paid && !b.final_payment_paid).length,
+    pending: bookings.filter(b => !b.deposit_paid).length,
+    overdue: bookings.filter(b =>
+      !b.final_payment_paid &&
+      new Date(b.end_date) < new Date() &&
+      b.status === 'completed'
+    ).length,
   };
 
   const overdueAmount = mockBookings
