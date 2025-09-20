@@ -194,21 +194,7 @@ export async function getAllCameras(): Promise<Camera[]> {
   try {
     const { data, error } = await supabase
       .from('cameras')
-      .select(`
-        *,
-        camera_images (
-          id,
-          image_url,
-          image_path,
-          is_primary,
-          alt_text,
-          order_index,
-          file_size,
-          file_type,
-          created_at,
-          updated_at
-        )
-      `)
+      .select('*')
       .order('name', { ascending: true })
 
     if (error) {

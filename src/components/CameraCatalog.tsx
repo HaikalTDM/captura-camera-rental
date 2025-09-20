@@ -21,26 +21,33 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const loadCameras = async () => {
     try {
       const dbCameras = await getAllCameras();
-      // Convert database cameras to frontend camera format
+      // Convert database cameras to frontend camera format with static images
       const convertedCameras: Camera[] = dbCameras
         .filter(cam => cam.is_available && cam.available_quantity > 0) // Only show available cameras
         .map(dbCamera => {
-          // Get primary image or first image
-          const primaryImage = dbCamera.camera_images?.find(img => img.is_primary);
-          const firstImage = dbCamera.camera_images?.[0];
-          const mainImage = primaryImage || firstImage;
+          // Map camera names to static image files
+          const getStaticImage = (cameraName: string) => {
+            const name = cameraName.toLowerCase();
+            if (name.includes('osmo') && name.includes('pocket')) {
+              return '/images/osmo-pocket-3.jpg';
+            } else if (name.includes('action') && name.includes('5')) {
+              return '/images/dji-action-5-pro.jpg';
+            } else if (name.includes('action')) {
+              return '/images/dji-action-5-pro.jpg'; // Default action camera
+            } else if (name.includes('osmo')) {
+              return '/images/osmo-pocket-3.jpg'; // Default osmo camera
+            }
+            return '/images/osmo-pocket-3.jpg'; // Fallback to a real camera image
+          };
 
-          // Get all image URLs
-          const allImages = dbCamera.camera_images
-            ?.sort((a, b) => a.order_index - b.order_index)
-            .map(img => img.image_url) || [];
+          const staticImage = getStaticImage(dbCamera.name);
 
           return {
             id: dbCamera.id,
             name: dbCamera.name,
             description: dbCamera.description || 'Professional camera equipment for your creative projects.',
-            image: mainImage?.image_url || '/images/default-camera.svg',
-            images: allImages.length > 0 ? allImages : ['/images/default-camera.svg'],
+            image: staticImage,
+            images: [staticImage],
             dailyRate: dbCamera.daily_rate,
             discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
             features: [

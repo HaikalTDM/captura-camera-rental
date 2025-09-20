@@ -11,7 +11,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['api.placeholder.com', 'mqpzbzkdtfebzcfoqgta.supabase.co'],
+    domains: ['api.placeholder.com'],
     unoptimized: true
   },
   // Reduce console warnings
