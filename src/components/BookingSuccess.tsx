@@ -48,16 +48,12 @@ export default function BookingSuccess({
         </p>
       </div>
 
-      {/* Friendly WhatsApp Contact Section - Moved to Top */}
+      {/* WhatsApp Contact Section */}
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-6">
         <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center justify-center">
-            <span className="mr-2">💬</span>
-            Let&apos;s Connect on WhatsApp!
+          <h3 className="text-lg font-semibold text-green-800 mb-4">
+            Complete Booking via WhatsApp
           </h3>
-          <p className="text-sm text-green-700">
-            Get instant updates and personalized assistance for your booking
-          </p>
         </div>
 
         <button
@@ -65,16 +61,12 @@ export default function BookingSuccess({
           className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium text-base shadow-md hover:shadow-lg transform hover:scale-105"
         >
           <span className="text-xl">💬</span>
-          Chat with Our Team
-          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Fast & Easy</span>
+          Complete Booking via WhatsApp
         </button>
 
         <div className="mt-4 text-center">
-          <p className="text-xs text-green-600 mb-2">
-            ✨ Why WhatsApp? Get real-time updates, ask questions, and receive personalized service!
-          </p>
-          <p className="text-xs text-green-500">
-            Our team typically responds within minutes during business hours
+          <p className="text-sm text-green-700">
+            Confirmation is only finalized once you complete it on WhatsApp.
           </p>
         </div>
       </div>
