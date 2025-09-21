@@ -48,6 +48,37 @@ export default function BookingSuccess({
         </p>
       </div>
 
+      {/* Friendly WhatsApp Contact Section - Moved to Top */}
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-6">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-green-800 mb-2 flex items-center justify-center">
+            <span className="mr-2">💬</span>
+            Let&apos;s Connect on WhatsApp!
+          </h3>
+          <p className="text-sm text-green-700">
+            Get instant updates and personalized assistance for your booking
+          </p>
+        </div>
+
+        <button
+          onClick={handleWhatsAppContact}
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 font-medium text-base shadow-md hover:shadow-lg transform hover:scale-105"
+        >
+          <span className="text-xl">💬</span>
+          Chat with Our Team
+          <span className="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Fast & Easy</span>
+        </button>
+
+        <div className="mt-4 text-center">
+          <p className="text-xs text-green-600 mb-2">
+            ✨ Why WhatsApp? Get real-time updates, ask questions, and receive personalized service!
+          </p>
+          <p className="text-xs text-green-500">
+            Our team typically responds within minutes during business hours
+          </p>
+        </div>
+      </div>
+
       {/* Confirmation Details */}
       <div className="bg-green-50 border border-green-200 rounded-lg sm:rounded-xl p-3 sm:p-4 lg:p-6 mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-2 sm:mb-3">
@@ -99,52 +130,28 @@ export default function BookingSuccess({
         </div>
       </div>
 
-      {/* REQUIRED: WhatsApp Contact - Moved to Top */}
-      <div className="bg-green-50 border-2 border-green-300 rounded-xl p-6 mb-6">
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-bold text-green-800 mb-2 flex items-center justify-center">
-            <span className="mr-2">🚨</span>
-            IMPORTANT: Complete Your Booking
-            <span className="ml-2">🚨</span>
-          </h3>
-          <p className="text-sm text-green-700 font-medium">
-            To finalize your booking, you MUST contact us via WhatsApp within 24 hours
-          </p>
-        </div>
-
-        <button
-          onClick={handleWhatsAppContact}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105"
-        >
-          <span className="text-2xl">💬</span>
-          CONTACT US VIA WHATSAPP NOW
-          <span className="text-sm bg-green-800 px-2 py-1 rounded-full">REQUIRED</span>
-        </button>
-
-        <p className="text-center text-sm text-green-700 mt-3 font-medium">
-          ⚠️ Your booking is NOT confirmed until you contact us via WhatsApp ⚠️
-        </p>
-      </div>
-
       {/* Next Steps */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
-        <h3 className="text-lg font-semibold text-yellow-800 mb-4">What's Next?</h3>
-        <div className="space-y-3 text-sm text-yellow-700">
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-8">
+        <h3 className="text-lg font-semibold text-amber-800 mb-4 flex items-center">
+          <span className="mr-2">�</span>
+          What&apos;s Next?
+        </h3>
+        <div className="space-y-3 text-sm text-amber-700">
           <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-yellow-200 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-            <p><strong>Contact us via WhatsApp immediately</strong> using the button above</p>
+            <span className="flex-shrink-0 w-6 h-6 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+            <p>Connect with us on WhatsApp for instant updates and personalized service</p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-yellow-200 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+            <span className="flex-shrink-0 w-6 h-6 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-xs font-bold">2</span>
             <p>Our team will review your booking request within 24 hours</p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-yellow-200 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-            <p>We&apos;ll confirm availability and arrange payment details</p>
+            <span className="flex-shrink-0 w-6 h-6 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+            <p>We&apos;ll confirm availability and arrange convenient payment options</p>
           </div>
           <div className="flex items-start gap-3">
-            <span className="flex-shrink-0 w-6 h-6 bg-yellow-200 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">4</span>
-            <p>Once confirmed, we&apos;ll provide pickup/delivery details and final instructions</p>
+            <span className="flex-shrink-0 w-6 h-6 bg-amber-200 text-amber-800 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+            <p>Receive detailed pickup/delivery instructions and enjoy your rental!</p>
           </div>
         </div>
       </div>
