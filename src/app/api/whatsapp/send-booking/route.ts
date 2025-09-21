@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     const whatsappMessage = generateWhatsAppMessage(whatsappBookingData, result.confirmation_number);
     
     // Create WhatsApp URL
-    const adminWhatsAppNumber = process.env.ADMIN_WHATSAPP_NUMBER || '+60123456789'; // Set this in your .env.local
+    const adminWhatsAppNumber = process.env.ADMIN_WHATSAPP_NUMBER || '+60177464121'; // Set this in your .env.local
     const whatsappUrl = `https://wa.me/${adminWhatsAppNumber.replace('+', '')}?text=${encodeURIComponent(whatsappMessage)}`;
 
     console.log('WhatsApp booking created successfully:', result);

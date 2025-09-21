@@ -151,7 +151,7 @@ export default function WhatsAppBookingButton({
             value={customerDetails.phone}
             onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            placeholder="+60123456789"
+            placeholder="+60177464121"
             required
           />
         </div>

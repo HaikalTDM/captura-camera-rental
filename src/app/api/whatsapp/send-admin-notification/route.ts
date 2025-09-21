@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // WhatsApp Business API configuration
-const WHATSAPP_BUSINESS_NUMBER = process.env.WHATSAPP_BUSINESS_NUMBER || '+60123456789';
+const WHATSAPP_BUSINESS_NUMBER = process.env.WHATSAPP_BUSINESS_NUMBER || '+60177464121';
 const WHATSAPP_API_URL = process.env.WHATSAPP_API_URL;
 const WHATSAPP_API_TOKEN = process.env.WHATSAPP_API_TOKEN;
 

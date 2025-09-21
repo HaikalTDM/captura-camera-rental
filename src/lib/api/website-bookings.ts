@@ -360,7 +360,7 @@ Thank you for choosing CAPTURA! 📸`;
 export function generateWhatsAppContactUrl(booking: any, customer: any, bookingData: WebsiteBookingData): string {
   const message = generateWhatsAppMessage(booking, customer, bookingData);
   const encodedMessage = encodeURIComponent(message);
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60123456789';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60177464121';
 
   return `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodedMessage}`;
 }
