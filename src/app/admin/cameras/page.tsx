@@ -117,6 +117,26 @@ export default function CamerasPage() {
     return activeBooking;
   };
 
+  // Calculate camera metrics
+  const getCameraMetrics = (cameraId: string) => {
+    const cameraBookings = bookings.filter(b => b.camera_id === cameraId);
+    const paidBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
+
+    // Calculate total revenue using backward compatible logic
+    const totalRevenue = paidBookings.reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
+
+    return {
+      totalRentals: paidBookings.length,
+      totalRevenue: totalRevenue,
+      lastBooking: cameraBookings.length > 0
+        ? Math.max(...cameraBookings.map(b => new Date(b.created_at).getTime()))
+        : null
+    };
+  };
+
   const statusCounts = {
     available: cameras.filter(c => c.status === 'available').length,
     rented: cameras.filter(c => c.status === 'rented').length,
@@ -259,6 +279,7 @@ export default function CamerasPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {cameras.map((camera) => {
           const rentalInfo = getCameraRentalInfo(camera.id);
+          const metrics = getCameraMetrics(camera.id);
           return (
             <div key={camera.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
               <div className="flex items-start justify-between mb-4">
@@ -285,11 +306,16 @@ export default function CamerasPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Last Maintenance</p>
-                  <p className="text-sm text-gray-900">{camera.lastMaintenance}</p>
+                  <p className="text-sm text-gray-900">
+                    {camera.last_maintenance
+                      ? new Date(camera.last_maintenance).toLocaleDateString()
+                      : 'No records'
+                    }
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Revenue</p>
-                  <p className="text-lg font-semibold text-green-600">RM{camera.totalRentals * camera.dailyRate}</p>
+                  <p className="text-lg font-semibold text-green-600">RM{metrics.totalRevenue}</p>
                 </div>
               </div>
 

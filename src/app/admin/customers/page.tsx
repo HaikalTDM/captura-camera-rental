@@ -12,6 +12,8 @@ export default function CustomersPage() {
   const [sortBy, setSortBy] = useState<'full_name' | 'totalSpent' | 'totalRentals' | 'created_at'>('full_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadCustomersData();
@@ -36,7 +38,11 @@ export default function CustomersPage() {
   // Calculate customer metrics
   const customersWithMetrics = customers.map(customer => {
     const customerBookings = bookings.filter(b => b.customer_id === customer.id);
-    const totalSpent = customerBookings.reduce((sum, b) => sum + b.total_amount, 0);
+    const paidBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
+    const totalSpent = paidBookings.reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
     const lastRental = customerBookings.length > 0
       ? Math.max(...customerBookings.map(b => new Date(b.created_at).getTime()))
       : null;
@@ -88,6 +94,104 @@ export default function CustomersPage() {
 
   const getCustomerBookings = (customerId: string) => {
     return bookings.filter(booking => booking.customer_id === customerId);
+  };
+
+  // Handle checkbox selection
+  const handleSelectCustomer = (customerId: string) => {
+    setSelectedCustomers(prev =>
+      prev.includes(customerId)
+        ? prev.filter(id => id !== customerId)
+        : [...prev, customerId]
+    );
+  };
+
+  // Handle select all checkbox
+  const handleSelectAll = () => {
+    if (selectedCustomers.length === filteredCustomers.length) {
+      setSelectedCustomers([]);
+    } else {
+      setSelectedCustomers(filteredCustomers.map(customer => customer.id));
+    }
+  };
+
+  // Handle bulk delete
+  const handleBulkDelete = async () => {
+    if (selectedCustomers.length === 0) {
+      alert('Please select customers to delete');
+      return;
+    }
+
+    const confirmMessage = `Are you sure you want to delete ${selectedCustomers.length} customer(s)? This action cannot be undone.`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/customers/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ customerIds: selectedCustomers }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Show detailed results
+        const { summary, results } = data;
+        let message = `Bulk delete completed:\n`;
+        message += `✅ Deleted: ${summary.deleted}\n`;
+        if (summary.skipped > 0) {
+          message += `⚠️ Skipped: ${summary.skipped} (customers with active bookings)\n`;
+        }
+        if (summary.failed > 0) {
+          message += `❌ Failed: ${summary.failed}\n`;
+        }
+
+        alert(message);
+
+        // Reload customers data
+        await loadCustomersData();
+        setSelectedCustomers([]);
+      } else {
+        alert('Failed to delete customers: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting customers:', error);
+      alert('Failed to delete customers. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle single customer delete
+  const handleDeleteSingleCustomer = async (customerId: string) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (!customer) return;
+
+    if (!confirm(`Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/customers/${customerId}/delete`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Customer deleted successfully');
+        await loadCustomersData();
+      } else {
+        alert('Failed to delete customer: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting customer:', error);
+      alert('Failed to delete customer. Please try again.');
+    }
   };
 
   const customerStats = {
@@ -163,7 +267,7 @@ export default function CustomersPage() {
               🔍
             </div>
           </div>
-          
+
           <div className="flex gap-3">
             <select
               value={sortBy}
@@ -183,6 +287,51 @@ export default function CustomersPage() {
             </button>
           </div>
         </div>
+
+        {/* Selection Controls */}
+        {filteredCustomers.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    Select All ({filteredCustomers.length})
+                  </span>
+                </label>
+                {selectedCustomers.length > 0 && (
+                  <span className="text-sm text-blue-600 font-medium">
+                    {selectedCustomers.length} selected
+                  </span>
+                )}
+              </div>
+
+              {selectedCustomers.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      🗑️ Delete Selected ({selectedCustomers.length})
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Customers Grid */}
@@ -199,10 +348,20 @@ export default function CustomersPage() {
           return (
             <div key={customer.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="text-lg font-bold text-gray-900">{customer.full_name}</h3>
-                  <p className="text-gray-600">{customer.phone}</p>
-                  <p className="text-sm text-gray-500">{customer.email}</p>
+                <div className="flex items-start gap-3 flex-1">
+                  <label className="flex items-center mt-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCustomers.includes(customer.id)}
+                      onChange={() => handleSelectCustomer(customer.id)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                  </label>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-gray-900">{customer.full_name}</h3>
+                    <p className="text-gray-600">{customer.phone}</p>
+                    <p className="text-sm text-gray-500">{customer.email}</p>
+                  </div>
                 </div>
                 <span className={`px-3 py-1 rounded-lg text-sm font-medium ${getReliabilityColor(customer.totalRentals)}`}>
                   {customer.totalRentals >= 5 ? 'Excellent' : customer.totalRentals >= 2 ? 'Good' : customer.totalRentals >= 1 ? 'Fair' : 'New'}
@@ -267,6 +426,13 @@ export default function CustomersPage() {
                 >
                   View
                 </Link>
+                <button
+                  onClick={() => handleDeleteSingleCustomer(customer.id)}
+                  className="bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm transition-colors"
+                  title="Delete Customer"
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           );

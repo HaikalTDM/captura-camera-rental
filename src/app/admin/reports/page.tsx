@@ -42,24 +42,36 @@ export default function ReportsPage() {
     );
   }
 
-  // Calculate revenue metrics
-  const completedBookings = bookings.filter(b => b.status === 'completed');
-  const totalRevenue = completedBookings.reduce((sum, b) => sum + b.total_amount, 0);
+  // Calculate revenue metrics - only count fully paid bookings
+  const fullyPaidBookings = bookings.filter(b => b.deposit_paid && b.final_payment_paid);
+  const totalRevenue = fullyPaidBookings.reduce((sum, b) => {
+    // Backward compatible: new system (deposit=100) vs old system (use total_amount)
+    const isNewPaymentSystem = b.deposit_amount === 100;
+    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+  }, 0);
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-  const monthlyRevenue = completedBookings
-    .filter(b => b.end_date.startsWith(currentMonth))
-    .reduce((sum, b) => sum + b.total_amount, 0);
+  const monthlyRevenue = fullyPaidBookings
+    .filter(b => b.created_at.startsWith(currentMonth))
+    .reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
 
   // Calculate booking metrics
   const totalBookings = bookings.length;
   const activeBookings = bookings.filter(b => b.status === 'active').length;
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
+  const completedBookings = bookings.filter(b => b.status === 'completed');
   const completedBookingsCount = completedBookings.length;
 
   // Calculate camera performance
   const cameraPerformance = cameras.map(camera => {
     const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
-    const revenue = cameraBookings.reduce((sum, b) => sum + b.total_amount, 0);
+    const paidCameraBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
+    const revenue = paidCameraBookings.reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
     const utilization = totalBookings > 0 ? (cameraBookings.length / totalBookings) * 100 : 0;
 
     return {
@@ -73,7 +85,11 @@ export default function ReportsPage() {
   // Calculate customer metrics
   const customerMetrics = customers.map(customer => {
     const customerBookings = bookings.filter(b => b.customer_id === customer.id);
-    const totalSpent = customerBookings.reduce((sum, b) => sum + b.total_amount, 0);
+    const paidCustomerBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
+    const totalSpent = paidCustomerBookings.reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
     return {
       ...customer,
       totalSpent,
@@ -105,13 +121,45 @@ export default function ReportsPage() {
     )
     .reduce((sum, b) => sum + b.final_payment_amount, 0);
 
-  // Monthly trend (mock data for demo)
-  const monthlyTrend = [
-    { month: 'Oct', revenue: 850, bookings: 12 },
-    { month: 'Nov', revenue: 1200, bookings: 18 },
-    { month: 'Dec', revenue: 1450, bookings: 22 },
-    { month: 'Jan', revenue: monthlyRevenue, bookings: completedBookingsCount },
-  ];
+  // Calculate real monthly revenue trend from database
+  const calculateMonthlyRevenue = (year: number, month: number) => {
+    const monthStr = `${year}-${String(month).padStart(2, '0')}`;
+    const monthlyBookings = fullyPaidBookings.filter(b =>
+      b.created_at.startsWith(monthStr)
+    );
+    const revenue = monthlyBookings.reduce((sum, b) => {
+      const isNewPaymentSystem = b.deposit_amount === 100;
+      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    }, 0);
+    return { revenue, bookings: monthlyBookings.length };
+  };
+
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonthNum = currentDate.getMonth() + 1; // getMonth() returns 0-11
+
+  // Generate last 6 months of data
+  const monthlyTrend = [];
+  for (let i = 5; i >= 0; i--) {
+    let month = currentMonthNum - i;
+    let year = currentYear;
+
+    // Handle year rollover
+    if (month <= 0) {
+      month += 12;
+      year -= 1;
+    }
+
+    const monthData = calculateMonthlyRevenue(year, month);
+    const monthName = new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short' });
+
+    monthlyTrend.push({
+      month: monthName,
+      revenue: monthData.revenue,
+      bookings: monthData.bookings,
+      year: year
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -200,7 +248,7 @@ export default function ReportsPage() {
           </h3>
           <div className="space-y-4">
             {monthlyTrend.map((month, index) => (
-              <div key={month.month} className="flex items-center justify-between">
+              <div key={`${month.month}-${month.year}`} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <span className="text-sm font-bold text-blue-600">{month.month}</span>
@@ -208,6 +256,7 @@ export default function ReportsPage() {
                   <div>
                     <p className="font-medium text-gray-900">RM{month.revenue}</p>
                     <p className="text-sm text-gray-500">{month.bookings} bookings</p>
+                    <p className="text-xs text-gray-400">{month.year}</p>
                   </div>
                 </div>
                 <div className="w-32 bg-gray-200 rounded-full h-2">

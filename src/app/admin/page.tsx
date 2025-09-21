@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
-import { useNotifications } from '@/contexts/NotificationContext';
 import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -19,51 +18,10 @@ export default function AdminDashboard() {
     bySource: {} as Record<string, number>
   });
   const [isLoading, setIsLoading] = useState(true);
-  const { showToast } = useNotifications();
 
   useEffect(() => {
     loadDashboardData();
   }, []);
-
-  const testNotification = async () => {
-    try {
-      const response = await fetch('/api/test-notification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'new_booking',
-          title: 'Test Booking Notification',
-          message: 'This is a test notification to verify the system is working correctly.',
-          priority: 'high'
-        })
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        showToast({
-          type: 'success',
-          title: 'Test Successful',
-          message: 'Test notification created successfully!',
-          duration: 3000
-        });
-      } else {
-        showToast({
-          type: 'error',
-          title: 'Test Failed',
-          message: result.error || 'Failed to create test notification',
-          duration: 5000
-        });
-      }
-    } catch (error) {
-      console.error('Error testing notification:', error);
-      showToast({
-        type: 'error',
-        title: 'Test Error',
-        message: 'An error occurred while testing notifications',
-        duration: 5000
-      });
-    }
-  };
 
   const loadDashboardData = async () => {
     setIsLoading(true);
@@ -85,13 +43,26 @@ export default function AdminDashboard() {
 
   // Get today's activities
   const today = new Date().toISOString().split('T')[0];
-  const todayPickups = bookings.filter(b => b.start_date === today && b.status === 'confirmed');
-  const todayReturns = bookings.filter(b => b.end_date === today && b.status === 'active');
+  const todayPickups = bookings.filter(b =>
+    b.start_date === today &&
+    b.booking_status === 'confirmed' &&
+    !b.equipment_picked_up
+  );
+  const activeRentals = bookings.filter(b =>
+    b.booking_status === 'confirmed' &&
+    b.equipment_picked_up &&
+    !b.equipment_returned
+  );
+  const todayReturns = bookings.filter(b =>
+    b.end_date === today &&
+    b.equipment_picked_up &&
+    !b.equipment_returned
+  );
   const recentBookings = bookings.slice(0, 5);
   const overduePayments = bookings.filter(b =>
     !b.final_payment_paid &&
     new Date(b.end_date) < new Date() &&
-    b.status === 'completed'
+    (b.booking_status === 'completed' || b.status === 'completed')
   );
 
   if (isLoading) {
@@ -111,13 +82,7 @@ export default function AdminDashboard() {
             <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
             <p className="text-blue-100 text-lg">Welcome back! Here's what's happening today.</p>
           </div>
-          <div className="text-right flex items-center gap-4">
-            <button
-              onClick={testNotification}
-              className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-white hover:bg-white/30 transition-colors text-sm font-medium"
-            >
-              🔔 Test Notification
-            </button>
+          <div className="text-right">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
               <p className="text-blue-100 text-sm">Today</p>
               <p className="text-xl font-bold">
@@ -133,13 +98,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         {/* Active Rentals */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Active Rentals</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">{stats.active}</p>
+              <p className="text-3xl font-bold text-blue-600 mt-2">{activeRentals.length}</p>
               <p className="text-sm text-gray-500 mt-1">Currently rented</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -162,15 +127,25 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Pending Payments */}
+        {/* Total Revenue */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Pending Payments</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">{overduePayments.length}</p>
-              <p className="text-sm text-gray-500 mt-1">Need follow up</p>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Revenue</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">RM{
+                bookings
+                  .filter(b => b.deposit_paid && b.final_payment_paid)
+                  .reduce((sum, b) => {
+                    // For new payment system: deposit (100) + rental amount
+                    // For old payment system: total_amount (which includes everything)
+                    const isNewPaymentSystem = b.deposit_amount === 100;
+                    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+                  }, 0)
+                  .toFixed(0)
+              }</p>
+              <p className="text-sm text-gray-500 mt-1">All time</p>
             </div>
-            <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">💰</span>
             </div>
           </div>
@@ -183,14 +158,38 @@ export default function AdminDashboard() {
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Revenue</p>
               <p className="text-3xl font-bold text-purple-600 mt-2">RM{
                 bookings
-                  .filter(b => b.final_payment_paid && new Date(b.created_at).getMonth() === new Date().getMonth())
-                  .reduce((sum, b) => sum + b.total_amount, 0)
+                  .filter(b =>
+                    b.deposit_paid &&
+                    b.final_payment_paid &&
+                    new Date(b.created_at).getMonth() === new Date().getMonth() &&
+                    new Date(b.created_at).getFullYear() === new Date().getFullYear()
+                  )
+                  .reduce((sum, b) => {
+                    // For new payment system: deposit (100) + rental amount
+                    // For old payment system: total_amount (which includes everything)
+                    const isNewPaymentSystem = b.deposit_amount === 100;
+                    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+                  }, 0)
                   .toFixed(0)
               }</p>
               <p className="text-sm text-gray-500 mt-1">{new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">📈</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Payments */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Pending Payments</p>
+              <p className="text-3xl font-bold text-red-600 mt-2">{overduePayments.length}</p>
+              <p className="text-sm text-gray-500 mt-1">Need follow up</p>
+            </div>
+            <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-2xl">⚠️</span>
             </div>
           </div>
         </div>
