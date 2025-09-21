@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllBookings, getBookingStats } from '@/lib/api/bookings';
+import BookingApprovalCard from '@/components/admin/BookingApprovalCard';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -11,6 +12,7 @@ export default function BookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deletingBookingId, setDeletingBookingId] = useState<string | null>(null);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -50,12 +52,90 @@ export default function BookingsPage() {
     }
   };
 
+  const handleApproveBooking = async (bookingId: string, notes?: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ admin_notes: notes }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Booking approved successfully!');
+        loadBookings(); // Refresh the list
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error approving booking:', error);
+      alert('Failed to approve booking');
+    }
+  };
+
+  const handleRejectBooking = async (bookingId: string, reason: string, notes?: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rejection_reason: reason,
+          admin_notes: notes
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Booking rejected successfully!');
+        loadBookings(); // Refresh the list
+      } else {
+        alert(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('Error rejecting booking:', error);
+      alert('Failed to reject booking');
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingBookingId(bookingId);
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/delete`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Reload bookings after successful deletion
+        await loadBookings();
+      } else {
+        alert('Failed to delete booking: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      alert('Failed to delete booking. Please try again.');
+    } finally {
+      setDeletingBookingId(null);
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...bookings];
 
-    // Status filter
+    // Status filter (now using booking_status)
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(booking => booking.status === statusFilter);
+      filtered = filtered.filter(booking => booking.booking_status === statusFilter);
     }
 
     // Source filter
@@ -75,6 +155,9 @@ export default function BookingsPage() {
 
     setFilteredBookings(filtered);
   };
+
+  // Get pending approval bookings for priority display
+  const pendingApprovalBookings = bookings.filter(booking => booking.booking_status === 'pending_approval');
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -167,6 +250,16 @@ export default function BookingsPage() {
               All ({stats.total})
             </button>
             <button
+              onClick={() => setStatusFilter('pending_approval')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                statusFilter === 'pending_approval'
+                  ? 'bg-orange-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              🔔 Needs Approval ({pendingApprovalBookings.length})
+            </button>
+            <button
               onClick={() => setStatusFilter('pending')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 statusFilter === 'pending'
@@ -239,6 +332,29 @@ export default function BookingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Pending Approval Section */}
+      {pendingApprovalBookings.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-lg border border-orange-200 overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 to-red-500 p-4">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              🔔 Bookings Pending Approval ({pendingApprovalBookings.length})
+            </h2>
+            <p className="text-orange-100 text-sm">These bookings require your immediate attention</p>
+          </div>
+          <div className="p-6 space-y-4">
+            {pendingApprovalBookings.map((booking) => (
+              <BookingApprovalCard
+                key={booking.id}
+                booking={booking}
+                onApprove={handleApproveBooking}
+                onReject={handleRejectBooking}
+                onRefresh={loadBookings}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bookings Table */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
@@ -320,19 +436,28 @@ export default function BookingsPage() {
                       {booking.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <Link
-                      href={`/admin/bookings/${booking.id}`}
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                    >
-                      View
-                    </Link>
-                    <button
-                      onClick={() => router.push(`/admin/bookings/${booking.id}/edit`)}
-                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs transition-colors"
-                    >
-                      Edit
-                    </button>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex flex-wrap gap-1">
+                      <Link
+                        href={`/admin/bookings/${booking.id}`}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/admin/bookings/${booking.id}/edit`}
+                        className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs transition-colors"
+                      >
+                        Edit
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteBooking(booking.id)}
+                        disabled={deletingBookingId === booking.id}
+                        className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs transition-colors disabled:opacity-50"
+                      >
+                        {deletingBookingId === booking.id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

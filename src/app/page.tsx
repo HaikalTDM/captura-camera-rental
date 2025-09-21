@@ -42,16 +42,16 @@ export default function Home() {
     setShowWelcomeModal(false);
   };
 
-  const handleBookCamera = (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails) => {
-    if (startDate && endDate && totalCost && customerDetails) {
+  const handleBookCamera = (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => {
+    if (startDate && endDate && totalCost && customerDetails && totalDays !== undefined && dailyRate !== undefined) {
       // Direct booking with dates and customer details
       const booking: BookingDetails = {
         camera,
         startDate,
         endDate,
-        totalDays: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+        totalDays,
         totalCost,
-        dailyRate: totalCost / Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+        dailyRate,
         customerDetails
       };
       handleBookingComplete(booking);

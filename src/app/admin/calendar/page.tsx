@@ -38,17 +38,33 @@ export default function CalendarPage() {
     setIsLoading(true);
     try {
       const bookings = await getAllBookings();
+      console.log('Calendar: Loaded bookings:', bookings.length);
+
+      // Filter only confirmed bookings for calendar display
+      const confirmedBookings = bookings.filter(booking =>
+        booking.booking_status === 'confirmed'
+      );
+      console.log('Calendar: Confirmed bookings:', confirmedBookings.length);
+
       // Convert bookings to calendar events
-      const calendarEvents = bookings.map(booking => ({
-        id: booking.id,
-        title: `${booking.camera?.name || 'Camera'}`,
-        camera: booking.camera?.name || 'Camera',
-        customer: booking.customer?.full_name || 'Customer',
-        startDate: new Date(booking.start_date),
-        endDate: new Date(booking.end_date),
-        status: booking.status,
-        color: getStatusColor(booking.status)
-      }));
+      const calendarEvents = confirmedBookings.map(booking => {
+        const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
+        const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
+
+        return {
+          id: booking.id,
+          title: cameraName,
+          camera: cameraName,
+          customer: customerName,
+          startDate: new Date(booking.start_date),
+          endDate: new Date(booking.end_date),
+          status: booking.booking_status || booking.status,
+          color: getStatusColor(booking.booking_status || booking.status)
+        };
+      });
+
+      console.log('Calendar: Created events:', calendarEvents.length);
+      console.log('Calendar: Events:', calendarEvents);
       setEvents(calendarEvents);
     } catch (error) {
       console.error('Error loading calendar data:', error);
@@ -59,10 +75,13 @@ export default function CalendarPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
+      case 'pending_approval': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
       case 'confirmed': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
       case 'active': return 'bg-green-100 border-l-4 border-green-500 text-green-900';
       case 'completed': return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
+      case 'rejected': return 'bg-red-100 border-l-4 border-red-500 text-red-900';
+      // Legacy status support
+      case 'pending': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
       default: return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
     }
   };
@@ -78,7 +97,10 @@ export default function CalendarPage() {
     
     const days: CalendarDay[] = [];
     const today = new Date();
-    
+
+    console.log('Calendar: Generating days for month:', month, 'year:', year);
+    console.log('Calendar: Total events available:', events.length);
+
     for (let i = 0; i < 42; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
@@ -86,7 +108,28 @@ export default function CalendarPage() {
       const dayEvents = events.filter(event => {
         const eventStart = new Date(event.startDate);
         const eventEnd = new Date(event.endDate);
-        return date >= eventStart && date <= eventEnd;
+
+        // Normalize dates to compare only the date part (ignore time)
+        const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+        const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
+        const isInRange = dayStart >= eventStartDay && dayStart <= eventEndDay;
+
+        // Debug for September 21, 2025
+        if (date.getDate() === 21 && date.getMonth() === 8 && date.getFullYear() === 2025) {
+          console.log('Calendar: Sept 21, 2025 check:', {
+            date: date.toDateString(),
+            dayStart: dayStart.toDateString(),
+            eventId: event.id,
+            eventStartDay: eventStartDay.toDateString(),
+            eventEndDay: eventEndDay.toDateString(),
+            isInRange,
+            customer: event.customer
+          });
+        }
+
+        return isInRange;
       });
       
       days.push({
@@ -301,7 +344,7 @@ export default function CalendarPage() {
             <div>
               <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Pending</p>
               <p className="text-2xl font-bold text-yellow-600 mt-2">
-                {events.filter(e => e.status === 'pending').length}
+                {events.filter(e => e.status === 'pending_approval' || e.status === 'pending').length}
               </p>
               <p className="text-sm text-gray-600 mt-1">Need Confirmation</p>
             </div>

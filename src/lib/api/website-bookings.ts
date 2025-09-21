@@ -128,25 +128,40 @@ export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Pro
     // Step 3: Create the booking
     console.log('Creating booking for customer:', customer.id);
     
-    const booking = await createBooking({
-      customer_id: customer.id,
-      camera_id: bookingData.camera_id,
-      start_date: bookingData.start_date,
-      end_date: bookingData.end_date,
-      total_days: bookingData.total_days,
-      daily_rate: bookingData.daily_rate,
-      total_amount: bookingData.total_amount,
-      deposit_amount: bookingData.deposit_amount,
-      final_payment_amount: bookingData.final_payment_amount,
-      status: 'pending',
-      pickup_method: bookingData.pickup_method,
-      pickup_address: bookingData.pickup_address,
-      delivery_fee: bookingData.delivery_fee || 0,
-      booking_source: bookingData.booking_source,
-      notes: bookingData.special_requests || null,
-      deposit_paid: false,
-      final_payment_paid: false
-    });
+    // Create complete booking record with all fields
+    console.log('Creating booking with complete data...');
+
+    const { data: booking, error: bookingError } = await supabase
+      .from('bookings')
+      .insert([{
+        customer_id: customer.id,
+        camera_id: bookingData.camera_id,
+        start_date: bookingData.start_date,
+        end_date: bookingData.end_date,
+        total_days: bookingData.total_days,
+        daily_rate: bookingData.daily_rate,
+        total_amount: bookingData.total_amount,
+        deposit_amount: bookingData.deposit_amount,
+        final_payment_amount: bookingData.final_payment_amount,
+        status: 'pending',
+        booking_status: 'pending_approval',
+        pickup_method: bookingData.pickup_method,
+        pickup_address: bookingData.pickup_address,
+        delivery_fee: bookingData.delivery_fee || 0,
+        booking_source: bookingData.booking_source,
+        notes: bookingData.special_requests || null,
+        deposit_paid: false,
+        final_payment_paid: false
+      }])
+      .select('*')
+      .single();
+
+    if (bookingError) {
+      console.error('Error creating booking:', bookingError);
+      throw new Error('Failed to create booking record');
+    }
+
+    console.log('Booking created successfully:', booking.id);
 
     if (!booking) {
       return {
@@ -159,6 +174,9 @@ export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Pro
     const confirmationNumber = `CAP-${booking.id.slice(-8).toUpperCase()}`;
 
     console.log('Booking created successfully:', booking.id);
+
+    // Step 5: Booking completed successfully - no automatic WhatsApp notifications
+    console.log('Booking submission completed without WhatsApp integration');
 
     return {
       success: true,
@@ -207,32 +225,50 @@ export async function getBookingByConfirmation(confirmationNumber: string): Prom
 
 // Check camera availability for given dates
 export async function checkCameraAvailability(
-  cameraId: string, 
-  startDate: string, 
+  cameraId: string,
+  startDate: string,
   endDate: string
 ): Promise<{ available: boolean; conflictingBookings?: Booking[] }> {
   try {
-    const { data: conflictingBookings, error } = await supabase
-      .from('bookings')
-      .select(`
-        *,
-        customer:customers(*),
-        camera:cameras(*)
-      `)
-      .eq('camera_id', cameraId)
-      .in('status', ['confirmed', 'active'])
-      .or(`start_date.lte.${endDate},end_date.gte.${startDate}`);
+    console.log('Checking availability for:', { cameraId, startDate, endDate });
 
-    if (error) {
-      console.error('Error checking camera availability:', error);
+    // Use the database function to check availability
+    const { data: isAvailable, error: availabilityError } = await supabase
+      .rpc('check_camera_availability', {
+        p_camera_id: cameraId,
+        p_start_date: startDate,
+        p_end_date: endDate,
+        p_exclude_booking_id: null
+      });
+
+    if (availabilityError) {
+      console.error('Error checking camera availability:', availabilityError);
       return { available: false };
     }
 
-    const hasConflicts = conflictingBookings && conflictingBookings.length > 0;
+    console.log('Availability check result:', isAvailable);
+
+    // If not available, get conflicting bookings for details
+    let conflictingBookings = undefined;
+    if (!isAvailable) {
+      const { data: conflicts, error: conflictsError } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          customer:customers(*)
+        `)
+        .eq('camera_id', cameraId)
+        .eq('booking_status', 'confirmed')
+        .or(`start_date.lte.${endDate},end_date.gte.${startDate}`);
+
+      if (!conflictsError && conflicts) {
+        conflictingBookings = conflicts;
+      }
+    }
 
     return {
-      available: !hasConflicts,
-      conflictingBookings: hasConflicts ? conflictingBookings : undefined
+      available: isAvailable || false,
+      conflictingBookings
     };
   } catch (error) {
     console.error('Error in checkCameraAvailability:', error);
@@ -287,6 +323,46 @@ export async function sendBookingConfirmationEmail(booking: Booking, customer: C
     console.error('Error sending confirmation email:', error);
     return false;
   }
+}
+
+// Generate WhatsApp message for optional customer contact
+export function generateWhatsAppMessage(booking: any, customer: any, bookingData: WebsiteBookingData): string {
+  const message = `🎥 *CAPTURA Camera Rental Booking*
+
+📋 *Booking Details:*
+• Confirmation: CAP-${booking.id.slice(-8).toUpperCase()}
+• Camera: ${bookingData.camera_name}
+• Dates: ${bookingData.start_date} to ${bookingData.end_date}
+• Duration: ${bookingData.total_days} days
+
+👤 *Customer Details:*
+• Name: ${customer.full_name || customer.name}
+• Email: ${customer.email}
+• Phone: ${customer.phone}
+• Pickup Method: ${bookingData.pickup_method}
+
+💰 *Pricing:*
+• Daily Rate: RM${bookingData.daily_rate}
+• Total Amount: RM${bookingData.total_amount}
+• Deposit Required: RM${bookingData.deposit_amount}
+• Final Payment: RM${bookingData.final_payment_amount}
+
+📝 *Special Requests:* ${bookingData.special_requests || 'None'}
+
+✅ *Status:* Pending approval - we'll contact you soon to confirm your booking!
+
+Thank you for choosing CAPTURA! 📸`;
+
+  return message;
+}
+
+// Generate WhatsApp contact URL
+export function generateWhatsAppContactUrl(booking: any, customer: any, bookingData: WebsiteBookingData): string {
+  const message = generateWhatsAppMessage(booking, customer, bookingData);
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60123456789';
+
+  return `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodedMessage}`;
 }
 
 // Send WhatsApp notification (placeholder for future implementation)

@@ -7,7 +7,7 @@ import { Camera, CustomerDetails } from '@/types';
 import CameraCard from './CameraCard';
 
 interface CameraCatalogProps {
-  onBookCamera: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails) => void;
+  onBookCamera: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => void;
 }
 
 export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {

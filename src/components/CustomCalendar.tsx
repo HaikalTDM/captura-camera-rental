@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Camera } from '@/types';
-import { calculateRentalCost, formatCurrency } from '@/lib/pricing';
+import { calculateRentalCost } from '@/lib/pricing';
+import { formatDateForAPI } from '@/lib/dateUtils';
 
 interface CustomCalendarProps {
   camera: Camera;
-  onDateRangeSelect?: (startDate: Date | null, endDate: Date | null, totalCost: number) => void;
+  onDateRangeSelect?: (startDate: Date | null, endDate: Date | null, totalCost: number, totalDays?: number, dailyRate?: number) => void;
   className?: string;
 }
 
@@ -19,6 +20,14 @@ interface CalendarDay {
   isInRange: boolean;
   isStartDate: boolean;
   isEndDate: boolean;
+  isUnavailable: boolean;
+}
+
+interface UnavailableDate {
+  date: string;
+  type: string;
+  reason: string;
+  booking_id?: string;
 }
 
 export default function CustomCalendar({ camera, onDateRangeSelect, className = "" }: CustomCalendarProps) {
@@ -27,9 +36,53 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [isSelectingEndDate, setIsSelectingEndDate] = useState(false);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
+  const [unavailableDates, setUnavailableDates] = useState<UnavailableDate[]>([]);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
+  // Fetch unavailable dates for the current month
+  const fetchUnavailableDates = useCallback(async () => {
+    if (!camera.id) return;
+
+    setIsLoadingAvailability(true);
+    try {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      // Format dates to avoid timezone issues
+      const startOfMonth = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const endOfMonth = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+      const response = await fetch(`/api/calendar/availability?camera_id=${camera.id}&start_date=${startOfMonth}&end_date=${endOfMonth}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setUnavailableDates(data.unavailable_dates || []);
+      } else {
+        console.error('Failed to fetch availability:', data.error);
+        setUnavailableDates([]);
+      }
+    } catch (error) {
+      console.error('Error fetching unavailable dates:', error);
+      setUnavailableDates([]);
+    } finally {
+      setIsLoadingAvailability(false);
+    }
+  }, [camera.id, currentDate]);
+
+  // Fetch unavailable dates when component mounts or month changes
+  useEffect(() => {
+    fetchUnavailableDates();
+  }, [fetchUnavailableDates]);
+
+  // Check if a date is unavailable
+  const isDateUnavailable = (date: Date): boolean => {
+    const dateStr = formatDateForAPI(date);
+    return unavailableDates.some(unavailable => unavailable.date === dateStr);
+  };
 
   // Generate calendar days for the current month
   const generateCalendarDays = (): CalendarDay[] => {
@@ -91,22 +144,26 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
       isInRange,
       isStartDate: dateTime === startTime,
       isEndDate: dateTime === endTime,
+      isUnavailable: isDateUnavailable(date),
     };
   };
 
   const handleDateClick = (day: CalendarDay) => {
-    if (day.isPast) return;
+    if (day.isPast || day.isUnavailable) return;
 
     const clickedDate = new Date(day.date);
-    
+
     if (!startDate || (startDate && endDate)) {
       // Start new selection
       setStartDate(clickedDate);
       setEndDate(null);
       setIsSelectingEndDate(true);
     } else if (isSelectingEndDate) {
-      // Set end date
-      if (clickedDate >= startDate) {
+      // Set end date - use date comparison that works for same day
+      const clickedDateStr = formatDateForAPI(clickedDate);
+      const startDateStr = formatDateForAPI(startDate);
+
+      if (clickedDateStr >= startDateStr) {
         setEndDate(clickedDate);
         setIsSelectingEndDate(false);
       } else {
@@ -140,9 +197,10 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
   useEffect(() => {
     if (startDate && endDate && onDateRangeSelect) {
       const pricing = calculateRentalCost(camera, startDate, endDate);
-      onDateRangeSelect(startDate, endDate, pricing.totalCost);
+      onDateRangeSelect(startDate, endDate, pricing.totalCost, pricing.totalDays, pricing.dailyRate);
     } else if (onDateRangeSelect) {
-      onDateRangeSelect(startDate, endDate, 0);
+      // Provide default values when no dates are selected
+      onDateRangeSelect(startDate, endDate, 0, 0, camera.dailyRate || 0);
     }
   }, [startDate, endDate, camera, onDateRangeSelect]);
 
@@ -158,6 +216,8 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
 
     if (day.isPast) {
       baseClass += "text-gray-500 cursor-not-allowed ";
+    } else if (day.isUnavailable) {
+      baseClass += "bg-red-100 text-red-600 cursor-not-allowed border border-red-200 ";
     } else if (!day.isCurrentMonth) {
       baseClass += "text-gray-600 hover:text-gray-800 hover:bg-gray-100 ";
     } else if (day.isStartDate || day.isEndDate) {
@@ -210,13 +270,21 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 mb-4">
+      <div className="grid grid-cols-7 gap-1 mb-4 relative">
+        {isLoadingAvailability && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              Loading availability...
+            </div>
+          </div>
+        )}
         {calendarDays.map((day, index) => (
           <div
             key={index}
             className={getDayClassName(day)}
             onClick={() => handleDateClick(day)}
-            onMouseEnter={() => !day.isPast && setHoveredDate(day.date)}
+            onMouseEnter={() => !day.isPast && !day.isUnavailable && setHoveredDate(day.date)}
             onMouseLeave={() => setHoveredDate(null)}
           >
             {day.date.getDate()}
@@ -266,6 +334,24 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
             )}
           </div>
         )}
+
+        {/* Legend */}
+        <div className="mt-3 pt-3 border-t border-gray-100">
+          <div className="flex flex-wrap gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-blue-600 rounded"></div>
+              <span className="text-gray-600">Selected</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-100 border border-red-200 rounded"></div>
+              <span className="text-gray-600">Unavailable</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gray-100 border-2 border-blue-600 rounded"></div>
+              <span className="text-gray-600">Today</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

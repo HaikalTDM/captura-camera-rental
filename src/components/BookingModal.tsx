@@ -112,9 +112,9 @@ export default function BookingModal({
                       </label>
                       <input
                         type="date"
-                        value={startDate ? startDate.toISOString().split('T')[0] : ''}
-                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : null)}
-                        min={new Date().toISOString().split('T')[0]}
+                        value={startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}` : ''}
+                        onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)}
+                        min={`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -124,9 +124,9 @@ export default function BookingModal({
                       </label>
                       <input
                         type="date"
-                        value={endDate ? endDate.toISOString().split('T')[0] : ''}
-                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : null)}
-                        min={startDate ? startDate.toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                        value={endDate ? `${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}` : ''}
+                        onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value + 'T00:00:00') : null)}
+                        min={startDate ? `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}` : `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>

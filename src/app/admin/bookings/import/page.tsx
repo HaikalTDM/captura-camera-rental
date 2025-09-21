@@ -87,8 +87,8 @@ David Lim,david@email.com,0176543210,DJI Osmo Pocket 3,2024-02-01,2024-02-03,80,
         const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
         const dailyRate = parseFloat(rowData.daily_rate) || camera.daily_rate;
         const totalAmount = dailyRate * totalDays;
-        const depositAmount = camera.deposit_amount;
-        const finalPaymentAmount = totalAmount - (rowData.deposit_paid === 'true' ? depositAmount : 0);
+        const depositAmount = 100; // Fixed RM100 deposit
+        const finalPaymentAmount = totalAmount; // Full rental amount (separate from deposit)
 
         const bookingData = {
           customer_email: rowData.customer_email,

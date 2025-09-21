@@ -8,7 +8,7 @@ import CalendarBooking from './CalendarBooking';
 
 interface CameraCardProps {
   camera: Camera;
-  onBookNow: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails) => void;
+  onBookNow: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => void;
 }
 
 export default function CameraCard({ camera, onBookNow }: CameraCardProps) {
@@ -61,8 +61,8 @@ export default function CameraCard({ camera, onBookNow }: CameraCardProps) {
           <h4 className="text-sm font-semibold text-gray-900 mb-3">📅 Book Your Rental</h4>
           <CalendarBooking
             camera={camera}
-            onBookNow={(camera, startDate, endDate, totalCost, customerDetails) =>
-              onBookNow(camera, startDate, endDate, totalCost, customerDetails)
+            onBookNow={(camera, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) =>
+              onBookNow(camera, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate)
             }
             className="w-full"
           />

@@ -113,6 +113,20 @@ export interface Booking {
   delivery_fee: number
   booking_source: 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical' | 'manual'
   notes: string | null
+  // Equipment pickup/return tracking
+  equipment_picked_up: boolean
+  equipment_pickup_date: string | null
+  equipment_pickup_notes: string | null
+  // Deposit refund tracking
+  deposit_refunded: boolean
+  deposit_refund_date: string | null
+  deposit_refund_notes: string | null
+  deposit_refund_amount: number
+  equipment_returned: boolean
+  equipment_return_date: string | null
+  equipment_return_notes: string | null
+  equipment_condition_pickup: 'excellent' | 'good' | 'fair' | 'damaged' | null
+  equipment_condition_return: 'excellent' | 'good' | 'fair' | 'damaged' | null
   created_at: string
   updated_at: string
   // Relations

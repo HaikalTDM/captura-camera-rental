@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { Camera, CustomerDetails } from '@/types';
 import { calculateRentalCost, formatCurrency } from '@/lib/pricing';
 import TermsModal from './TermsModal';
-import CustomerDetailsModal from './CustomerDetailsModal';
 
 interface CalendarPricingProps {
   camera: Camera;
   startDate: Date | null;
   endDate: Date | null;
   totalCost: number;
+  totalDays?: number;
+  dailyRate?: number;
   onBookNow?: (customerDetails: CustomerDetails) => void;
   className?: string;
 }
@@ -20,6 +21,8 @@ export default function CalendarPricing({
   startDate,
   endDate,
   totalCost,
+  totalDays = 0,
+  dailyRate = 0,
   onBookNow,
   className = ""
 }: CalendarPricingProps) {
@@ -31,24 +34,24 @@ export default function CalendarPricing({
     isDiscounted: boolean;
   } | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
-  const [showCustomerModal, setShowCustomerModal] = useState(false);
 
   useEffect(() => {
-    if (startDate && endDate) {
-      const calculatedPricing = calculateRentalCost(camera, startDate, endDate);
-      const isDiscounted = calculatedPricing.totalDays >= 3;
-      const savings = isDiscounted ? 
-        (camera.dailyRate - camera.discountRate) * calculatedPricing.totalDays : 0;
-      
+    if (startDate && endDate && totalDays > 0) {
+      const isDiscounted = totalDays >= 3;
+      const savings = isDiscounted ?
+        (camera.dailyRate - camera.discountRate) * totalDays : 0;
+
       setPricing({
-        ...calculatedPricing,
+        totalDays,
+        dailyRate,
+        totalCost,
         savings,
         isDiscounted
       });
     } else {
       setPricing(null);
     }
-  }, [camera, startDate, endDate]);
+  }, [camera, startDate, endDate, totalCost, totalDays, dailyRate]);
 
   if (!pricing || !startDate || !endDate) {
     return (
@@ -187,27 +190,15 @@ export default function CalendarPricing({
         isOpen={showTermsModal}
         onAccept={() => {
           setShowTermsModal(false);
-          setShowCustomerModal(true);
+          // Skip CustomerDetailsModal and go directly to main booking flow
+          if (onBookNow) {
+            onBookNow({ name: '', email: '', phone: '' }); // Pass empty customer details
+          }
         }}
         onCancel={() => setShowTermsModal(false)}
       />
 
-      {/* Customer Details Modal */}
-      {startDate && endDate && pricing && (
-        <CustomerDetailsModal
-          isOpen={showCustomerModal}
-          camera={camera}
-          startDate={startDate}
-          endDate={endDate}
-          totalCost={pricing.totalCost}
-          totalDays={pricing.totalDays}
-          onSubmit={() => {
-            // WhatsApp integration handles the booking flow
-            setShowCustomerModal(false);
-          }}
-          onCancel={() => setShowCustomerModal(false)}
-        />
-      )}
+
     </div>
   );
 }

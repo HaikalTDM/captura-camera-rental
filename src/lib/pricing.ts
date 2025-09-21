@@ -1,4 +1,5 @@
 import { Camera } from '@/types';
+import { calculateDaysBetween } from './dateUtils';
 
 export function calculateRentalCost(
   camera: Camera,
@@ -9,13 +10,13 @@ export function calculateRentalCost(
   dailyRate: number;
   totalCost: number;
 } {
-  const timeDiff = endDate.getTime() - startDate.getTime();
-  const totalDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // Include both start and end dates
-  
+  // Use the utility function for consistent date calculation
+  const totalDays = calculateDaysBetween(startDate, endDate);
+
   // Apply discount for 3+ days
   const dailyRate = totalDays >= 3 ? camera.discountRate : camera.dailyRate;
   const totalCost = dailyRate * totalDays;
-  
+
   return {
     totalDays,
     dailyRate,

@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { NotificationProvider } from '@/contexts/NotificationContext';
-import NotificationBell from '@/components/admin/NotificationBell';
 
 export default function AdminLayout({
   children,
@@ -59,15 +57,13 @@ export default function AdminLayout({
     { name: 'Cameras', href: '/admin/cameras', icon: '📷' },
     { name: 'Accessories', href: '/admin/accessories', icon: '🔧' },
     { name: 'Customers', href: '/admin/customers', icon: '👥' },
-    { name: 'Notifications', href: '/admin/notifications', icon: '🔔' },
     { name: 'Gallery', href: '/admin/gallery', icon: '📸' },
     { name: 'Reports', href: '/admin/reports', icon: '📈' },
     { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
   ];
 
   return (
-    <NotificationProvider>
-      <div className="min-h-screen bg-gray-100 flex">
+    <div className="min-h-screen bg-gray-100 flex">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div
@@ -162,7 +158,6 @@ export default function AdminLayout({
             </button>
             
             <div className="flex items-center space-x-4">
-              <NotificationBell />
               <span className="text-sm text-gray-500">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'long',
@@ -181,6 +176,5 @@ export default function AdminLayout({
         </main>
       </div>
     </div>
-    </NotificationProvider>
   );
 }

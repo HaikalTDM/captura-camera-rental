@@ -1,15 +1,15 @@
 import { supabase } from '../supabase'
 import type { Booking, Customer, Camera } from '../supabase'
 
-// Get all bookings with customer and camera details
+// Get all bookings with customer details (camera info is stored in booking record)
 export async function getAllBookings(): Promise<Booking[]> {
   try {
+    console.log('Fetching all bookings...');
     const { data, error } = await supabase
       .from('bookings')
       .select(`
         *,
-        customer:customers(*),
-        camera:cameras(*)
+        customer:customers(*)
       `)
       .order('created_at', { ascending: false })
 
@@ -18,7 +18,19 @@ export async function getAllBookings(): Promise<Booking[]> {
       return []
     }
 
-    return data || []
+    console.log('Fetched bookings:', data?.length || 0);
+
+    // Since camera_id is now a string field (not a foreign key), we need to fetch camera info separately
+    // For now, we'll add camera_name from the booking record itself or use a default
+    const bookingsWithCameraInfo = data?.map(booking => ({
+      ...booking,
+      camera: {
+        id: booking.camera_id,
+        name: booking.camera_name || 'Camera', // Use camera_name from booking if available
+      }
+    })) || []
+
+    return bookingsWithCameraInfo
   } catch (error) {
     console.error('Error in getAllBookings:', error)
     return []
@@ -67,6 +79,7 @@ export async function createBooking(bookingData: {
   final_payment_paid?: boolean
   final_payment_paid_date?: string | null
   status?: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled'
+  booking_status?: 'pending_approval' | 'confirmed' | 'rejected' | 'cancelled' | 'completed'
   pickup_method?: 'pickup' | 'delivery'
   pickup_address?: string | null
   delivery_fee?: number
@@ -74,14 +87,11 @@ export async function createBooking(bookingData: {
   notes?: string | null
 }): Promise<Booking | null> {
   try {
-    const { data, error } = await supabase
+    // First, insert the booking without joins
+    const { data: bookingRecord, error } = await supabase
       .from('bookings')
       .insert([bookingData])
-      .select(`
-        *,
-        customer:customers(*),
-        camera:cameras(*)
-      `)
+      .select('*')
       .single()
 
     if (error) {
@@ -89,7 +99,20 @@ export async function createBooking(bookingData: {
       return null
     }
 
-    return data
+    // Then fetch the related data separately
+    const [customerResult, cameraResult] = await Promise.all([
+      supabase.from('customers').select('*').eq('id', bookingData.customer_id).single(),
+      supabase.from('cameras').select('*').eq('id', bookingData.camera_id).single()
+    ])
+
+    // Combine the data
+    const booking = {
+      ...bookingRecord,
+      customer: customerResult.data,
+      camera: cameraResult.data
+    }
+
+    return booking
   } catch (error) {
     console.error('Error in createBooking:', error)
     return null
@@ -171,9 +194,16 @@ export async function createCustomer(customerData: {
   emergency_contact_phone?: string
 }): Promise<Customer | null> {
   try {
+    // Map full_name to both name and full_name for database insertion
+    const dbCustomerData = {
+      ...customerData,
+      name: customerData.full_name,
+      full_name: customerData.full_name
+    };
+
     const { data, error } = await supabase
       .from('customers')
-      .insert([customerData])
+      .insert([dbCustomerData])
       .select()
       .single()
 
@@ -257,6 +287,26 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
   }
 }
 
+// Delete customer
+export async function deleteCustomer(id: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error deleting customer:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in deleteCustomer:', error)
+    return false
+  }
+}
+
 // Get booking statistics
 export async function getBookingStats(): Promise<{
   total: number
@@ -268,21 +318,23 @@ export async function getBookingStats(): Promise<{
   bySource: Record<string, number>
 }> {
   try {
+    console.log('Fetching booking stats...');
     const { data, error } = await supabase
       .from('bookings')
-      .select('status, booking_source')
+      .select('booking_status, booking_source')
 
     if (error) {
       console.error('Error fetching booking stats:', error)
       return { total: 0, pending: 0, confirmed: 0, active: 0, completed: 0, cancelled: 0, bySource: {} }
     }
 
+    console.log('Stats data:', data);
     const total = data.length
-    const pending = data.filter(b => b.status === 'pending').length
-    const confirmed = data.filter(b => b.status === 'confirmed').length
-    const active = data.filter(b => b.status === 'active').length
-    const completed = data.filter(b => b.status === 'completed').length
-    const cancelled = data.filter(b => b.status === 'cancelled').length
+    const pending = data.filter(b => b.booking_status === 'pending_approval').length
+    const confirmed = data.filter(b => b.booking_status === 'confirmed').length
+    const active = data.filter(b => b.booking_status === 'active').length
+    const completed = data.filter(b => b.booking_status === 'completed').length
+    const cancelled = data.filter(b => b.booking_status === 'cancelled').length
 
     const bySource: Record<string, number> = {}
     data.forEach(booking => {

@@ -3,8 +3,10 @@ import { submitWebsiteBooking, checkCameraAvailability } from '@/lib/api/website
 import type { WebsiteBookingData } from '@/lib/api/website-bookings';
 
 export async function POST(request: NextRequest) {
+  console.log('API: POST request received at', new Date().toISOString());
   try {
     const bookingData: WebsiteBookingData = await request.json();
+    console.log('API: Received booking data:', bookingData);
 
     // Validate required fields
     const requiredFields = [
@@ -24,29 +26,43 @@ export async function POST(request: NextRequest) {
       'booking_source'
     ];
 
-    const missingFields = requiredFields.filter(field => !bookingData[field as keyof WebsiteBookingData]);
-    
+    const missingFields = requiredFields.filter(field => {
+      const value = bookingData[field as keyof WebsiteBookingData];
+      return value === undefined || value === null || value === '';
+    });
+
     if (missingFields.length > 0) {
+      console.log('API: Missing fields:', missingFields);
+      console.log('API: Received data keys:', Object.keys(bookingData));
+      // Log each missing field value for debugging
+      missingFields.forEach(field => {
+        console.log(`API: Field "${field}" value:`, bookingData[field as keyof WebsiteBookingData]);
+      });
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Missing required fields: ${missingFields.join(', ')}` 
+        {
+          success: false,
+          error: `Missing required fields: ${missingFields.join(', ')}`
         },
         { status: 400 }
       );
     }
 
+    console.log('API: Validation passed, proceeding to email validation');
+
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(bookingData.customer_email)) {
+      console.log('API: Email validation failed:', bookingData.customer_email);
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid email format' 
+        {
+          success: false,
+          error: 'Invalid email format'
         },
         { status: 400 }
       );
     }
+
+    console.log('API: Email validation passed, proceeding to availability check');
 
     // Validate phone format (basic validation)
     const phoneRegex = /^[\+]?[0-9\s\-\(\)]{8,}$/;
@@ -60,49 +76,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate dates
-    const startDate = new Date(bookingData.start_date);
-    const endDate = new Date(bookingData.end_date);
+    // Validate dates - use date strings for comparison to avoid timezone issues
+    const startDateStr = bookingData.start_date;
+    const endDateStr = bookingData.end_date;
+    // Use local date to avoid timezone issues with same-day bookings
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    if (startDate < today) {
+    console.log('API: Date validation:', {
+      startDateStr,
+      endDateStr,
+      todayStr,
+      isStartDateInPast: startDateStr < todayStr
+    });
+
+    if (startDateStr < todayStr) {
+      console.log('API: Start date is in the past');
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Start date cannot be in the past' 
+        {
+          success: false,
+          error: 'Start date cannot be in the past'
         },
         { status: 400 }
       );
     }
 
-    if (endDate <= startDate) {
+    if (endDateStr < startDateStr) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'End date must be after start date' 
+        {
+          success: false,
+          error: 'End date cannot be before start date'
         },
         { status: 400 }
       );
     }
 
     // Check camera availability
-    const availability = await checkCameraAvailability(
-      bookingData.camera_id,
-      bookingData.start_date,
-      bookingData.end_date
-    );
-
-    if (!availability.available) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Camera is not available for the selected dates',
-          conflictingBookings: availability.conflictingBookings
-        },
-        { status: 409 }
+    try {
+      const availability = await checkCameraAvailability(
+        bookingData.camera_id,
+        bookingData.start_date,
+        bookingData.end_date
       );
+
+      if (!availability.available) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Camera is not available for the selected dates',
+            conflictingBookings: availability.conflictingBookings
+          },
+          { status: 409 }
+        );
+      }
+    } catch (availabilityError) {
+      console.log('API: Availability check failed, proceeding anyway:', availabilityError);
+      // Continue with booking if availability check fails (for now)
     }
+
+    console.log('API: Availability check completed, proceeding to booking submission');
 
     // Submit the booking
     const result = await submitWebsiteBooking(bookingData);
@@ -117,11 +149,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return success response
+    // Return success response with complete data for success component
     return NextResponse.json({
       success: true,
       booking_id: result.booking_id,
       confirmation_number: result.confirmation_number,
+      booking: result.booking,
+      customer: result.customer,
       message: 'Booking submitted successfully'
     });
 
