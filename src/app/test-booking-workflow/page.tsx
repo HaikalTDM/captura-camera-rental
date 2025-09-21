@@ -28,7 +28,7 @@ export default function TestBookingWorkflow() {
       final_payment_amount: 70,
       customer_name: 'Test Customer',
       customer_email: 'test@example.com',
-      customer_phone: '+60123456789',
+      customer_phone: '+60177464121',
       pickup_method: 'pickup',
       booking_source: 'website'
     };

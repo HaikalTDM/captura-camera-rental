@@ -201,7 +201,7 @@ export default function BookingForm({
                 value={customerDetails.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
                 className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="+60123456789"
+                placeholder="+60177464121"
                 required
               />
             </div>

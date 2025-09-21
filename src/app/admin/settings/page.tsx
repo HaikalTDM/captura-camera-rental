@@ -127,7 +127,7 @@ export default function SettingsPage() {
                     type="tel"
                     value={settings.businessPhone}
                     onChange={(e) => updateSetting('businessPhone', e.target.value)}
-                    placeholder="e.g., +60123456789"
+                    placeholder="e.g., +60177464121"
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white placeholder:text-gray-500"
                   />
                 </div>
