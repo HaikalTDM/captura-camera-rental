@@ -43,34 +43,41 @@ export async function POST(
       );
     }
 
-    // Update booking status to rejected
-    const { data: updatedBooking, error: updateError } = await supabase
-      .from('bookings')
-      .update({
-        booking_status: 'rejected',
-        approved_at: new Date().toISOString(),
-        rejection_reason: rejection_reason,
-        admin_notes: admin_notes || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', bookingId)
-      .select()
-      .single();
+    // Get customer ID before deleting booking
+    const customerId = booking.customer_id;
 
-    if (updateError) {
-      console.error('Update booking error:', updateError);
+    // Delete the booking (this will cascade delete related records)
+    const { error: deleteBookingError } = await supabase
+      .from('bookings')
+      .delete()
+      .eq('id', bookingId);
+
+    if (deleteBookingError) {
+      console.error('Delete booking error:', deleteBookingError);
       return NextResponse.json(
-        { success: false, error: 'Failed to reject booking' },
+        { success: false, error: 'Failed to delete rejected booking' },
         { status: 500 }
       );
     }
 
-    console.log('Booking rejected successfully:', updatedBooking);
+    // Delete the customer record as well
+    const { error: deleteCustomerError } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', customerId);
+
+    if (deleteCustomerError) {
+      console.error('Delete customer error:', deleteCustomerError);
+      // Don't fail the request if customer deletion fails, just log it
+      console.log('Customer deletion failed, but booking was deleted successfully');
+    }
+
+    console.log('Booking and customer data deleted successfully for rejection');
 
     return NextResponse.json({
       success: true,
-      message: 'Booking rejected successfully',
-      booking: updatedBooking
+      message: 'Booking rejected and customer data deleted successfully',
+      deleted: true
     });
 
   } catch (error) {
