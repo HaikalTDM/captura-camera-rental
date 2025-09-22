@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
 
 export default function AdminLayout({
   children,
@@ -63,7 +64,8 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <AdminPWAWrapper>
+      <div className="min-h-screen bg-gray-100 flex">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div
@@ -175,6 +177,7 @@ export default function AdminLayout({
           {children}
         </main>
       </div>
-    </div>
+      </div>
+    </AdminPWAWrapper>
   );
 }
