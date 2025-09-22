@@ -149,10 +149,10 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
     <>
       {children}
       
-      {/* Admin PWA Install Prompt */}
+      {/* Admin PWA Install Prompt - Mobile Optimized */}
       {shouldShowInstallPrompt && (
-        <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-          <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4">
+        <div className="fixed bottom-4 left-4 right-4 sm:bottom-4 sm:right-4 sm:left-auto z-50 sm:max-w-sm">
+          <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 backdrop-blur-sm bg-white/95">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -164,18 +164,18 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
                   Install Admin Dashboard
                 </h3>
                 <p className="text-xs text-gray-600 mb-3">
-                  Install the admin dashboard as an app for faster access and offline functionality.
+                  Install as an app for faster access and offline functionality.
                 </p>
                 <div className="flex gap-2">
                   <button
                     onClick={handleInstallClick}
-                    className="flex-1 bg-blue-600 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex-1 bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors touch-manipulation min-h-[44px]"
                   >
                     Install
                   </button>
                   <button
                     onClick={handleDismiss}
-                    className="flex-1 bg-gray-100 text-gray-700 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    className="flex-1 bg-gray-100 text-gray-700 text-sm font-medium px-4 py-2 rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation min-h-[44px]"
                   >
                     Not Now
                   </button>
@@ -183,7 +183,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
               </div>
               <button
                 onClick={handleDismiss}
-                className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+                className="flex-shrink-0 text-gray-400 hover:text-gray-600 active:text-gray-800 transition-colors p-1 rounded touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

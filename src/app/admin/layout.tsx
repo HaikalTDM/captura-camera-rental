@@ -82,62 +82,63 @@ export default function AdminLayout({
       `}>
         <div className="flex flex-col h-full w-full">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-6 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-700">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-700">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
                 <span className="text-lg">📷</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">CAPTURA</h1>
+                <h1 className="text-base sm:text-lg font-bold text-white">CAPTURA</h1>
                 <p className="text-xs text-blue-100">Admin Panel</p>
               </div>
             </div>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden text-white hover:text-gray-200 w-6 h-6 flex items-center justify-center"
+              className="lg:hidden text-white hover:text-gray-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
             >
               ✕
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-2 sm:px-4 py-4 sm:py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => setIsSidebarOpen(false)} // Close sidebar on mobile after navigation
                   className={`
-                    flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200
+                    flex items-center px-3 sm:px-4 py-3 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 min-h-[48px] touch-manipulation
                     ${isActive
                       ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100'
                     }
                   `}
                 >
-                  <span className="mr-3 text-lg">{item.icon}</span>
-                  <span className="font-medium">{item.name}</span>
+                  <span className="mr-3 text-lg flex-shrink-0">{item.icon}</span>
+                  <span className="font-medium truncate">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* User info & logout */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-3 sm:p-4 border-t border-gray-200">
             <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="flex items-center min-w-0">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-bold">A</span>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-800">Admin</p>
-                  <p className="text-xs text-gray-600">CAPTURA Owner</p>
+                <div className="ml-3 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">Admin</p>
+                  <p className="text-xs text-gray-600 truncate">CAPTURA Owner</p>
                 </div>
               </div>
               <button
                 onClick={handleLogout}
-                className="text-gray-600 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50"
+                className="text-gray-600 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
                 title="Logout"
               >
                 🚪
@@ -150,17 +151,17 @@ export default function AdminLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-0">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-6">
+        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden text-gray-600 hover:text-gray-900"
+              className="lg:hidden text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
             >
-              ☰
+              <span className="text-xl">☰</span>
             </button>
-            
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
+
+            <div className="flex items-center space-x-2 sm:space-x-4 overflow-hidden">
+              <span className="text-xs sm:text-sm text-gray-500 truncate">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'long',
                   year: 'numeric',
@@ -173,7 +174,7 @@ export default function AdminLayout({
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 bg-gray-100">
+        <main className="flex-1 p-4 sm:p-6 bg-gray-100 overflow-x-hidden">
           {children}
         </main>
       </div>

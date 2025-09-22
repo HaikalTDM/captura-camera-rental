@@ -166,42 +166,42 @@ export default function CalendarPage() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Rental Calendar</h1>
-          <p className="text-gray-700 mt-2">View and manage camera rental schedules</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Rental Calendar</h1>
+          <p className="text-gray-700 mt-1 sm:mt-2 text-sm sm:text-base">View and manage camera rental schedules</p>
         </div>
-        
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
           {/* View Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1 flex-1 sm:flex-none">
             <button
               onClick={() => setSelectedView('month')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation ${
                 selectedView === 'month'
                   ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900 active:bg-gray-200'
               }`}
             >
               Month
             </button>
             <button
               onClick={() => setSelectedView('week')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation ${
                 selectedView === 'week'
                   ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  : 'text-gray-600 hover:text-gray-900 active:bg-gray-200'
               }`}
             >
               Week
             </button>
           </div>
-          
+
           <button
             onClick={goToToday}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+            className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-medium transition-colors text-sm touch-manipulation min-h-[44px]"
           >
             Today
           </button>
@@ -209,24 +209,24 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={() => navigateMonth('prev')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          
-          <h2 className="text-2xl font-bold text-gray-900">
+
+          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
             {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
           </h2>
-          
+
           <button
             onClick={() => navigateMonth('next')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -235,20 +235,20 @@ export default function CalendarPage() {
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-3 h-3 bg-yellow-500 rounded"></div>
             <span className="text-gray-800 font-medium">Pending</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-3 h-3 bg-blue-500 rounded"></div>
             <span className="text-gray-800 font-medium">Confirmed</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
             <span className="text-gray-800 font-medium">Active</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-3 h-3 bg-gray-500 rounded"></div>
             <span className="text-gray-800 font-medium">Completed</span>
           </div>
@@ -260,8 +260,9 @@ export default function CalendarPage() {
         {/* Day Headers */}
         <div className="grid grid-cols-7 border-b border-gray-200">
           {dayNames.map(day => (
-            <div key={day} className="p-4 text-center font-semibold text-gray-800 bg-gray-50">
-              {day}
+            <div key={day} className="p-2 sm:p-4 text-center font-semibold text-gray-800 bg-gray-50 text-xs sm:text-sm">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.slice(0, 1)}</span>
             </div>
           ))}
         </div>
@@ -271,12 +272,12 @@ export default function CalendarPage() {
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`min-h-[120px] p-2 border-r border-b border-gray-100 ${
+              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-b border-gray-100 ${
                 !day.isCurrentMonth ? 'bg-gray-50' : 'bg-white'
               } ${day.isToday ? 'bg-blue-50' : ''}`}
             >
               {/* Date Number */}
-              <div className={`text-sm font-medium mb-2 ${
+              <div className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
                 !day.isCurrentMonth ? 'text-gray-400' : 'text-gray-900'
               } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
                 {day.date.getDate()}
@@ -284,21 +285,21 @@ export default function CalendarPage() {
 
               {/* Events */}
               <div className="space-y-1">
-                {day.bookings.slice(0, 3).map((booking, eventIndex) => (
+                {day.bookings.slice(0, window.innerWidth < 640 ? 2 : 3).map((booking, eventIndex) => (
                   <div
                     key={eventIndex}
-                    className={`text-xs p-1 rounded border-l-2 ${booking.color} truncate cursor-pointer hover:shadow-sm transition-shadow`}
+                    className={`text-xs p-1 rounded border-l-2 ${booking.color} truncate cursor-pointer hover:shadow-sm transition-shadow touch-manipulation`}
                     title={`${booking.customer} - ${booking.camera}`}
                     onClick={() => handleEventClick(booking)}
                   >
-                    <div className="font-medium">{booking.camera}</div>
-                    <div className="opacity-75">{booking.customer}</div>
+                    <div className="font-medium truncate">{booking.camera}</div>
+                    <div className="opacity-75 truncate hidden sm:block">{booking.customer}</div>
                   </div>
                 ))}
-                
-                {day.bookings.length > 3 && (
+
+                {day.bookings.length > (window.innerWidth < 640 ? 2 : 3) && (
                   <div className="text-xs text-gray-700 font-medium">
-                    +{day.bookings.length - 3} more
+                    +{day.bookings.length - (window.innerWidth < 640 ? 2 : 3)} more
                   </div>
                 )}
               </div>

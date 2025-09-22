@@ -235,66 +235,67 @@ export default function BookingsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6">
+        <div className="space-y-4">
           {/* Status Filters */}
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setStatusFilter('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'all'
                   ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               All ({stats.total})
             </button>
             <button
               onClick={() => setStatusFilter('pending_approval')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'pending_approval'
                   ? 'bg-orange-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
-              🔔 Needs Approval ({pendingApprovalBookings.length})
+              <span className="hidden sm:inline">🔔 Needs Approval</span>
+              <span className="sm:hidden">🔔 Approval</span> ({pendingApprovalBookings.length})
             </button>
             <button
               onClick={() => setStatusFilter('pending')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'pending'
                   ? 'bg-yellow-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Pending ({stats.pending})
             </button>
             <button
               onClick={() => setStatusFilter('confirmed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'confirmed'
                   ? 'bg-green-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Confirmed ({stats.confirmed})
             </button>
             <button
               onClick={() => setStatusFilter('active')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'active'
                   ? 'bg-blue-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Active ({stats.active})
             </button>
             <button
               onClick={() => setStatusFilter('completed')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-200 touch-manipulation ${
                 statusFilter === 'completed'
                   ? 'bg-gray-500 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 active:bg-gray-300'
               }`}
             >
               Completed ({stats.completed})
@@ -302,11 +303,11 @@ export default function BookingsPage() {
           </div>
 
           {/* Source Filter & Search */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px]"
             >
               <option value="all">All Sources</option>
               <option value="website">Website ({stats.bySource.website || 0})</option>
@@ -317,13 +318,13 @@ export default function BookingsPage() {
               <option value="manual">Manual ({stats.bySource.manual || 0})</option>
             </select>
 
-            <div className="relative">
+            <div className="relative flex-1 sm:max-w-xs">
               <input
                 type="text"
                 placeholder="Search bookings..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px]"
               />
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                 🔍
@@ -356,8 +357,8 @@ export default function BookingsPage() {
         </div>
       )}
 
-      {/* Bookings Table */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      {/* Bookings Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -467,6 +468,83 @@ export default function BookingsPage() {
 
         {filteredBookings.length === 0 && (
           <div className="text-center py-12">
+            <div className="text-gray-400 text-lg mb-2">📋</div>
+            <p className="text-gray-500">No bookings found matching your criteria</p>
+          </div>
+        )}
+      </div>
+
+      {/* Bookings Cards - Mobile */}
+      <div className="lg:hidden space-y-4">
+        {filteredBookings.map((booking) => (
+          <div key={booking.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <div className="text-sm font-medium text-gray-900">#{booking.id.slice(0, 8)}</div>
+                <div className="text-xs text-gray-500">{new Date(booking.created_at).toLocaleDateString()}</div>
+              </div>
+              <div className="flex gap-1">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
+                  {booking.status}
+                </span>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(booking.booking_source)}`}>
+                  {booking.booking_source}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              <div>
+                <div className="text-sm font-medium text-gray-900">{booking.customer?.full_name}</div>
+                <div className="text-xs text-gray-500">{booking.customer?.phone}</div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-900">{booking.camera?.name}</div>
+              </div>
+
+              <div>
+                <div className="text-sm text-gray-900">
+                  {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+                </div>
+                <div className="text-xs text-gray-500">{booking.total_days} days</div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium text-gray-900">RM{booking.total_amount}</div>
+                <div className="text-xs text-gray-500">
+                  Deposit: {booking.deposit_paid ? '✅' : '❌'} RM{booking.deposit_amount} |
+                  Final: {booking.final_payment_paid ? '✅' : '❌'} RM{booking.final_payment_amount}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Link
+                href={`/admin/bookings/${booking.id}`}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
+              >
+                View
+              </Link>
+              <Link
+                href={`/admin/bookings/${booking.id}/edit`}
+                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
+              >
+                Edit
+              </Link>
+              <button
+                onClick={() => handleDeleteBooking(booking.id)}
+                disabled={deletingBookingId === booking.id}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 touch-manipulation"
+              >
+                {deletingBookingId === booking.id ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        ))}
+
+        {filteredBookings.length === 0 && (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 text-center py-12">
             <div className="text-gray-400 text-lg mb-2">📋</div>
             <p className="text-gray-500">No bookings found matching your criteria</p>
           </div>

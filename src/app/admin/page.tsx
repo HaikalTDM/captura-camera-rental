@@ -76,16 +76,16 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 lg:p-8 text-white mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-            <p className="text-blue-100 text-lg">Welcome back! Here's what's happening today.</p>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-blue-100 text-sm sm:text-lg">Welcome back! Here's what's happening today.</p>
           </div>
-          <div className="text-right">
-            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
-              <p className="text-blue-100 text-sm">Today</p>
-              <p className="text-xl font-bold">
+          <div className="text-left sm:text-right">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 sm:p-4">
+              <p className="text-blue-100 text-xs sm:text-sm">Today</p>
+              <p className="text-lg sm:text-xl font-bold">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'short',
                   month: 'short',
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
         {/* Active Rentals */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center justify-between">

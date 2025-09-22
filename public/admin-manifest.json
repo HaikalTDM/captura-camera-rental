@@ -6,10 +6,11 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "scope": "/admin/",
   "lang": "en",
   "categories": ["business", "productivity", "utilities"],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "icons": [
     {
       "src": "/icons/admin-icon-72x72.png",
