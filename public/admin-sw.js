@@ -1,8 +1,10 @@
 // CAPTURA Admin Dashboard PWA Service Worker
-const ADMIN_CACHE_NAME = 'captura-admin-v1';
-const ADMIN_STATIC_CACHE_NAME = 'captura-admin-static-v1';
-const ADMIN_DYNAMIC_CACHE_NAME = 'captura-admin-dynamic-v1';
-const ADMIN_API_CACHE_NAME = 'captura-admin-api-v1';
+// Updated cache version to force cache refresh - increment when deploying updates
+const CACHE_VERSION = 'v1758517386159';
+const ADMIN_CACHE_NAME = `captura-admin-${CACHE_VERSION}`;
+const ADMIN_STATIC_CACHE_NAME = `captura-admin-static-${CACHE_VERSION}`;
+const ADMIN_DYNAMIC_CACHE_NAME = `captura-admin-dynamic-${CACHE_VERSION}`;
+const ADMIN_API_CACHE_NAME = `captura-admin-api-${CACHE_VERSION}`;
 
 // Admin-specific files to cache immediately
 const ADMIN_STATIC_ASSETS = [
@@ -54,8 +56,9 @@ self.addEventListener('activate', (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName.startsWith('captura-admin-') && 
-                cacheName !== ADMIN_STATIC_CACHE_NAME && 
+            // Delete all old admin caches (more aggressive cleanup)
+            if (cacheName.startsWith('captura-admin-') &&
+                cacheName !== ADMIN_STATIC_CACHE_NAME &&
                 cacheName !== ADMIN_DYNAMIC_CACHE_NAME &&
                 cacheName !== ADMIN_API_CACHE_NAME) {
               console.log('🗑️ Admin Service Worker: Deleting old cache', cacheName);
@@ -96,26 +99,27 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(handleAdminPageRequest(request));
 });
 
-// Handle admin page requests
+// Handle admin page requests with network-first strategy for fresh content
 async function handleAdminPageRequest(request) {
   try {
-    // Try cache first
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      console.log('📦 Admin Service Worker: Serving page from cache', request.url);
-      return cachedResponse;
-    }
-    
-    // Fetch from network
+    // Try network first for fresh content (network-first strategy)
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse && networkResponse.status === 200) {
-      // Cache the response
+      // Cache the fresh response
       const cache = await caches.open(ADMIN_DYNAMIC_CACHE_NAME);
       cache.put(request, networkResponse.clone());
-      console.log('💾 Admin Service Worker: Cached admin page', request.url);
+      console.log('💾 Admin Service Worker: Cached fresh admin page', request.url);
+      return networkResponse;
     }
-    
+
+    // If network fails, try cache as fallback
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      console.log('📦 Admin Service Worker: Serving page from cache (network failed)', request.url);
+      return cachedResponse;
+    }
+
     return networkResponse;
   } catch (error) {
     console.log('🌐 Admin Service Worker: Network request failed', request.url, error);

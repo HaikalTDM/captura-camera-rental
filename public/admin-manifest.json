@@ -2,15 +2,23 @@
   "name": "CAPTURA Admin Dashboard",
   "short_name": "CAPTURA Admin",
   "description": "Admin dashboard for CAPTURA camera rental management. Manage bookings, customers, and equipment with offline capabilities.",
-  "start_url": "/admin",
+  "start_url": "/admin?v=v1758517386159",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#3b82f6",
   "orientation": "any",
   "scope": "/admin/",
   "lang": "en",
-  "categories": ["business", "productivity", "utilities"],
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
   "icons": [
     {
       "src": "/icons/admin-icon-72x72.png",
@@ -130,5 +138,6 @@
   "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
-  }
+  },
+  "version": "v1758517386159"
 }
