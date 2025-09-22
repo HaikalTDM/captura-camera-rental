@@ -1,4 +1,5 @@
 // CAPTURA PWA Service Worker
+// NOTE: Currently disabled on main site, will be used for admin dashboard PWA implementation
 const CACHE_NAME = 'captura-v1';
 const STATIC_CACHE_NAME = 'captura-static-v1';
 const DYNAMIC_CACHE_NAME = 'captura-dynamic-v1';
