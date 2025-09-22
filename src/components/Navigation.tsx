@@ -2,15 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
 
-  const scrollToSection = (sectionId: string) => {
-    const section = document.getElementById(sectionId);
-    if (section) {
-      section.scrollIntoView({ behavior: 'smooth' });
-    }
+  const closeMenu = () => {
     setIsMenuOpen(false);
   };
 
@@ -27,30 +25,52 @@ export default function Navigation() {
           {/* Desktop Navigation */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
-              <button
-                onClick={() => scrollToSection('cameras')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              <Link
+                href="/cameras"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/cameras'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Cameras
-              </button>
-              <button
-                onClick={() => scrollToSection('reviews')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              </Link>
+              <Link
+                href="/equipment"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/equipment'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                Reviews
-              </button>
-              <button
-                onClick={() => scrollToSection('gallery')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                Equipment
+              </Link>
+              <Link
+                href="/gallery"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/gallery'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Gallery
-              </button>
-              <button
-                onClick={() => scrollToSection('how-to-book')}
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              </Link>
+              <Link
+                href="/support"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/support'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                How to Book
-              </button>
+                Support
+              </Link>
+              <Link
+                href="/cameras"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Book Now
+              </Link>
             </div>
           </div>
 
@@ -76,30 +96,57 @@ export default function Navigation() {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-              <button
-                onClick={() => scrollToSection('cameras')}
-                className="text-gray-600 hover:text-gray-900 block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
+              <Link
+                href="/cameras"
+                onClick={closeMenu}
+                className={`block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center ${
+                  pathname === '/cameras'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Cameras
-              </button>
-              <button
-                onClick={() => scrollToSection('reviews')}
-                className="text-gray-600 hover:text-gray-900 block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
+              </Link>
+              <Link
+                href="/equipment"
+                onClick={closeMenu}
+                className={`block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center ${
+                  pathname === '/equipment'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                Reviews
-              </button>
-              <button
-                onClick={() => scrollToSection('gallery')}
-                className="text-gray-600 hover:text-gray-900 block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
+                Equipment
+              </Link>
+              <Link
+                href="/gallery"
+                onClick={closeMenu}
+                className={`block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center ${
+                  pathname === '/gallery'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
                 Gallery
-              </button>
-              <button
-                onClick={() => scrollToSection('how-to-book')}
-                className="text-gray-600 hover:text-gray-900 block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
+              </Link>
+              <Link
+                href="/support"
+                onClick={closeMenu}
+                className={`block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center ${
+                  pathname === '/support'
+                    ? 'text-blue-600 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
               >
-                How to Book
-              </button>
+                Support
+              </Link>
+              <Link
+                href="/cameras"
+                onClick={closeMenu}
+                className="block px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+              >
+                📷 Book Now
+              </Link>
             </div>
           </div>
         )}

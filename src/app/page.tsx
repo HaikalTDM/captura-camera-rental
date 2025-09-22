@@ -6,23 +6,11 @@ import HeroSection from '@/components/HeroSection';
 import TrustSection from '@/components/TrustSection';
 import CustomerGallery from '@/components/CustomerGallery';
 import BookingStepsSection from '@/components/BookingStepsSection';
-import CameraCatalog from '@/components/CameraCatalog';
-import EquipmentSpecs from '@/components/EquipmentSpecs';
-import PickupDeliverySection from '@/components/PickupDeliverySection';
-import FAQSection from '@/components/FAQSection';
-import TikTokEmbed from '@/components/TikTokEmbed';
-import FloatingNav from '@/components/FloatingNav';
-import BookingModal from '@/components/BookingModal';
-import RentalSummary from '@/components/RentalSummary';
 import WelcomeModal from '@/components/WelcomeModal';
 import Footer from '@/components/Footer';
-import { Camera, BookingDetails, CustomerDetails } from '@/types';
+import Link from 'next/link';
 
 export default function Home() {
-  const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [completedBooking, setCompletedBooking] = useState<BookingDetails | null>(null);
-  const [showSummary, setShowSummary] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
   // Check if user has seen the welcome modal before
@@ -42,68 +30,41 @@ export default function Home() {
     setShowWelcomeModal(false);
   };
 
-  const handleBookCamera = (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => {
-    if (startDate && endDate && totalCost && customerDetails && totalDays !== undefined && dailyRate !== undefined) {
-      // Direct booking with dates and customer details
-      const booking: BookingDetails = {
-        camera,
-        startDate,
-        endDate,
-        totalDays,
-        totalCost,
-        dailyRate,
-        customerDetails
-      };
-      handleBookingComplete(booking);
-    } else {
-      // Open modal for date selection
-      setSelectedCamera(camera);
-      setIsBookingModalOpen(true);
-    }
-  };
-
-  const handleCloseBookingModal = () => {
-    setIsBookingModalOpen(false);
-    setSelectedCamera(null);
-  };
-
-  const handleBookingComplete = (booking: BookingDetails) => {
-    setCompletedBooking(booking);
-    setIsBookingModalOpen(false);
-    setShowSummary(true);
-  };
-
-  const handleCloseSummary = () => {
-    setShowSummary(false);
-    setCompletedBooking(null);
-  };
-
-  const handleNewBooking = () => {
-    setShowSummary(false);
-    setCompletedBooking(null);
-    // Scroll to cameras section
-    const camerasSection = document.getElementById('cameras');
-    if (camerasSection) {
-      camerasSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
       <HeroSection />
       <TrustSection />
-      <CustomerGallery />
       <BookingStepsSection />
-      <CameraCatalog onBookCamera={handleBookCamera} />
-      <EquipmentSpecs />
-      <PickupDeliverySection />
-      <FAQSection />
-      <TikTokEmbed />
-      <Footer />
+      <CustomerGallery />
 
-      {/* Floating Navigation */}
-      <FloatingNav />
+      {/* Call to Action Section */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+            Ready to Start Creating?
+          </h2>
+          <p className="text-lg text-gray-600 mb-8">
+            Choose from our professional camera collection and book your rental dates.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/cameras"
+              className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-full hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              📷 Browse Cameras
+            </Link>
+            <Link
+              href="/equipment"
+              className="inline-flex items-center px-8 py-4 bg-white text-gray-700 font-semibold rounded-full border-2 border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+            >
+              🔧 View Specifications
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
 
       {/* Welcome Modal */}
       <WelcomeModal
@@ -111,23 +72,6 @@ export default function Home() {
         onClose={handleCloseWelcomeModal}
         onDontShowAgain={handleDontShowWelcomeAgain}
       />
-
-      {/* Booking Modal */}
-      <BookingModal
-        camera={selectedCamera}
-        isOpen={isBookingModalOpen}
-        onClose={handleCloseBookingModal}
-        onBookingComplete={handleBookingComplete}
-      />
-
-      {/* Rental Summary */}
-      {showSummary && completedBooking && (
-        <RentalSummary
-          booking={completedBooking}
-          onClose={handleCloseSummary}
-          onNewBooking={handleNewBooking}
-        />
-      )}
     </div>
   );
 }
