@@ -74,15 +74,15 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 lg:p-8 text-white mb-6 sm:mb-8">
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 lg:p-8 text-white mb-6 sm:mb-8 max-w-full">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl sm:text-3xl font-bold mb-2">Dashboard</h1>
             <p className="text-blue-100 text-sm sm:text-lg">Welcome back! Here's what's happening today.</p>
           </div>
-          <div className="text-left sm:text-right">
+          <div className="text-left sm:text-right flex-shrink-0">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 sm:p-4">
               <p className="text-blue-100 text-xs sm:text-sm">Today</p>
               <p className="text-lg sm:text-xl font-bold">
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 max-w-full">
         {/* Active Rentals */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center justify-between">
@@ -196,15 +196,15 @@ export default function AdminDashboard() {
       </div>
 
       {/* Today's Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
         {/* Today's Pickups */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b border-green-100">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 border-b border-green-100">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3">
+              <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-sm">📦</span>
               </span>
-              Today's Pickups
+              <span className="truncate">Today's Pickups</span>
             </h3>
           </div>
           <div className="p-6">
@@ -233,13 +233,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Camera Status */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-blue-100">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 border-b border-blue-100">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3">
+              <span className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-sm">📷</span>
               </span>
-              Camera Status
+              <span className="truncate">Camera Status</span>
             </h3>
           </div>
           <div className="p-6">
@@ -271,17 +271,17 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Bookings & Overdue Payments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
         {/* Recent Bookings */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-6 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
+          <div className="bg-gradient-to-r from-gray-50 to-slate-50 p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3 min-w-0 flex-1">
+              <span className="w-8 h-8 bg-gray-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-sm">📋</span>
               </span>
-              Recent Bookings
+              <span className="truncate">Recent Bookings</span>
             </h3>
-            <Link href="/admin/bookings" className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <Link href="/admin/bookings" className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors flex-shrink-0">
               View All
             </Link>
           </div>
@@ -319,13 +319,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Overdue Payments */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-red-50 to-rose-50 p-6 border-b border-red-100">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
+          <div className="bg-gradient-to-r from-red-50 to-rose-50 p-4 sm:p-6 border-b border-red-100">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3">
+              <span className="w-8 h-8 bg-red-500 rounded-lg flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-sm">⚠️</span>
               </span>
-              Overdue Payments
+              <span className="truncate">Overdue Payments</span>
             </h3>
           </div>
           <div className="p-6">

@@ -166,15 +166,15 @@ export default function CalendarPage() {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="p-4 sm:p-6">
+    <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
-        <div>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4 max-w-full">
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Rental Calendar</h1>
           <p className="text-gray-700 mt-1 sm:mt-2 text-sm sm:text-base">View and manage camera rental schedules</p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto flex-shrink-0">
           {/* View Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-1 flex-1 sm:flex-none">
             <button
@@ -201,7 +201,7 @@ export default function CalendarPage() {
 
           <button
             onClick={goToToday}
-            className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-medium transition-colors text-sm touch-manipulation min-h-[44px]"
+            className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-medium transition-colors text-sm touch-manipulation min-h-[44px] flex-shrink-0"
           >
             Today
           </button>
@@ -256,7 +256,7 @@ export default function CalendarPage() {
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-full">
         {/* Day Headers */}
         <div className="grid grid-cols-7 border-b border-gray-200">
           {dayNames.map(day => (
@@ -309,18 +309,18 @@ export default function CalendarPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-8 max-w-full">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 max-w-full">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">This Month</p>
-              <p className="text-2xl font-bold text-blue-600 mt-2">
+            <div className="min-w-0 flex-1 mr-3">
+              <p className="text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wide">This Month</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-2">
                 {events.filter(e => e.startDate.getMonth() === currentDate.getMonth()).length}
               </p>
-              <p className="text-sm text-gray-600 mt-1">Total Bookings</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-1">Total Bookings</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-xl">📅</span>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+              <span className="text-lg sm:text-xl">📅</span>
             </div>
           </div>
         </div>

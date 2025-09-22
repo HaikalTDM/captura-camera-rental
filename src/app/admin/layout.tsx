@@ -65,7 +65,7 @@ export default function AdminLayout({
 
   return (
     <AdminPWAWrapper>
-      <div className="min-h-screen bg-gray-100 flex">
+      <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div
@@ -149,18 +149,18 @@ export default function AdminLayout({
       </div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-0">
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-0 w-full max-w-full">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 w-full">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 max-w-full">
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+              className="lg:hidden text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation flex-shrink-0"
             >
               <span className="text-xl">☰</span>
             </button>
 
-            <div className="flex items-center space-x-2 sm:space-x-4 overflow-hidden">
+            <div className="flex items-center space-x-2 sm:space-x-4 overflow-hidden min-w-0 flex-1 justify-end">
               <span className="text-xs sm:text-sm text-gray-500 truncate">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'long',
@@ -174,8 +174,10 @@ export default function AdminLayout({
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 bg-gray-100 overflow-x-hidden">
-          {children}
+        <main className="flex-1 p-4 sm:p-6 bg-gray-100 overflow-x-hidden w-full max-w-full">
+          <div className="max-w-full overflow-x-hidden">
+            {children}
+          </div>
         </main>
       </div>
       </div>
