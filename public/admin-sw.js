@@ -15,8 +15,10 @@ const ADMIN_STATIC_ASSETS = [
   '/admin/customers',
   '/admin/cameras',
   '/admin-manifest.json',
-  '/icons/admin-icon-192x192.png',
-  '/icons/admin-icon-512x512.png',
+  '/icons/captura-icon-192x192.png',
+  '/icons/captura-icon-512x512.png',
+  '/images/captura_logo.png',
+  '/images/captura_icon.png',
 ];
 
 // Admin API endpoints to cache for offline access

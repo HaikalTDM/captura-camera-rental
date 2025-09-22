@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "CAPTURA - Premium Camera Rental",
   description: "Rent professional cameras for your creative projects. Osmo Pocket 3 and Action 5 Pro available for daily rental.",
+  icons: {
+    icon: [
+      { url: '/images/captura_icon.ico', sizes: 'any' },
+      { url: '/images/captura_icon.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: '/images/captura_icon.png',
+  },
 };
 
 export default function RootLayout({

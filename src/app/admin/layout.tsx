@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
 
 export default function AdminLayout({
@@ -84,8 +85,14 @@ export default function AdminLayout({
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-700">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <span className="text-lg">📷</span>
+              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center p-1">
+                <Image
+                  src="/images/captura_icon.png"
+                  alt="CAPTURA"
+                  width={24}
+                  height={24}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-base sm:text-lg font-bold text-white">CAPTURA</h1>
