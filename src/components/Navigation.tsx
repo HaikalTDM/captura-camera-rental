@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -20,15 +19,8 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <Image
-                src="/images/captura_logo.png"
-                alt="CAPTURA"
-                width={120}
-                height={40}
-                className="h-8 w-auto"
-                priority
-              />
+            <Link href="/" className="text-2xl font-bold text-gray-900">
+              CAPTURA
             </Link>
           </div>
 
