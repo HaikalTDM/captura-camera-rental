@@ -59,7 +59,7 @@ export default function CalendarPage() {
           startDate: new Date(booking.start_date),
           endDate: new Date(booking.end_date),
           status: booking.booking_status || booking.status,
-          color: getStatusColor(booking.booking_status || booking.status)
+          color: getCameraColor(cameraName, booking.booking_status || booking.status)
         };
       });
 
@@ -73,16 +73,46 @@ export default function CalendarPage() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getCameraColor = (cameraName: string, status: string) => {
+    // Determine camera type and return appropriate colors
+    const isActionPro = cameraName.includes('Action 5 Pro');
+    const isOsmoPocket = cameraName.includes('Osmo Pocket 3');
+
+    // Status-based colors with camera-specific themes
     switch (status) {
-      case 'pending_approval': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
-      case 'confirmed': return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
-      case 'active': return 'bg-green-100 border-l-4 border-green-500 text-green-900';
-      case 'completed': return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
-      case 'rejected': return 'bg-red-100 border-l-4 border-red-500 text-red-900';
+      case 'pending_approval':
+        return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
+      case 'confirmed':
+        if (isActionPro) {
+          return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
+        } else if (isOsmoPocket) {
+          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900';
+        } else {
+          return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
+        }
+      case 'active':
+        if (isActionPro) {
+          return 'bg-blue-200 border-l-4 border-blue-600 text-blue-900 font-semibold';
+        } else if (isOsmoPocket) {
+          return 'bg-orange-200 border-l-4 border-orange-600 text-orange-900 font-semibold';
+        } else {
+          return 'bg-purple-200 border-l-4 border-purple-600 text-purple-900 font-semibold';
+        }
+      case 'completed':
+        return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
+      case 'rejected':
+        return 'bg-red-100 border-l-4 border-red-500 text-red-900';
       // Legacy status support
-      case 'pending': return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
-      default: return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
+      case 'pending':
+        return 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-900';
+      default:
+        if (isActionPro) {
+          return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
+        } else if (isOsmoPocket) {
+          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900';
+        } else {
+          return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
+        }
     }
   };
 
@@ -235,22 +265,39 @@ export default function CalendarPage() {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-            <span className="text-gray-800 font-medium">Pending</span>
+        <div className="space-y-2">
+          {/* Status Legend */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+            <span className="text-gray-700 font-semibold mr-1">Status:</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
+              <span className="text-gray-800 font-medium">Pending</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <span className="text-gray-800 font-medium">Active</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-gray-500 rounded"></div>
+              <span className="text-gray-800 font-medium">Completed</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-3 h-3 bg-blue-500 rounded"></div>
-            <span className="text-gray-800 font-medium">Confirmed</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-gray-800 font-medium">Active</span>
-          </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-3 h-3 bg-gray-500 rounded"></div>
-            <span className="text-gray-800 font-medium">Completed</span>
+
+          {/* Camera Legend */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+            <span className="text-gray-700 font-semibold mr-1">Cameras:</span>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+              <span className="text-gray-800 font-medium">DJI Action 5 Pro</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-orange-500 rounded"></div>
+              <span className="text-gray-800 font-medium">DJI Osmo Pocket 3</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-purple-500 rounded"></div>
+              <span className="text-gray-800 font-medium">Other Cameras</span>
+            </div>
           </div>
         </div>
       </div>

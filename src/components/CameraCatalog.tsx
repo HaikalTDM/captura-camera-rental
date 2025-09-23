@@ -21,6 +21,8 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const loadCameras = async () => {
     try {
       const dbCameras = await getAllCameras();
+      // Debug logging removed for production
+
       // Convert database cameras to frontend camera format with static images
       const convertedCameras: Camera[] = dbCameras
         .filter(cam => cam.is_available && cam.available_quantity > 0) // Only show available cameras

@@ -1,7 +1,7 @@
 import { supabase } from '../supabase'
 import type { Booking, Customer, Camera } from '../supabase'
 
-// Get all bookings with customer details (camera info is stored in booking record)
+// Get all bookings with customer details and camera information
 export async function getAllBookings(): Promise<Booking[]> {
   try {
     console.log('Fetching all bookings...');
@@ -20,13 +20,34 @@ export async function getAllBookings(): Promise<Booking[]> {
 
     console.log('Fetched bookings:', data?.length || 0);
 
-    // Since camera_id is now a string field (not a foreign key), we need to fetch camera info separately
-    // For now, we'll add camera_name from the booking record itself or use a default
+    // Since camera_id is a string field, we need to fetch camera info separately
+    // Get all unique camera IDs from bookings
+    const cameraIds = [...new Set(data?.map(booking => booking.camera_id).filter(Boolean))] as string[]
+
+    // Fetch camera information for all camera IDs
+    const { data: cameras, error: cameraError } = await supabase
+      .from('cameras')
+      .select('id, name, brand, model')
+      .in('id', cameraIds)
+
+    if (cameraError) {
+      console.error('Error fetching camera info:', cameraError)
+    }
+
+    // Create a map of camera ID to camera info for quick lookup
+    const cameraMap = new Map()
+    cameras?.forEach(camera => {
+      cameraMap.set(camera.id, camera)
+    })
+
+    // Add camera info to each booking
     const bookingsWithCameraInfo = data?.map(booking => ({
       ...booking,
-      camera: {
+      camera: cameraMap.get(booking.camera_id) || {
         id: booking.camera_id,
-        name: booking.camera_name || 'Camera', // Use camera_name from booking if available
+        name: `Camera (${booking.camera_id})`, // Fallback if camera not found
+        brand: 'Unknown',
+        model: 'Unknown'
       }
     })) || []
 
@@ -44,8 +65,7 @@ export async function getBookingsByDateRange(startDate: string, endDate: string)
       .from('bookings')
       .select(`
         *,
-        customer:customers(*),
-        camera:cameras(*)
+        customer:customers(*)
       `)
       .gte('start_date', startDate)
       .lte('end_date', endDate)
@@ -54,6 +74,37 @@ export async function getBookingsByDateRange(startDate: string, endDate: string)
     if (error) {
       console.error('Error fetching bookings by date range:', error)
       return []
+    }
+
+    // Get camera information for all bookings
+    const cameraIds = [...new Set(data?.map(booking => booking.camera_id).filter(Boolean))] as string[]
+
+    if (cameraIds.length > 0) {
+      const { data: cameras, error: cameraError } = await supabase
+        .from('cameras')
+        .select('id, name, brand, model')
+        .in('id', cameraIds)
+
+      if (cameraError) {
+        console.error('Error fetching camera info:', cameraError)
+      }
+
+      // Create a map of camera ID to camera info
+      const cameraMap = new Map()
+      cameras?.forEach(camera => {
+        cameraMap.set(camera.id, camera)
+      })
+
+      // Add camera info to each booking
+      return data?.map(booking => ({
+        ...booking,
+        camera: cameraMap.get(booking.camera_id) || {
+          id: booking.camera_id,
+          name: `Camera (${booking.camera_id})`,
+          brand: 'Unknown',
+          model: 'Unknown'
+        }
+      })) || []
     }
 
     return data || []
@@ -231,6 +282,8 @@ export async function getAllCameras(): Promise<Camera[]> {
       console.error('Error fetching cameras:', error)
       return []
     }
+
+    // Debug logging removed for production
 
     return data || []
   } catch (error) {

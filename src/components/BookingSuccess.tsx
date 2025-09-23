@@ -9,6 +9,7 @@ interface BookingSuccessProps {
   customer: any;
   bookingData: any;
   onNewBooking: () => void;
+  onClose?: () => void;
 }
 
 export default function BookingSuccess({
@@ -16,7 +17,8 @@ export default function BookingSuccess({
   booking,
   customer,
   bookingData,
-  onNewBooking
+  onNewBooking,
+  onClose
 }: BookingSuccessProps) {
   const [copied, setCopied] = useState(false);
 
@@ -31,7 +33,10 @@ export default function BookingSuccess({
   };
 
   const handleWhatsAppContact = () => {
+    console.log('BookingSuccess: WhatsApp contact - bookingData:', bookingData);
+    console.log('BookingSuccess: WhatsApp contact - camera_name:', bookingData.camera_name);
     const whatsappUrl = generateWhatsAppContactUrl(booking, customer, bookingData);
+    console.log('BookingSuccess: Generated WhatsApp URL:', whatsappUrl);
     window.open(whatsappUrl, '_blank');
   };
 
@@ -108,7 +113,7 @@ export default function BookingSuccess({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <p className="text-blue-600 font-medium">Camera</p>
-            <p className="text-blue-900">{bookingData.camera_name}</p>
+            <p className="text-blue-900">{bookingData.camera_name || 'Camera Equipment'}</p>
           </div>
           <div>
             <p className="text-blue-600 font-medium">Duration</p>

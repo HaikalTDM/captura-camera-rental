@@ -200,13 +200,12 @@ export async function getBookingByConfirmation(confirmationNumber: string): Prom
   try {
     // Extract booking ID from confirmation number (last 8 characters)
     const bookingIdSuffix = confirmationNumber.replace('CAP-', '').toLowerCase();
-    
+
     const { data, error } = await supabase
       .from('bookings')
       .select(`
         *,
-        customer:customers(*),
-        camera:cameras(*)
+        customer:customers(*)
       `)
       .ilike('id', `%${bookingIdSuffix}`)
       .single();
@@ -214,6 +213,29 @@ export async function getBookingByConfirmation(confirmationNumber: string): Prom
     if (error) {
       console.error('Error fetching booking by confirmation:', error);
       return null;
+    }
+
+    // Fetch camera information separately
+    if (data && data.camera_id) {
+      const { data: camera, error: cameraError } = await supabase
+        .from('cameras')
+        .select('id, name, brand, model')
+        .eq('id', data.camera_id)
+        .single();
+
+      if (cameraError) {
+        console.error('Error fetching camera info:', cameraError);
+      }
+
+      return {
+        ...data,
+        camera: camera || {
+          id: data.camera_id,
+          name: `Camera (${data.camera_id})`,
+          brand: 'Unknown',
+          model: 'Unknown'
+        }
+      };
     }
 
     return data;
@@ -327,11 +349,21 @@ export async function sendBookingConfirmationEmail(booking: Booking, customer: C
 
 // Generate WhatsApp message for optional customer contact
 export function generateWhatsAppMessage(booking: any, customer: any, bookingData: WebsiteBookingData): string {
+  console.log('WhatsApp Message Generation - bookingData:', bookingData);
+  console.log('WhatsApp Message Generation - camera_name:', bookingData.camera_name);
+
+  // Ensure camera name is not empty or generic
+  const cameraName = bookingData.camera_name && bookingData.camera_name.trim() !== '' && bookingData.camera_name.toLowerCase() !== 'camera'
+    ? bookingData.camera_name
+    : 'Camera Equipment'; // Fallback if camera name is missing or generic
+
+  console.log('WhatsApp Message Generation - final camera name used:', cameraName);
+
   const message = `🎥 *CAPTURA Camera Rental Booking*
 
 📋 *Booking Details:*
 • Confirmation: CAP-${booking.id.slice(-8).toUpperCase()}
-• Camera: ${bookingData.camera_name}
+• Camera: ${cameraName}
 • Dates: ${bookingData.start_date} to ${bookingData.end_date}
 • Duration: ${bookingData.total_days} days
 

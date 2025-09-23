@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { Camera } from '@/lib/supabase';
+import type { Camera as DBCamera } from '@/lib/supabase';
+import type { Camera } from '@/types';
 import type { WebsiteBookingData } from '@/lib/api/website-bookings';
 import { formatDateForAPI } from '@/lib/dateUtils';
 
 interface BookingFormProps {
-  camera: Camera;
+  camera: Camera; // Frontend Camera type
   startDate: Date;
   endDate: Date;
   totalDays: number;
@@ -96,9 +97,20 @@ export default function BookingForm({
     setError(null);
 
     try {
+      console.log('BookingForm: Camera object received:', camera);
+      console.log('BookingForm: Camera name:', camera.name);
+      console.log('BookingForm: Camera ID:', camera.id);
+
+      // Ensure camera name is properly set and not empty
+      const cameraName = camera.name && camera.name.trim() !== ''
+        ? camera.name.trim()
+        : `Camera ${camera.id}`; // Fallback using camera ID
+
+      console.log('BookingForm: Final camera name used:', cameraName);
+
       const bookingData: WebsiteBookingData = {
         camera_id: camera.id,
-        camera_name: camera.name,
+        camera_name: cameraName,
         start_date: formatDateForAPI(startDate),
         end_date: formatDateForAPI(endDate),
         total_days: totalDays,
