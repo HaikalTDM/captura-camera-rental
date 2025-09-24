@@ -9,9 +9,10 @@ import CalendarBooking from './CalendarBooking';
 interface CameraCardProps {
   camera: Camera;
   onBookNow: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => void;
+  onViewSpecs?: (camera: Camera) => void;
 }
 
-export default function CameraCard({ camera, onBookNow }: CameraCardProps) {
+export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
       {/* Image Gallery */}
@@ -55,6 +56,21 @@ export default function CameraCard({ camera, onBookNow }: CameraCardProps) {
             {formatCurrency(camera.discountRate)}/day for 3+ days
           </p>
         </div>
+
+        {/* Specifications Button */}
+        {onViewSpecs && (
+          <div className="mb-4">
+            <button
+              onClick={() => onViewSpecs(camera)}
+              className="w-full bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 text-indigo-700 font-medium py-3 px-4 rounded-lg transition-all duration-200 text-sm flex items-center justify-center border border-indigo-200 hover:border-indigo-300 shadow-sm hover:shadow-md"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Camera Details & Specs
+            </button>
+          </div>
+        )}
 
         {/* Custom Calendar Booking */}
         <div className="mb-4">

@@ -183,8 +183,8 @@ export default function BookingSuccess({
           <a href="tel:+60177464121" className="text-blue-600 hover:text-blue-700">
             📞 +60 17-746 4121
           </a>
-          <a href="mailto:info@captura.my" className="text-blue-600 hover:text-blue-700">
-            ✉️ info@captura.my
+          <a href="mailto:captura.my@gmail.com" className="text-blue-600 hover:text-blue-700">
+            ✉️ captura.my@gmail.com
           </a>
         </div>
       </div>

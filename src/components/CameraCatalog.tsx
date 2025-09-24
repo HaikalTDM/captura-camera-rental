@@ -5,6 +5,7 @@ import { getAllCameras } from '@/lib/api/bookings';
 import type { Camera as DBCamera } from '@/lib/supabase';
 import { Camera, CustomerDetails } from '@/types';
 import CameraCard from './CameraCard';
+import CameraSpecsModal from './CameraSpecsModal';
 
 interface CameraCatalogProps {
   onBookCamera: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => void;
@@ -13,10 +14,22 @@ interface CameraCatalogProps {
 export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedCameraForSpecs, setSelectedCameraForSpecs] = useState<Camera | null>(null);
+  const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
 
   useEffect(() => {
     loadCameras();
   }, []);
+
+  const handleViewSpecs = (camera: Camera) => {
+    setSelectedCameraForSpecs(camera);
+    setIsSpecsModalOpen(true);
+  };
+
+  const handleCloseSpecsModal = () => {
+    setIsSpecsModalOpen(false);
+    setSelectedCameraForSpecs(null);
+  };
 
   const loadCameras = async () => {
     try {
@@ -120,6 +133,7 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                 key={camera.id}
                 camera={camera}
                 onBookNow={onBookCamera}
+                onViewSpecs={handleViewSpecs}
               />
             ))}
           </div>
@@ -164,6 +178,13 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
           </div>
         </div>
       </div>
+
+      {/* Camera Specifications Modal */}
+      <CameraSpecsModal
+        camera={selectedCameraForSpecs}
+        isOpen={isSpecsModalOpen}
+        onClose={handleCloseSpecsModal}
+      />
     </section>
   );
 }

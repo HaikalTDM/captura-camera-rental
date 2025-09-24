@@ -6,7 +6,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState({
     businessName: 'CAPTURA',
     businessPhone: '0177464121',
-    businessEmail: 'info@captura.my',
+    businessEmail: 'captura.my@gmail.com',
     businessAddress: 'Caltex Selayang Pandang, Selangor',
     whatsappNumber: '0177464121',
     defaultDepositPercentage: 30,

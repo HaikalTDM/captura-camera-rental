@@ -175,11 +175,19 @@ export default function BookingStepsSection() {
 
         {/* Call to Action */}
         <div className="text-center mt-12 sm:mt-16 px-4">
-          <div className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-4 sm:px-8 rounded-full font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-pulse max-w-full">
+          <button
+            onClick={() => {
+              const camerasSection = document.getElementById('cameras');
+              if (camerasSection) {
+                camerasSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+            className="inline-flex items-center gap-2 sm:gap-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-4 sm:px-8 rounded-full font-bold text-base sm:text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 animate-pulse max-w-full cursor-pointer"
+          >
             <span className="text-xl sm:text-2xl">🚀</span>
             <span className="text-center">Ready to Start? Browse Cameras Below!</span>
             <span className="text-xl sm:text-2xl">📷</span>
-          </div>
+          </button>
         </div>
       </div>
     </section>
