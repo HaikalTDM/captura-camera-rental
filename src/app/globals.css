@@ -48,21 +48,39 @@ body {
   animation: scroll-infinite 30s linear infinite;
 }
 
-/* Image Carousel Animation */
-@keyframes scroll-infinite-images {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-33.333%);
-  }
-}
-
-.animate-scroll-infinite-images {
-  animation: scroll-infinite-images 15s linear infinite;
+/* Image Carousel Optimization */
+.carousel-track {
   will-change: transform;
   backface-visibility: hidden;
   perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Mobile-optimized carousel with faster animation and touch support */
+@media (max-width: 768px) {
+  .animate-scroll-infinite-images {
+    animation: scroll-infinite-images 12s linear infinite;
+  }
+
+  .animate-scroll-infinite {
+    animation: scroll-infinite 18s linear infinite;
+  }
+
+  /* Enable smooth touch scrolling on mobile */
+  .touch-pan-x {
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Hide scrollbars while maintaining functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
 
 /* Line clamp utility for text truncation */

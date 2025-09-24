@@ -240,11 +240,34 @@ export default function CameraSpecsModal({ camera, isOpen, onClose }: CameraSpec
               <button
                 onClick={() => {
                   onClose();
-                  // Scroll to cameras section to book
+                  // Scroll to the specific camera card's booking section
                   setTimeout(() => {
-                    const camerasSection = document.getElementById('cameras');
-                    if (camerasSection) {
-                      camerasSection.scrollIntoView({ behavior: 'smooth' });
+                    // First try to find the specific camera card
+                    const cameraCards = document.querySelectorAll('[data-camera-id]');
+                    let targetCard = null;
+
+                    cameraCards.forEach(card => {
+                      const cardElement = card as HTMLElement;
+                      if (cardElement.dataset.cameraId === camera.id) {
+                        targetCard = cardElement;
+                      }
+                    });
+
+                    if (targetCard) {
+                      // Scroll to the calendar booking section within the card
+                      const bookingSection = targetCard.querySelector('[data-booking-section]');
+                      if (bookingSection) {
+                        bookingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      } else {
+                        // Fallback to scrolling to the card itself
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    } else {
+                      // Fallback to cameras section
+                      const camerasSection = document.getElementById('cameras');
+                      if (camerasSection) {
+                        camerasSection.scrollIntoView({ behavior: 'smooth' });
+                      }
                     }
                   }, 100);
                 }}

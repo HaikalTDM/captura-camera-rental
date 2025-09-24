@@ -67,38 +67,7 @@ export default function ImageGallery({
         </div>
       )}
 
-      {/* Navigation Arrows for Main Image */}
-      {allImages.length > 1 && (
-        <>
-          <button
-            onClick={() => {
-              const currentIndex = allImages.indexOf(currentImage);
-              const prevIndex = currentIndex === 0 ? allImages.length - 1 : currentIndex - 1;
-              setCurrentImage(allImages[prevIndex]);
-            }}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
-            style={{ top: '6rem' }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          
-          <button
-            onClick={() => {
-              const currentIndex = allImages.indexOf(currentImage);
-              const nextIndex = currentIndex === allImages.length - 1 ? 0 : currentIndex + 1;
-              setCurrentImage(allImages[nextIndex]);
-            }}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200"
-            style={{ top: '6rem' }}
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </>
-      )}
+
     </div>
   );
 }

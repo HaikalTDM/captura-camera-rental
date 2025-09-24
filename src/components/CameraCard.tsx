@@ -14,7 +14,10 @@ interface CameraCardProps {
 
 export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+    <div
+      className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 h-full flex flex-col"
+      data-camera-id={camera.id}
+    >
       {/* Image Gallery */}
       <div className="p-4 pb-2">
         <ImageGallery
@@ -73,7 +76,7 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCar
         )}
 
         {/* Custom Calendar Booking */}
-        <div className="mb-4">
+        <div className="mb-4" data-booking-section>
           <h4 className="text-sm font-semibold text-gray-900 mb-3">📅 Book Your Rental</h4>
           <CalendarBooking
             camera={camera}

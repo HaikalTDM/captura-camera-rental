@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getActiveGalleryImages, type GalleryImage } from '../lib/api/gallery';
 
 export default function CustomerGallery() {
   const [customerImages, setCustomerImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [currentOffset, setCurrentOffset] = useState(0);
 
   // Load images from database
   useEffect(() => {
@@ -22,6 +24,30 @@ export default function CustomerGallery() {
       setIsLoading(false);
     }
   };
+
+  // Infinite scroll animation
+  useEffect(() => {
+    if (customerImages.length === 0) return;
+
+    const cardWidth = 288; // 72 * 4 (w-72 = 18rem = 288px) + margin
+    const totalWidth = cardWidth * customerImages.length;
+
+    const animate = () => {
+      setCurrentOffset(prev => {
+        const newOffset = prev - 1; // Move 1px per frame for smooth animation
+        // Reset when we've moved one full set of images
+        return newOffset <= -totalWidth ? 0 : newOffset;
+      });
+    };
+
+    const intervalId = setInterval(animate, 50); // 20fps for smooth animation
+    return () => clearInterval(intervalId);
+  }, [customerImages]);
+
+  // Create extended array for seamless looping
+  const extendedImages = customerImages.length > 0
+    ? [...customerImages, ...customerImages, ...customerImages]
+    : [];
 
   return (
     <section id="gallery" className="py-16 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
@@ -58,10 +84,17 @@ export default function CustomerGallery() {
         <div className="w-full overflow-hidden">
           <div className="relative">
             {/* Carousel Track */}
-            <div className="flex animate-scroll-infinite-images transform-gpu">
-              {/* Triple set of images for smooth infinite scroll */}
-              {customerImages.concat(customerImages, customerImages).map((image, index) => (
-                <div key={index} className="flex-shrink-0 w-64 sm:w-72 mx-2 sm:mx-3">
+            <div
+              ref={carouselRef}
+              className="flex carousel-track touch-pan-x overflow-x-auto scrollbar-hide md:overflow-hidden"
+              style={{
+                transform: `translateX(${currentOffset}px)`,
+                width: `${extendedImages.length * 288}px` // 288px per card (w-72 + margins)
+              }}
+            >
+              {/* Extended set of images for smooth infinite scroll */}
+              {extendedImages.map((image, index) => (
+                <div key={`${image.id}-${Math.floor(index / customerImages.length)}-${index}`} className="flex-shrink-0 w-64 sm:w-72 mx-2 sm:mx-3">
                   <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:scale-105 transition-all duration-300 ease-out group transform-gpu">
                     {/* Image Container */}
                     <div className="relative overflow-hidden">

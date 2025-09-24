@@ -40,29 +40,44 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
       const convertedCameras: Camera[] = dbCameras
         .filter(cam => cam.is_available && cam.available_quantity > 0) // Only show available cameras
         .map(dbCamera => {
-          // Map camera names to static image files
-          const getStaticImage = (cameraName: string) => {
+          // Map camera names to static image files with specific variants
+          const getStaticImages = (cameraName: string) => {
             const name = cameraName.toLowerCase();
             if (name.includes('osmo') && name.includes('pocket')) {
-              return '/images/osmo-pocket-31.jpg';
+              return {
+                main: '/images/osmo-pocket-31.jpg',
+                variant: '/images/osmo_pocket_3_creator_combo.jpg'
+              };
             } else if (name.includes('action') && name.includes('5')) {
-              return '/images/dji-action-5-pro1.jpg';
+              return {
+                main: '/images/dji-action-5-pro1.jpg',
+                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
+              };
             } else if (name.includes('action')) {
-              return '/images/dji-action-5-pro1.jpg'; // Default action camera
+              return {
+                main: '/images/dji-action-5-pro1.jpg',
+                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
+              };
             } else if (name.includes('osmo')) {
-              return '/images/osmo-pocket-31.jpg'; // Default osmo camera
+              return {
+                main: '/images/osmo-pocket-31.jpg',
+                variant: '/images/osmo_pocket_3_creator_combo.jpg'
+              };
             }
-            return '/images/osmo-pocket-31.jpg'; // Fallback to a real camera image
+            return {
+              main: '/images/osmo-pocket-31.jpg',
+              variant: '/images/osmo_pocket_3_creator_combo.jpg'
+            };
           };
 
-          const staticImage = getStaticImage(dbCamera.name);
+          const cameraImages = getStaticImages(dbCamera.name);
 
           return {
             id: dbCamera.id,
             name: dbCamera.name,
             description: dbCamera.description || 'Professional camera equipment for your creative projects.',
-            image: staticImage,
-            images: [staticImage],
+            image: cameraImages.main,
+            images: [cameraImages.variant], // Only include the variant image, not the main image again
             dailyRate: dbCamera.daily_rate,
             discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
             features: [
