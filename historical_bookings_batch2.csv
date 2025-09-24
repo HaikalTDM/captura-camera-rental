@@ -1,0 +1,9 @@
+customer_name,customer_email,customer_phone,camera_name,start_date,end_date,daily_rate,deposit_paid,final_payment_paid,status,booking_source,notes
+Areeba Firdaus,areebafirdaus091@gmail.com,+60113321917,DJI Action 5 Pro,2025-08-17,2025-08-17,55,true,true,completed,whatsapp,Historical booking import
+pyka,syafiqahnurul2009@gmail.com,+60167044423,DJI Osmo Pocket 3,2025-08-31,2025-08-31,45,true,true,completed,whatsapp,Historical booking import
+Nana,farhanamunawar17@gmail.com,+60196373059,DJI Osmo Pocket 3,2025-09-07,2025-09-07,65,true,true,completed,whatsapp,Historical booking import
+Efendy,efendy@gmail.com,+60160103638,DJI Action 5 Pro,2025-09-04,2025-09-07,55,true,true,completed,whatsapp,Historical booking import
+Mahadi Aman,mahadiaman@gmail.com,+60113960754,DJI Osmo Pocket 3,2025-10-01,2025-10-04,45,true,true,completed,whatsapp,Historical booking import
+Aisyah Hawari,aisyahhawari08@gmail.com,+60123456789,DJI Osmo Pocket 3,2025-09-12,2025-09-18,45,true,true,completed,whatsapp,Historical booking import
+Ummi Umairah Binti Mad Yussof,mairah.yussof@gmail.com,+601123327882,DJI Osmo Pocket 3,2025-09-20,2025-09-21,45,true,true,completed,whatsapp,Historical booking import
+Areeba Firdaus,areebafirdaus091@gmail.com,+60113321917,Osmo Pocket 3,2025-08-15,2025-08-15,45,true,true,completed,whatsapp,Historical booking import

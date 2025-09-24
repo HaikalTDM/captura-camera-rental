@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
+import TikTokCalendarExport from '@/components/TikTokCalendarExport';
 
 interface CalendarDay {
   date: Date;
@@ -29,6 +30,11 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [exportNotification, setExportNotification] = useState<{
+    show: boolean;
+    success: boolean;
+    message: string;
+  }>({ show: false, success: false, message: '' });
 
   useEffect(() => {
     loadCalendarData();
@@ -40,14 +46,15 @@ export default function CalendarPage() {
       const bookings = await getAllBookings();
       console.log('Calendar: Loaded bookings:', bookings.length);
 
-      // Filter only confirmed bookings for calendar display
-      const confirmedBookings = bookings.filter(booking =>
-        booking.booking_status === 'confirmed'
-      );
-      console.log('Calendar: Confirmed bookings:', confirmedBookings.length);
+      // Filter confirmed and completed bookings for calendar display
+      const displayBookings = bookings.filter(booking => {
+        const status = booking.booking_status || booking.status;
+        return status === 'confirmed' || status === 'completed';
+      });
+      console.log('Calendar: Display bookings (confirmed + completed):', displayBookings.length);
 
       // Convert bookings to calendar events
-      const calendarEvents = confirmedBookings.map(booking => {
+      const calendarEvents = displayBookings.map(booking => {
         const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
         const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
 
@@ -99,7 +106,13 @@ export default function CalendarPage() {
           return 'bg-purple-200 border-l-4 border-purple-600 text-purple-900 font-semibold';
         }
       case 'completed':
-        return 'bg-gray-100 border-l-4 border-gray-500 text-gray-900';
+        if (isActionPro) {
+          return 'bg-blue-50 border-l-4 border-blue-300 text-blue-700 opacity-75';
+        } else if (isOsmoPocket) {
+          return 'bg-orange-50 border-l-4 border-orange-300 text-orange-700 opacity-75';
+        } else {
+          return 'bg-purple-50 border-l-4 border-purple-300 text-purple-700 opacity-75';
+        }
       case 'rejected':
         return 'bg-red-100 border-l-4 border-red-500 text-red-900';
       // Legacy status support
@@ -188,6 +201,21 @@ export default function CalendarPage() {
     setShowEventModal(true);
   };
 
+  const handleExportComplete = (success: boolean, filename?: string) => {
+    setExportNotification({
+      show: true,
+      success,
+      message: success
+        ? `Calendar exported successfully as ${filename}!`
+        : 'Export failed. Please try again.'
+    });
+
+    // Auto-hide notification after 5 seconds
+    setTimeout(() => {
+      setExportNotification({ show: false, success: false, message: '' });
+    }, 5000);
+  };
+
   const calendarDays = generateCalendarDays();
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -264,6 +292,54 @@ export default function CalendarPage() {
           </button>
         </div>
 
+        {/* Export Button */}
+        <div className="flex items-center gap-4">
+          <TikTokCalendarExport
+            currentDate={currentDate}
+            calendarDays={calendarDays}
+            events={events}
+            onExportComplete={handleExportComplete}
+          />
+        </div>
+      </div>
+
+      {/* Export Notification */}
+      {exportNotification.show && (
+        <div className={`mb-4 p-4 rounded-lg border ${
+          exportNotification.success
+            ? 'bg-green-50 border-green-200 text-green-800'
+            : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              {exportNotification.success ? (
+                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{exportNotification.message}</p>
+            </div>
+            <div className="ml-auto pl-3">
+              <button
+                onClick={() => setExportNotification({ show: false, success: false, message: '' })}
+                className="inline-flex text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
         {/* Legend */}
         <div className="space-y-2">
           {/* Status Legend */}
@@ -274,12 +350,16 @@ export default function CalendarPage() {
               <span className="text-gray-800 font-medium">Pending</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-blue-500 rounded"></div>
+              <span className="text-gray-800 font-medium">Confirmed</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-3 h-3 bg-green-500 rounded"></div>
               <span className="text-gray-800 font-medium">Active</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-gray-500 rounded"></div>
-              <span className="text-gray-800 font-medium">Completed</span>
+              <div className="w-3 h-3 bg-gray-400 rounded opacity-75"></div>
+              <span className="text-gray-800 font-medium">Completed (Historical)</span>
             </div>
           </div>
 
@@ -298,6 +378,11 @@ export default function CalendarPage() {
               <div className="w-3 h-3 bg-purple-500 rounded"></div>
               <span className="text-gray-800 font-medium">Other Cameras</span>
             </div>
+          </div>
+
+          {/* Additional Info */}
+          <div className="text-xs text-gray-600 italic">
+            * Completed bookings appear with muted colors and reduced opacity
           </div>
         </div>
       </div>

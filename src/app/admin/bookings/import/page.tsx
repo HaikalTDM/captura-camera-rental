@@ -106,7 +106,7 @@ David Lim,david@email.com,0176543210,DJI Osmo Pocket 3,2024-02-01,2024-02-03,80,
           final_payment_amount: finalPaymentAmount,
           final_payment_paid: rowData.final_payment_paid === 'true',
           final_payment_paid_date: rowData.final_payment_paid === 'true' ? rowData.end_date : null,
-          status: rowData.status || 'completed',
+          booking_status: rowData.status || 'completed', // Use booking_status instead of status
           pickup_method: 'pickup',
           delivery_fee: 0,
           booking_source: rowData.booking_source || 'historical',
@@ -179,7 +179,7 @@ David Lim,david@email.com,0176543210,DJI Osmo Pocket 3,2024-02-01,2024-02-03,80,
           {/* CSV Input */}
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <h2 className="text-xl font-bold text-gray-900 mb-4">CSV Data</h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 mb-4 text-gray-00">
               Paste your CSV data below. The first row should contain headers.
             </p>
             
