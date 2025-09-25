@@ -108,12 +108,21 @@ export interface Booking {
   final_payment_paid: boolean
   final_payment_paid_date: string | null
   status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled'
+  booking_status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancelled' | 'completed'
   pickup_method: 'pickup' | 'delivery'
   pickup_address: string | null
   delivery_fee: number
   booking_source: 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical' | 'manual'
   notes: string | null
+  // Approval workflow fields
+  approved_by: string | null
+  approved_at: string | null
+  rejection_reason: string | null
+  admin_notes: string | null
+  whatsapp_message_sent: boolean
+  whatsapp_sent_at: string | null
   // Equipment pickup/return tracking
+  pickup_date: string | null // Date when customer should pick up (start_date - 1 day)
   equipment_picked_up: boolean
   equipment_pickup_date: string | null
   equipment_pickup_notes: string | null

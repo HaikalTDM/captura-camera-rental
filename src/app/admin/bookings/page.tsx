@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAllBookings, getBookingStats } from '@/lib/api/bookings';
 import BookingApprovalCard from '@/components/admin/BookingApprovalCard';
+import StatusManagementDropdown from '@/components/admin/StatusManagementDropdown';
+import { ToastContainer, useToast } from '@/components/admin/Toast';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
 export default function BookingsPage() {
   const router = useRouter();
+  const { toasts, success, error, removeToast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +54,8 @@ export default function BookingsPage() {
       setIsLoading(false);
     }
   };
+
+
 
   const handleApproveBooking = async (bookingId: string, notes?: string) => {
     try {
@@ -130,6 +135,8 @@ export default function BookingsPage() {
     }
   };
 
+
+
   const applyFilters = () => {
     let filtered = [...bookings];
 
@@ -154,6 +161,30 @@ export default function BookingsPage() {
     }
 
     setFilteredBookings(filtered);
+  };
+
+
+
+  const handleStatusChange = (bookingId: string, newStatus: string) => {
+    // Update the booking in the local state
+    setBookings(prevBookings =>
+      prevBookings.map(booking =>
+        booking.id === bookingId
+          ? { ...booking, booking_status: newStatus as any }
+          : booking
+      )
+    );
+
+    // Optionally reload bookings to ensure data consistency
+    // loadBookings();
+  };
+
+  const handleStatusSuccess = (message: string) => {
+    success('Status Updated', message);
+  };
+
+  const handleStatusError = (message: string) => {
+    error('Update Failed', message);
   };
 
   // Get pending approval bookings for priority display
@@ -348,15 +379,17 @@ export default function BookingsPage() {
             <p className="text-orange-100 text-sm">These bookings require your immediate attention</p>
           </div>
           <div className="p-6 space-y-4">
-            {pendingApprovalBookings.map((booking) => (
-              <BookingApprovalCard
-                key={booking.id}
-                booking={booking}
-                onApprove={handleApproveBooking}
-                onReject={handleRejectBooking}
-                onRefresh={loadBookings}
-              />
-            ))}
+            {pendingApprovalBookings
+              .filter(booking => booking.customer && booking.camera)
+              .map((booking) => (
+                <BookingApprovalCard
+                  key={booking.id}
+                  booking={booking as any}
+                  onApprove={handleApproveBooking}
+                  onReject={handleRejectBooking}
+                  onRefresh={loadBookings}
+                />
+              ))}
           </div>
         </div>
       )}
@@ -437,9 +470,13 @@ export default function BookingsPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.booking_status)}`}>
-                      {booking.booking_status}
-                    </span>
+                    <StatusManagementDropdown
+                      bookingId={booking.id}
+                      currentStatus={booking.booking_status || 'pending_approval'}
+                      onStatusChange={(newStatus) => handleStatusChange(booking.id, newStatus)}
+                      onSuccess={handleStatusSuccess}
+                      onError={handleStatusError}
+                    />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex flex-wrap gap-1">
@@ -488,9 +525,13 @@ export default function BookingsPage() {
                 <div className="text-xs text-gray-500">{new Date(booking.created_at).toLocaleDateString()}</div>
               </div>
               <div className="flex flex-col gap-1 flex-shrink-0">
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.booking_status)}`}>
-                  {booking.booking_status}
-                </span>
+                <StatusManagementDropdown
+                  bookingId={booking.id}
+                  currentStatus={booking.booking_status || 'pending_approval'}
+                  onStatusChange={(newStatus) => handleStatusChange(booking.id, newStatus)}
+                  onSuccess={handleStatusSuccess}
+                  onError={handleStatusError}
+                />
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(booking.booking_source)}`}>
                   {booking.booking_source}
                 </span>
@@ -554,6 +595,9 @@ export default function BookingsPage() {
           </div>
         )}
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

@@ -122,10 +122,11 @@ export default function CamerasPage() {
     const cameraBookings = bookings.filter(b => b.camera_id === cameraId);
     const paidBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
 
-    // Calculate total revenue using backward compatible logic
+    // FIXED: Calculate total revenue excluding refundable deposits
     const totalRevenue = paidBookings.reduce((sum, b) => {
+      // Only count actual revenue (final payment), exclude refundable deposits
       const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
 
     return {

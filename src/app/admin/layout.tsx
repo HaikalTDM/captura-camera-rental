@@ -54,6 +54,7 @@ export default function AdminLayout({
 
   const navigation = [
     { name: 'Dashboard', href: '/admin', icon: '📊' },
+    { name: 'Approvals', href: '/admin/booking-approvals', icon: '⏳' },
     { name: 'Calendar', href: '/admin/calendar', icon: '📅' },
     { name: 'Bookings', href: '/admin/bookings', icon: '📋' },
     { name: 'Cameras', href: '/admin/cameras', icon: '📷' },

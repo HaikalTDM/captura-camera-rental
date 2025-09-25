@@ -72,16 +72,22 @@ export default function BookingStepsSection() {
           <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full mb-6 animate-pulse">
             <span className="text-2xl sm:text-3xl">🎯</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 px-4">
-            How to Book Your Camera
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6 px-4 leading-tight">
+            <span className="block sm:inline">How to Book</span>
+            <span className="block sm:inline"> Your Camera</span>
           </h2>
-          <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-4 px-4">
+          <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-4 px-4 leading-relaxed">
             Simple 4-step process to get your professional camera rental
           </p>
-          <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 px-4 py-3 sm:px-6 rounded-full font-semibold text-base sm:text-lg border-2 border-green-200 mx-4">
-            <span className="text-xl sm:text-2xl">💳</span>
-            <span className="text-center">No Payment Required on Website!</span>
-            <span className="text-xl sm:text-2xl">✨</span>
+          <div className="inline-flex flex-col sm:flex-row items-center gap-1 sm:gap-2 bg-green-100 text-green-800 px-3 py-2 sm:px-6 sm:py-3 rounded-full font-semibold text-sm sm:text-base md:text-lg border-2 border-green-200 mx-4 max-w-[calc(100%-2rem)]">
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-lg sm:text-xl md:text-2xl">💳</span>
+              <span className="text-center whitespace-nowrap">No Payment Required</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-center">on Website!</span>
+              <span className="text-lg sm:text-xl md:text-2xl">✨</span>
+            </div>
           </div>
         </div>
 

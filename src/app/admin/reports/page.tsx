@@ -45,16 +45,18 @@ export default function ReportsPage() {
   // Calculate revenue metrics - only count fully paid bookings
   const fullyPaidBookings = bookings.filter(b => b.deposit_paid && b.final_payment_paid);
   const totalRevenue = fullyPaidBookings.reduce((sum, b) => {
-    // Backward compatible: new system (deposit=100) vs old system (use total_amount)
+    // FIXED: Only count actual revenue (final payment), exclude refundable deposits
+    // Backward compatible: new system (deposit=100) vs old system (use total_amount minus deposit)
     const isNewPaymentSystem = b.deposit_amount === 100;
-    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+    return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
   }, 0);
   const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
   const monthlyRevenue = fullyPaidBookings
     .filter(b => b.created_at.startsWith(currentMonth))
     .reduce((sum, b) => {
+      // FIXED: Only count actual revenue (final payment), exclude refundable deposits
       const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
 
   // Calculate booking metrics
@@ -69,8 +71,9 @@ export default function ReportsPage() {
     const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
     const paidCameraBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
     const revenue = paidCameraBookings.reduce((sum, b) => {
+      // FIXED: Only count actual revenue (final payment), exclude refundable deposits
       const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
     const utilization = totalBookings > 0 ? (cameraBookings.length / totalBookings) * 100 : 0;
 
@@ -87,8 +90,9 @@ export default function ReportsPage() {
     const customerBookings = bookings.filter(b => b.customer_id === customer.id);
     const paidCustomerBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
     const totalSpent = paidCustomerBookings.reduce((sum, b) => {
+      // FIXED: Only count actual revenue (final payment), exclude refundable deposits
       const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
     return {
       ...customer,
@@ -128,8 +132,9 @@ export default function ReportsPage() {
       b.created_at.startsWith(monthStr)
     );
     const revenue = monthlyBookings.reduce((sum, b) => {
+      // FIXED: Only count actual revenue (final payment), exclude refundable deposits
       const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
     return { revenue, bookings: monthlyBookings.length };
   };
@@ -248,22 +253,24 @@ export default function ReportsPage() {
           </h3>
           <div className="space-y-4">
             {monthlyTrend.map((month, index) => (
-              <div key={`${month.month}-${month.year}`} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div key={`${month.month}-${month.year}`} className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                     <span className="text-sm font-bold text-blue-600">{month.month}</span>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">RM{month.revenue}</p>
-                    <p className="text-sm text-gray-500">{month.bookings} bookings</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-gray-900 truncate">RM{month.revenue}</p>
+                    <p className="text-sm text-gray-500 truncate">{month.bookings} bookings</p>
                     <p className="text-xs text-gray-400">{month.year}</p>
                   </div>
                 </div>
-                <div className="w-32 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(month.revenue / 1500) * 100}%` }}
-                  ></div>
+                <div className="flex-1 min-w-0 ml-auto">
+                  <div className="w-full max-w-24 sm:max-w-32 bg-gray-200 rounded-full h-2 ml-auto">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min((month.revenue / 1500) * 100, 100)}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             ))}

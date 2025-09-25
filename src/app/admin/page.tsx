@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
 import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
+import TodaysPickupsSection from '@/components/admin/TodaysPickupsSection';
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -43,11 +44,26 @@ export default function AdminDashboard() {
 
   // Get today's activities
   const today = new Date().toISOString().split('T')[0];
-  const todayPickups = bookings.filter(b =>
-    b.start_date === today &&
-    b.booking_status === 'confirmed' &&
-    !b.equipment_picked_up
-  );
+
+  // Today's pickups: customers who need to pick up cameras today
+  // Business rule: pickup_date = start_date - 1 day
+  const todayPickups = bookings.filter(b => {
+    // If pickup_date exists, use it directly
+    if (b.pickup_date) {
+      return b.pickup_date === today &&
+             (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+             !b.equipment_picked_up;
+    }
+    // Fallback: calculate pickup date as start_date - 1 day
+    const startDate = new Date(b.start_date);
+    const pickupDate = new Date(startDate);
+    pickupDate.setDate(pickupDate.getDate() - 1);
+    const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
+
+    return calculatedPickupDate === today &&
+           (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+           !b.equipment_picked_up;
+  });
   const activeRentals = bookings.filter(b =>
     b.booking_status === 'confirmed' &&
     b.equipment_picked_up &&
@@ -59,6 +75,7 @@ export default function AdminDashboard() {
     !b.equipment_returned
   );
   const recentBookings = bookings.slice(0, 5);
+  const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
   const overduePayments = bookings.filter(b =>
     !b.final_payment_paid &&
     new Date(b.end_date) < new Date() &&
@@ -136,14 +153,15 @@ export default function AdminDashboard() {
                 bookings
                   .filter(b => b.deposit_paid && b.final_payment_paid)
                   .reduce((sum, b) => {
-                    // For new payment system: deposit (100) + rental amount
-                    // For old payment system: total_amount (which includes everything)
+                    // FIXED: Only count actual revenue (final payment), exclude refundable deposits
+                    // For new payment system: only final_payment_amount (deposit is refundable)
+                    // For old payment system: total_amount minus deposit_amount (if deposit is refundable)
                     const isNewPaymentSystem = b.deposit_amount === 100;
-                    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+                    return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
                   }, 0)
                   .toFixed(0)
               }</p>
-              <p className="text-sm text-gray-500 mt-1">All time</p>
+              <p className="text-sm text-gray-500 mt-1">All time (excludes refundable deposits)</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">💰</span>
@@ -165,14 +183,15 @@ export default function AdminDashboard() {
                     new Date(b.created_at).getFullYear() === new Date().getFullYear()
                   )
                   .reduce((sum, b) => {
-                    // For new payment system: deposit (100) + rental amount
-                    // For old payment system: total_amount (which includes everything)
+                    // FIXED: Only count actual revenue (final payment), exclude refundable deposits
+                    // For new payment system: only final_payment_amount (deposit is refundable)
+                    // For old payment system: total_amount minus deposit_amount (if deposit is refundable)
                     const isNewPaymentSystem = b.deposit_amount === 100;
-                    return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+                    return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
                   }, 0)
                   .toFixed(0)
               }</p>
-              <p className="text-sm text-gray-500 mt-1">{new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })}</p>
+              <p className="text-sm text-gray-500 mt-1">{new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} (excludes deposits)</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">📈</span>
@@ -195,42 +214,33 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Today's Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
-        {/* Today's Pickups */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 border-b border-green-100">
-            <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3">
-              <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-white text-sm">📦</span>
-              </span>
-              <span className="truncate">Today's Pickups</span>
-            </h3>
-          </div>
-          <div className="p-6">
-            {todayPickups.length > 0 ? (
-              <div className="space-y-4">
-                {todayPickups.map((booking) => (
-                  <div key={booking.id} className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div>
-                      <p className="font-medium text-gray-900">{booking.customer?.full_name}</p>
-                      <p className="text-sm text-gray-600">{booking.camera?.name}</p>
-                      <p className="text-sm text-green-600">Pickup: {new Date(booking.start_date).toLocaleDateString()}</p>
-                    </div>
-                    <Link
-                      href={`/admin/bookings/${booking.id}`}
-                      className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
-                    >
-                      View
-                    </Link>
-                  </div>
-                ))}
+      {/* Pending Approvals Alert */}
+      {pendingApprovals.length > 0 && (
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <span className="text-2xl">⚠️</span>
               </div>
-            ) : (
-              <p className="text-gray-600 text-center py-8">No pickups scheduled for today</p>
-            )}
+              <div>
+                <h3 className="text-xl font-bold">Action Required: {pendingApprovals.length} Booking{pendingApprovals.length !== 1 ? 's' : ''} Need Approval</h3>
+                <p className="text-orange-100">Review and approve pending bookings to allow customers to proceed with pickup</p>
+              </div>
+            </div>
+            <Link
+              href="/admin/booking-approvals"
+              className="bg-white text-orange-600 px-6 py-3 rounded-lg font-bold hover:bg-orange-50 transition-colors"
+            >
+              Review Now
+            </Link>
           </div>
         </div>
+      )}
+
+      {/* Today's Activities */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
+        {/* Today's Pickups - Enhanced Component */}
+        <TodaysPickupsSection onPickupUpdate={loadDashboardData} />
 
         {/* Camera Status */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
@@ -298,15 +308,17 @@ export default function AdminDashboard() {
                   </div>
                   <div className="text-right">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      booking.status === 'active'
-                        ? 'bg-blue-100 text-blue-800'
-                        : booking.status === 'confirmed'
+                      booking.booking_status === 'confirmed'
                         ? 'bg-green-100 text-green-800'
-                        : booking.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        : booking.booking_status === 'pending_approval'
+                        ? 'bg-orange-100 text-orange-800'
+                        : booking.booking_status === 'rejected'
+                        ? 'bg-red-100 text-red-800'
+                        : booking.booking_status === 'completed'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {booking.status}
+                      {booking.booking_status === 'pending_approval' ? 'Pending' : booking.booking_status}
                     </span>
                     <p className="text-sm text-gray-600 mt-1">RM{booking.total_amount}</p>
                   </div>

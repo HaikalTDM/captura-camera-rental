@@ -52,11 +52,12 @@ export async function GET(request: NextRequest) {
     } else {
       console.log('Bookings found:', bookings?.length || 0);
       
-      // Calculate revenue
+      // FIXED: Calculate revenue excluding refundable deposits
       const fullyPaidBookings = bookings?.filter(b => b.deposit_paid && b.final_payment_paid) || [];
       const totalRevenue = fullyPaidBookings.reduce((sum, b) => {
+        // Only count actual revenue (final payment), exclude refundable deposits
         const isNewPaymentSystem = b.deposit_amount === 100;
-        return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
+        return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
       }, 0);
       
       console.log('Fully paid bookings:', fullyPaidBookings.length);
