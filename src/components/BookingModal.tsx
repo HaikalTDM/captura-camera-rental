@@ -260,23 +260,23 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
           {/* Step 2: Your Information */}
           {currentStep === 2 && (
-            <div className="space-y-4">
-              <div className="text-center mb-4">
-                <h3 className="text-lg sm:text-xl font-bold text-black mb-2">Tell us about yourself</h3>
-                <p className="text-sm text-black/60">We'll use this to contact you about your booking</p>
+            <div className="space-y-3">
+              <div className="text-center mb-3">
+                <h3 className="text-base sm:text-lg font-bold text-black mb-1">Tell us about yourself</h3>
+                <p className="text-xs sm:text-sm text-black/60">We'll use this to contact you about your booking</p>
               </div>
 
               {/* Name and Email */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-black mb-2 uppercase tracking-widest">
+                  <label className="block text-xs font-bold text-black mb-1 uppercase tracking-wide">
                     Full Name *
                   </label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
+                    className={`w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none transition-colors text-sm text-black ${
                       errors.name 
                         ? 'border-red-300 focus:border-red-500' 
                         : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -295,14 +295,14 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-black mb-2 uppercase tracking-widest">
+                  <label className="block text-xs font-bold text-black mb-1 uppercase tracking-wide">
                     Email Address *
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
+                    className={`w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none transition-colors text-sm text-black ${
                       errors.email 
                         ? 'border-red-300 focus:border-red-500' 
                         : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -321,14 +321,14 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
                 </div>
 
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-black mb-2 uppercase tracking-widest">
+                  <label className="block text-xs font-bold text-black mb-1 uppercase tracking-wide">
                     Phone Number *
                   </label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => handleInputChange('phone', e.target.value)}
-                    className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
+                    className={`w-full px-3 py-2.5 border-2 rounded-lg focus:outline-none transition-colors text-sm text-black ${
                       errors.phone 
                         ? 'border-red-300 focus:border-red-500' 
                         : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -348,9 +348,9 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
               </div>
 
               {/* Booking Summary */}
-              <div className="bg-gray-50 rounded-lg p-4 border border-[#d4af37]/20">
-                <h4 className="font-bold text-black mb-2">Booking Summary</h4>
-                <div className="space-y-1 text-sm">
+              <div className="bg-gray-50 rounded-lg p-3 border border-[#d4af37]/20">
+                <h4 className="font-bold text-black mb-1.5 text-sm">Booking Summary</h4>
+                <div className="space-y-0.5 text-xs">
                   <div className="flex justify-between">
                     <span className="text-black/60">Date:</span>
                     <span className="text-black font-medium">
@@ -374,7 +374,7 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
           )}
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-6 mt-6 border-t border-gray-100">
+          <div className="flex gap-3 pt-4 mt-4 border-t border-gray-100">
             {/* Step 1 Buttons */}
             {currentStep === 1 && (
               <>
