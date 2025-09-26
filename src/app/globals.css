@@ -526,3 +526,42 @@ body {
     line-height: 1.25rem !important;
   }
 }
+
+/* Gallery Fade Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+.gallery-fade-in {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.gallery-fade-out {
+  animation: fadeOutDown 0.4s ease-in forwards;
+}
+
+/* Text truncation utilities */
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
