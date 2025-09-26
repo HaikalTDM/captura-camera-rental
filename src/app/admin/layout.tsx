@@ -17,6 +17,9 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Check if current route is photography admin
+  const isPhotographyRoute = pathname?.startsWith('/admin/photography');
+
   useEffect(() => {
     // Check authentication
     const authStatus = localStorage.getItem('adminAuth');
@@ -50,6 +53,11 @@ export default function AdminLayout({
   // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return null;
+  }
+
+  // For photography routes, return children without admin layout
+  if (isPhotographyRoute) {
+    return children;
   }
 
   const navigation = [

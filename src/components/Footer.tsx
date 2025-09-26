@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900 text-white relative overflow-hidden">
@@ -15,7 +17,17 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-2xl font-bold mb-4">CAPTURA</h3>
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="relative w-12 h-12">
+                <Image
+                  src="/images/captura_logo_big.png"
+                  alt="Captura Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
+              <h3 className="text-2xl font-bold">CAPTURA</h3>
+            </div>
             <p className="text-gray-400 mb-4 max-w-md">
               Premium camera rental service for content creators, photographers, and filmmakers. 
               Professional equipment at affordable rates.
