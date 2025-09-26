@@ -309,12 +309,12 @@ const PackageCard = ({ pkg, type }: { pkg: Package; type: 'main' | 'second' }) =
         </div>
       )}
       
-      <div className="p-10">
+      <div className="p-6 sm:p-8 lg:p-10">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h3 className="text-3xl font-bold text-black mb-6 font-serif tracking-wide">{pkg.name}</h3>
-          <div className="text-5xl font-bold text-[#d4af37] mb-4">{pkg.price}</div>
-          <div className="flex items-center justify-center text-black/70 text-base uppercase tracking-widest">
+        <div className="text-center mb-8 sm:mb-10">
+          <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-black mb-4 sm:mb-6 font-serif tracking-wide">{pkg.name}</h3>
+          <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-[#d4af37] mb-3 sm:mb-4">{pkg.price}</div>
+          <div className="flex items-center justify-center text-black/70 text-sm sm:text-base uppercase tracking-widest">
             <svg className="w-5 h-5 mr-3 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -323,11 +323,11 @@ const PackageCard = ({ pkg, type }: { pkg: Package; type: 'main' | 'second' }) =
         </div>
 
         {/* Features */}
-        <div className="space-y-5 mb-10">
+        <div className="space-y-4 sm:space-y-5 mb-8 sm:mb-10">
           {pkg.features.map((feature, index) => (
             <div key={index} className="flex items-start text-black">
               <div className="w-2 h-2 bg-[#d4af37] rounded-full mt-2 mr-4 flex-shrink-0"></div>
-              <span className="text-base leading-relaxed">{feature}</span>
+              <span className="text-sm sm:text-base leading-relaxed">{feature}</span>
             </div>
           ))}
         </div>
@@ -374,29 +374,29 @@ export default function PhotographyPage() {
       <PhotographyNavigation />
 
       {/* Hero Section */}
-      <section className="py-32 bg-white">
+      <section className="py-16 sm:py-24 lg:py-32 bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-7xl md:text-8xl font-bold mb-8 font-serif text-black leading-tight">
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-bold mb-6 sm:mb-8 font-serif text-black leading-tight">
               Professional
               <br />
               <span className="italic">Photography</span>
             </h1>
             
-            <div className="w-24 h-px bg-[#d4af37] mx-auto mb-8"></div>
+            <div className="w-16 sm:w-24 h-px bg-[#d4af37] mx-auto mb-6 sm:mb-8"></div>
             
-            <p className="text-xl text-black/80 mb-4 font-medium">
+            <p className="text-lg sm:text-xl text-black/80 mb-3 sm:mb-4 font-medium">
               Capture your moments
             </p>
             
-            <p className="text-lg text-black/60 max-w-3xl mx-auto mb-16 leading-relaxed">
+            <p className="text-base sm:text-lg text-black/60 max-w-3xl mx-auto mb-12 sm:mb-16 leading-relaxed px-4">
               Weddings, Graduations, Corporate Events & More — Cinematic storytelling through the lens. 
               Every frame crafted with precision, every moment captured with purpose.
             </p>
 
             {/* Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
-              <div className="bg-white rounded-lg p-8 shadow-lg border border-[#d4af37]/20 hover:border-[#d4af37] hover:shadow-xl transition-all duration-300 text-center group">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-20">
+              <div className="bg-white rounded-lg p-6 sm:p-8 shadow-lg border border-[#d4af37]/20 hover:border-[#d4af37] hover:shadow-xl transition-all duration-300 text-center group">
                 <div className="w-16 h-16 border-2 border-[#d4af37] rounded-lg flex items-center justify-center mx-auto mb-6 group-hover:bg-[#d4af37] transition-colors duration-300">
                   <svg className="w-8 h-8 text-[#d4af37] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -534,7 +534,7 @@ export default function PhotographyPage() {
                   calendarSection.scrollIntoView({ behavior: 'smooth' });
                 }
               }}
-              className="inline-flex items-center px-12 py-6 bg-[#d4af37] text-black font-bold text-lg uppercase tracking-widest rounded-2xl hover:bg-[#d4af37]/90 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl"
+              className="inline-flex items-center px-8 sm:px-12 py-4 sm:py-6 bg-[#d4af37] text-black font-bold text-base sm:text-lg uppercase tracking-widest rounded-2xl hover:bg-[#d4af37]/90 transition-all duration-300 transform hover:scale-105 shadow-xl hover:shadow-2xl"
             >
               <svg className="w-6 h-6 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -544,7 +544,7 @@ export default function PhotographyPage() {
           </div>
 
           {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-20">
             {(activeTab === 'main' ? mainShooterPackages : secondShooterPackages).map((pkg) => (
               <PackageCard key={pkg.id} pkg={pkg} type={activeTab} />
             ))}
@@ -570,16 +570,16 @@ export default function PhotographyPage() {
       </section>
 
       {/* Terms Section */}
-      <section className="py-20 bg-black/5">
+      <section className="py-12 sm:py-20 bg-black/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white border border-[#d4af37]/30 p-12">
-            <div className="text-center mb-12">
-              <h3 className="text-4xl font-bold text-black mb-4 font-serif">Terms & Conditions</h3>
-              <div className="w-16 h-px bg-[#d4af37] mx-auto mb-6"></div>
+          <div className="bg-white border border-[#d4af37]/30 p-6 sm:p-12">
+            <div className="text-center mb-8 sm:mb-12">
+              <h3 className="text-2xl sm:text-4xl font-bold text-black mb-4 font-serif">Terms & Conditions</h3>
+              <div className="w-16 h-px bg-[#d4af37] mx-auto mb-4 sm:mb-6"></div>
               <p className="text-black/60">Professional service guidelines</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 max-w-4xl mx-auto">
               <div className="flex items-start space-x-4">
                 <div className="w-2 h-2 bg-[#d4af37] mt-2 flex-shrink-0"></div>
                 <div>

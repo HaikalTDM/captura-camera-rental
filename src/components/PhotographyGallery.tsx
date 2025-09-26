@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export interface GalleryImage {
   id: number;
@@ -417,10 +418,10 @@ export default function PhotographyGallery({ images, currentFilter, isLoading = 
 
   return (
     <>
-      {/* Mobile Layout (1 column) */}
+      {/* Mobile Layout (1 column) - Show only first 6 images */}
       <div className="block sm:hidden">
         <div className="space-y-6">
-          {images.map((image, index) => (
+          {images.slice(0, 6).map((image, index) => (
             <div
               key={image.id}
               className="group relative overflow-hidden bg-white rounded-2xl border border-[#d4af37]/10 hover:border-[#d4af37] transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer"
@@ -456,6 +457,21 @@ export default function PhotographyGallery({ images, currentFilter, isLoading = 
             </div>
           ))}
         </div>
+        
+        {/* View More Button for Mobile */}
+        {images.length > 6 && (
+          <div className="mt-8 text-center">
+            <Link 
+              href="/photography/gallery"
+              className="inline-flex items-center px-6 py-3 bg-[#d4af37] text-black font-semibold rounded-lg hover:bg-[#d4af37]/90 transition-colors"
+            >
+              <span>View All {images.length} Photos</span>
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Tablet Layout (2 columns) */}
