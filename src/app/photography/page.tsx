@@ -7,6 +7,7 @@ import PhotographyNavigation from '@/components/PhotographyNavigation';
 import PhotographyCalendar from '@/components/PhotographyCalendar';
 import SocialMediaSection from '@/components/SocialMediaSection';
 import PhotographyGallery from '@/components/PhotographyGallery';
+import MobilePackageCarousel from '@/components/MobilePackageCarousel';
 
 interface Package {
   id: string;
@@ -542,12 +543,18 @@ export default function PhotographyPage() {
             </button>
           </div>
 
-          {/* Packages Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-20">
+          {/* Packages Grid - Desktop */}
+          <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 mb-12 sm:mb-20">
             {(activeTab === 'main' ? mainShooterPackages : secondShooterPackages).map((pkg) => (
               <PackageCard key={pkg.id} pkg={pkg} type={activeTab} />
             ))}
           </div>
+
+          {/* Mobile Package Carousel */}
+          <MobilePackageCarousel 
+            packages={activeTab === 'main' ? mainShooterPackages : secondShooterPackages}
+            type={activeTab}
+          />
 
 
           {/* Availability Calendar */}

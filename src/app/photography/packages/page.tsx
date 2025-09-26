@@ -5,6 +5,7 @@ import PhotographyNavigation from '@/components/PhotographyNavigation';
 import { getActiveAddOns, getActiveCategories, formatPrice, type AddOn } from '@/data/addons';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import { quickContact } from '@/utils/whatsapp';
+import MobilePackagePageCarousel from '@/components/MobilePackagePageCarousel';
 
 interface Package {
   id: string;
@@ -221,7 +222,6 @@ const getIconForAddOn = (iconType: string) => {
 export default function PackagesPage() {
   const [activeTab, setActiveTab] = useState<'main' | 'second'>('main');
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
-  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
 
   const currentPackages = activeTab === 'main' ? mainShooterPackages : secondShooterPackages;
   const addOns = getActiveAddOns(); // Load from admin-editable data
@@ -262,23 +262,23 @@ export default function PackagesPage() {
       {/* Packages Header */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h1 className="text-6xl md:text-7xl font-bold text-black mb-6 font-serif">
+          <div className="text-center mb-12 sm:mb-16">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-4 sm:mb-6 font-serif">
               Photography Packages
             </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#d4af37] to-[#b8941f] mx-auto mb-8 rounded-full"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-[#d4af37] to-[#b8941f] mx-auto mb-6 sm:mb-8 rounded-full"></div>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
               Professional photography packages designed for every occasion. 
               From intimate gatherings to grand celebrations, we capture your moments with cinematic excellence.
             </p>
           </div>
 
           {/* Package Type Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="bg-gray-100 rounded-full p-2 inline-flex">
+          <div className="flex justify-center mb-8 sm:mb-12 px-4">
+            <div className="bg-gray-100 rounded-full p-2 inline-flex w-full max-w-sm sm:w-auto">
               <button
                 onClick={() => setActiveTab('main')}
-                className={`px-8 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all duration-300 ${
+                className={`flex-1 sm:flex-initial px-4 sm:px-8 py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-widest transition-all duration-300 ${
                   activeTab === 'main'
                     ? 'bg-[#d4af37] text-black shadow-lg'
                     : 'text-gray-600 hover:text-black'
@@ -288,7 +288,7 @@ export default function PackagesPage() {
               </button>
               <button
                 onClick={() => setActiveTab('second')}
-                className={`px-8 py-3 rounded-full font-bold text-sm uppercase tracking-widest transition-all duration-300 ${
+                className={`flex-1 sm:flex-initial px-4 sm:px-8 py-3 rounded-full font-bold text-xs sm:text-sm uppercase tracking-widest transition-all duration-300 ${
                   activeTab === 'second'
                     ? 'bg-[#d4af37] text-black shadow-lg'
                     : 'text-gray-600 hover:text-black'
@@ -299,8 +299,17 @@ export default function PackagesPage() {
             </div>
           </div>
 
-          {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+          {/* Mobile Package Carousel */}
+          <MobilePackagePageCarousel 
+            packages={currentPackages}
+            type={activeTab}
+            addOns={addOns}
+            selectedPackage={selectedPackage}
+            onPackageSelect={setSelectedPackage}
+          />
+
+          {/* Desktop Packages Grid */}
+          <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-20">
             {currentPackages.map((pkg) => (
               <div
                 key={pkg.id}
