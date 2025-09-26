@@ -147,42 +147,42 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
       onClick={handleBackdropClick}
     >
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl transform animate-slideUp overflow-hidden">
+      <div className="relative w-full max-w-sm sm:max-w-2xl bg-white rounded-2xl sm:rounded-3xl shadow-2xl transform animate-slideUp overflow-hidden max-h-[95vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-black to-gray-900 text-white p-8">
-          <div className="flex items-center justify-between mb-6">
+        <div className="bg-gradient-to-r from-black to-gray-900 text-white p-4 sm:p-8">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h2 className="text-3xl font-bold font-serif mb-2">Book Your Session</h2>
-              <p className="text-white/80">
+              <h2 className="text-xl sm:text-3xl font-bold font-serif mb-1 sm:mb-2">Book Your Session</h2>
+              <p className="text-white/80 text-sm sm:text-base">
                 {selectedDate.toLocaleDateString('en-US', { 
-                  weekday: 'long', 
+                  weekday: 'short', 
                   year: 'numeric', 
-                  month: 'long', 
+                  month: 'short', 
                   day: 'numeric' 
                 })}
               </p>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="p-1.5 sm:p-2 hover:bg-white/10 rounded-full transition-colors"
               disabled={isSubmitting}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
           
           {/* Progress Indicator */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                    className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-bold transition-all duration-300 ${
                       step <= currentStep
                         ? 'bg-[#d4af37] text-black'
                         : 'bg-white/20 text-white/60'
@@ -192,7 +192,7 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
                   </div>
                   {step < 3 && (
                     <div
-                      className={`w-12 h-0.5 mx-2 transition-all duration-300 ${
+                      className={`w-6 sm:w-12 h-0.5 mx-1 sm:mx-2 transition-all duration-300 ${
                         step < currentStep ? 'bg-[#d4af37]' : 'bg-white/20'
                       }`}
                     />
@@ -200,30 +200,30 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
                 </div>
               ))}
             </div>
-            <span className="text-white/60 text-sm">
+            <span className="text-white/60 text-xs sm:text-sm">
               Step {currentStep} of {totalSteps}
             </span>
           </div>
           
           {/* Step Labels */}
           <div className="flex justify-between text-xs text-white/60 uppercase tracking-wider">
-            <span className={currentStep >= 1 ? 'text-[#d4af37]' : ''}>Service Details</span>
-            <span className={currentStep >= 2 ? 'text-[#d4af37]' : ''}>Your Information</span>
-            <span className={currentStep >= 3 ? 'text-[#d4af37]' : ''}>Confirmation</span>
+            <span className={`${currentStep >= 1 ? 'text-[#d4af37]' : ''} text-xs sm:text-xs`}>Service</span>
+            <span className={`${currentStep >= 2 ? 'text-[#d4af37]' : ''} text-xs sm:text-xs`}>Info</span>
+            <span className={`${currentStep >= 3 ? 'text-[#d4af37]' : ''} text-xs sm:text-xs`}>Confirm</span>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-8 space-y-4 sm:space-y-6">
           {/* Photography Type */}
           <div>
-            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-widest">
+            <label className="block text-xs sm:text-sm font-bold text-black mb-2 sm:mb-3 uppercase tracking-widest">
               Photography Type *
             </label>
             <select
               value={formData.photographyType}
               onChange={(e) => handleInputChange('photographyType', e.target.value as any)}
-              className="w-full px-4 py-4 border-2 border-[#d4af37]/20 rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-lg bg-white text-black"
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-[#d4af37]/20 rounded-lg sm:rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-base sm:text-lg bg-white text-black"
               disabled={isSubmitting}
             >
               {photographyTypes.map(type => (
@@ -235,16 +235,16 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
           </div>
 
           {/* Name and Email */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-widest">
+              <label className="block text-xs sm:text-sm font-bold text-black mb-2 sm:mb-3 uppercase tracking-widest">
                 Full Name *
               </label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none transition-colors text-lg text-black ${
+                className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
                   errors.name 
                     ? 'border-red-300 focus:border-red-500' 
                     : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -263,14 +263,14 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-black mb-3 uppercase tracking-widest">
+              <label className="block text-xs sm:text-sm font-bold text-black mb-2 sm:mb-3 uppercase tracking-widest">
                 Email Address *
               </label>
               <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none transition-colors text-lg text-black ${
+                className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
                   errors.email 
                     ? 'border-red-300 focus:border-red-500' 
                     : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -291,14 +291,14 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
           {/* Phone Number */}
           <div>
-            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-widest">
+            <label className="block text-xs sm:text-sm font-bold text-black mb-2 sm:mb-3 uppercase tracking-widest">
               Phone Number *
             </label>
             <input
               type="tel"
               value={formData.phone}
               onChange={(e) => handleInputChange('phone', e.target.value)}
-              className={`w-full px-4 py-4 border-2 rounded-xl focus:outline-none transition-colors text-lg text-black ${
+              className={`w-full px-3 sm:px-4 py-3 sm:py-4 border-2 rounded-lg sm:rounded-xl focus:outline-none transition-colors text-base sm:text-lg text-black ${
                 errors.phone 
                   ? 'border-red-300 focus:border-red-500' 
                   : 'border-[#d4af37]/20 focus:border-[#d4af37]'
@@ -318,25 +318,25 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
           {/* Special Notes */}
           <div>
-            <label className="block text-sm font-bold text-black mb-3 uppercase tracking-widest">
+            <label className="block text-xs sm:text-sm font-bold text-black mb-2 sm:mb-3 uppercase tracking-widest">
               Special Requests or Notes
             </label>
             <textarea
               value={formData.notes}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              rows={4}
-              className="w-full px-4 py-4 border-2 border-[#d4af37]/20 rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-lg resize-none text-black"
+              rows={3}
+              className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-[#d4af37]/20 rounded-lg sm:rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-base sm:text-lg resize-none text-black"
               placeholder="Any special requests, preferred style, location details, or other notes..."
               disabled={isSubmitting}
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 sm:pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-4 px-8 border-2 border-black/20 text-black font-bold text-lg uppercase tracking-widest rounded-xl hover:bg-black/5 transition-all duration-300"
+              className="flex-1 py-3 sm:py-4 px-6 sm:px-8 border-2 border-black/20 text-black font-bold text-sm sm:text-lg uppercase tracking-widest rounded-lg sm:rounded-xl hover:bg-black/5 transition-all duration-300"
               disabled={isSubmitting}
             >
               Cancel
@@ -345,7 +345,7 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-4 px-8 bg-[#d4af37] text-black font-bold text-lg uppercase tracking-widest rounded-xl hover:bg-[#d4af37]/90 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
+              className="flex-1 py-3 sm:py-4 px-6 sm:px-8 bg-[#d4af37] text-black font-bold text-sm sm:text-lg uppercase tracking-widest rounded-lg sm:rounded-xl hover:bg-[#d4af37]/90 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center"
             >
               {isSubmitting ? (
                 <>
