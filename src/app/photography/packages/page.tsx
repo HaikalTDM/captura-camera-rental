@@ -222,11 +222,13 @@ const getIconForAddOn = (iconType: string) => {
 export default function PackagesPage() {
   const [activeTab, setActiveTab] = useState<'main' | 'second'>('main');
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
+  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
 
   const currentPackages = activeTab === 'main' ? mainShooterPackages : secondShooterPackages;
   const addOns = getActiveAddOns(); // Load from admin-editable data
   const categories = getActiveCategories();
 
+  // Add-on management functions
   const toggleAddOn = (addOnId: string) => {
     setSelectedAddOns(prev => 
       prev.includes(addOnId) 
