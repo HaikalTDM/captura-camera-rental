@@ -503,13 +503,6 @@ body {
 
 /* Photography Mobile Optimizations */
 @media (max-width: 768px) {
-  /* Fix floating WhatsApp button positioning */
-  .floating-whatsapp {
-    bottom: 1rem !important;
-    right: 1rem !important;
-    z-index: 40 !important;
-  }
-  
   /* Gallery mobile spacing */
   .gallery-mobile .space-y-6 > * + * {
     margin-top: 1.5rem !important;

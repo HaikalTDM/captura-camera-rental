@@ -7,7 +7,6 @@ import PhotographyNavigation from '@/components/PhotographyNavigation';
 import PhotographyCalendar from '@/components/PhotographyCalendar';
 import SocialMediaSection from '@/components/SocialMediaSection';
 import PhotographyGallery from '@/components/PhotographyGallery';
-import FloatingWhatsAppButton from '@/components/FloatingWhatsAppButton';
 
 interface Package {
   id: string;
@@ -682,8 +681,6 @@ export default function PhotographyPage() {
         </div>
       </footer>
 
-      {/* Floating WhatsApp Button */}
-      <FloatingWhatsAppButton />
     </div>
   );
 }

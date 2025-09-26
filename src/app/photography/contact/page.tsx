@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import PhotographyNavigation from '@/components/PhotographyNavigation';
 import WhatsAppButton from '@/components/WhatsAppButton';
-import FloatingWhatsAppButton from '@/components/FloatingWhatsAppButton';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -336,8 +335,6 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Floating WhatsApp Button */}
-      <FloatingWhatsAppButton />
     </div>
   );
 }
