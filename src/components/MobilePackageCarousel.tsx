@@ -21,7 +21,29 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const autoSlideRef = useRef<NodeJS.Timeout>();
+
+  // Reset carousel to first slide when type or packages change
+  useEffect(() => {
+    setCurrentIndex(0);
+  }, [type, packages]);
+
+  // Auto-slide functionality
+  useEffect(() => {
+    if (!isPaused && packages.length > 1) {
+      autoSlideRef.current = setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % packages.length);
+      }, 3000); // 3 seconds
+    }
+
+    return () => {
+      if (autoSlideRef.current) {
+        clearTimeout(autoSlideRef.current);
+      }
+    };
+  }, [currentIndex, isPaused, packages.length]);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % packages.length);
@@ -39,6 +61,7 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
   const handleTouchStart = (e: React.TouchEvent) => {
     setIsDragging(true);
     setStartX(e.touches[0].clientX);
+    setIsPaused(true); // Pause auto-slide when user interacts
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -49,6 +72,7 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
     
     // Threshold for swipe detection
     if (Math.abs(diff) > 50) {
+      e.preventDefault();
       if (diff > 0) {
         nextSlide();
       } else {
@@ -60,16 +84,20 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
 
   const handleTouchEnd = () => {
     setIsDragging(false);
+    // Resume auto-slide after 1 second of inactivity
+    setTimeout(() => setIsPaused(false), 1000);
   };
 
   // Mouse drag handlers for desktop testing
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
     setStartX(e.clientX);
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging) return;
+    e.preventDefault();
     
     const currentX = e.clientX;
     const diff = startX - currentX;
@@ -88,16 +116,7 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
     setIsDragging(false);
   };
 
-  // Auto-scroll the carousel to current index
-  useEffect(() => {
-    if (carouselRef.current) {
-      const cardWidth = carouselRef.current.offsetWidth;
-      carouselRef.current.scrollTo({
-        left: currentIndex * cardWidth,
-        behavior: 'smooth'
-      });
-    }
-  }, [currentIndex]);
+  // No need for scroll-based approach, using transform instead
 
   const getWhatsAppMessage = (pkg: Package) => {
     return encodeURIComponent(
@@ -109,7 +128,6 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
     <div className="lg:hidden mb-12 sm:mb-20">
       {/* Carousel Container */}
       <div
-        ref={carouselRef}
         className="relative overflow-hidden"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -121,10 +139,15 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
       >
         <div 
           className="flex transition-transform duration-300 ease-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+          style={{ 
+            transform: `translateX(-${currentIndex * 100}%)`,
+          }}
         >
-          {packages.map((pkg) => (
-            <div key={pkg.id} className="w-full flex-shrink-0 px-4">
+          {packages.map((pkg, index) => (
+            <div 
+              key={pkg.id} 
+              className="w-full flex-shrink-0 px-4"
+            >
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden h-auto">
                 {/* Package Header */}
                 <div className="p-6 pb-4">
@@ -177,49 +200,41 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
         </div>
       </div>
 
-      {/* Navigation Dots */}
-      <div className="flex justify-center mt-6 space-x-2">
-        {packages.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => goToSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentIndex
-                ? 'bg-[#d4af37] scale-110'
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
+      {/* Progress Bar */}
+      <div className="mt-6 px-4">
+        <div className="flex space-x-1">
+          {packages.map((_, index) => (
+            <div
+              key={index}
+              className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden cursor-pointer"
+              onClick={() => {
+                goToSlide(index);
+                setIsPaused(true);
+                setTimeout(() => setIsPaused(false), 1000);
+              }}
+            >
+              <div
+                className={`h-full transition-all duration-300 rounded-full ${
+                  index === currentIndex
+                    ? 'bg-[#d4af37] animate-pulse'
+                    : index < currentIndex
+                    ? 'bg-[#d4af37]'
+                    : 'bg-gray-200'
+                }`}
+                style={{
+                  width: index === currentIndex ? '100%' : index < currentIndex ? '100%' : '0%'
+                }}
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Navigation Arrows */}
-      <div className="flex justify-between items-center mt-4 px-4">
-        <button
-          onClick={prevSlide}
-          className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:text-[#d4af37] hover:bg-[#d4af37]/5 transition-all duration-300"
-          aria-label="Previous package"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
-
-        <div className="text-center">
-          <span className="text-sm text-gray-500 font-medium">
-            {currentIndex + 1} of {packages.length}
-          </span>
-        </div>
-
-        <button
-          onClick={nextSlide}
-          className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-gray-600 hover:text-[#d4af37] hover:bg-[#d4af37]/5 transition-all duration-300"
-          aria-label="Next package"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+      {/* Package Counter */}
+      <div className="text-center mt-4">
+        <span className="text-sm text-gray-500 font-medium">
+          {currentIndex + 1} of {packages.length}
+        </span>
       </div>
     </div>
   );

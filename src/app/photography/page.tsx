@@ -7,6 +7,7 @@ import PhotographyNavigation from '@/components/PhotographyNavigation';
 import PhotographyCalendar from '@/components/PhotographyCalendar';
 import SocialMediaSection from '@/components/SocialMediaSection';
 import PhotographyGallery from '@/components/PhotographyGallery';
+import HorizontalGridGallery from '@/components/HorizontalGridGallery';
 import MobilePackageCarousel from '@/components/MobilePackageCarousel';
 
 interface Package {
@@ -469,8 +470,8 @@ export default function PhotographyPage() {
             </div>
           </div>
 
-          {/* Professional Masonry Gallery */}
-          <PhotographyGallery 
+          {/* Professional Horizontal Grid Gallery */}
+          <HorizontalGridGallery 
             images={filteredImages}
             currentFilter={galleryFilter}
             isLoading={isGalleryLoading}
@@ -551,10 +552,20 @@ export default function PhotographyPage() {
           </div>
 
           {/* Mobile Package Carousel */}
-          <MobilePackageCarousel 
-            packages={activeTab === 'main' ? mainShooterPackages : secondShooterPackages}
-            type={activeTab}
-          />
+          {activeTab === 'main' && (
+            <MobilePackageCarousel 
+              key="main-carousel"
+              packages={mainShooterPackages}
+              type="main"
+            />
+          )}
+          {activeTab === 'second' && (
+            <MobilePackageCarousel 
+              key="second-carousel"
+              packages={secondShooterPackages}
+              type="second"
+            />
+          )}
 
 
           {/* Availability Calendar */}

@@ -69,9 +69,9 @@ export default function ContactPage() {
         </svg>
       ),
       title: 'Email',
-      content: 'hello@shotbymirul.com',
+      content: 'captura.my@gmail.com',
       description: 'Send us detailed inquiries via email',
-      action: () => window.open('mailto:hello@shotbymirul.com?subject=Photography Inquiry', '_self')
+      action: () => window.open('mailto:captura.my@gmail.com?subject=Photography Inquiry', '_self')
     },
     {
       icon: (
