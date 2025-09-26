@@ -499,11 +499,11 @@ export default function PhotographyPage() {
           </div>
 
           {/* Package Type Tabs */}
-          <div className="flex justify-center mb-12">
-            <div className="bg-white rounded-lg border-2 border-[#d4af37]/20 p-2 shadow-lg">
+          <div className="flex justify-center items-center mb-12 px-4">
+            <div className="bg-white rounded-lg border-2 border-[#d4af37]/20 p-2 shadow-lg inline-flex">
               <button
                 onClick={() => setActiveTab('main')}
-                className={`px-10 py-4 font-bold text-sm uppercase tracking-widest rounded-lg transition-all duration-300 ${
+                className={`px-6 sm:px-10 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-widest rounded-lg transition-all duration-300 ${
                   activeTab === 'main'
                     ? 'bg-black text-white shadow-lg'
                     : 'text-black hover:bg-[#d4af37]/10 hover:text-[#d4af37]'
@@ -513,7 +513,7 @@ export default function PhotographyPage() {
               </button>
               <button
                 onClick={() => setActiveTab('second')}
-                className={`px-10 py-4 font-bold text-sm uppercase tracking-widest rounded-lg transition-all duration-300 ${
+                className={`px-6 sm:px-10 py-3 sm:py-4 font-bold text-xs sm:text-sm uppercase tracking-widest rounded-lg transition-all duration-300 ${
                   activeTab === 'second'
                     ? 'bg-black text-white shadow-lg'
                     : 'text-black hover:bg-[#d4af37]/10 hover:text-[#d4af37]'
