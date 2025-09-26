@@ -393,7 +393,7 @@ export default function PackagesPage() {
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                       }`}
                     >
-                      {selectedPackage === pkg.id ? 'Selected' : 'Select Package'}
+                      {selectedPackage === pkg.id ? '✓ Selected' : 'Select Package'}
                     </button>
                     
                     <WhatsAppButton

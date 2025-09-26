@@ -161,13 +161,23 @@ export default function MobilePackagePageCarousel({
     return encodeURIComponent(message);
   };
 
-  // Handle package selection
+  // Handle package selection/deselection
   const handlePackageSelect = (pkg: Package) => {
     if (onPackageSelect) {
-      onPackageSelect(pkg.id);
+      // Toggle selection: if already selected, deselect it
+      const newSelection = selectedPackage === pkg.id ? null : pkg.id;
+      onPackageSelect(newSelection);
+      
+      // If deselecting, hide add-ons and clear selected add-ons
+      if (newSelection === null) {
+        setShowAddOns(false);
+        setSelectedAddOns([]);
+        setIsPaused(false); // Resume auto-slide
+      } else {
+        setShowAddOns(true);
+        setIsPaused(true); // Pause auto-slide when user is customizing
+      }
     }
-    setShowAddOns(true);
-    setIsPaused(true); // Pause auto-slide when user is customizing
   };
 
   return (
@@ -271,11 +281,11 @@ export default function MobilePackagePageCarousel({
                       onClick={() => handlePackageSelect(pkg)}
                       className={`w-full py-3 px-6 rounded-xl font-bold text-sm uppercase tracking-wider transition-all duration-300 ${
                         selectedPackage === pkg.id
-                          ? 'bg-[#d4af37] text-black'
+                          ? 'bg-[#d4af37] text-black hover:bg-[#b8941f]'
                           : 'bg-gray-100 text-black hover:bg-gray-200'
                       }`}
                     >
-                      {selectedPackage === pkg.id ? '✓ Selected' : 'Select Package'}
+                      {selectedPackage === pkg.id ? '✓ Selected (Tap to Deselect)' : 'Select Package'}
                     </button>
 
                     {/* Add-ons Button - Show only if package is selected */}
