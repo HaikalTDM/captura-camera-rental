@@ -110,17 +110,17 @@ export default function SocialMediaSection() {
           </p>
           
           {/* Social Links */}
-          <div className="flex justify-center space-x-6 mb-12">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 sm:gap-6 mb-12">
             {socialLinks.map((social) => (
               <a
                 key={social.name}
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center space-x-3 px-6 py-3 rounded-full text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg ${social.color}`}
+                className={`flex items-center space-x-3 px-4 sm:px-6 py-3 rounded-full text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg w-full sm:w-auto max-w-xs justify-center ${social.color}`}
               >
                 {social.icon}
-                <span>Follow on {social.name}</span>
+                <span className="text-sm sm:text-base">Follow on {social.name}</span>
               </a>
             ))}
           </div>
