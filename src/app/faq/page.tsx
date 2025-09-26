@@ -148,18 +148,18 @@ export default function FAQPage() {
       <PhotographyNavigation />
 
       {/* Hero Section */}
-      <section className="py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-7xl md:text-8xl font-bold mb-8 font-serif text-black leading-tight">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-8 font-serif text-black leading-tight">
             Frequently
             <br />
             <span className="italic">Asked Questions</span>
           </h1>
-          <div className="w-24 h-px bg-[#d4af37] mx-auto mb-8"></div>
-          <p className="text-xl text-black/80 mb-4 font-medium">
+          <div className="w-16 sm:w-24 h-px bg-[#d4af37] mx-auto mb-6 sm:mb-8"></div>
+          <p className="text-lg sm:text-xl text-black/80 mb-3 sm:mb-4 font-medium">
             Everything you need to know
           </p>
-          <p className="text-lg text-black/60 max-w-3xl mx-auto mb-16 leading-relaxed">
+          <p className="text-base sm:text-lg text-black/60 max-w-3xl mx-auto mb-12 sm:mb-16 leading-relaxed px-4">
             Find answers to common questions about our photography services, booking process, pricing, and more.
             Can't find what you're looking for? Contact us directly.
           </p>

@@ -260,32 +260,32 @@ export default function GalleryPage() {
       <PhotographyNavigation />
 
       {/* Gallery Header */}
-      <section className="py-20 bg-white">
+      <section className="py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h1 className="text-6xl md:text-7xl font-bold text-black mb-6 font-serif">
+          <div className="text-center mb-12 sm:mb-16">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black mb-4 sm:mb-6 font-serif">
               Photography Gallery
             </h1>
-            <div className="w-24 h-1 bg-gradient-to-r from-[#d4af37] to-[#b8941f] mx-auto mb-8 rounded-full"></div>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <div className="w-16 sm:w-24 h-1 bg-gradient-to-r from-[#d4af37] to-[#b8941f] mx-auto mb-6 sm:mb-8 rounded-full"></div>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-4">
               Browse our complete portfolio of wedding, corporate, and portrait photography. 
               Each image tells a story, crafted with cinematic precision and artistic vision.
             </p>
           </div>
 
           {/* Category Filter */}
-          <div className="flex flex-wrap justify-center gap-4 mb-16">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-12 sm:mb-16 px-4">
             {(['all', 'wedding', 'corporate', 'graduation', 'portrait', 'event'] as const).map((category) => (
               <button
                 key={category}
                 onClick={() => handleFilterChange(category)}
-                className={`px-6 py-3 text-sm font-bold uppercase tracking-widest rounded-full border-2 transition-all duration-300 ${
+                className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full border-2 transition-all duration-300 ${
                   galleryFilter === category
                     ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-lg'
                     : 'bg-white text-black border-[#d4af37]/30 hover:border-[#d4af37] hover:text-[#d4af37] hover:shadow-md'
                 }`}
               >
-                {category === 'all' ? 'All Work' : category.charAt(0).toUpperCase() + category.slice(1)}
+                {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
               </button>
             ))}
           </div>
