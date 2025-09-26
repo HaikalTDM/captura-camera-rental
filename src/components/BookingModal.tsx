@@ -216,48 +216,29 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
           
           {/* Step 1: Service Details */}
           {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
+            <div className="space-y-4">
+              <div className="text-center mb-4">
                 <h3 className="text-lg sm:text-xl font-bold text-black mb-2">What type of photography do you need?</h3>
                 <p className="text-sm text-black/60">Choose the service that best fits your event</p>
               </div>
 
-              {/* Photography Type Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                {photographyTypes.map(type => (
-                  <div
-                    key={type.value}
-                    onClick={() => handleInputChange('photographyType', type.value)}
-                    className={`p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      formData.photographyType === type.value
-                        ? 'border-[#d4af37] bg-[#d4af37]/10 shadow-lg'
-                        : 'border-gray-200 hover:border-[#d4af37]/50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-bold text-black">{type.label}</h4>
-                        <p className="text-xs text-black/60 mt-1">
-                          {type.value === 'wedding' && 'Ceremonies, receptions, celebrations'}
-                          {type.value === 'engagement' && 'Pre-wedding shoots, proposals'}
-                          {type.value === 'graduation' && 'Academic ceremonies, portraits'}
-                          {type.value === 'event' && 'Parties, gatherings, special occasions'}
-                          {type.value === 'corporate' && 'Business events, headshots, conferences'}
-                          {type.value === 'private-session' && 'Personal portraits, family photos'}
-                        </p>
-                      </div>
-                      <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${
-                        formData.photographyType === type.value
-                          ? 'border-[#d4af37] bg-[#d4af37]'
-                          : 'border-gray-300'
-                      }`}>
-                        {formData.photographyType === type.value && (
-                          <div className="w-2 h-2 bg-white rounded-full m-0.5"></div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              {/* Photography Type Dropdown */}
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-black mb-2 uppercase tracking-widest">
+                  Photography Type *
+                </label>
+                <select
+                  value={formData.photographyType}
+                  onChange={(e) => handleInputChange('photographyType', e.target.value as any)}
+                  className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-[#d4af37]/20 rounded-lg sm:rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-base sm:text-lg bg-white text-black"
+                  disabled={isSubmitting}
+                >
+                  {photographyTypes.map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Special Notes for Step 1 */}
@@ -268,7 +249,7 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
                 <textarea
                   value={formData.notes}
                   onChange={(e) => handleInputChange('notes', e.target.value)}
-                  rows={3}
+                  rows={2}
                   className="w-full px-3 sm:px-4 py-3 sm:py-4 border-2 border-[#d4af37]/20 rounded-lg sm:rounded-xl focus:border-[#d4af37] focus:outline-none transition-colors text-base sm:text-lg resize-none text-black"
                   placeholder="Any special requests, preferred style, location details..."
                   disabled={isSubmitting}
@@ -279,8 +260,8 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
           {/* Step 2: Your Information */}
           {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="text-center mb-6">
+            <div className="space-y-4">
+              <div className="text-center mb-4">
                 <h3 className="text-lg sm:text-xl font-bold text-black mb-2">Tell us about yourself</h3>
                 <p className="text-sm text-black/60">We'll use this to contact you about your booking</p>
               </div>
