@@ -13,8 +13,8 @@ export default function PhotographyNavigation() {
     { name: 'Home', href: '/photography', icon: '🏠' },
     { name: 'Gallery', href: '/photography/gallery', icon: '🖼️' },
     { name: 'Packages', href: '/photography/packages', icon: '📦' },
-    { name: 'Testimonials', href: '/testimonials', icon: '⭐' },
-    { name: 'FAQ', href: '/faq', icon: '❓' },
+    { name: 'Testimonials', href: '/photography/testimonials', icon: '⭐' },
+    { name: 'FAQ', href: '/photography/faq', icon: '❓' },
     { name: 'Contact', href: '/photography/contact', icon: '📞' }
   ];
 

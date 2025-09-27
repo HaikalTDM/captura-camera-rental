@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getCameraById, getAllBookings } from '@/lib/api/bookings';
 import type { Camera, Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function CameraDetailsPage() {
   const params = useParams();
@@ -208,7 +209,7 @@ export default function CameraDetailsPage() {
                   View Booking
                 </Link>
                 <a
-                  href={`https://wa.me/${activeBooking.customerPhone.replace(/[^0-9]/g, '')}`}
+                  href={`https://wa.me/${formatPhoneWithCountryCode(activeBooking.customerPhone)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"

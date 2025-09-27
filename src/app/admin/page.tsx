@@ -76,6 +76,9 @@ export default function AdminDashboard() {
   );
   const recentBookings = bookings.slice(0, 5);
   const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
+  console.log('Dashboard - Total bookings:', bookings.length);
+  console.log('Dashboard - Pending approvals:', pendingApprovals.length);
+  console.log('Dashboard - Booking statuses:', bookings.map(b => ({ id: b.id, status: b.status, booking_status: b.booking_status })));
   const overduePayments = bookings.filter(b =>
     !b.final_payment_paid &&
     new Date(b.end_date) < new Date() &&

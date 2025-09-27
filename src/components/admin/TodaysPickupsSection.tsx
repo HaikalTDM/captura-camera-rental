@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getTodaysPickups, markEquipmentPickedUp, type PickupSchedule } from '@/lib/api/pickup-scheduling';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 interface TodaysPickupsSectionProps {
   onPickupUpdate?: () => void;
@@ -50,7 +51,7 @@ export default function TodaysPickupsSection({ onPickupUpdate }: TodaysPickupsSe
   };
 
   const formatPhoneForWhatsApp = (phone: string) => {
-    return phone.replace(/[^0-9]/g, '');
+    return formatPhoneWithCountryCode(phone);
   };
 
   const generateWhatsAppMessage = (pickup: PickupSchedule) => {

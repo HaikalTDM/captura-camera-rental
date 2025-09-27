@@ -36,6 +36,13 @@ export default function PhotoUpload() {
         return null;
       }
       
+      // Check file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (file.size > maxSize) {
+        alert(`File "${file.name}" is too large. Please select images smaller than 5MB.`);
+        return null;
+      }
+      
       return {
         id: generateId(),
         file,
@@ -91,23 +98,48 @@ export default function PhotoUpload() {
     });
   };
 
-  const simulateUpload = async (file: UploadFile) => {
+  const uploadToDatabase = async (file: UploadFile) => {
     updateFile(file.id, { status: 'uploading', progress: 0 });
     
-    // Simulate upload progress
-    for (let progress = 0; progress <= 100; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      updateFile(file.id, { progress });
-    }
-    
-    // Simulate success/error
-    const success = Math.random() > 0.1; // 90% success rate
-    if (success) {
-      updateFile(file.id, { status: 'completed', progress: 100 });
-    } else {
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('file', file.file);
+      formData.append('title', file.title);
+      formData.append('description', file.description);
+      formData.append('category', file.category);
+      formData.append('isPublic', file.isPublic.toString());
+      formData.append('clientId', file.clientId);
+      
+      // Simulate progress updates
+      updateFile(file.id, { progress: 25 });
+      
+      // Upload to our API endpoint
+      const response = await fetch('/api/photography/gallery-new', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      updateFile(file.id, { progress: 75 });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Upload failed: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        updateFile(file.id, { status: 'completed', progress: 100 });
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+      
+    } catch (error) {
+      console.error('Upload error:', error);
       updateFile(file.id, { 
         status: 'error', 
-        errorMessage: 'Upload failed. Please try again.'
+        errorMessage: error instanceof Error ? error.message : 'Upload failed. Please try again.'
       });
     }
   };
@@ -116,11 +148,11 @@ export default function PhotoUpload() {
     setIsUploading(true);
     const pendingFiles = uploadFiles.filter(f => f.status === 'pending');
     
-    // Upload files in batches of 3
-    const batchSize = 3;
-    for (let i = 0; i < pendingFiles.length; i += batchSize) {
-      const batch = pendingFiles.slice(i, i + batchSize);
-      await Promise.all(batch.map(simulateUpload));
+    // Upload files one by one
+    for (const file of pendingFiles) {
+      await uploadToDatabase(file);
+      // Add a small delay between uploads to prevent overwhelming the server
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
     
     setIsUploading(false);

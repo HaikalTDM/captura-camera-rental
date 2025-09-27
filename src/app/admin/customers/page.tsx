@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getAllCustomers, getAllBookings } from '@/lib/api/bookings';
 import type { Customer, Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -407,7 +408,7 @@ export default function CustomersPage() {
               {/* Actions */}
               <div className="flex gap-2">
                 <a
-                  href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}`}
+                  href={`https://wa.me/${formatPhoneWithCountryCode(customer.phone)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded-lg text-sm text-center transition-colors"

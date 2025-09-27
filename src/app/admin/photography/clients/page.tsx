@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 interface Client {
   id: string;
@@ -106,7 +107,8 @@ export default function ClientManagement() {
 
   const handleWhatsAppContact = (client: Client) => {
     const message = `Hi ${client.name}! Thank you for choosing Captura Photography. How can I assist you today?`;
-    window.open(`https://wa.me/${client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+    const formattedPhone = formatPhoneWithCountryCode(client.phone);
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const getInitials = (name: string) => {

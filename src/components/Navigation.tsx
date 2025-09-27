@@ -13,13 +13,13 @@ export default function Navigation() {
   const handleCamerasClick = () => {
     setIsMenuOpen(false);
 
-    // If we're not on the home page, navigate to home first
-    if (pathname !== '/') {
-      router.push('/#cameras');
+    // If we're not on the rental page, navigate to rental first
+    if (pathname !== '/rental') {
+      router.push('/rental#cameras');
       return;
     }
 
-    // If we're on the home page, just scroll to cameras section
+    // If we're on the rental page, just scroll to cameras section
     const section = document.getElementById('cameras');
     if (section) {
       section.scrollIntoView({ behavior: 'smooth' });
@@ -69,25 +69,25 @@ export default function Navigation() {
                 Cameras
               </button>
               <Link
-                href="/gallery"
+                href="/rental/gallery"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Gallery
               </Link>
               <Link
-                href="/how-to-book"
+                href="/rental/how-to-book"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 How to Book
               </Link>
               <Link
-                href="/equipment"
+                href="/rental/equipment"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Equipment
               </Link>
               <Link
-                href="/support"
+                href="/rental/support"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium transition-colors"
               >
                 Support
@@ -135,35 +135,35 @@ export default function Navigation() {
                 Cameras
               </button>
               <Link
-                href="/gallery"
+                href="/rental/gallery"
                 className="text-gray-600 hover:text-gray-900 px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Gallery
               </Link>
               <Link
-                href="/how-to-book"
+                href="/rental/how-to-book"
                 className="text-gray-600 hover:text-gray-900 px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 How to Book
               </Link>
               <Link
-                href="/equipment"
+                href="/rental/equipment"
                 className="text-gray-600 hover:text-gray-900 px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Equipment
               </Link>
               <Link
-                href="/faq"
+                href="/rental/faq"
                 className="text-gray-600 hover:text-gray-900 px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >
                 FAQ
               </Link>
               <Link
-                href="/support"
+                href="/rental/support"
                 className="text-gray-600 hover:text-gray-900 px-4 py-3 rounded-md text-base font-medium transition-colors w-full text-left min-h-[48px] flex items-center"
                 onClick={() => setIsMenuOpen(false)}
               >

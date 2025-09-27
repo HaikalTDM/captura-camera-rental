@@ -239,7 +239,7 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
         {/* Footer */}
         <div className="border-t border-gray-200 p-6 bg-gray-50">
           {/* Agreement Checkbox */}
-          <div className="flex items-start space-x-3 mb-4">
+          <div className="flex items-start space-x-3 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
             <input
               type="checkbox"
               id="termsCheckbox"
@@ -247,10 +247,18 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
               onChange={(e) => setIsAgreed(e.target.checked)}
               className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
-            <label htmlFor="termsCheckbox" className="text-sm text-gray-800 font-medium">
+            <label htmlFor="termsCheckbox" className="text-sm text-gray-800 font-medium cursor-pointer">
               {currentContent.agreementText}
             </label>
           </div>
+          
+          {!isAgreed && (
+            <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">
+                ⚠️ Please check the agreement checkbox above to continue with your booking.
+              </p>
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3">
@@ -269,7 +277,7 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
                   : 'bg-gray-300 text-gray-600 cursor-not-allowed'
               }`}
             >
-              Continue
+              {isAgreed ? 'Continue to Booking' : 'Check Agreement First'}
             </button>
           </div>
         </div>

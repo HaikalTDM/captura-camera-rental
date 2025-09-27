@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { getCustomerById, getAllBookings } from '@/lib/api/bookings';
 import type { Customer, Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function CustomerDetailsPage() {
   const params = useParams();
@@ -426,7 +427,7 @@ export default function CustomerDetailsPage() {
             </h3>
             <div className="space-y-3">
               <a
-                href={`https://wa.me/${customer.phone.replace(/[^0-9]/g, '')}`}
+                href={`https://wa.me/${formatPhoneWithCountryCode(customer.phone)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import PhotographyNavigation from '@/components/PhotographyNavigation';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ export default function ContactPage() {
     
     if (name) whatsappMessage += `Name: ${name}\n`;
     if (email) whatsappMessage += `Email: ${email}\n`;
-    if (phone) whatsappMessage += `Phone: ${phone}\n`;
+    if (phone) whatsappMessage += `Phone: ${formatPhoneWithCountryCode(phone)}\n`;
     if (eventType) whatsappMessage += `Event Type: ${eventType}\n`;
     if (eventDate) whatsappMessage += `Event Date: ${eventDate}\n`;
     if (message) whatsappMessage += `Additional Details: ${message}\n`;

@@ -39,7 +39,7 @@ export default function HowToBookPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
-              href="/#cameras"
+              href="/rental#cameras"
               className="bg-white hover:bg-gray-100 text-purple-600 font-semibold py-3 px-8 rounded-lg transition-colors duration-200 shadow-lg"
             >
               Browse Cameras

@@ -7,6 +7,23 @@
 
 import { supabase } from '@/lib/supabase'
 import type { Booking } from '@/lib/supabase'
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter'
+
+// Helper function to get camera info
+const getCameraInfo = async (cameraId: string) => {
+  const { data: camera, error } = await supabase
+    .from('cameras')
+    .select('name, model')
+    .eq('id', cameraId)
+    .single();
+  
+  if (error) {
+    console.error('Error fetching camera info:', error);
+    return { name: 'Unknown Camera', model: '' };
+  }
+  
+  return camera || { name: 'Unknown Camera', model: '' };
+};
 
 export interface PickupSchedule {
   id: string
@@ -43,8 +60,7 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
         equipment_picked_up,
         total_amount,
         notes,
-        customer:customers(full_name, phone, email),
-        camera:cameras(name, model)
+        customer:customers(full_name, phone, email)
       `)
       .eq('pickup_date', today)
       .eq('equipment_picked_up', false)
@@ -52,13 +68,25 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
       .order('created_at', { ascending: true });
 
     if (!pickupsError && pickupsWithDate && pickupsWithDate.length > 0) {
-      return pickupsWithDate.map(booking => ({
+      // Get camera info for all bookings
+      const bookingsWithCameraInfo = await Promise.all(
+        pickupsWithDate.map(async (booking) => {
+          const cameraInfo = await getCameraInfo(booking.camera_id);
+          return {
+            ...booking,
+            camera_name: cameraInfo.name,
+            camera_model: cameraInfo.model
+          };
+        })
+      );
+
+      return bookingsWithCameraInfo.map(booking => ({
         id: booking.id,
         customer_name: booking.customer?.full_name || 'Unknown Customer',
-        customer_phone: booking.customer?.phone || '',
+        customer_phone: booking.customer?.phone ? formatPhoneWithCountryCode(booking.customer.phone) : '',
         customer_email: booking.customer?.email || '',
-        camera_name: booking.camera?.name || 'Unknown Camera',
-        camera_model: booking.camera?.model || '',
+        camera_name: booking.camera_name,
+        camera_model: booking.camera_model,
         pickup_date: booking.pickup_date || today,
         start_date: booking.start_date,
         end_date: booking.end_date,
@@ -80,8 +108,7 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
         equipment_picked_up,
         total_amount,
         notes,
-        customer:customers(full_name, phone, email),
-        camera:cameras(name, model)
+        customer:customers(full_name, phone, email)
       `)
       .eq('equipment_picked_up', false)
       .in('booking_status', ['confirmed', 'approved'])
@@ -101,13 +128,25 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
       return calculatedPickupDate === today;
     });
 
-    return todaysPickups.map(booking => ({
+    // Get camera info for all bookings
+    const bookingsWithCameraInfo = await Promise.all(
+      todaysPickups.map(async (booking) => {
+        const cameraInfo = await getCameraInfo(booking.camera_id);
+        return {
+          ...booking,
+          camera_name: cameraInfo.name,
+          camera_model: cameraInfo.model
+        };
+      })
+    );
+
+    return bookingsWithCameraInfo.map(booking => ({
       id: booking.id,
       customer_name: booking.customer?.full_name || 'Unknown Customer',
       customer_phone: booking.customer?.phone || '',
       customer_email: booking.customer?.email || '',
-      camera_name: booking.camera?.name || 'Unknown Camera',
-      camera_model: booking.camera?.model || '',
+      camera_name: booking.camera_name,
+      camera_model: booking.camera_model,
       pickup_date: (() => {
         const startDate = new Date(booking.start_date);
         const pickupDate = new Date(startDate);
@@ -145,21 +184,32 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
         equipment_picked_up,
         total_amount,
         notes,
-        customer:customers(full_name, phone, email),
-        camera:cameras(name, model)
+        customer:customers(full_name, phone, email)
       `)
       .eq('pickup_date', date)
       .in('booking_status', ['confirmed', 'approved'])
       .order('created_at', { ascending: true });
 
     if (!pickupsError && pickupsWithDate && pickupsWithDate.length > 0) {
-      return pickupsWithDate.map(booking => ({
+      // Get camera info for all bookings
+      const bookingsWithCameraInfo = await Promise.all(
+        pickupsWithDate.map(async (booking) => {
+          const cameraInfo = await getCameraInfo(booking.camera_id);
+          return {
+            ...booking,
+            camera_name: cameraInfo.name,
+            camera_model: cameraInfo.model
+          };
+        })
+      );
+
+      return bookingsWithCameraInfo.map(booking => ({
         id: booking.id,
         customer_name: booking.customer?.full_name || 'Unknown Customer',
-        customer_phone: booking.customer?.phone || '',
+        customer_phone: booking.customer?.phone ? formatPhoneWithCountryCode(booking.customer.phone) : '',
         customer_email: booking.customer?.email || '',
-        camera_name: booking.camera?.name || 'Unknown Camera',
-        camera_model: booking.camera?.model || '',
+        camera_name: booking.camera_name,
+        camera_model: booking.camera_model,
         pickup_date: booking.pickup_date || date,
         start_date: booking.start_date,
         end_date: booking.end_date,
@@ -186,8 +236,7 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
         equipment_picked_up,
         total_amount,
         notes,
-        customer:customers(full_name, phone, email),
-        camera:cameras(name, model)
+        customer:customers(full_name, phone, email)
       `)
       .eq('start_date', rentalStartDateString)
       .in('booking_status', ['confirmed', 'approved'])
@@ -198,13 +247,25 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
       return [];
     }
 
-    return (calculatedPickups || []).map(booking => ({
+    // Get camera info for all bookings
+    const bookingsWithCameraInfo = await Promise.all(
+      (calculatedPickups || []).map(async (booking) => {
+        const cameraInfo = await getCameraInfo(booking.camera_id);
+        return {
+          ...booking,
+          camera_name: cameraInfo.name,
+          camera_model: cameraInfo.model
+        };
+      })
+    );
+
+    return bookingsWithCameraInfo.map(booking => ({
       id: booking.id,
       customer_name: booking.customer?.full_name || 'Unknown Customer',
       customer_phone: booking.customer?.phone || '',
       customer_email: booking.customer?.email || '',
-      camera_name: booking.camera?.name || 'Unknown Camera',
-      camera_model: booking.camera?.model || '',
+      camera_name: booking.camera_name,
+      camera_model: booking.camera_model,
       pickup_date: date,
       start_date: booking.start_date,
       end_date: booking.end_date,

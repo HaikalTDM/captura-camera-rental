@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import { supabase } from '@/lib/supabase';
 
 interface Booking {
   id: string;
@@ -23,67 +25,66 @@ interface Booking {
 }
 
 export default function BookingManagement() {
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      clientName: 'Ahmad & Siti',
-      clientEmail: 'ahmad.siti@email.com',
-      clientPhone: '+60123456789',
-      eventType: 'Wedding',
-      eventDate: '2024-02-15',
-      eventTime: '10:00 AM',
-      eventLocation: 'Putrajaya Convention Centre',
-      package: 'Combo Nikah + Sanding',
-      addOns: ['Drone Coverage', 'Rush Delivery'],
-      totalAmount: 1200,
-      depositPaid: 300,
-      status: 'confirmed',
-      notes: 'Traditional Malay wedding, prefer gold theme in editing',
-      createdAt: '2024-01-15',
-      source: 'whatsapp'
-    },
-    {
-      id: '2',
-      clientName: 'Corporate Event Sdn Bhd',
-      clientEmail: 'events@company.com',
-      clientPhone: '+60987654321',
-      eventType: 'Corporate',
-      eventDate: '2024-02-18',
-      eventTime: '2:00 PM',
-      eventLocation: 'Kuala Lumpur Convention Centre',
-      package: 'Corporate Package',
-      addOns: ['Additional Hour'],
-      totalAmount: 900,
-      depositPaid: 0,
-      status: 'pending',
-      notes: 'Annual company dinner, need formal photography style',
-      createdAt: '2024-01-18',
-      source: 'website'
-    },
-    {
-      id: '3',
-      clientName: 'Fatimah binti Abdullah',
-      clientEmail: 'fatimah@email.com',
-      clientPhone: '+60111222333',
-      eventType: 'Graduation',
-      eventDate: '2024-02-20',
-      eventTime: '9:00 AM',
-      eventLocation: 'Universiti Malaya',
-      package: 'Graduation Package',
-      addOns: [],
-      totalAmount: 350,
-      depositPaid: 100,
-      status: 'confirmed',
-      notes: 'Family graduation photos, include group shots',
-      createdAt: '2024-01-20',
-      source: 'referral'
-    }
-  ]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [filter, setFilter] = useState<'all' | 'inquiry' | 'pending' | 'confirmed' | 'completed' | 'cancelled'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  // Load bookings from database
+  useEffect(() => {
+    loadBookings();
+  }, []);
+
+  const loadBookings = async () => {
+    try {
+      setIsLoading(true);
+      const { data: bookingsData, error } = await supabase
+        .from('photography_bookings')
+        .select(`
+          *,
+          customer:customers(full_name, email, phone),
+          package:photography_packages(name),
+          addons:photography_booking_addons(
+            addon:photography_addons(name)
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading photography bookings:', error);
+        return;
+      }
+
+      // Transform the data to match our interface
+      const transformedBookings: Booking[] = (bookingsData || []).map(booking => ({
+        id: booking.id,
+        clientName: booking.customer?.full_name || 'Unknown Client',
+        clientEmail: booking.customer?.email || '',
+        clientPhone: booking.customer?.phone || '',
+        eventType: booking.event_type || '',
+        eventDate: booking.event_date || '',
+        eventTime: booking.event_time || '',
+        eventLocation: booking.event_location || '',
+        package: booking.package?.name || '',
+        addOns: booking.addons?.map((addon: any) => addon.addon?.name).filter(Boolean) || [],
+        totalAmount: booking.total_amount || 0,
+        depositPaid: booking.deposit_paid || 0,
+        status: booking.status || 'inquiry',
+        notes: booking.notes || '',
+        createdAt: booking.created_at || '',
+        source: booking.source || 'manual'
+      }));
+
+      setBookings(transformedBookings);
+    } catch (error) {
+      console.error('Error in loadBookings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const filteredBookings = bookings.filter(booking => {
     const matchesFilter = filter === 'all' || booking.status === filter;
@@ -143,7 +144,8 @@ export default function BookingManagement() {
 
   const handleWhatsAppContact = (booking: Booking) => {
     const message = `Hi ${booking.clientName}! This is regarding your ${booking.eventType} photography booking on ${new Date(booking.eventDate).toLocaleDateString()}. How can I assist you today?`;
-    window.open(`https://wa.me/${booking.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`, '_blank');
+    const formattedPhone = formatPhoneWithCountryCode(booking.clientPhone);
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const totalRevenue = filteredBookings.reduce((sum, booking) => 
@@ -154,6 +156,17 @@ export default function BookingManagement() {
     booking.status === 'confirmed' && booking.depositPaid < booking.totalAmount 
       ? sum + (booking.totalAmount - booking.depositPaid) : sum, 0
   );
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading photography bookings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { bulkCreateBookings, createCustomer, getAllCustomers, getAllCameras } from '@/lib/api/bookings';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function ImportBookingsPage() {
   const router = useRouter();
@@ -65,7 +66,7 @@ David Lim,david@email.com,0176543210,DJI Osmo Pocket 3,2024-02-01,2024-02-03,80,
               full_name: rowData.customer_name,
               email: rowData.customer_email,
               phone: rowData.customer_phone,
-              whatsapp: rowData.customer_phone // Default to same as phone
+              whatsapp: formatPhoneWithCountryCode(rowData.customer_phone) // Format phone with country code
             });
           }
         }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 
 interface CalendarEvent {
   id: string;
@@ -25,67 +26,86 @@ export default function CalendarManagement() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>([
-    {
-      id: '1',
-      title: 'Ahmad & Siti Wedding',
-      date: '2024-12-15',
-      time: '10:00',
-      type: 'booking',
-      status: 'confirmed',
-      client: 'Ahmad & Siti Rahman',
-      location: 'Putrajaya Convention Centre',
-      duration: 8,
-      notes: 'Traditional Malay wedding ceremony'
-    },
-    {
-      id: '2',
-      title: 'Corporate Event Photography',
-      date: '2024-12-18',
-      time: '14:00',
-      type: 'booking',
-      status: 'pending',
-      client: 'Corporate Events Sdn Bhd',
-      location: 'KL Convention Centre',
-      duration: 4,
-      notes: 'Annual company dinner'
-    },
-    {
-      id: '3',
-      title: 'Client Consultation',
-      date: '2024-12-20',
-      time: '16:00',
-      type: 'consultation',
-      status: 'confirmed',
-      client: 'Sarah & James Thompson',
-      location: 'Office',
-      duration: 1,
-      notes: 'Discuss engagement shoot details'
-    },
-    {
-      id: '4',
-      title: 'Photo Editing Session',
-      date: '2024-12-22',
-      time: '09:00',
-      type: 'editing',
-      status: 'confirmed',
-      duration: 6,
-      notes: 'Edit wedding photos for Ahmad & Siti'
-    },
-    {
-      id: '5',
-      title: 'Personal Day Off',
-      date: '2024-12-25',
-      time: '00:00',
-      type: 'blocked',
-      status: 'confirmed',
-      duration: 24,
-      notes: 'Christmas holiday'
-    }
-  ]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
+
+  // Load events from database
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Load photography bookings
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('photography_bookings')
+        .select(`
+          id,
+          event_date,
+          event_time,
+          event_type,
+          status,
+          notes,
+          customer:customers(full_name),
+          package:photography_packages(name)
+        `)
+        .order('event_date', { ascending: true });
+
+      if (bookingsError) {
+        console.error('Error loading photography bookings:', bookingsError);
+      }
+
+      // Load calendar events
+      const { data: calendarEvents, error: calendarError } = await supabase
+        .from('photography_calendar_events')
+        .select('*')
+        .order('event_date', { ascending: true });
+
+      if (calendarError) {
+        console.error('Error loading calendar events:', calendarError);
+      }
+
+      // Transform bookings to calendar events
+      const bookingEvents: CalendarEvent[] = (bookings || []).map(booking => ({
+        id: `booking-${booking.id}`,
+        title: booking.package?.name || `${booking.event_type} Photography`,
+        date: booking.event_date,
+        time: booking.event_time || '09:00',
+        type: 'booking' as const,
+        status: booking.status as 'confirmed' | 'pending' | 'completed',
+        client: booking.customer?.full_name || 'Unknown Client',
+        location: booking.event_type || '',
+        duration: 4, // Default duration
+        notes: booking.notes || ''
+      }));
+
+      // Transform calendar events
+      const transformedCalendarEvents: CalendarEvent[] = (calendarEvents || []).map(event => ({
+        id: `event-${event.id}`,
+        title: event.title,
+        date: event.event_date,
+        time: event.event_time,
+        type: event.event_type as 'booking' | 'consultation' | 'editing' | 'blocked',
+        status: event.status as 'confirmed' | 'pending' | 'completed',
+        client: event.client_name || '',
+        location: event.location || '',
+        duration: event.duration || 1,
+        notes: event.notes || ''
+      }));
+
+      // Combine all events
+      setEvents([...bookingEvents, ...transformedCalendarEvents]);
+    } catch (error) {
+      console.error('Error in loadEvents:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Get days in month
   const getDaysInMonth = (date: Date) => {
@@ -190,6 +210,17 @@ export default function CalendarManagement() {
              event.type === 'booking' && event.status === 'confirmed';
     })
     .length * 850; // Average booking value
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading calendar events...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

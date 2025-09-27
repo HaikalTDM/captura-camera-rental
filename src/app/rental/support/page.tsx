@@ -105,7 +105,7 @@ export default function SupportPage() {
                 <p className="text-gray-600 text-sm mb-4">
                   Questions about rates, availability, and the booking process.
                 </p>
-                <a href="/faq" className="text-blue-600 hover:text-blue-700 font-medium">
+                <a href="/rental/faq" className="text-blue-600 hover:text-blue-700 font-medium">
                   View FAQ →
                 </a>
               </div>
@@ -114,7 +114,7 @@ export default function SupportPage() {
                 <p className="text-gray-600 text-sm mb-4">
                   Camera specifications, accessories, and technical support.
                 </p>
-                <a href="/equipment" className="text-blue-600 hover:text-blue-700 font-medium">
+                <a href="/rental/equipment" className="text-blue-600 hover:text-blue-700 font-medium">
                   View Equipment →
                 </a>
               </div>

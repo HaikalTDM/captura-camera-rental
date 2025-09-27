@@ -195,8 +195,8 @@ export default function BookingStepsSection() {
               className="text-center cursor-pointer hover:underline"
               onClick={(e) => {
                 e.stopPropagation();
-                // Navigate to homepage with cameras anchor
-                router.push('/#cameras');
+                // Navigate to rental page and scroll to cameras
+                window.location.href = 'https://captura.my/rental#cameras';
               }}
             >
               Ready to Start? Browse Cameras Below!

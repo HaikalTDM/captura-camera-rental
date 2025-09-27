@@ -1,6 +1,8 @@
 // WhatsApp integration utilities for Captura Photography
 // Centralized WhatsApp message handling with context-aware messages
 
+import { formatPhoneWithCountryCode } from './phoneFormatter';
+
 export interface WhatsAppMessage {
   type: 'general' | 'package' | 'gallery' | 'availability' | 'custom';
   context?: string;
@@ -13,6 +15,11 @@ export interface WhatsAppMessage {
 }
 
 const WHATSAPP_NUMBER = '60177464121';
+
+// Helper function to format phone numbers in messages
+function formatPhoneInMessage(phoneNumber: string): string {
+  return formatPhoneWithCountryCode(phoneNumber);
+}
 
 // Pre-defined message templates
 const messageTemplates = {

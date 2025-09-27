@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Camera, CustomerDetails } from '@/types';
 import { calculateRentalCost, formatCurrency } from '@/lib/pricing';
 import TermsModal from './TermsModal';
+import BookingForm from './BookingForm';
+import BookingSuccess from './BookingSuccess';
 
 interface CalendarPricingProps {
   camera: Camera;
@@ -34,6 +37,27 @@ export default function CalendarPricing({
     isDiscounted: boolean;
   } | null>(null);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showBookingSuccess, setShowBookingSuccess] = useState(false);
+  const [bookingSuccessData, setBookingSuccessData] = useState<{
+    confirmationNumber: string;
+    booking: any;
+    customer: any;
+    bookingData: any;
+  } | null>(null);
+
+  // Prevent background scrolling when modal is open
+  useEffect(() => {
+    if (showBookingForm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showBookingForm]);
 
   useEffect(() => {
     if (startDate && endDate && totalDays > 0) {
@@ -190,14 +214,64 @@ export default function CalendarPricing({
         isOpen={showTermsModal}
         onAccept={() => {
           setShowTermsModal(false);
-          // Skip CustomerDetailsModal and go directly to main booking flow
-          if (onBookNow) {
-            onBookNow({ name: '', email: '', phone: '' }); // Pass empty customer details
-          }
+          setShowBookingForm(true);
         }}
         onCancel={() => setShowTermsModal(false)}
       />
 
+      {/* Booking Form Modal */}
+      {showBookingForm && startDate && endDate && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+          <div className="w-full max-w-xs sm:max-w-sm">
+            <BookingForm
+              camera={camera}
+              startDate={startDate}
+              endDate={endDate}
+              totalDays={totalDays}
+              totalCost={totalCost}
+              dailyRate={dailyRate}
+              onSuccess={(confirmationNumber, booking, customer, bookingData) => {
+                setShowBookingForm(false);
+                setBookingSuccessData({
+                  confirmationNumber,
+                  booking,
+                  customer,
+                  bookingData
+                });
+                setShowBookingSuccess(true);
+                if (onBookNow) {
+                  onBookNow(camera, startDate, endDate, totalCost, customer, totalDays, dailyRate);
+                }
+              }}
+              onCancel={() => setShowBookingForm(false)}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Booking Success Modal */}
+      {showBookingSuccess && bookingSuccessData && createPortal(
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+          <div className="w-full max-w-sm sm:max-w-md">
+            <BookingSuccess
+              confirmationNumber={bookingSuccessData.confirmationNumber}
+              booking={bookingSuccessData.booking}
+              customer={bookingSuccessData.customer}
+              bookingData={bookingSuccessData.bookingData}
+              onNewBooking={() => {
+                setShowBookingSuccess(false);
+                setBookingSuccessData(null);
+              }}
+              onClose={() => {
+                setShowBookingSuccess(false);
+                setBookingSuccessData(null);
+              }}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
 
     </div>
   );

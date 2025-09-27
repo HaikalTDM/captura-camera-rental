@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getAllBookings } from '@/lib/api/bookings';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 
@@ -49,7 +50,7 @@ export default function EditBookingPage() {
           customer_name: foundBooking.customer?.full_name || '',
           customer_email: foundBooking.customer?.email || '',
           customer_phone: foundBooking.customer?.phone || '',
-          customer_whatsapp: foundBooking.customer?.whatsapp || foundBooking.customer?.phone || '',
+          customer_whatsapp: foundBooking.customer?.whatsapp || (foundBooking.customer?.phone ? formatPhoneWithCountryCode(foundBooking.customer.phone) : ''),
           start_date: foundBooking.start_date || '',
           end_date: foundBooking.end_date || '',
           total_days: foundBooking.total_days || 0,

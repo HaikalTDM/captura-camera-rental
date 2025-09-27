@@ -5,15 +5,12 @@ import Navigation from '@/components/Navigation';
 import HeroSection from '@/components/HeroSection';
 import TrustSection from '@/components/TrustSection';
 import CameraCatalog from '@/components/CameraCatalog';
-import BookingModal from '@/components/BookingModal';
 import RentalSummary from '@/components/RentalSummary';
 import WelcomeModal from '@/components/WelcomeModal';
 import Footer from '@/components/Footer';
 import { Camera, BookingDetails, CustomerDetails } from '@/types';
 
 export default function RentalHome() {
-  const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [completedBooking, setCompletedBooking] = useState<BookingDetails | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -30,19 +27,26 @@ export default function RentalHome() {
     }
   }, []);
 
-  const handleRentNowClick = (camera: Camera) => {
-    setSelectedCamera(camera);
-    setIsBookingModalOpen(true);
+
+  const handleCameraBookingComplete = (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => {
+    if (startDate && endDate && totalCost && customerDetails && totalDays && dailyRate) {
+      const bookingDetails: BookingDetails = {
+        camera,
+        startDate,
+        endDate,
+        totalDays,
+        totalCost,
+        dailyRate,
+        customerDetails
+      };
+      handleBookingComplete(bookingDetails);
+    }
   };
 
-  const handleCloseBookingModal = () => {
-    setIsBookingModalOpen(false);
-    setSelectedCamera(null);
-  };
+
 
   const handleBookingComplete = (booking: BookingDetails) => {
     setCompletedBooking(booking);
-    setIsBookingModalOpen(false);
     setShowSummary(true);
   };
 
@@ -54,7 +58,6 @@ export default function RentalHome() {
   const handleNewBooking = () => {
     setShowSummary(false);
     setCompletedBooking(null);
-    setSelectedCamera(null);
   };
 
   const handleCloseWelcomeModal = () => {
@@ -69,9 +72,12 @@ export default function RentalHome() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
-      <HeroSection onRentNowClick={handleRentNowClick} />
+      <HeroSection />
       <TrustSection />
-      <CameraCatalog onRentNowClick={handleRentNowClick} />
+      {/* Camera Catalog Section */}
+      <section id="cameras" className="py-20">
+        <CameraCatalog onBookCamera={handleCameraBookingComplete} />
+      </section>
 
       {/* Quick Links Section */}
       <section className="py-20 bg-gray-50">
@@ -83,7 +89,7 @@ export default function RentalHome() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <a
-              href="/how-to-book"
+              href="/rental/how-to-book"
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 text-center group"
             >
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-200 transition-colors">
@@ -96,7 +102,7 @@ export default function RentalHome() {
             </a>
 
             <a
-              href="/gallery"
+              href="/rental/gallery"
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 text-center group"
             >
               <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-pink-200 transition-colors">
@@ -109,7 +115,7 @@ export default function RentalHome() {
             </a>
 
             <a
-              href="/equipment"
+              href="/rental/equipment"
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 text-center group"
             >
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-200 transition-colors">
@@ -122,7 +128,7 @@ export default function RentalHome() {
             </a>
 
             <a
-              href="/faq"
+              href="/rental/faq"
               className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 text-center group"
             >
               <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-200 transition-colors">
@@ -147,13 +153,6 @@ export default function RentalHome() {
         onDontShowAgain={handleDontShowWelcomeAgain}
       />
 
-      {/* Booking Modal */}
-      <BookingModal
-        camera={selectedCamera}
-        isOpen={isBookingModalOpen}
-        onClose={handleCloseBookingModal}
-        onBookingComplete={handleBookingComplete}
-      />
 
       {/* Rental Summary */}
       {showSummary && completedBooking && (

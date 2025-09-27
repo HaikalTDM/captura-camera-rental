@@ -4,15 +4,39 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function BookingApprovalsPage() {
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
+  const [cameras, setCameras] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingBooking, setProcessingBooking] = useState<string | null>(null);
 
   useEffect(() => {
     loadPendingBookings();
+    loadCameras();
   }, []);
+
+  const loadCameras = async () => {
+    try {
+      const { data: camerasData, error } = await supabase
+        .from('cameras')
+        .select('id, name, brand, model')
+        .order('name');
+      
+      if (error) {
+        console.error('Error loading cameras:', error);
+      } else {
+        setCameras(camerasData || []);
+      }
+    } catch (error) {
+      console.error('Error in loadCameras:', error);
+    }
+  };
+
+  const getCameraInfo = (cameraId: string) => {
+    return cameras.find(camera => camera.id === cameraId) || { name: 'Unknown Camera', brand: '', model: '' };
+  };
 
   const loadPendingBookings = async () => {
     setIsLoading(true);
@@ -21,8 +45,7 @@ export default function BookingApprovalsPage() {
         .from('bookings')
         .select(`
           *,
-          customer:customers(*),
-          camera:cameras(*)
+          customer:customers(*)
         `)
         .eq('booking_status', 'pending_approval')
         .order('created_at', { ascending: true });
@@ -30,6 +53,8 @@ export default function BookingApprovalsPage() {
       if (error) {
         console.error('Error loading pending bookings:', error);
       } else {
+        console.log('Approvals page - Loaded bookings:', bookings?.length || 0);
+        console.log('Approvals page - Booking statuses:', bookings?.map(b => ({ id: b.id, status: b.status, booking_status: b.booking_status })));
         setPendingBookings(bookings || []);
       }
     } catch (error) {
@@ -191,7 +216,7 @@ export default function BookingApprovalsPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                           <p className="text-sm text-gray-600 mb-1">📷 <strong>Camera:</strong></p>
-                          <p className="font-medium">{booking.camera?.name}</p>
+                          <p className="font-medium">{getCameraInfo(booking.camera_id).name}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-600 mb-1">📅 <strong>Rental Period:</strong></p>
@@ -250,7 +275,7 @@ export default function BookingApprovalsPage() {
                     
                     {booking.customer?.phone && (
                       <a
-                        href={`https://wa.me/${booking.customer.phone.replace(/[^0-9]/g, '')}`}
+                        href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
