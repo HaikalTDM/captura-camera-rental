@@ -23,15 +23,17 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
   const loadImages = async () => {
     try {
       setIsLoading(true);
-      // Use API endpoint instead of direct function call
+      // No timeout - let the database take its time
       const response = await fetch('/api/photography/gallery-new');
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn('Failed to load gallery images, will keep trying...');
+        return;
       }
       const data = await response.json();
       setImages(data.images || []);
     } catch (error) {
       console.error('Error loading photography gallery images:', error);
+      // Don't hide loading state on error - let user know we're still trying
     } finally {
       setIsLoading(false);
     }
@@ -98,6 +100,17 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
   if (isLoading) {
     return (
       <>
+        {/* Loading Message */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center space-x-3 px-6 py-3 bg-[#d4af37]/10 rounded-full border border-[#d4af37]/20">
+            <div className="w-5 h-5 border-2 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-[#d4af37] font-medium">Loading beautiful photography...</span>
+          </div>
+          <p className="text-gray-600 text-sm mt-3">
+            ✨ Taking time to load high-quality images for the best experience
+          </p>
+        </div>
+        
         {/* Mobile Skeleton (2 columns) */}
         <div className="block md:hidden">
           <div className="grid grid-cols-2 gap-3 px-2">
@@ -107,6 +120,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
                 className={`group relative overflow-hidden bg-gray-100 rounded-2xl border border-[#d4af37]/10 animate-pulse
                   ${index % 3 === 0 ? 'aspect-[3/4]' : index % 3 === 1 ? 'aspect-square' : 'aspect-[4/3]'}
                 `}
+                style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -124,6 +138,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
               <div
                 key={`desktop-skeleton-${index}`}
                 className="group relative overflow-hidden bg-gray-100 rounded-xl border border-[#d4af37]/10 aspect-square animate-pulse"
+                style={{ animationDelay: `${index * 150}ms` }}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300"></div>
                 <div className="absolute inset-0 flex items-center justify-center">

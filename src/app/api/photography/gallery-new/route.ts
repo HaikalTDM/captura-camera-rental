@@ -7,20 +7,21 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const isAdmin = searchParams.get('admin') === 'true';
+    const limitParam = searchParams.get('limit');
+    const limit = limitParam ? parseInt(limitParam, 10) : (isAdmin ? 50 : 20);
 
-    console.log(`Gallery API called - isAdmin: ${isAdmin}`);
+    console.log(`Gallery API called - isAdmin: ${isAdmin}, limit: ${limit}`);
 
-    // For admin, we can load metadata first and images on demand
-    // For client, we need the images but can limit the number
-    let selectFields = isAdmin 
-      ? 'id, title, description, alt_text, category, aspect_ratio, is_featured, is_active, created_at, photographer_name, location, shoot_date'
-      : 'id, title, description, image_url, alt_text, category, aspect_ratio, is_featured, is_active, created_at';
+    // Simplified approach like rental gallery - only essential fields
+    let selectFields = isAdmin
+      ? 'id, title, alt_text, is_featured, is_active, created_at'  // Admin: minimal metadata only
+      : 'id, title, image_url, alt_text, is_active, created_at';    // Client: essential fields only
 
     let query = supabase
       .from('photography_gallery_images')
       .select(selectFields)
       .order('created_at', { ascending: false })
-      .limit(isAdmin ? 50 : 10); // Admin gets more records but without images
+      .limit(Math.min(limit, isAdmin ? 100 : 20)); // Cap limits for safety
 
     // If not admin, only fetch active images
     if (!isAdmin) {

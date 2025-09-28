@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import PhotographyNavigation from '@/components/PhotographyNavigation';
 import PhotographyCalendar from '@/components/PhotographyCalendar';
-import SocialMediaSection from '@/components/SocialMediaSection';
 import PhotographyGallery from '@/components/PhotographyGallery';
 import HorizontalGridGallery from '@/components/HorizontalGridGallery';
 import MobilePackageCarousel from '@/components/MobilePackageCarousel';
+import { type PhotographyGalleryImage } from '@/lib/api/photography-gallery';
 
 interface Package {
   id: string;
@@ -118,7 +118,7 @@ const secondShooterPackages: Package[] = [
   }
 ];
 
-// Gallery Images - Admin-friendly structure for easy management
+// Gallery Image interface compatible with HorizontalGridGallery
 interface GalleryImage {
   id: number;
   url: string;
@@ -129,171 +129,21 @@ interface GalleryImage {
   order: number;
 }
 
-const galleryImages: GalleryImage[] = [
-  {
-    id: 1,
-    url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Wedding ceremony celebration',
-    aspect: 'portrait',
-    category: 'wedding',
-    featured: true,
-    order: 1
-  },
-  {
-    id: 2,
-    url: 'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800',
-    alt: 'Wedding reception dance celebration',
-    aspect: 'landscape',
-    category: 'wedding',
-    featured: true,
-    order: 2
-  },
-  {
-    id: 3,
-    url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Bride portrait with bouquet',
-    aspect: 'portrait',
-    category: 'wedding',
-    featured: false,
-    order: 3
-  },
-  {
-    id: 4,
-    url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800',
-    alt: 'Corporate conference presentation',
-    aspect: 'landscape',
-    category: 'corporate',
-    featured: true,
-    order: 4
-  },
-  {
-    id: 5,
-    url: 'https://images.unsplash.com/photo-1556157382-97eda2d62296?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Professional headshot portrait',
-    aspect: 'portrait',
-    category: 'corporate',
-    featured: true,
-    order: 5
-  },
-  {
-    id: 6,
-    url: 'https://images.unsplash.com/photo-1519741497674-611481863552?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&h=400',
-    alt: 'Wedding ceremony moment',
-    aspect: 'landscape',
-    category: 'wedding',
-    featured: false,
-    order: 6
-  },
-  {
-    id: 7,
-    url: 'https://images.unsplash.com/photo-1594736797933-d0b22ce71b10?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=600',
-    alt: 'Bride getting ready',
-    aspect: 'portrait',
-    category: 'wedding',
-    featured: true,
-    order: 7
-  },
-  {
-    id: 8,
-    url: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&h=400',
-    alt: 'Wedding venue decoration',
-    aspect: 'landscape',
-    category: 'wedding',
-    featured: false,
-    order: 8
-  },
-  {
-    id: 9,
-    url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=600',
-    alt: 'Professional portrait session',
-    aspect: 'portrait',
-    category: 'portrait',
-    featured: true,
-    order: 9
-  },
-  {
-    id: 10,
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=400&h=400',
-    alt: 'Corporate headshot',
-    aspect: 'square',
-    category: 'corporate',
-    featured: false,
-    order: 10
-  },
-  {
-    id: 11,
-    url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=600&h=400',
-    alt: 'Graduation ceremony',
-    aspect: 'landscape',
-    category: 'graduation',
-    featured: false,
-    order: 11
-  },
-  {
-    id: 12,
-    url: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Traditional wedding ceremony',
-    aspect: 'portrait',
-    category: 'wedding',
-    featured: true,
-    order: 12
-  },
-  // Additional portfolio images for variety
-  {
-    id: 13,
-    url: 'https://images.unsplash.com/photo-1523050854058-8df90110c9d1?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Graduation celebration moment',
-    aspect: 'portrait',
-    category: 'graduation',
-    featured: true,
-    order: 13
-  },
-  {
-    id: 14,
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Professional portrait session outdoor',
-    aspect: 'portrait',
-    category: 'portrait',
-    featured: true,
-    order: 14
-  },
-  {
-    id: 15,
-    url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800',
-    alt: 'Private event celebration',
-    aspect: 'landscape',
-    category: 'event',
-    featured: true,
-    order: 15
-  },
-  {
-    id: 16,
-    url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0e4a6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Wedding rings close-up',
-    aspect: 'portrait',
-    category: 'wedding',
-    featured: false,
-    order: 16
-  },
-  {
-    id: 17,
-    url: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=800',
-    alt: 'Corporate team collaboration',
-    aspect: 'landscape',
-    category: 'corporate',
-    featured: false,
-    order: 17
-  },
-  {
-    id: 18,
-    url: 'https://images.unsplash.com/photo-1515169067868-5387ec356754?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=1200',
-    alt: 'Event candid moments',
-    aspect: 'portrait',
-    category: 'event',
-    featured: false,
-    order: 18
-  }
-];
+// Helper function to convert simplified API response to GalleryImage
+const convertToGalleryImage = (img: any, index: number): GalleryImage => {
+  // Default aspect ratio since we're not fetching complex metadata
+  const aspect: 'portrait' | 'landscape' | 'square' = index % 3 === 0 ? 'portrait' : index % 2 === 0 ? 'landscape' : 'square';
+
+  return {
+    id: parseInt(img.id) || index,
+    url: img.image_url,
+    alt: img.alt_text || img.title || `Photography image ${index + 1}`,
+    aspect,
+    category: 'wedding', // Default category - can be enhanced later
+    featured: img.is_featured || false,
+    order: index + 1
+  };
+};
 
 const PackageCard = ({ pkg, type }: { pkg: Package; type: 'main' | 'second' }) => {
   return (
@@ -352,10 +202,67 @@ export default function PhotographyPage() {
   const [activeTab, setActiveTab] = useState<'main' | 'second'>('main');
   const [galleryFilter, setGalleryFilter] = useState<'all' | 'wedding' | 'corporate' | 'graduation' | 'portrait' | 'event'>('all');
   const [isGalleryLoading, setIsGalleryLoading] = useState(false);
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+
+  // Load gallery images from API with retry logic
+  useEffect(() => {
+    const loadGalleryImages = async () => {
+      try {
+        setIsInitialLoading(true);
+        
+        // No timeout - let the API handle its own timeout logic
+        const response = await fetch('/api/photography/gallery-homepage');
+        
+        if (!response.ok) {
+          console.warn('API response not OK, will retry if needed');
+          // Don't immediately give up - the API might be handling timeouts gracefully
+        }
+        
+        const data = await response.json();
+        
+        // Convert PhotographyGalleryImage[] to GalleryImage[]
+        const convertedImages = (data.images || []).map((img: PhotographyGalleryImage, index: number) => 
+          convertToGalleryImage(img, index)
+        );
+        
+        if (convertedImages.length === 0 && retryCount < 2) {
+          // If no images and we haven't retried much, try again after a delay
+          console.log(`No images loaded, retry attempt ${retryCount + 1}/2`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            // Keep loading state active during retry
+          }, 3000); // Retry after 3 seconds
+          return; // Don't set isInitialLoading to false yet
+        }
+        
+        setGalleryImages(convertedImages);
+        console.log(`Loaded ${convertedImages.length} images for photography homepage`);
+        // Only stop loading if we have images or exhausted retries
+        setIsInitialLoading(false);
+      } catch (error) {
+        console.error('Error loading gallery images:', error);
+        // If we get an error and haven't retried much, try again
+        if (retryCount < 2) {
+          console.log(`Error occurred, retry attempt ${retryCount + 1}/2`);
+          setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            // Keep loading state active during retry
+          }, 5000); // Retry after 5 seconds on error
+          return; // Don't set isInitialLoading to false yet
+        }
+        // Only stop loading if we've exhausted all retries
+        setIsInitialLoading(false);
+      }
+    };
+
+    loadGalleryImages();
+  }, [retryCount]);
   
   // Filter gallery images based on selected category
   const filteredImages = galleryFilter === 'all' 
-    ? galleryImages.sort((a, b) => a.order - b.order)
+    ? [...galleryImages].sort((a, b) => a.order - b.order)
     : galleryImages.filter(img => img.category === galleryFilter).sort((a, b) => a.order - b.order);
 
   const handleFilterChange = (filter: typeof galleryFilter) => {
@@ -471,20 +378,94 @@ export default function PhotographyPage() {
           </div>
 
           {/* Professional Horizontal Grid Gallery */}
-          <HorizontalGridGallery 
-            images={filteredImages}
-            currentFilter={galleryFilter}
-            isLoading={isGalleryLoading}
-          />
+          {isInitialLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center max-w-md mx-auto">
+                {/* Beautiful Loading Animation */}
+                <div className="relative mb-8">
+                  {/* Outer rotating ring */}
+                  <div className="w-20 h-20 mx-auto border-4 border-gray-200 rounded-full animate-spin">
+                    <div className="w-full h-full border-4 border-transparent border-t-[#d4af37] rounded-full animate-pulse"></div>
+                  </div>
+                  {/* Inner pulsing dot */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-3 h-3 bg-[#d4af37] rounded-full animate-ping"></div>
+                  </div>
+                  {/* Camera icon in center */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-[#d4af37] animate-pulse" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/>
+                      <path d="M17 5h-2l-2-2H9L7 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z"/>
+                    </svg>
+                  </div>
+                </div>
+                
+                {/* Loading Text with Animation */}
+                <div className="space-y-3">
+                  <h3 className="text-xl font-bold text-black animate-pulse">Loading Our Portfolio</h3>
+                  <p className="text-black/70 leading-relaxed">
+                    {retryCount === 0 
+                      ? "We're preparing our finest photography work for you..."
+                      : retryCount === 1
+                      ? "Still loading... Our high-quality images are worth the wait!"
+                      : "Almost there... Loading the best photography for you!"
+                    }
+                  </p>
+                  
+                  {/* Animated dots */}
+                  <div className="flex justify-center space-x-2 mt-4">
+                    <div className="w-2 h-2 bg-[#d4af37] rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                    <div className="w-2 h-2 bg-[#d4af37] rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                    <div className="w-2 h-2 bg-[#d4af37] rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                  </div>
+                  
+                  {/* Progress bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-1 mt-6">
+                    <div className="bg-gradient-to-r from-[#d4af37] to-yellow-500 h-1 rounded-full animate-pulse" 
+                         style={{width: `${30 + (retryCount * 30)}%`}}></div>
+                  </div>
+                  
+                  <p className="text-sm text-black/50 mt-3">
+                    ✨ High-quality images are worth the wait
+                    {retryCount > 0 && (
+                      <span className="block mt-1 text-[#d4af37]">
+                        📡 Attempt {retryCount + 1}/3 - Database working hard for you!
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : galleryImages.length === 0 ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center">
+                <div className="w-24 h-24 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Images Yet</h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  The photography gallery is currently empty. Images will appear here once they are uploaded through the admin panel.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <HorizontalGridGallery 
+              images={filteredImages}
+              currentFilter={galleryFilter}
+              isLoading={isGalleryLoading}
+            />
+          )}
 
-          {/* Load More Button */}
+          {/* View More Work Button */}
           <div className="text-center mt-16">
-            <button className="inline-flex items-center px-8 py-4 bg-white border-2 border-[#d4af37] text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-[#d4af37] hover:text-white transition-all duration-300 group">
+            <Link href="/photography/gallery" className="inline-flex items-center px-8 py-4 bg-white border-2 border-[#d4af37] text-black font-bold text-sm uppercase tracking-widest rounded-lg hover:bg-[#d4af37] hover:text-white transition-all duration-300 group">
               <svg className="w-5 h-5 mr-3 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
               View More Work
-            </button>
+            </Link>
           </div>
         </div>
       </section>
@@ -671,9 +652,6 @@ export default function PhotographyPage() {
           </button>
         </div>
       </section>
-
-      {/* Social Media Section */}
-      <SocialMediaSection />
 
       {/* Footer */}
       <footer className="bg-white border-t border-black/10 py-12">

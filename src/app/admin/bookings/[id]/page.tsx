@@ -263,6 +263,114 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const generateReturnReminderMessage = () => {
+    // Debug what data we have
+    console.log('Generating return reminder message...');
+    console.log('Booking data:', {
+      customerName: booking?.customer?.full_name,
+      endDate: booking?.end_date,
+      cameraName: booking?.camera_name,
+      fullBooking: booking
+    });
+
+    if (!booking?.customer?.full_name || !booking?.end_date || !booking?.camera_name) {
+      console.log('Missing required data for return reminder message');
+      // Return a generic message if some data is missing
+      const customerName = booking?.customer?.full_name || 'Customer';
+      const cameraName = booking?.camera_name || 'rented equipment';
+      
+      return `Hi ${customerName}! 📷
+
+This is a friendly reminder about your ${cameraName} rental return.
+
+Please ensure the equipment is returned by 10:00 PM tonight to avoid any late fees.
+
+Thank you for choosing Captura! 😊`;
+    }
+
+    const customerName = booking.customer.full_name;
+    const returnDate = new Date(booking.end_date);
+    const today = new Date();
+    const cameraName = booking.camera_name;
+    
+    // Format dates
+    const returnDateStr = returnDate.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    
+    // Calculate if it's return day, overdue, or future
+    const timeDiff = returnDate.getTime() - today.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    let message = '';
+    
+    if (daysDiff === 0) {
+      // Today is return day
+      message = `Hi ${customerName}! 📷
+
+This is a friendly reminder that your rental of the ${cameraName} is due for return TODAY (${returnDateStr}).
+
+Please ensure the camera is returned by tonight to avoid any late fees. 
+
+Return details:
+🎥 Camera: ${cameraName}
+📅 Return Date: ${returnDateStr} (Today)
+⏰ Return before: 10:00 PM
+
+Thank you for choosing Captura! 😊`;
+    } else if (daysDiff < 0) {
+      // Overdue
+      const overdueDays = Math.abs(daysDiff);
+      message = `Hi ${customerName}! 📷
+
+Your rental of the ${cameraName} was due for return on ${returnDateStr} and is now ${overdueDays} day${overdueDays > 1 ? 's' : ''} overdue.
+
+Please return the camera as soon as possible to avoid additional late fees.
+
+Overdue details:
+🎥 Camera: ${cameraName}
+📅 Was due: ${returnDateStr}
+⚠️ Days overdue: ${overdueDays}
+
+Please contact us immediately to arrange return. Thank you!`;
+    } else {
+      // Future return
+      message = `Hi ${customerName}! 📷
+
+Just a friendly reminder about your upcoming camera return:
+
+🎥 Camera: ${cameraName}
+📅 Return Date: ${returnDateStr} (${daysDiff} day${daysDiff > 1 ? 's' : ''} from now)
+⏰ Return before: 10:00 PM
+
+Please ensure the camera is returned on time to avoid any late fees.
+
+Thank you for choosing Captura! 😊`;
+    }
+    
+    return message;
+  };
+
+  const handleReturnReminder = () => {
+    if (!booking?.customer?.phone) {
+      alert('Customer phone number not available');
+      return;
+    }
+
+    const message = generateReturnReminderMessage();
+    console.log('Generated message:', message);
+    console.log('Message length:', message.length);
+    
+    const phoneNumber = formatPhoneWithCountryCode(booking.customer.phone);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    
+    console.log('WhatsApp URL:', whatsappUrl);
+    
+    window.open(whatsappUrl, '_blank');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
@@ -783,6 +891,14 @@ export default function BookingDetailsPage() {
                 >
                   💬 WhatsApp Customer
                 </a>
+              )}
+              {booking.customer?.phone && (
+                <button
+                  onClick={handleReturnReminder}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  🔔 Return Reminder
+                </button>
               )}
               {booking.customer?.phone && (
                 <a
