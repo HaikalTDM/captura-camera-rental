@@ -340,6 +340,29 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
   }
 }
 
+// Update customer
+export async function updateCustomer(
+  id: string, 
+  updates: Partial<Customer>
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('customers')
+      .update(updates)
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error updating customer:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error in updateCustomer:', error)
+    return false
+  }
+}
+
 // Delete customer
 export async function deleteCustomer(id: string): Promise<boolean> {
   try {

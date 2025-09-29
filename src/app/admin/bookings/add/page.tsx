@@ -75,7 +75,7 @@ export default function AddBookingPage() {
       const camera = cameras.find(c => c.id === bookingData.camera_id);
       if (camera && days > 0) {
         const dailyRate = camera.daily_rate;
-        const totalAmount = dailyRate * days + bookingData.delivery_fee;
+        const totalAmount = dailyRate * days; // Delivery fee handled separately
         const depositAmount = 100; // Fixed RM100 deposit
         const finalPaymentAmount = totalAmount; // Full rental amount (separate from deposit)
 

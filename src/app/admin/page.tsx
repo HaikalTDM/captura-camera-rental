@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
 import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
-import TodaysPickupsSection from '@/components/admin/TodaysPickupsSection';
+import UpcomingPickupsSection from '@/components/admin/UpcomingPickupsSection';
+import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -118,7 +119,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 max-w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 max-w-full">
         {/* Active Rentals */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
           <div className="flex items-center justify-between">
@@ -143,6 +144,20 @@ export default function AdminDashboard() {
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-2xl">📦</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Today's Returns */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Today's Returns</p>
+              <p className="text-3xl font-bold text-orange-600 mt-2">{todayReturns.length}</p>
+              <p className="text-sm text-gray-500 mt-1">Due today</p>
+            </div>
+            <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-2xl">📤</span>
             </div>
           </div>
         </div>
@@ -242,10 +257,15 @@ export default function AdminDashboard() {
 
       {/* Today's Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
-        {/* Today's Pickups - Enhanced Component */}
-        <TodaysPickupsSection onPickupUpdate={loadDashboardData} />
+        {/* Upcoming Pickups - Enhanced Component */}
+        <UpcomingPickupsSection onPickupUpdate={loadDashboardData} />
 
-        {/* Camera Status */}
+        {/* Upcoming Returns - New Component */}
+        <UpcomingReturnsSection onReturnUpdate={loadDashboardData} />
+      </div>
+
+      {/* Camera Status */}
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:gap-8 max-w-full">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden max-w-full">
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 border-b border-blue-100">
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-3">

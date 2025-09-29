@@ -41,6 +41,10 @@ export default function BookingDetailsPage() {
     }
   };
 
+
+
+
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -875,6 +879,7 @@ Thank you for choosing Captura! 😊`;
               </div>
             </div>
           </div>
+
 
           {/* Quick Actions */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">

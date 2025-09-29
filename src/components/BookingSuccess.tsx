@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateWhatsAppContactUrl } from '../lib/api/website-bookings';
 
 interface BookingSuccessProps {
@@ -39,6 +39,9 @@ export default function BookingSuccess({
     console.log('BookingSuccess: Generated WhatsApp URL:', whatsappUrl);
     window.open(whatsappUrl, '_blank');
   };
+
+
+
 
   return (
     <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg mx-auto bg-white rounded-xl sm:rounded-2xl shadow-xl p-4 sm:p-6 lg:p-8 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto relative">
@@ -163,6 +166,7 @@ export default function BookingSuccess({
           </div>
         </div>
       </div>
+
 
       {/* Secondary Action: New Booking */}
       <div className="mt-6">

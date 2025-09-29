@@ -26,18 +26,22 @@ export default function BookingsPage() {
     bySource: {} as Record<string, number>
   });
 
-  // Filters
+  // Filters and Sorting
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [paymentFilter, setPaymentFilter] = useState('all');
 
   useEffect(() => {
     loadBookings();
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [bookings, statusFilter, sourceFilter, searchTerm]);
+    applyFiltersAndSorting();
+  }, [bookings, statusFilter, sourceFilter, searchTerm, sortField, sortDirection, dateFilter, paymentFilter]);
 
   const loadBookings = async () => {
     setIsLoading(true);
@@ -137,7 +141,7 @@ export default function BookingsPage() {
 
 
 
-  const applyFilters = () => {
+  const applyFiltersAndSorting = () => {
     let filtered = [...bookings];
 
     // Status filter (now using booking_status)
@@ -150,17 +154,185 @@ export default function BookingsPage() {
       filtered = filtered.filter(booking => booking.booking_source === sourceFilter);
     }
 
+    // Date filter
+    if (dateFilter !== 'all') {
+      const today = new Date();
+      const thisWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      
+      filtered = filtered.filter(booking => {
+        const bookingDate = new Date(booking.created_at);
+        switch (dateFilter) {
+          case 'today':
+            return bookingDate.toDateString() === today.toDateString();
+          case 'week':
+            return bookingDate >= thisWeek;
+          case 'month':
+            return bookingDate >= thisMonth;
+          case 'upcoming':
+            return new Date(booking.start_date) >= today;
+          case 'ongoing':
+            return new Date(booking.start_date) <= today && new Date(booking.end_date) >= today;
+          case 'overdue':
+            return new Date(booking.end_date) < today && booking.equipment_picked_up && !booking.equipment_returned;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Payment filter
+    if (paymentFilter !== 'all') {
+      filtered = filtered.filter(booking => {
+        switch (paymentFilter) {
+          case 'deposit_pending':
+            return !booking.deposit_paid;
+          case 'deposit_paid':
+            return booking.deposit_paid;
+          case 'final_pending':
+            return !booking.final_payment_paid;
+          case 'final_paid':
+            return booking.final_payment_paid;
+          case 'fully_paid':
+            return booking.deposit_paid && booking.final_payment_paid;
+          case 'unpaid':
+            return !booking.deposit_paid && !booking.final_payment_paid;
+          default:
+            return true;
+        }
+      });
+    }
+
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(booking =>
         booking.customer?.full_name?.toLowerCase().includes(term) ||
         booking.camera?.name?.toLowerCase().includes(term) ||
-        booking.notes?.toLowerCase().includes(term)
+        booking.notes?.toLowerCase().includes(term) ||
+        booking.id.toLowerCase().includes(term) ||
+        booking.customer?.phone?.includes(term) ||
+        booking.customer?.email?.toLowerCase().includes(term)
       );
     }
 
+    // Sorting
+    filtered.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (sortField) {
+        case 'customer_name':
+          aValue = a.customer?.full_name || '';
+          bValue = b.customer?.full_name || '';
+          break;
+        case 'camera_name':
+          aValue = a.camera?.name || '';
+          bValue = b.camera?.name || '';
+          break;
+        case 'start_date':
+          aValue = new Date(a.start_date);
+          bValue = new Date(b.start_date);
+          break;
+        case 'end_date':
+          aValue = new Date(a.end_date);
+          bValue = new Date(b.end_date);
+          break;
+        case 'created_at':
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+          break;
+        case 'total_amount':
+          aValue = a.total_amount;
+          bValue = b.total_amount;
+          break;
+        case 'booking_status':
+          aValue = a.booking_status;
+          bValue = b.booking_status;
+          break;
+        case 'booking_source':
+          aValue = a.booking_source;
+          bValue = b.booking_source;
+          break;
+        default:
+          aValue = new Date(a.created_at);
+          bValue = new Date(b.created_at);
+      }
+
+      if (aValue < bValue) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+
     setFilteredBookings(filtered);
+  };
+
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) {
+      return '↕';
+    }
+    return sortDirection === 'asc' ? '^' : 'v';
+  };
+
+  const exportToCSV = () => {
+    const csvHeaders = [
+      'Booking ID',
+      'Customer Name',
+      'Phone',
+      'Camera',
+      'Start Date',
+      'End Date',
+      'Total Days',
+      'Total Amount',
+      'Deposit Paid',
+      'Final Payment Paid',
+      'Status',
+      'Source',
+      'Created Date'
+    ];
+
+    const csvData = filteredBookings.map(booking => [
+      booking.id,
+      booking.customer?.full_name || '',
+      booking.customer?.phone || '',
+      booking.camera?.name || '',
+      booking.start_date,
+      booking.end_date,
+      booking.total_days,
+      booking.total_amount,
+      booking.deposit_paid ? 'Yes' : 'No',
+      booking.final_payment_paid ? 'Yes' : 'No',
+      booking.booking_status,
+      booking.booking_source,
+      booking.created_at
+    ]);
+
+    const csvContent = [csvHeaders, ...csvData]
+      .map(row => row.map(field => `"${field}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bookings-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
 
@@ -272,6 +444,43 @@ export default function BookingsPage() {
       {/* Filters */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 sm:p-6 max-w-full overflow-hidden">
         <div className="space-y-4">
+          {/* Active Filters Summary */}
+          {(statusFilter !== 'all' || sourceFilter !== 'all' || dateFilter !== 'all' || paymentFilter !== 'all' || searchTerm) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium text-blue-900">Active filters:</span>
+                {statusFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    Status: {statusFilter}
+                  </span>
+                )}
+                {sourceFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    Source: {sourceFilter}
+                  </span>
+                )}
+                {dateFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    Date: {dateFilter}
+                  </span>
+                )}
+                {paymentFilter !== 'all' && (
+                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    Payment: {paymentFilter}
+                  </span>
+                )}
+                {searchTerm && (
+                  <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                    Search: "{searchTerm}"
+                  </span>
+                )}
+                <span className="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">
+                  Sort: {sortField.replace('_', ' ')} {sortDirection === 'asc' ? '^' : 'v'}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Status Filters */}
           <div className="flex flex-wrap gap-2 max-w-full">
             <button
@@ -337,12 +546,13 @@ export default function BookingsPage() {
             </button>
           </div>
 
-          {/* Source Filter & Search */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-full">
+          {/* Advanced Filters Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-full">
+            {/* Source Filter */}
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px] w-full sm:w-auto flex-shrink-0"
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px]"
             >
               <option value="all">All Sources</option>
               <option value="website">Website ({stats.bySource.website || 0})</option>
@@ -353,7 +563,38 @@ export default function BookingsPage() {
               <option value="manual">Manual ({stats.bySource.manual || 0})</option>
             </select>
 
-            <div className="relative flex-1 sm:max-w-xs min-w-0">
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px]"
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="upcoming">Upcoming Rentals</option>
+              <option value="ongoing">Currently Active</option>
+              <option value="overdue">Overdue Returns</option>
+            </select>
+
+            {/* Payment Filter */}
+            <select
+              value={paymentFilter}
+              onChange={(e) => setPaymentFilter(e.target.value)}
+              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm touch-manipulation min-h-[44px]"
+            >
+              <option value="all">All Payments</option>
+              <option value="unpaid">No Payments</option>
+              <option value="deposit_pending">Deposit Pending</option>
+              <option value="deposit_paid">Deposit Paid</option>
+              <option value="final_pending">Final Payment Pending</option>
+              <option value="final_paid">Final Payment Paid</option>
+              <option value="fully_paid">Fully Paid</option>
+            </select>
+
+            {/* Search */}
+            <div className="relative">
               <input
                 type="text"
                 placeholder="Search bookings..."
@@ -363,6 +604,112 @@ export default function BookingsPage() {
               />
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
                 🔍
+              </div>
+            </div>
+          </div>
+
+          {/* Sorting Controls */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 pt-4 border-t border-gray-200">
+            <span className="text-sm font-medium text-gray-700 flex-shrink-0">Sort by:</span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleSort('customer_name')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'customer_name' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Customer {getSortIcon('customer_name')}
+              </button>
+              <button
+                onClick={() => handleSort('camera_name')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'camera_name' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Camera {getSortIcon('camera_name')}
+              </button>
+              <button
+                onClick={() => handleSort('created_at')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'created_at' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Booking Date {getSortIcon('created_at')}
+              </button>
+              <button
+                onClick={() => handleSort('start_date')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'start_date' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Start Date {getSortIcon('start_date')}
+              </button>
+              <button
+                onClick={() => handleSort('end_date')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'end_date' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                End Date {getSortIcon('end_date')}
+              </button>
+              <button
+                onClick={() => handleSort('total_amount')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'total_amount' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Amount {getSortIcon('total_amount')}
+              </button>
+              <button
+                onClick={() => handleSort('booking_status')}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  sortField === 'booking_status' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Status {getSortIcon('booking_status')}
+              </button>
+            </div>
+            
+            {/* Clear Filters & Results count */}
+            <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+              {filteredBookings.length > 0 && (
+                <button
+                  onClick={exportToCSV}
+                  className="px-3 py-1 bg-green-500 text-white rounded-lg text-xs hover:bg-green-600 transition-colors flex items-center gap-1"
+                >
+                  📊 Export CSV
+                </button>
+              )}
+              {(statusFilter !== 'all' || sourceFilter !== 'all' || dateFilter !== 'all' || paymentFilter !== 'all' || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setStatusFilter('all');
+                    setSourceFilter('all');
+                    setDateFilter('all');
+                    setPaymentFilter('all');
+                    setSearchTerm('');
+                  }}
+                  className="px-3 py-1 bg-gray-500 text-white rounded-lg text-xs hover:bg-gray-600 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              )}
+              <div className="text-sm text-gray-500">
+                Showing {filteredBookings.length} of {bookings.length} bookings
               </div>
             </div>
           </div>
@@ -400,26 +747,61 @@ export default function BookingsPage() {
           <table className="w-full min-w-[800px]">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking ID
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('created_at')}
+                >
+                  <div className="flex items-center gap-2">
+                    Booking ID {getSortIcon('created_at')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('customer_name')}
+                >
+                  <div className="flex items-center gap-2">
+                    Customer {getSortIcon('customer_name')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Camera
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('camera_name')}
+                >
+                  <div className="flex items-center gap-2">
+                    Camera {getSortIcon('camera_name')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Dates
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('start_date')}
+                >
+                  <div className="flex items-center gap-2">
+                    Dates {getSortIcon('start_date')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Amount
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('total_amount')}
+                >
+                  <div className="flex items-center gap-2">
+                    Amount {getSortIcon('total_amount')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Source
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('booking_source')}
+                >
+                  <div className="flex items-center gap-2">
+                    Source {getSortIcon('booking_source')}
+                  </div>
                 </th>
-                <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                <th 
+                  className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('booking_status')}
+                >
+                  <div className="flex items-center gap-2">
+                    Status {getSortIcon('booking_status')}
+                  </div>
                 </th>
                 <th className="px-4 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions

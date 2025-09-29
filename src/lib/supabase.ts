@@ -143,6 +143,7 @@ export interface Booking {
   camera?: Camera
 }
 
+
 export interface GalleryImage {
   id: string
   customer_name: string

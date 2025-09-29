@@ -115,9 +115,9 @@ export default function BookingForm({
         end_date: formatDateForAPI(endDate),
         total_days: totalDays,
         daily_rate: dailyRate,
-        total_amount: totalCost + deliveryFee, // Rental amount only
+        total_amount: totalCost, // Rental amount only (delivery fee handled separately)
         deposit_amount: depositAmount, // Fixed RM100 deposit
-        final_payment_amount: finalPaymentAmount + deliveryFee, // Same as total_amount (rental)
+        final_payment_amount: finalPaymentAmount, // Same as total_amount (rental only)
         customer_name: customerDetails.name.trim(),
         customer_email: customerDetails.email.trim(),
         customer_phone: formatPhoneWithCountryCode(customerDetails.phone.trim()),
@@ -288,15 +288,26 @@ export default function BookingForm({
             </div>
             <div className="flex justify-between">
               <span>Rental Amount:</span>
-              <span className="font-semibold">RM{finalPaymentAmount + deliveryFee}</span>
+              <span className="font-semibold">RM{finalPaymentAmount}</span>
             </div>
+            {deliveryFee > 0 && (
+              <div className="flex justify-between text-xs">
+                <span>Delivery Fee:</span>
+                <span className="text-orange-600">Pay to Lalamove directly</span>
+              </div>
+            )}
             <div className="flex justify-between border-t border-yellow-300 pt-1">
               <span className="font-semibold">Total Due:</span>
-              <span className="font-bold text-base">RM{depositAmount + finalPaymentAmount + deliveryFee}</span>
+              <span className="font-bold text-base">RM{depositAmount + finalPaymentAmount}</span>
             </div>
             <p className="text-xs text-yellow-600 mt-1">
               The RM{depositAmount} deposit is fully refundable when equipment is returned in good condition.
             </p>
+            {deliveryFee > 0 && (
+              <p className="text-xs text-orange-600 mt-1">
+                * Delivery fee will be paid separately to the Lalamove driver upon delivery.
+              </p>
+            )}
           </div>
         </div>
 
