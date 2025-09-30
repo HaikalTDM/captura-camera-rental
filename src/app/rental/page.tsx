@@ -7,6 +7,7 @@ import TrustSection from '@/components/TrustSection';
 import CameraCatalog from '@/components/CameraCatalog';
 import RentalSummary from '@/components/RentalSummary';
 import WelcomeModal from '@/components/WelcomeModal';
+import PickupDeliverySection from '@/components/PickupDeliverySection';
 import Footer from '@/components/Footer';
 import { Camera, BookingDetails, CustomerDetails } from '@/types';
 
@@ -78,6 +79,9 @@ export default function RentalHome() {
       <section id="cameras" className="py-20">
         <CameraCatalog onBookCamera={handleCameraBookingComplete} />
       </section>
+
+      {/* Pickup & Delivery Section */}
+      <PickupDeliverySection />
 
       {/* Quick Links Section */}
       <section className="py-20 bg-gray-50">
