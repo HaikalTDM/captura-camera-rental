@@ -10,7 +10,8 @@
     "live-demo": "node scripts/live-demo.js",
     "dev:live": "concurrently \"npm run dev\" \"npm run live-demo\"",
     "deploy:vercel": "vercel --prod",
-    "deploy:netlify": "netlify deploy --prod"
+    "deploy:netlify": "netlify deploy --prod",
+    "add-camera:osmo-pocket-3-ii": "node scripts/add-second-osmo-pocket-3.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",

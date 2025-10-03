@@ -194,7 +194,7 @@ export default function BookingApprovalsPage() {
             </span>
             Pending Approvals ({pendingBookings.length})
           </h3>
-          <p className="text-sm text-gray-600 mt-2">
+          <p className="text-sm text-gray-700 mt-2">
             These bookings are waiting for admin approval before customers can proceed with pickup
           </p>
         </div>
@@ -215,33 +215,33 @@ export default function BookingApprovalsPage() {
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">📷 <strong>Camera:</strong></p>
-                          <p className="font-medium">{getCameraInfo(booking.camera_id).name}</p>
+                          <p className="text-sm text-gray-700 mb-1">📷 <strong>Camera:</strong></p>
+                          <p className="font-medium text-gray-900">{getCameraInfo(booking.camera_id).name}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">📅 <strong>Rental Period:</strong></p>
-                          <p className="font-medium">
+                          <p className="text-sm text-gray-700 mb-1">📅 <strong>Rental Period:</strong></p>
+                          <p className="font-medium text-gray-900">
                             {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">💰 <strong>Total Amount:</strong></p>
+                          <p className="text-sm text-gray-700 mb-1">💰 <strong>Total Amount:</strong></p>
                           <p className="font-medium text-green-600">RM{booking.total_amount}</p>
                         </div>
                         <div>
-                          <p className="text-sm text-gray-600 mb-1">📞 <strong>Contact:</strong></p>
-                          <p className="font-medium">{booking.customer?.phone}</p>
+                          <p className="text-sm text-gray-700 mb-1">📞 <strong>Contact:</strong></p>
+                          <p className="font-medium text-gray-900">{booking.customer?.phone}</p>
                         </div>
                       </div>
 
                       {booking.notes && (
                         <div className="bg-gray-50 rounded p-3 mb-4">
-                          <p className="text-sm text-gray-600 mb-1"><strong>Customer Notes:</strong></p>
-                          <p className="text-sm">{booking.notes}</p>
+                          <p className="text-sm text-gray-800 mb-1"><strong>Customer Notes:</strong></p>
+                          <p className="text-sm text-gray-900">{booking.notes}</p>
                         </div>
                       )}
 
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-700">
                         <p>Booking ID: {booking.id}</p>
                         <p>Submitted: {new Date(booking.created_at).toLocaleString()}</p>
                         <p>Source: {booking.booking_source}</p>

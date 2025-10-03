@@ -91,7 +91,7 @@ export default function BookingApprovalCard({
             <h3 className="text-lg font-semibold text-gray-900">
               {booking.camera?.name || booking.camera_id}
             </h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-700">
               Booking ID: {booking.id.slice(-8).toUpperCase()}
             </p>
           </div>
@@ -104,32 +104,32 @@ export default function BookingApprovalCard({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <h4 className="font-medium text-gray-900 mb-2">📅 Booking Details</h4>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Dates:</strong> {formatDate(booking.start_date)} - {formatDate(booking.end_date)}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Duration:</strong> {booking.total_days} day{booking.total_days > 1 ? 's' : ''}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Daily Rate:</strong> {formatCurrency(booking.daily_rate)}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Total Amount:</strong> {formatCurrency(booking.total_amount)}
             </p>
           </div>
 
           <div>
             <h4 className="font-medium text-gray-900 mb-2">👤 Customer Details</h4>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Name:</strong> {booking.customer?.name || 'N/A'}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Phone:</strong> {booking.customer?.phone || 'N/A'}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Email:</strong> {booking.customer?.email || 'N/A'}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Pickup:</strong> {booking.pickup_method === 'pickup' ? 'Customer Pickup' : 'Delivery'}
             </p>
           </div>
@@ -139,7 +139,7 @@ export default function BookingApprovalCard({
         {booking.notes && (
           <div className="mb-4">
             <h4 className="font-medium text-gray-900 mb-1">📝 Special Requests</h4>
-            <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{booking.notes}</p>
+            <p className="text-sm text-gray-900 bg-gray-50 p-2 rounded">{booking.notes}</p>
           </div>
         )}
 
@@ -166,11 +166,11 @@ export default function BookingApprovalCard({
         {/* Status Info for Non-Pending Bookings */}
         {booking.booking_status !== 'pending_approval' && (
           <div className="bg-gray-50 p-3 rounded-lg">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-900">
               <strong>Status:</strong> {booking.booking_status?.replace('_', ' ').toUpperCase()}
             </p>
             {booking.approved_at && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 <strong>Processed:</strong> {new Date(booking.approved_at).toLocaleString()}
               </p>
             )}
@@ -180,7 +180,7 @@ export default function BookingApprovalCard({
               </p>
             )}
             {booking.admin_notes && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 <strong>Admin Notes:</strong> {booking.admin_notes}
               </p>
             )}
