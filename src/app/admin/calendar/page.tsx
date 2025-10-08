@@ -384,6 +384,10 @@ export default function CalendarPage() {
               <span className="text-gray-800 font-medium">DJI Osmo Pocket 3</span>
             </div>
             <div className="flex items-center gap-1 sm:gap-2">
+              <div className="w-3 h-3 bg-teal-500 rounded"></div>
+              <span className="text-gray-800 font-medium">DJI Osmo Pocket 3 (ii)</span>
+            </div>
+            <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-3 h-3 bg-purple-500 rounded"></div>
               <span className="text-gray-800 font-medium">Other Cameras</span>
             </div>
