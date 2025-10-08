@@ -83,7 +83,8 @@ export default function CalendarPage() {
   const getCameraColor = (cameraName: string, status: string) => {
     // Determine camera type and return appropriate colors
     const isActionPro = cameraName.includes('Action 5 Pro');
-    const isOsmoPocket = cameraName.includes('Osmo Pocket 3');
+    const isOsmoPocket2 = cameraName.includes('Osmo Pocket 3 (ii)'); // Second Osmo Pocket 3
+    const isOsmoPocket = cameraName.includes('Osmo Pocket 3') && !isOsmoPocket2; // First Osmo Pocket 3
 
     // Status-based colors with camera-specific themes
     switch (status) {
@@ -92,24 +93,30 @@ export default function CalendarPage() {
       case 'confirmed':
         if (isActionPro) {
           return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
+        } else if (isOsmoPocket2) {
+          return 'bg-teal-100 border-l-4 border-teal-500 text-teal-900'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
-          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900';
+          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900'; // First Osmo = Orange
         } else {
           return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
         }
       case 'active':
         if (isActionPro) {
           return 'bg-blue-200 border-l-4 border-blue-600 text-blue-900 font-semibold';
+        } else if (isOsmoPocket2) {
+          return 'bg-teal-200 border-l-4 border-teal-600 text-teal-900 font-semibold'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
-          return 'bg-orange-200 border-l-4 border-orange-600 text-orange-900 font-semibold';
+          return 'bg-orange-200 border-l-4 border-orange-600 text-orange-900 font-semibold'; // First Osmo = Orange
         } else {
           return 'bg-purple-200 border-l-4 border-purple-600 text-purple-900 font-semibold';
         }
       case 'completed':
         if (isActionPro) {
           return 'bg-blue-50 border-l-4 border-blue-300 text-blue-700 opacity-75';
+        } else if (isOsmoPocket2) {
+          return 'bg-teal-50 border-l-4 border-teal-300 text-teal-700 opacity-75'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
-          return 'bg-orange-50 border-l-4 border-orange-300 text-orange-700 opacity-75';
+          return 'bg-orange-50 border-l-4 border-orange-300 text-orange-700 opacity-75'; // First Osmo = Orange
         } else {
           return 'bg-purple-50 border-l-4 border-purple-300 text-purple-700 opacity-75';
         }
@@ -121,8 +128,10 @@ export default function CalendarPage() {
       default:
         if (isActionPro) {
           return 'bg-blue-100 border-l-4 border-blue-500 text-blue-900';
+        } else if (isOsmoPocket2) {
+          return 'bg-teal-100 border-l-4 border-teal-500 text-teal-900'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
-          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900';
+          return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900'; // First Osmo = Orange
         } else {
           return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
         }
