@@ -134,12 +134,13 @@ All emails feature:
 
 ### Pickup Reminder Key Points:
 - "Your camera is ready for pickup!"
+- **"Pickup after 9:30 PM"** (prominent)
 - "What to Bring" checklist:
   - Valid ID
   - RM100 deposit
   - Booking confirmation
 - Map links to location
-- Business hours reminder
+- Contact to confirm exact pickup time
 
 ### Return Reminder Key Points:
 - "**Return by 10:00 PM Tonight**" (prominent)

@@ -341,6 +341,12 @@ export async function sendCustomerThankYouEmail(data: EmailData): Promise<boolea
               </p>
             </div>
             
+            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <p style="margin: 0; color: #075985; font-weight: bold; font-size: 16px;">
+                🕘 <strong>Pickup Time:</strong> After 9:30 PM on your pickup date
+              </p>
+            </div>
+            
             <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
               <h3 style="color: #2d3748; margin-top: 0;">📍 Pickup Location</h3>
               <p style="color: #4a5568; margin: 10px 0;">
@@ -436,6 +442,16 @@ export async function sendCustomerPickupReminder(data: EmailData): Promise<boole
               </ul>
             </div>
             
+            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="color: #075985; margin-top: 0; font-size: 18px;">🕘 Pickup Time</h3>
+              <p style="margin: 0; color: #075985; font-weight: bold; font-size: 18px;">
+                Equipment ready for pickup <strong>after 9:30 PM</strong>
+              </p>
+              <p style="margin: 10px 0 0 0; color: #0c4a6e; font-size: 14px;">
+                Please coordinate pickup time via WhatsApp or call
+              </p>
+            </div>
+            
             <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
               <h3 style="color: #2d3748; margin-top: 0;">📍 Pickup Location</h3>
               <p style="color: #4a5568; margin: 10px 0; font-size: 16px;">
@@ -452,7 +468,7 @@ export async function sendCustomerPickupReminder(data: EmailData): Promise<boole
             
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <p style="margin: 0; color: #856404; font-weight: bold;">
-                ⏰ <strong>Please arrive during business hours.</strong> Contact us if you need to change your pickup time.
+                ⏰ <strong>Pickup after 9:30 PM.</strong> Please contact us at +60 17-746 4121 to confirm your exact pickup time.
               </p>
             </div>
             
