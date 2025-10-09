@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { submitWebsiteBooking, checkCameraAvailability } from '@/lib/api/website-bookings';
 import type { WebsiteBookingData } from '@/lib/api/website-bookings';
+import { sendCustomerThankYouEmail, sendCustomerPickupReminder } from '@/lib/email/emailService';
 
 export async function POST(request: NextRequest) {
   console.log('API: POST request received at', new Date().toISOString());
@@ -147,6 +148,55 @@ export async function POST(request: NextRequest) {
         },
         { status: 500 }
       );
+    }
+
+    // Send thank you email to customer
+    try {
+      const pickupDateObj = result.booking?.pickup_date 
+        ? new Date(result.booking.pickup_date)
+        : new Date(bookingData.start_date);
+      pickupDateObj.setDate(pickupDateObj.getDate() - 1); // Pickup is 1 day before start date
+
+      const emailData = {
+        bookingId: result.booking_id || '',
+        customerName: bookingData.customer_name,
+        cameraName: bookingData.camera_name,
+        phone: bookingData.customer_phone,
+        email: bookingData.customer_email,
+        startDate: new Date(bookingData.start_date).toLocaleDateString('en-MY', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        endDate: new Date(bookingData.end_date).toLocaleDateString('en-MY', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        totalAmount: bookingData.total_amount,
+        pickupDate: pickupDateObj.toLocaleDateString('en-MY', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+      };
+
+      // Send thank you email
+      await sendCustomerThankYouEmail(emailData);
+      console.log('✅ Thank you email sent to customer');
+
+      // If pickup is today, send pickup reminder immediately
+      const today = new Date().toISOString().split('T')[0];
+      const pickupDate = pickupDateObj.toISOString().split('T')[0];
+      
+      if (pickupDate === today) {
+        await sendCustomerPickupReminder(emailData);
+        console.log('✅ Immediate pickup reminder sent (same-day booking)');
+      }
+    } catch (emailError) {
+      console.error('Error sending customer emails:', emailError);
+      // Don't fail the booking if email fails
     }
 
     // Return success response with complete data for success component

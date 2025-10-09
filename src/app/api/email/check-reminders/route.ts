@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { sendPickupReminder, sendReturnReminder } from '@/lib/email/emailService';
+import { 
+  sendPickupReminder, 
+  sendReturnReminder,
+  sendCustomerPickupReminder,
+  sendCustomerReturnReminder
+} from '@/lib/email/emailService';
 
 /**
  * API Route: Check for pickup and return reminders
@@ -38,7 +43,7 @@ export async function GET(request: NextRequest) {
 
       for (const booking of pickupsToday) {
         try {
-          const success = await sendPickupReminder({
+          const emailData = {
             bookingId: booking.id,
             customerName: booking.customer?.full_name || booking.customer?.name || 'Customer',
             cameraName: booking.camera?.name || 'Camera',
@@ -50,9 +55,15 @@ export async function GET(request: NextRequest) {
               month: 'long',
               day: 'numeric'
             })
-          });
+          };
 
-          if (success) {
+          // Send reminder to admin
+          const adminSuccess = await sendPickupReminder(emailData);
+          
+          // Send reminder to customer
+          const customerSuccess = await sendCustomerPickupReminder(emailData);
+
+          if (adminSuccess || customerSuccess) {
             pickupsSent.push(booking.id);
           } else {
             errors.push(`Failed to send pickup reminder for ${booking.id}`);
@@ -88,7 +99,7 @@ export async function GET(request: NextRequest) {
 
       for (const booking of returnsToday) {
         try {
-          const success = await sendReturnReminder({
+          const emailData = {
             bookingId: booking.id,
             customerName: booking.customer?.full_name || booking.customer?.name || 'Customer',
             cameraName: booking.camera?.name || 'Camera',
@@ -100,9 +111,15 @@ export async function GET(request: NextRequest) {
               month: 'long',
               day: 'numeric'
             })
-          });
+          };
 
-          if (success) {
+          // Send reminder to admin
+          const adminSuccess = await sendReturnReminder(emailData);
+          
+          // Send reminder to customer (mentions 10 PM deadline)
+          const customerSuccess = await sendCustomerReturnReminder(emailData);
+
+          if (adminSuccess || customerSuccess) {
             returnsSent.push(booking.id);
           } else {
             errors.push(`Failed to send return reminder for ${booking.id}`);
