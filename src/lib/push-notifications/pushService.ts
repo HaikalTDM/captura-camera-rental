@@ -3,7 +3,7 @@
  * Sends push notifications for bookings, pickups, and returns
  */
 
-import { supabase } from '@/lib/supabase/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 export interface PushSubscription {
   endpoint: string;
