@@ -22,13 +22,14 @@ export async function GET(request: NextRequest) {
     console.log('Fetching availability for:', { cameraId, startDate: defaultStartDate, endDate: defaultEndDate });
 
     // Get confirmed bookings for the camera in the date range
+    // A booking overlaps if: booking_start <= range_end AND booking_end >= range_start
     const { data: confirmedBookings, error: bookingsError } = await supabase
       .from('bookings')
       .select('start_date, end_date, booking_status, id')
       .eq('camera_id', cameraId)
       .eq('booking_status', 'confirmed')
-      .gte('start_date', defaultStartDate)
-      .lte('end_date', defaultEndDate);
+      .lte('start_date', defaultEndDate)  // Booking starts on or before range end
+      .gte('end_date', defaultStartDate);  // Booking ends on or after range start
 
     if (bookingsError) {
       console.error('Error fetching bookings:', bookingsError);
@@ -39,12 +40,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Get calendar blocks for the camera in the date range
+    // A block overlaps if: block_start <= range_end AND block_end >= range_start
     const { data: calendarBlocks, error: blocksError } = await supabase
       .from('calendar_blocks')
       .select('start_date, end_date, block_type, reason')
       .eq('camera_id', cameraId)
-      .gte('start_date', defaultStartDate)
-      .lte('end_date', defaultEndDate);
+      .lte('start_date', defaultEndDate)  // Block starts on or before range end
+      .gte('end_date', defaultStartDate);  // Block ends on or after range start
 
     if (blocksError) {
       console.error('Error fetching calendar blocks:', blocksError);

@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Camera } from '@/types';
 import { calculateRentalCost } from '@/lib/pricing';
 import { formatDateForAPI } from '@/lib/dateUtils';
+import Toast from './Toast';
+import type { ToastData } from '@/hooks/useToast';
 
 interface CustomCalendarProps {
   camera: Camera;
@@ -38,6 +40,7 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [unavailableDates, setUnavailableDates] = useState<UnavailableDate[]>([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+  const [toast, setToast] = useState<ToastData | null>(null);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -148,6 +151,20 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
     };
   };
 
+  // Check if there are any unavailable dates between start and end
+  const hasUnavailableDatesInRange = (start: Date, end: Date): boolean => {
+    const currentDate = new Date(start);
+    currentDate.setDate(currentDate.getDate() + 1); // Start from day after start
+    
+    while (currentDate < end) {
+      if (isDateUnavailable(currentDate)) {
+        return true;
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    return false;
+  };
+
   const handleDateClick = (day: CalendarDay) => {
     if (day.isPast || day.isUnavailable) return;
 
@@ -164,6 +181,16 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
       const startDateStr = formatDateForAPI(startDate);
 
       if (clickedDateStr >= startDateStr) {
+        // Check if there are any unavailable dates in the selected range
+        if (hasUnavailableDatesInRange(startDate, clickedDate)) {
+          setToast({
+            id: Math.random().toString(36).substr(2, 9),
+            message: 'Your selected date range contains unavailable dates. Please select a different range.',
+            type: 'warning',
+            duration: 5000
+          });
+          return;
+        }
         setEndDate(clickedDate);
         setIsSelectingEndDate(false);
       } else {
@@ -234,8 +261,19 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
   };
 
   return (
-    <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
-      {/* Calendar Header */}
+    <>
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={() => setToast(null)}
+        />
+      )}
+      
+      <div className={`bg-white rounded-lg border border-gray-200 p-4 ${className}`}>
+        {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => navigateMonth('prev')}
@@ -353,6 +391,7 @@ export default function CustomCalendar({ camera, onDateRangeSelect, className = 
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

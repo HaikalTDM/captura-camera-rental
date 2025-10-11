@@ -225,25 +225,27 @@ export default function BookingForm({
         <div>
           <h3 className="text-sm font-semibold text-gray-900 mb-2">Pickup Method</h3>
           <div className="space-y-2">
-            <label className="flex items-center p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center p-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
               <input
                 type="radio"
                 value="pickup"
                 checked={pickupMethod === 'pickup'}
                 onChange={(e) => setPickupMethod(e.target.value as 'pickup' | 'delivery')}
-                className="mr-2 text-blue-600"
+                className="mr-3 h-5 w-5 text-blue-600 border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                style={{ minWidth: '20px', minHeight: '20px' }}
               />
-              <span className="text-sm text-gray-700">Self Pickup</span>
+              <span className="text-sm text-gray-900 font-medium">Self Pickup</span>
             </label>
-            <label className="flex items-center p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer">
+            <label className="flex items-center p-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
               <input
                 type="radio"
                 value="delivery"
                 checked={pickupMethod === 'delivery'}
                 onChange={(e) => setPickupMethod(e.target.value as 'pickup' | 'delivery')}
-                className="mr-2 text-blue-600"
+                className="mr-3 h-5 w-5 text-blue-600 border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                style={{ minWidth: '20px', minHeight: '20px' }}
               />
-              <span className="text-sm text-gray-700">Lalamove Delivery</span>
+              <span className="text-sm text-gray-900 font-medium">Lalamove Delivery</span>
             </label>
           </div>
 

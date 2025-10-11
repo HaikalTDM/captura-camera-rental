@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -167,6 +167,22 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
   const [currentLang, setCurrentLang] = useState<'en' | 'ms'>('en');
   const [isAgreed, setIsAgreed] = useState(false);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const currentContent = termsContent[currentLang];
@@ -182,8 +198,19 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+      onClick={(e) => {
+        // Close modal if clicking on backdrop
+        if (e.target === e.currentTarget) {
+          onCancel();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
           <h2 className="text-2xl font-bold text-gray-900">{currentContent.title}</h2>
@@ -239,15 +266,16 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
         {/* Footer */}
         <div className="border-t border-gray-200 p-6 bg-gray-50">
           {/* Agreement Checkbox */}
-          <div className="flex items-start space-x-3 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-start space-x-3 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <input
               type="checkbox"
               id="termsCheckbox"
               checked={isAgreed}
               onChange={(e) => setIsAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="mt-1 h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-2 border-gray-400 rounded cursor-pointer accent-blue-600 flex-shrink-0"
+              style={{ minWidth: '20px', minHeight: '20px' }}
             />
-            <label htmlFor="termsCheckbox" className="text-sm text-gray-800 font-medium cursor-pointer">
+            <label htmlFor="termsCheckbox" className="text-sm text-gray-900 font-medium cursor-pointer select-none">
               {currentContent.agreementText}
             </label>
           </div>

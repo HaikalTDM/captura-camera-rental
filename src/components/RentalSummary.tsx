@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookingDetails } from '@/types';
 import { formatCurrency } from '@/lib/pricing';
 import BookingForm from './BookingForm';
@@ -20,6 +20,17 @@ export default function RentalSummary({ booking, onClose, onNewBooking }: Rental
   const [bookingResult, setBookingResult] = useState<any>(null);
   const [customerResult, setCustomerResult] = useState<any>(null);
   const [bookingDataResult, setBookingDataResult] = useState<any>(null);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    document.body.style.paddingRight = '0px';
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, []);
 
   const isDiscounted = booking.totalDays >= 3;
   const savings = isDiscounted ? (booking.camera.dailyRate - booking.camera.discountRate) * booking.totalDays : 0;

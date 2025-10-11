@@ -5,6 +5,25 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Custom Checkbox and Radio Button Styles */
+input[type="checkbox"],
+input[type="radio"] {
+  appearance: auto;
+  -webkit-appearance: auto;
+  -moz-appearance: auto;
+}
+
+/* Ensure checkboxes and radio buttons are visible and styled properly */
+input[type="checkbox"] {
+  cursor: pointer;
+  position: relative;
+}
+
+input[type="radio"] {
+  cursor: pointer;
+  position: relative;
+}
+
 /* Photography Services Custom Styles - Peter McKinnon Inspired */
 .font-serif {
   font-family: "Playfair Display", "Times New Roman", Georgia, serif;
@@ -360,9 +379,9 @@ html {
 }
 
 /* Toast animations */
-@keyframes slide-in-right {
+@keyframes slideInRight {
   from {
-    transform: translateX(100%);
+    transform: translateX(400px);
     opacity: 0;
   }
   to {
@@ -371,8 +390,21 @@ html {
   }
 }
 
-.animate-slide-in-right {
-  animation: slide-in-right 0.3s ease-out;
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-shrink {
+  animation: shrink linear;
 }
 
 :root {

@@ -54,13 +54,40 @@ export default function WelcomeModal({ isOpen, onClose, onDontShowAgain }: Welco
     }
   }, [isOpen, currentStep, steps.length]);
 
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const currentStepData = steps[currentStep];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl transform transition-all duration-500 scale-100 animate-modal-enter">
+    <div 
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm overflow-y-auto"
+      onClick={(e) => {
+        // Close modal if clicking on backdrop
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl transform transition-all duration-500 scale-100 animate-modal-enter my-8"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Animated Background */}
         <div className="relative bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-8 text-white overflow-hidden">
           {/* Floating Particles */}
