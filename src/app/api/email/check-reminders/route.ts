@@ -63,6 +63,21 @@ export async function GET(request: NextRequest) {
           // Send reminder to customer
           const customerSuccess = await sendCustomerPickupReminder(emailData);
 
+          // Send push notification
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/push-notifications/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: '📦 Pickup Today',
+                body: `${emailData.customerName} picking up ${emailData.cameraName}`,
+                data: { bookingId: booking.id, type: 'pickup' }
+              })
+            });
+          } catch (pushError) {
+            console.error('Error sending pickup push notification:', pushError);
+          }
+
           if (adminSuccess || customerSuccess) {
             pickupsSent.push(booking.id);
           } else {
@@ -118,6 +133,21 @@ export async function GET(request: NextRequest) {
           
           // Send reminder to customer (mentions 10 PM deadline)
           const customerSuccess = await sendCustomerReturnReminder(emailData);
+
+          // Send push notification
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/push-notifications/send`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: '🔙 Return Today',
+                body: `${emailData.customerName} returning ${emailData.cameraName} by 10 PM`,
+                data: { bookingId: booking.id, type: 'return' }
+              })
+            });
+          } catch (pushError) {
+            console.error('Error sending return push notification:', pushError);
+          }
 
           if (adminSuccess || customerSuccess) {
             returnsSent.push(booking.id);

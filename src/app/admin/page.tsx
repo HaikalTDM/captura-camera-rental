@@ -6,6 +6,7 @@ import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
 import UpcomingPickupsSection from '@/components/admin/UpcomingPickupsSection';
 import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
+import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
 
 export default function AdminDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -117,6 +118,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Push Notification Toggle */}
+      <PushNotificationToggle />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6 max-w-full">

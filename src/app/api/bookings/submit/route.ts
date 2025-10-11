@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { submitWebsiteBooking, checkCameraAvailability } from '@/lib/api/website-bookings';
 import type { WebsiteBookingData } from '@/lib/api/website-bookings';
-import { sendCustomerThankYouEmail, sendCustomerPickupReminder } from '@/lib/email/emailService';
+import { sendCustomerThankYouEmail, sendCustomerPickupReminder, sendNewBookingNotification } from '@/lib/email/emailService';
 
 export async function POST(request: NextRequest) {
   console.log('API: POST request received at', new Date().toISOString());
@@ -182,9 +182,29 @@ export async function POST(request: NextRequest) {
         })
       };
 
-      // Send thank you email
+      // Send thank you email to customer
       await sendCustomerThankYouEmail(emailData);
       console.log('✅ Thank you email sent to customer');
+
+      // Send new booking notification to admin
+      await sendNewBookingNotification(emailData);
+      console.log('✅ New booking notification sent to admin');
+
+      // Send push notification
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/push-notifications/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: '🆕 New Booking',
+            body: `${bookingData.customer_name} booked ${bookingData.camera_name}`,
+            data: { bookingId: result.booking_id }
+          })
+        });
+        console.log('✅ Push notification sent to admin');
+      } catch (pushError) {
+        console.error('Error sending push notification:', pushError);
+      }
 
       // If pickup is today, send pickup reminder immediately
       const today = new Date().toISOString().split('T')[0];
