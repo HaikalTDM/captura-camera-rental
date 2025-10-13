@@ -152,10 +152,15 @@ export async function POST(request: NextRequest) {
 
     // Send thank you email to customer
     try {
+      // Get pickup date from database (already calculated by trigger as start_date - 1 day)
+      // Only calculate manually if not present in the booking
       const pickupDateObj = result.booking?.pickup_date 
-        ? new Date(result.booking.pickup_date)
-        : new Date(bookingData.start_date);
-      pickupDateObj.setDate(pickupDateObj.getDate() - 1); // Pickup is 1 day before start date
+        ? new Date(result.booking.pickup_date) // Already calculated by database trigger
+        : (() => {
+            const date = new Date(bookingData.start_date);
+            date.setDate(date.getDate() - 1); // Calculate: 1 day before start date
+            return date;
+          })();
 
       const emailData = {
         bookingId: result.booking_id || '',

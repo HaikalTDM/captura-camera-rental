@@ -54,15 +54,18 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
       today.setHours(0, 0, 0, 0);
 
       const pickupsWithCalculations = pendingPickups.map(booking => {
-        // Use pickup_date if available, otherwise calculate as start_date - 1 day
-        let pickupDate;
-        if (booking.pickup_date) {
-          pickupDate = new Date(booking.pickup_date);
-        } else {
-          pickupDate = new Date(booking.start_date);
-          pickupDate.setDate(pickupDate.getDate() - 1);
-        }
-        pickupDate.setHours(0, 0, 0, 0);
+        // Use pickup_date directly from database (already calculated by trigger as start_date - 1 day)
+        // Parse dates in local timezone to avoid timezone shift issues
+        const pickupDateStr = booking.pickup_date || (() => {
+          // Fallback: calculate if pickup_date is missing
+          const startDate = new Date(booking.start_date + 'T00:00:00');
+          startDate.setDate(startDate.getDate() - 1);
+          return startDate.toISOString().split('T')[0];
+        })();
+        
+        // Parse as local date (YYYY-MM-DD format)
+        const [year, month, day] = pickupDateStr.split('-').map(Number);
+        const pickupDate = new Date(year, month - 1, day);
         
         const timeDiff = pickupDate.getTime() - today.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -74,7 +77,7 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
           customer_email: booking.customer?.email,
           camera_name: booking.camera?.name || booking.camera_name || 'Unknown Camera',
           camera_model: booking.camera?.model,
-          pickup_date: pickupDate.toISOString().split('T')[0],
+          pickup_date: pickupDateStr, // Use the string directly from database
           start_date: booking.start_date,
           end_date: booking.end_date,
           total_amount: booking.total_amount,
@@ -137,13 +140,19 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
       ? 'tomorrow'
       : `in ${pickup.days_until_pickup} days`;
 
+    // Parse dates in local timezone to avoid timezone issues
+    const formatDate = (dateStr: string) => {
+      const [y, m, d] = dateStr.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('en-MY', { day: 'numeric', month: 'numeric', year: 'numeric' });
+    };
+
     return encodeURIComponent(
       `Hi ${pickup.customer_name}! 📷\n\n` +
       `This is a reminder that your camera rental pickup is scheduled for ${dayText.toUpperCase()}.\n\n` +
       `📋 Pickup Details:\n` +
       `• Camera: ${pickup.camera_name}\n` +
-      `• Pickup Date: ${new Date(pickup.pickup_date).toLocaleDateString()}\n` +
-      `• Rental Period: ${new Date(pickup.start_date).toLocaleDateString()} - ${new Date(pickup.end_date).toLocaleDateString()}\n\n` +
+      `• Pickup Date: ${formatDate(pickup.pickup_date)}\n` +
+      `• Rental Period: ${formatDate(pickup.start_date)} - ${formatDate(pickup.end_date)}\n\n` +
       `Please come to our location to collect your camera equipment.\n\n` +
       `Thank you!\n` +
       `CAPTURA Camera Rental`
@@ -264,10 +273,17 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-3">
                         <p className="text-green-600">
-                          📦 <strong>Pickup:</strong> {new Date(pickup.pickup_date).toLocaleDateString()}
+                          📦 <strong>Pickup:</strong> {(() => {
+                            const [y, m, d] = pickup.pickup_date.split('-').map(Number);
+                            return new Date(y, m - 1, d).toLocaleDateString('en-MY', { day: 'numeric', month: 'numeric', year: 'numeric' });
+                          })()}
                         </p>
                         <p className="text-blue-600">
-                          🎬 <strong>Rental:</strong> {new Date(pickup.start_date).toLocaleDateString()} - {new Date(pickup.end_date).toLocaleDateString()}
+                          🎬 <strong>Rental:</strong> {(() => {
+                            const [y1, m1, d1] = pickup.start_date.split('-').map(Number);
+                            const [y2, m2, d2] = pickup.end_date.split('-').map(Number);
+                            return `${new Date(y1, m1 - 1, d1).toLocaleDateString('en-MY', { day: 'numeric', month: 'numeric', year: 'numeric' })} - ${new Date(y2, m2 - 1, d2).toLocaleDateString('en-MY', { day: 'numeric', month: 'numeric', year: 'numeric' })}`;
+                          })()}
                         </p>
                       </div>
                       
