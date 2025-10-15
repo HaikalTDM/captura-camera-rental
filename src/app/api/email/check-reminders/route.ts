@@ -14,21 +14,15 @@ import {
  * GET /api/email/check-reminders
  */
 export async function GET(request: NextRequest) {
-  console.log('🔔 Checking for pickup and return reminders...');
-
   try {
-    // Debug: Check if service role key exists
+    // Ensure server-side configuration exists
     const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-    console.log('Service Role Key exists:', hasServiceKey);
-    console.log('Service Role Key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
-    
     const today = new Date().toISOString().split('T')[0];
     const pickupsSent: string[] = [];
     const returnsSent: string[] = [];
     const errors: string[] = [];
     
     if (!hasServiceKey) {
-      console.error('❌ SUPABASE_SERVICE_ROLE_KEY is not set!');
       return NextResponse.json({
         success: false,
         error: 'Server configuration error: Missing SUPABASE_SERVICE_ROLE_KEY'
@@ -45,26 +39,28 @@ export async function GET(request: NextRequest) {
       .eq('booking_status', 'confirmed');
 
     if (pickupError) {
-      console.error('❌ Error fetching pickups:', pickupError);
-      console.error('❌ Pickup error details:', JSON.stringify(pickupError, null, 2));
       errors.push(`Failed to fetch pickup reminders: ${pickupError.message || 'Unknown error'}`);
     } else if (pickupsToday && pickupsToday.length > 0) {
-      console.log(`📦 Found ${pickupsToday.length} pickups for today`);
+      // Batch-fetch related entities to avoid N+1 queries
+      const uniquePickupCustomerIds = Array.from(new Set(pickupsToday.map(b => b.customer_id).filter(Boolean)));
+      const uniquePickupCameraIds = Array.from(new Set(pickupsToday.map(b => b.camera_id).filter(Boolean)));
+
+      const [{ data: pickupCustomers }, { data: pickupCameras }] = await Promise.all([
+        uniquePickupCustomerIds.length > 0
+          ? supabaseAdmin.from('customers').select('*').in('id', uniquePickupCustomerIds)
+          : Promise.resolve({ data: [] as any[] }),
+        uniquePickupCameraIds.length > 0
+          ? supabaseAdmin.from('cameras').select('*').in('id', uniquePickupCameraIds)
+          : Promise.resolve({ data: [] as any[] })
+      ]);
+
+      const pickupCustomerById = new Map<string, any>((pickupCustomers || []).map(c => [c.id, c]));
+      const pickupCameraById = new Map<string, any>((pickupCameras || []).map(c => [c.id, c]));
 
       for (const booking of pickupsToday) {
         try {
-          // Fetch customer and camera data separately
-          const { data: customer } = await supabaseAdmin
-            .from('customers')
-            .select('*')
-            .eq('id', booking.customer_id)
-            .single();
-
-          const { data: camera } = await supabaseAdmin
-            .from('cameras')
-            .select('*')
-            .eq('id', booking.camera_id)
-            .single();
+          const customer = pickupCustomerById.get(booking.customer_id);
+          const camera = pickupCameraById.get(booking.camera_id);
           
           const emailData = {
             bookingId: booking.id,
@@ -98,7 +94,7 @@ export async function GET(request: NextRequest) {
               })
             });
           } catch (pushError) {
-            console.error('Error sending pickup push notification:', pushError);
+            // swallow push notification errors
           }
 
           if (adminSuccess || customerSuccess) {
@@ -111,8 +107,6 @@ export async function GET(request: NextRequest) {
           errors.push(`Error with pickup ${booking.id}`);
         }
       }
-    } else {
-      console.log('No pickups scheduled for today');
     }
 
     // 2. CHECK FOR RETURN REMINDERS
@@ -126,26 +120,28 @@ export async function GET(request: NextRequest) {
       .eq('booking_status', 'confirmed');
 
     if (returnError) {
-      console.error('❌ Error fetching returns:', returnError);
-      console.error('❌ Return error details:', JSON.stringify(returnError, null, 2));
       errors.push(`Failed to fetch return reminders: ${returnError.message || 'Unknown error'}`);
     } else if (returnsToday && returnsToday.length > 0) {
-      console.log(`🔙 Found ${returnsToday.length} returns for today`);
+      // Batch-fetch related entities to avoid N+1 queries
+      const uniqueReturnCustomerIds = Array.from(new Set(returnsToday.map(b => b.customer_id).filter(Boolean)));
+      const uniqueReturnCameraIds = Array.from(new Set(returnsToday.map(b => b.camera_id).filter(Boolean)));
+
+      const [{ data: returnCustomers }, { data: returnCameras }] = await Promise.all([
+        uniqueReturnCustomerIds.length > 0
+          ? supabaseAdmin.from('customers').select('*').in('id', uniqueReturnCustomerIds)
+          : Promise.resolve({ data: [] as any[] }),
+        uniqueReturnCameraIds.length > 0
+          ? supabaseAdmin.from('cameras').select('*').in('id', uniqueReturnCameraIds)
+          : Promise.resolve({ data: [] as any[] })
+      ]);
+
+      const returnCustomerById = new Map<string, any>((returnCustomers || []).map(c => [c.id, c]));
+      const returnCameraById = new Map<string, any>((returnCameras || []).map(c => [c.id, c]));
 
       for (const booking of returnsToday) {
         try {
-          // Fetch customer and camera data separately
-          const { data: customer } = await supabaseAdmin
-            .from('customers')
-            .select('*')
-            .eq('id', booking.customer_id)
-            .single();
-
-          const { data: camera } = await supabaseAdmin
-            .from('cameras')
-            .select('*')
-            .eq('id', booking.camera_id)
-            .single();
+          const customer = returnCustomerById.get(booking.customer_id);
+          const camera = returnCameraById.get(booking.camera_id);
           
           const emailData = {
             bookingId: booking.id,
@@ -179,7 +175,7 @@ export async function GET(request: NextRequest) {
               })
             });
           } catch (pushError) {
-            console.error('Error sending return push notification:', pushError);
+            // swallow push notification errors
           }
 
           if (adminSuccess || customerSuccess) {
@@ -192,8 +188,6 @@ export async function GET(request: NextRequest) {
           errors.push(`Error with return ${booking.id}`);
         }
       }
-    } else {
-      console.log('No returns scheduled for today');
     }
 
     // Return summary
