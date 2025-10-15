@@ -39,11 +39,7 @@ export async function GET(request: NextRequest) {
     // Get bookings where pickup_date is today and equipment not yet picked up
     const { data: pickupsToday, error: pickupError } = await supabaseAdmin
       .from('bookings')
-      .select(`
-        *,
-        customers!customer_id(*),
-        cameras!camera_id(*)
-      `)
+      .select('*')
       .eq('pickup_date', today)
       .eq('equipment_picked_up', false)
       .eq('booking_status', 'confirmed');
@@ -57,14 +53,23 @@ export async function GET(request: NextRequest) {
 
       for (const booking of pickupsToday) {
         try {
-          // Access joined data from the new query format
-          const customer = (booking as any).customers;
-          const camera = (booking as any).cameras;
+          // Fetch customer and camera data separately
+          const { data: customer } = await supabaseAdmin
+            .from('customers')
+            .select('*')
+            .eq('id', booking.customer_id)
+            .single();
+
+          const { data: camera } = await supabaseAdmin
+            .from('cameras')
+            .select('*')
+            .eq('id', booking.camera_id)
+            .single();
           
           const emailData = {
             bookingId: booking.id,
             customerName: customer?.full_name || customer?.name || 'Customer',
-            cameraName: camera?.name || 'Camera',
+            cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
             pickupDate: new Date(booking.pickup_date).toLocaleDateString('en-MY', {
@@ -114,11 +119,7 @@ export async function GET(request: NextRequest) {
     // Get bookings where end_date is today and equipment not yet returned
     const { data: returnsToday, error: returnError } = await supabaseAdmin
       .from('bookings')
-      .select(`
-        *,
-        customers!customer_id(*),
-        cameras!camera_id(*)
-      `)
+      .select('*')
       .eq('end_date', today)
       .eq('equipment_picked_up', true)
       .eq('equipment_returned', false)
@@ -133,14 +134,23 @@ export async function GET(request: NextRequest) {
 
       for (const booking of returnsToday) {
         try {
-          // Access joined data from the new query format
-          const customer = (booking as any).customers;
-          const camera = (booking as any).cameras;
+          // Fetch customer and camera data separately
+          const { data: customer } = await supabaseAdmin
+            .from('customers')
+            .select('*')
+            .eq('id', booking.customer_id)
+            .single();
+
+          const { data: camera } = await supabaseAdmin
+            .from('cameras')
+            .select('*')
+            .eq('id', booking.camera_id)
+            .single();
           
           const emailData = {
             bookingId: booking.id,
             customerName: customer?.full_name || customer?.name || 'Customer',
-            cameraName: camera?.name || 'Camera',
+            cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
             returnDate: new Date(booking.end_date).toLocaleDateString('en-MY', {
