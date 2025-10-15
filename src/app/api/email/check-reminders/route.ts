@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin } from '@/lib/supabase';
 import { 
   sendPickupReminder, 
   sendReturnReminder,
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     // 1. CHECK FOR PICKUP REMINDERS
     // Get bookings where pickup_date is today and equipment not yet picked up
-    const { data: pickupsToday, error: pickupError } = await supabase
+    const { data: pickupsToday, error: pickupError } = await supabaseAdmin
       .from('bookings')
       .select(`
         *,
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     // 2. CHECK FOR RETURN REMINDERS
     // Get bookings where end_date is today and equipment not yet returned
-    const { data: returnsToday, error: returnError } = await supabase
+    const { data: returnsToday, error: returnError } = await supabaseAdmin
       .from('bookings')
       .select(`
         *,
