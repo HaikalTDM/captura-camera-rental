@@ -17,10 +17,23 @@ export async function GET(request: NextRequest) {
   console.log('🔔 Checking for pickup and return reminders...');
 
   try {
+    // Debug: Check if service role key exists
+    const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+    console.log('Service Role Key exists:', hasServiceKey);
+    console.log('Service Role Key length:', process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0);
+    
     const today = new Date().toISOString().split('T')[0];
     const pickupsSent: string[] = [];
     const returnsSent: string[] = [];
     const errors: string[] = [];
+    
+    if (!hasServiceKey) {
+      console.error('❌ SUPABASE_SERVICE_ROLE_KEY is not set!');
+      return NextResponse.json({
+        success: false,
+        error: 'Server configuration error: Missing SUPABASE_SERVICE_ROLE_KEY'
+      }, { status: 500 });
+    }
 
     // 1. CHECK FOR PICKUP REMINDERS
     // Get bookings where pickup_date is today and equipment not yet picked up
@@ -36,8 +49,9 @@ export async function GET(request: NextRequest) {
       .eq('booking_status', 'confirmed');
 
     if (pickupError) {
-      console.error('Error fetching pickups:', pickupError);
-      errors.push('Failed to fetch pickup reminders');
+      console.error('❌ Error fetching pickups:', pickupError);
+      console.error('❌ Pickup error details:', JSON.stringify(pickupError, null, 2));
+      errors.push(`Failed to fetch pickup reminders: ${pickupError.message || 'Unknown error'}`);
     } else if (pickupsToday && pickupsToday.length > 0) {
       console.log(`📦 Found ${pickupsToday.length} pickups for today`);
 
@@ -107,8 +121,9 @@ export async function GET(request: NextRequest) {
       .eq('booking_status', 'confirmed');
 
     if (returnError) {
-      console.error('Error fetching returns:', returnError);
-      errors.push('Failed to fetch return reminders');
+      console.error('❌ Error fetching returns:', returnError);
+      console.error('❌ Return error details:', JSON.stringify(returnError, null, 2));
+      errors.push(`Failed to fetch return reminders: ${returnError.message || 'Unknown error'}`);
     } else if (returnsToday && returnsToday.length > 0) {
       console.log(`🔙 Found ${returnsToday.length} returns for today`);
 
