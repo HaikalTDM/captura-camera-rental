@@ -41,8 +41,8 @@ export async function GET(request: NextRequest) {
       .from('bookings')
       .select(`
         *,
-        customer:customers(*),
-        camera:cameras(*)
+        customers!customer_id(*),
+        cameras!camera_id(*)
       `)
       .eq('pickup_date', today)
       .eq('equipment_picked_up', false)
@@ -57,12 +57,16 @@ export async function GET(request: NextRequest) {
 
       for (const booking of pickupsToday) {
         try {
+          // Access joined data from the new query format
+          const customer = (booking as any).customers;
+          const camera = (booking as any).cameras;
+          
           const emailData = {
             bookingId: booking.id,
-            customerName: booking.customer?.full_name || booking.customer?.name || 'Customer',
-            cameraName: booking.camera?.name || 'Camera',
-            phone: booking.customer?.phone || 'N/A',
-            email: booking.customer?.email || 'N/A',
+            customerName: customer?.full_name || customer?.name || 'Customer',
+            cameraName: camera?.name || 'Camera',
+            phone: customer?.phone || 'N/A',
+            email: customer?.email || 'N/A',
             pickupDate: new Date(booking.pickup_date).toLocaleDateString('en-MY', {
               weekday: 'long',
               year: 'numeric',
@@ -112,8 +116,8 @@ export async function GET(request: NextRequest) {
       .from('bookings')
       .select(`
         *,
-        customer:customers(*),
-        camera:cameras(*)
+        customers!customer_id(*),
+        cameras!camera_id(*)
       `)
       .eq('end_date', today)
       .eq('equipment_picked_up', true)
@@ -129,12 +133,16 @@ export async function GET(request: NextRequest) {
 
       for (const booking of returnsToday) {
         try {
+          // Access joined data from the new query format
+          const customer = (booking as any).customers;
+          const camera = (booking as any).cameras;
+          
           const emailData = {
             bookingId: booking.id,
-            customerName: booking.customer?.full_name || booking.customer?.name || 'Customer',
-            cameraName: booking.camera?.name || 'Camera',
-            phone: booking.customer?.phone || 'N/A',
-            email: booking.customer?.email || 'N/A',
+            customerName: customer?.full_name || customer?.name || 'Customer',
+            cameraName: camera?.name || 'Camera',
+            phone: customer?.phone || 'N/A',
+            email: customer?.email || 'N/A',
             returnDate: new Date(booking.end_date).toLocaleDateString('en-MY', {
               weekday: 'long',
               year: 'numeric',
