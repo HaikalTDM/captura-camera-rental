@@ -1,268 +1,528 @@
-# 📸 CAPTURA - Professional Camera Rental Platform
+# 📸 CAPTURA - Professional Camera Rental & Photography Platform
 
-A comprehensive camera rental website with advanced admin management system, built with modern web technologies for professional camera rental businesses.
+A comprehensive dual-service platform for **camera equipment rental** and **photography services**, built with Next.js 15, React 19, and Supabase.
 
-## 🌟 Features
+**Live Site**: [captura.my](https://captura.my)
 
-### 🎬 **Customer-Facing Website**
-- **Modern Landing Page** with professional hero section and glass morphism effects
-- **Dynamic Camera Catalog** with real-time pricing and availability from database
-- **Interactive Booking System** with TidyCal integration and custom calendars
-- **Customer Gallery** showcasing work done with rental equipment
-- **Responsive Design** optimized for all devices and screen sizes
-- **WhatsApp Integration** for instant customer communication
+---
 
-### 🔧 **Admin Management Panel**
-- **Complete Camera Management** - Add, edit, delete cameras with full specifications
-- **Booking Management** - Manual booking entry, bulk CSV import, and status tracking
-- **Accessory Management** - Full CRUD operations for camera accessories
-- **Customer Database** - Comprehensive customer relationship management
-- **Business Settings** - Configurable contact info, pricing, and policies
-- **Real-Time Synchronization** - Admin changes instantly reflect on main website
+## 🌟 Overview
 
-### 📊 **Advanced Features**
-- **Multiple Booking Sources** - Website, phone, WhatsApp, in-person tracking
-- **Bulk Data Import** - CSV import for historical bookings and customers
-- **Payment Tracking** - Deposit and final payment status management
-- **Maintenance Scheduling** - Equipment maintenance tracking and alerts
-- **Inventory Management** - Stock levels and availability monitoring
+CAPTURA is a full-featured platform with:
+- **Customer-facing website** for camera rentals and photography bookings
+- **Admin dashboard** for managing bookings, equipment, customers, and operations
+- **AI assistant** to help admins check availability and manage bookings
+- **Email & push notifications** for pickup/return reminders
+- **Invoice generation** system
+- **PWA support** for mobile admin management
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: Next.js 15.5.3, React, TypeScript
-- **Styling**: Tailwind CSS with custom components and glass morphism effects
-- **Database**: Supabase (PostgreSQL) with real-time features
-- **Authentication**: Supabase Auth for admin panel
-- **Deployment**: Vercel with automatic deployments
-- **Booking Integration**: TidyCal with custom calendar components
-- **Communication**: WhatsApp Business API integration
+- **Framework**: Next.js 15.5.3 (App Router)
+- **Frontend**: React 19, TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Email**: Nodemailer (Gmail SMTP)
+- **Push Notifications**: Web Push API
+- **AI**: DeepSeek API
+- **Deployment**: Vercel
+- **Domain**: Cloudflare (DNS)
 
-## Getting Started
+---
 
-1. **Install dependencies:**
+## 🚀 Quick Start
+
+### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-2. **Run the development server:**
+### 2. Environment Variables
+Create a `.env.local` file (see `.env.example`):
+
+```env
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Email (Gmail SMTP)
+EMAIL_USER=captura.my@gmail.com
+EMAIL_PASSWORD=your-app-password
+EMAIL_FROM=captura.my@gmail.com
+ADMIN_EMAIL=haikaltdm46@gmail.com
+
+# Push Notifications
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+
+# Base URL
+NEXT_PUBLIC_BASE_URL=https://captura.my
+
+# AI Assistant
+DEEPSEEK_API_KEY=sk-your-deepseek-key
+
+# Admin Auth
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=your-password
+```
+
+### 3. Run Development Server
 ```bash
 npm run dev
 ```
 
-3. **Open your browser:**
-Navigate to [http://localhost:3000](http://localhost:3000) to see the application.
+Visit [http://localhost:3000](http://localhost:3000)
 
-## 🔥 Live Development with Real-time Changes
+---
 
-The application supports **hot reloading** - any changes you make to the code will automatically update in the browser without refreshing!
+## 📋 Features
 
-### Live Demo Mode
+### 🎬 Customer Website
 
-To see automated real-time changes:
+#### Camera Rental
+- **Interactive catalog** with real-time availability
+- **Custom calendar** for date selection with conflict detection
+- **Dynamic pricing** (discounts for 3+ days)
+- **Booking flow** with customer details and terms acceptance
+- **Pickup options**: Shop pickup or home delivery
+- **WhatsApp integration** for instant communication
 
+#### Photography Services
+- **Package browsing** (wedding, portrait, event, product)
+- **Gallery showcase** of past work
+- **TidyCal integration** for bookings
+
+### 🔧 Admin Dashboard
+
+#### Core Management
+- **Dashboard**: Overview of bookings, revenue, upcoming pickups/returns
+- **Booking Approvals**: Review and approve pending bookings
+- **Calendar**: Visual timeline of all bookings by camera
+- **Bookings**: Full CRUD, status tracking, invoice generation
+- **Cameras**: Equipment management with specs and pricing
+- **Accessories**: Manage add-on items
+- **Customers**: CRM with booking history
+- **Gallery**: Upload and manage portfolio images
+
+#### Advanced Features
+- **Bulk CSV Import**: Import bookings and customers
+- **Invoice Generation**: PDF invoices with branding
+- **WhatsApp Integration**: Click-to-chat for pickups/returns
+- **Search & Filters**: Advanced booking search
+- **PWA Support**: Install admin app on mobile
+
+### 🤖 AI Assistant
+
+**Powered by DeepSeek** - Chat interface in admin dashboard
+
+**What it can do:**
+- Check camera availability for date ranges
+- Get booking details
+- Search customer information
+- View upcoming pickups and returns
+- List recent bookings
+- Show all cameras with pricing
+
+**Example queries:**
+- "Is the GoPro available from Oct 20-25?"
+- "Show me today's pickups"
+- "Find customer john@example.com"
+- "List all pending bookings"
+
+### 📧 Email System
+
+**Admin Notifications** (to haikaltdm46@gmail.com):
+- New booking received
+- Pickup reminder (day before)
+- Return reminder (on return date)
+
+**Customer Emails**:
+- Thank you email upon booking
+- Pickup reminder (day before, after 9:30 PM)
+- Return reminder (return date, by 10:00 PM)
+
+**Automated via Vercel Cron** (daily at 8:00 AM UTC)
+
+### 🔔 Push Notifications
+
+**PWA Admin App** receives push notifications for:
+- New bookings
+- Upcoming pickups
+- Upcoming returns
+
+**Setup:**
+- Enable notifications in admin dashboard
+- Install PWA on mobile device
+- Receive real-time alerts
+
+---
+
+## 📁 Project Structure
+
+```
+captura/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx                    # Customer homepage
+│   │   ├── admin/                      # Admin dashboard
+│   │   │   ├── page.tsx                # Dashboard overview
+│   │   │   ├── booking-approvals/      # Pending approvals
+│   │   │   ├── calendar/               # Booking calendar
+│   │   │   ├── bookings/               # Booking management
+│   │   │   ├── cameras/                # Equipment management
+│   │   │   ├── customers/              # Customer CRM
+│   │   │   └── gallery/                # Portfolio management
+│   │   ├── api/
+│   │   │   ├── bookings/               # Booking CRUD APIs
+│   │   │   ├── email/                  # Email notification APIs
+│   │   │   ├── push-notifications/     # Push notification APIs
+│   │   │   └── admin/ai-assistant/     # AI assistant API
+│   │   └── photography/                # Photography service pages
+│   ├── components/
+│   │   ├── admin/                      # Admin dashboard components
+│   │   │   ├── AIAssistant.tsx         # AI chat widget
+│   │   │   ├── BookingApprovalCard.tsx # Approval card
+│   │   │   └── PushNotificationToggle.tsx
+│   │   ├── CustomCalendar.tsx          # Date picker with conflicts
+│   │   ├── BookingForm.tsx             # Customer booking form
+│   │   ├── Toast.tsx                   # Notification toasts
+│   │   └── ...
+│   └── lib/
+│       ├── supabase.ts                 # Supabase client
+│       ├── email/emailService.ts       # Email sending logic
+│       ├── push-notifications/         # Push notification logic
+│       └── api/                        # API helpers
+├── public/
+│   ├── images/                         # Camera and gallery images
+│   ├── service-worker.js               # PWA service worker
+│   └── manifest.json                   # PWA manifest
+├── scripts/
+│   ├── add-second-osmo-pocket-3.js     # Camera addition script
+│   └── ...
+└── sql/
+    ├── create-push-subscriptions-table.sql
+    └── fix-pickup-date.sql
+```
+
+---
+
+## 🗄️ Database Schema
+
+### Tables
+
+**cameras**
+- `id`, `name`, `description`, `image_url`, `status`
+- `daily_rate`, `weekly_rate`, `monthly_rate`, `deposit_amount`
+- Specs: `purchase_date`, `serial_number`, `warranty_expiry`
+- Maintenance tracking
+
+**bookings**
+- `id`, `customer_id`, `camera_id`
+- Dates: `start_date`, `end_date`, `pickup_date`
+- Status: `booking_status` (pending/confirmed/cancelled/completed)
+- Tracking: `equipment_picked_up`, `equipment_returned`
+- Payment: `total_amount`, `deposit_paid`, `final_payment_status`
+- `pickup_method` (shop/delivery), `booking_source`
+
+**customers**
+- `id`, `full_name`, `email`, `phone`, `ic_number`
+- Address fields
+- Created/updated timestamps
+
+**accessories**
+- Add-on items (batteries, tripods, cases, etc.)
+
+**gallery**
+- Portfolio images for photography service
+
+**push_subscriptions**
+- Web push subscription data for PWA notifications
+
+### Database Triggers
+
+**Auto-calculate pickup_date**
+- Trigger: `set_pickup_date_trigger`
+- Function: `set_pickup_date()`
+- Sets `pickup_date = start_date - 1 day` on insert/update
+
+---
+
+## ⚙️ Setup Guides
+
+### Email Notifications Setup
+
+1. **Generate Gmail App Password**
+   - Go to [Google Account Security](https://myaccount.google.com/security)
+   - Enable 2-Step Verification
+   - Go to App Passwords → Generate new app password
+   - Copy the 16-character password
+
+2. **Add to Vercel**
+   ```
+   EMAIL_USER=captura.my@gmail.com
+   EMAIL_PASSWORD=your-16-char-app-password
+   EMAIL_FROM=captura.my@gmail.com
+   ADMIN_EMAIL=haikaltdm46@gmail.com
+   ```
+
+3. **Test Email**
 ```bash
-npm run live-demo
+   curl https://captura.my/api/email/test-config
+   ```
+
+4. **Cron Job** (already configured in `vercel.json`)
+   - Runs daily at 8:00 AM UTC
+   - Endpoint: `/api/email/check-reminders`
+
+### Push Notifications Setup
+
+1. **Generate VAPID Keys**
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+
+2. **Add to Vercel**
+   ```
+   NEXT_PUBLIC_VAPID_PUBLIC_KEY=your-public-key
+   VAPID_PRIVATE_KEY=your-private-key
+   ```
+
+3. **Create Database Table**
+   - Run `scripts/create-push-subscriptions-table.sql` in Supabase SQL Editor
+
+4. **Enable in Admin Dashboard**
+   - Login to admin
+   - Click "Enable Notifications" toggle
+   - Allow browser permissions
+   - Install PWA for mobile notifications
+
+### AI Assistant Setup
+
+1. **Get DeepSeek API Key**
+   - Visit [platform.deepseek.com](https://platform.deepseek.com)
+   - Sign up/login
+   - Create API key (starts with `sk-`)
+
+2. **Add to Vercel**
+   ```
+   DEEPSEEK_API_KEY=sk-your-key-here
+   ```
+
+3. **Use the Assistant**
+   - Login to admin dashboard
+   - Click floating chat bubble (bottom-right)
+   - Ask questions about bookings, availability, customers
+
+**Example queries:**
+```
+"Is DJI Osmo Pocket 3 available Oct 20-25?"
+"Show recent bookings"
+"What pickups are today?"
+"Find customer with email john@example.com"
+"List all cameras"
 ```
 
-This will automatically apply changes every 5 seconds to demonstrate the live updating capability.
+---
 
-### Development with Live Updates
+## 🎨 Available Cameras
 
+1. **GoPro Hero 13 Black** - RM50/day (RM45/day for 3+ days)
+2. **DJI Osmo Pocket 3** - RM50/day (RM45/day for 3+ days)
+3. **DJI Osmo Pocket 3 (ii)** - RM50/day (RM45/day for 3+ days)
+4. **Sony A7 IV** - (Custom pricing)
+
+---
+
+## 🔐 Admin Access
+
+**Login URL**: [captura.my/admin/login](https://captura.my/admin/login)
+
+**Credentials**: Stored in `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables
+
+**PWA Installation**:
+- Visit admin dashboard on mobile
+- Click "Add to Home Screen"
+- Open installed app
+- Enable push notifications
+
+---
+
+## 📱 Customer Booking Flow
+
+1. **Browse Cameras**: View available cameras with specs
+2. **Select Dates**: Interactive calendar shows availability
+3. **Check Conflicts**: Toast warning if dates unavailable
+4. **Enter Details**: Name, email, phone, IC, address
+5. **Choose Pickup**: Shop pickup (after 9:30 PM) or delivery
+6. **Accept Terms**: Terms and conditions modal
+7. **Submit**: Booking sent for admin approval
+8. **Email Confirmation**: Customer receives thank you email
+9. **Admin Notification**: Admin receives booking alert (email + push)
+10. **Pickup Reminder**: Sent day before pickup
+11. **Return Reminder**: Sent on return date
+
+---
+
+## 🚢 Deployment
+
+### Vercel (Current)
+
+**Domain**: captura.my (via Cloudflare DNS)
+
+**Environment Variables** (all set in Vercel dashboard):
+- Supabase credentials
+- Email configuration
+- Push notification keys
+- DeepSeek API key
+- Admin credentials
+
+**Automatic Deployment**:
+- Push to `master` branch → Auto deploy to production
+- Preview deployments for PRs
+
+**Cron Jobs**:
+- Daily email/push reminders at 8:00 AM UTC
+
+### Manual Deploy
 ```bash
-npm run dev
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel --prod
 ```
 
-- ✅ **Hot Module Replacement (HMR)** - Changes appear instantly
-- ✅ **Fast Refresh** - React state is preserved during updates
-- ✅ **Error Overlay** - See errors directly in the browser
-- ✅ **TypeScript** - Real-time type checking
+---
 
-## 📅 TidyCal Integration - Inline Calendars
+## 🧪 Testing
 
-**✅ NEW: Each camera now has its own inline booking calendar!**
+### Test Email System
+```bash
+# Local
+curl http://localhost:3000/api/email/test-config
 
-### Current Setup
-
-Each camera card includes an **interactive demo calendar** that shows:
-- ✅ **Monthly calendar view**
-- ✅ **Available time slots**
-- ✅ **Real-time booking summary**
-- ✅ **Individual calendar per camera**
-
-### Step 1: Get Your TidyCal Embed Code
-
-1. Log in to your [TidyCal Dashboard](https://tidycal.com)
-2. Create separate booking types for each camera:
-   - `osmo-pocket-3-rental`
-   - `action-5-pro-rental`
-3. Copy the embed code for each:
-
-```html
-<script src="https://asset-tidycal.b-cdn.net//js/embed.js"></script>
-<div id="tidycal-embed-osmo-pocket-3" data-path="your-username/osmo-pocket-3-rental"></div>
+# Production
+curl https://captura.my/api/email/test-config
 ```
 
-### Step 2: Replace Demo Calendars
-
-1. Open `src/components/CameraCard.tsx`
-2. Replace `TidyCalDemo` with `TidyCalEmbed`:
-
-```tsx
-// Replace this:
-<TidyCalDemo
-  cameraId={camera.id}
-  cameraName={camera.name}
-  className="w-full"
-/>
-
-// With this:
-<TidyCalEmbed
-  dataPath={`your-username/${camera.id}-rental`}
-  cameraId={camera.id}
-  cameraName={camera.name}
-  className="w-full"
-/>
-<div id="tidycal-embed" data-path="your-username/camera-pickup"></div>
+### Test Reminder System
+```bash
+curl https://captura.my/api/email/check-reminders
 ```
 
-### Step 3: Create TidyCal Booking Types
-
-For the camera rental service, consider creating these booking types:
-- **Camera Pickup** - For customers to schedule equipment pickup
-- **Camera Return** - For scheduling equipment returns
-- **Equipment Demo** - For product demonstrations
-
-### TidyCal Embed Options
-
-**Option 1: Embed a specific booking type**
-```html
-<script src="https://asset-tidycal.b-cdn.net//js/embed.js"></script>
-<div id="tidycal-embed" data-path="username/15-minute-meeting"></div>
-```
-
-**Option 2: Embed your entire booking page**
-```html
-<script src="https://asset-tidycal.b-cdn.net//js/embed.js"></script>
-<div id="tidycal-embed" data-path="username"></div>
-```
-
-## Project Structure
-
-```
-src/
-├── app/
-│   ├── layout.tsx          # Root layout with metadata
-│   ├── page.tsx            # Main page with all components
-│   └── globals.css         # Global styles
-├── components/
-│   ├── Navigation.tsx      # Header with mobile menu
-│   ├── HeroSection.tsx     # Landing page hero
-│   ├── CameraCatalog.tsx   # Camera grid display
-│   ├── CameraCard.tsx      # Individual camera cards
-│   ├── BookingModal.tsx    # Booking flow with TidyCal
-│   ├── PricingCalculator.tsx # Dynamic pricing logic
-│   ├── RentalSummary.tsx   # Booking confirmation
-│   └── Footer.tsx          # Site footer
-├── lib/
-│   ├── cameras.ts          # Camera data
-│   └── pricing.ts          # Pricing calculations
-└── types/
-    └── index.ts            # TypeScript interfaces
-```
-
-## Customization
-
-### Adding New Cameras
-
-1. Edit `src/lib/cameras.ts`
-2. Add new camera objects with the required properties:
-```typescript
+Expected response:
+```json
 {
-  id: 'camera-id',
-  name: 'Camera Name',
-  description: 'Camera description',
-  image: '/images/camera-image.jpg',
-  dailyRate: 50,
-  discountRate: 45,
-  features: ['Feature 1', 'Feature 2'],
-  specifications: {
-    'Spec 1': 'Value 1',
-    'Spec 2': 'Value 2'
+  "success": true,
+  "date": "2025-10-17",
+  "summary": {
+    "pickups": { "count": 1, "sent": 1, "ids": ["..."] },
+    "returns": { "count": 0, "sent": 0, "ids": [] }
   }
 }
 ```
 
-### Updating Pricing
+### Test AI Assistant
+1. Login to admin
+2. Click chat bubble
+3. Ask: "List all cameras"
+4. Should receive formatted list with pricing
 
-Modify the pricing logic in `src/lib/pricing.ts`:
-- Change discount thresholds
-- Adjust discount rates
-- Add seasonal pricing
+---
 
-### Styling
+## 📊 Business Rules
 
-The app uses Tailwind CSS. Key design tokens:
-- Primary color: Blue (blue-600)
-- Success color: Green (green-600)
-- Text: Gray scale (gray-900 to gray-400)
-- Responsive breakpoints: sm, md, lg, xl
+### Pricing
+- **Standard Rate**: RM50/day
+- **Discount Rate**: RM45/day for 3+ days
+- **Deposit**: Varies by camera
 
-## Production Deployment
+### Pickup & Return
+- **Pickup Time**: After 9:30 PM (day before rental start)
+- **Return Time**: By 10:00 PM (on rental end date)
+- **Methods**: Shop pickup or home delivery
 
-### Environment Setup
+### Booking Status
+- `pending` - Awaiting admin approval
+- `confirmed` - Approved and confirmed
+- `cancelled` - Cancelled by customer or admin
+- `completed` - Equipment returned
 
-1. **Add camera images** to `public/images/`
-2. **Configure TidyCal** embed codes
-3. **Set up analytics** (Google Analytics, etc.)
-4. **Configure SEO** metadata in `layout.tsx`
+---
 
-### 🚀 Live Deployment Options
+## 🐛 Troubleshooting
 
-#### Deploy to Vercel (Recommended)
+### Email Not Sending
+- Check Gmail app password is correct
+- Verify `EMAIL_PASSWORD` in Vercel has no spaces
+- Test with `/api/email/test-config`
+- Check Vercel logs: `vercel logs`
 
-1. **Quick Deploy:**
-```bash
-npm run deploy:vercel
-```
+### Push Notifications Not Working
+- Ensure VAPID keys are set in Vercel
+- Check browser permissions granted
+- Verify service worker registered (DevTools → Application → Service Workers)
+- Check push subscription saved in database
 
-2. **Or via GitHub:**
-   - Push to GitHub repository
-   - Connect to [Vercel](https://vercel.com)
-   - Automatic deployments on every push
+### AI Assistant Not Responding
+- Verify `DEEPSEEK_API_KEY` is set
+- Check DeepSeek account has credits
+- Review Vercel function logs
+- Test API directly: POST to `/api/admin/ai-assistant`
 
-#### Deploy to Netlify
+### Date/Time Issues
+- Database stores dates in YYYY-MM-DD format
+- Frontend parses in local timezone
+- Pickup date = start_date - 1 day (via database trigger)
 
-1. **Quick Deploy:**
-```bash
-npm run deploy:netlify
-```
+### Booking Conflicts
+- Calendar checks for overlapping bookings
+- Query: `start_date <= end_date AND end_date >= start_date`
+- Toast warning shows if conflict detected
 
-2. **Or via Git:**
-   - Connect your repository to [Netlify](https://netlify.com)
-   - Automatic builds and deployments
+---
 
-#### Other Platforms
+## 🔒 Security
 
-- **AWS Amplify**: Connect GitHub repository for automatic deployments
-- **DigitalOcean App Platform**: Deploy directly from GitHub
-- **Railway**: One-click deployment from repository
-- **Render**: Automatic deployments with zero config
+- **Admin Auth**: Credential-based (stored in env vars)
+- **API Protection**: Server-side validation
+- **Database**: Row Level Security (RLS) on Supabase
+- **Service Role**: Only used in server-side API routes
+- **Environment Variables**: Never exposed to client
+- **Email Credentials**: App-specific password (not account password)
 
-### 🌐 Live Demo URLs
+---
 
-Once deployed, your live application will be available at:
-- **Vercel**: `https://your-app.vercel.app`
-- **Netlify**: `https://your-app.netlify.app`
+## 📈 Future Enhancements
 
-All deployments include:
-- ✅ **Automatic HTTPS**
-- ✅ **Global CDN**
-- ✅ **Automatic deployments**
-- ✅ **Preview deployments** for pull requests
+- [ ] Payment gateway integration (Stripe/PayPal)
+- [ ] SMS notifications (Twilio)
+- [ ] Multi-language support (Malay, Chinese)
+- [ ] Customer login and booking history
+- [ ] Equipment damage tracking
+- [ ] Revenue analytics dashboard
+- [ ] Advanced reporting (PDF exports)
+- [ ] Inventory management for accessories
+- [ ] Automated late return penalties
 
-## Learn More
+---
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [TidyCal Help](https://help.tidycal.com)
-- [TypeScript Handbook](https://www.typescriptlang.org/docs)
+## 📞 Support & Contact
+
+**Business Email**: captura.my@gmail.com  
+**Admin Email**: haikaltdm46@gmail.com  
+**Website**: [captura.my](https://captura.my)
+
+---
+
+## 📄 License
+
+Proprietary - CAPTURA Camera Rental & Photography Services
+
+---
+
+**Built with ❤️ using Next.js 15 and React 19**

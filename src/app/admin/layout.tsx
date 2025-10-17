@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
+import AIAssistant from '../../components/admin/AIAssistant';
 
 export default function AdminLayout({
   children,
@@ -196,6 +197,9 @@ export default function AdminLayout({
           </div>
         </main>
       </div>
+      
+      {/* AI Assistant */}
+      <AIAssistant />
       </div>
     </AdminPWAWrapper>
   );
