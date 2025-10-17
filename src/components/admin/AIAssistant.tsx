@@ -64,10 +64,16 @@ export default function AIAssistant() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API error:', response.status, errorData);
+        throw new Error(errorData.error || `API error: ${response.status}`);
       }
 
       const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
       
       const assistantMessage: Message = {
         role: 'assistant',
@@ -78,9 +84,10 @@ export default function AIAssistant() {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('AI Assistant error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: `Sorry, I encountered an error: ${errorMessage}\n\nPlease make sure the DeepSeek API key is configured in your environment variables.`,
         timestamp: new Date()
       }]);
     } finally {
