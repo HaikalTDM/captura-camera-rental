@@ -62,8 +62,8 @@ VAPID_PRIVATE_KEY=your-vapid-private-key
 # Base URL
 NEXT_PUBLIC_BASE_URL=https://captura.my
 
-# AI Assistant
-DEEPSEEK_API_KEY=sk-your-deepseek-key
+# AI Assistant (DeepSeek)
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key
 
 # Admin Auth
 ADMIN_USERNAME=admin
@@ -306,6 +306,7 @@ captura/
    - Visit [platform.deepseek.com](https://platform.deepseek.com)
    - Sign up/login
    - Create API key (starts with `sk-`)
+   - **Add credits**: ~RM20-50 recommended for months of usage
 
 2. **Add to Vercel**
    ```
@@ -330,10 +331,9 @@ captura/
 
 ## 🎨 Available Cameras
 
-1. **GoPro Hero 13 Black** - RM50/day (RM45/day for 3+ days)
+1. **DJI Action 5 Pro** - RM50/day (RM45/day for 3+ days)
 2. **DJI Osmo Pocket 3** - RM50/day (RM45/day for 3+ days)
 3. **DJI Osmo Pocket 3 (ii)** - RM50/day (RM45/day for 3+ days)
-4. **Sony A7 IV** - (Custom pricing)
 
 ---
 

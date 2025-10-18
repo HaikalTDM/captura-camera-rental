@@ -87,7 +87,7 @@ export default function AIAssistant() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: `Sorry, I encountered an error: ${errorMessage}\n\nPlease make sure the DeepSeek API key is configured in your environment variables.`,
+        content: `Sorry, I encountered an error: ${errorMessage}\n\nPlease make sure the DeepSeek API key is configured and has sufficient credits.`,
         timestamp: new Date()
       }]);
     } finally {

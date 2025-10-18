@@ -365,11 +365,37 @@ export async function POST(request: NextRequest) {
     const { messages } = await request.json();
     
     if (!process.env.DEEPSEEK_API_KEY) {
+      console.error('❌ DEEPSEEK_API_KEY is not set');
       return NextResponse.json(
-        { error: 'DeepSeek API key not configured' },
+        { error: 'DeepSeek API key not configured. Please add DEEPSEEK_API_KEY to environment variables.' },
         { status: 500 }
       );
     }
+    
+    console.log('✅ DeepSeek API key found, processing request...');
+    
+    // Fetch actual cameras from database
+    const { data: cameras } = await supabaseAdmin
+      .from('cameras')
+      .select('name, daily_rate, weekly_rate, monthly_rate, status')
+      .eq('status', 'available')
+      .order('name', { ascending: true });
+    
+    const cameraList = cameras && cameras.length > 0
+      ? cameras.map(c => `- ${c.name} (Daily: RM${c.daily_rate}, 3+ days: RM${c.weekly_rate || c.daily_rate}/day)`).join('\n')
+      : '- No cameras currently available';
+    
+    // Fetch recent booking stats
+    const { data: recentBookings } = await supabaseAdmin
+      .from('bookings')
+      .select('booking_status')
+      .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+    
+    const bookingStats = recentBookings ? {
+      total: recentBookings.length,
+      pending: recentBookings.filter(b => b.booking_status === 'pending').length,
+      confirmed: recentBookings.filter(b => b.booking_status === 'confirmed').length
+    } : { total: 0, pending: 0, confirmed: 0 };
     
     // Add system message with context
     const systemMessage = {
@@ -377,24 +403,36 @@ export async function POST(request: NextRequest) {
       content: `You are an AI assistant for Captura's camera rental business admin dashboard. 
 You help the admin check bookings, availability, customer information, and answer questions about the business.
 
-Current date: ${new Date().toLocaleDateString('en-MY')}
+Current date: ${new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'long', year: 'numeric' })}
+Current time: ${new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })}
+
+IMPORTANT - ACTUAL AVAILABLE CAMERAS IN DATABASE:
+${cameraList}
+
+Recent Activity (Last 30 days):
+- Total bookings: ${bookingStats.total}
+- Pending approvals: ${bookingStats.pending}
+- Confirmed bookings: ${bookingStats.confirmed}
 
 Guidelines:
 - Be concise and professional
-- Use the available functions to query real data from the database
+- ALWAYS use the available functions to query real data from the database
+- ONLY mention cameras that are listed above - these are the actual cameras in the database
 - When checking availability, always mention the specific dates and camera names
 - Format prices in Malaysian Ringgit (RM)
 - For date queries, use YYYY-MM-DD format
-- If asked about "today" or "tomorrow", calculate the appropriate dates
+- If asked about "today" or "tomorrow", calculate the appropriate dates from the current date above
 
-Available cameras:
-- GoPro Hero 13 Black
-- DJI Osmo Pocket 3
-- DJI Osmo Pocket 3 (ii)
-- Sony A7 IV
+Business Rules:
+- Pickup time: After 9:30 PM (day before rental starts)
+- Return time: By 10:00 PM on the rental end date
+- Discount: 3+ days rental gets special rate
+- All prices in Malaysian Ringgit (RM)
 
-Pickup time: After 9:30 PM
-Return time: By 10:00 PM on the end date`
+When a user asks about cameras or availability:
+1. Use the get_all_cameras function to get the latest list
+2. Or use check_camera_availability to check specific dates
+3. Always base your response on database data, not assumptions`
     };
     
     const allMessages = [systemMessage, ...messages];
@@ -417,16 +455,21 @@ Return time: By 10:00 PM on the end date`
     });
     
     if (!response.ok) {
-      throw new Error(`DeepSeek API error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('❌ DeepSeek API error:', response.status, errorText);
+      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
     }
     
     const data = await response.json();
+    console.log('✅ Received response from DeepSeek');
     const assistantMessage = data.choices[0].message;
     
     // Check if AI wants to call a function
     if (assistantMessage.function_call) {
       const functionName = assistantMessage.function_call.name;
       const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
+      
+      console.log(`🔧 Calling function: ${functionName}`);
       
       // Execute the function
       const functionResult = await executeFunction(functionName, functionArgs);
@@ -467,11 +510,12 @@ Return time: By 10:00 PM on the end date`
     });
     
   } catch (error) {
-    console.error('AI Assistant error:', error);
+    console.error('❌ AI Assistant error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { 
         error: 'Failed to process request',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: errorMessage
       },
       { status: 500 }
     );
