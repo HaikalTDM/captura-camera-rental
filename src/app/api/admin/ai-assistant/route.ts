@@ -465,7 +465,7 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
     
     const allMessages = [systemMessage, ...messages];
     
-    // Call DeepSeek API with tools parameter (new format)
+    // Call DeepSeek API
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -475,8 +475,7 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: allMessages,
-        tools: functions.map(f => ({ type: 'function', function: f })),
-        tool_choice: 'auto',
+        functions: functions,
         temperature: 0.7,
         max_tokens: 2000
       })
@@ -485,12 +484,19 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ DeepSeek API error:', response.status, errorText);
-      throw new Error(`DeepSeek API error: ${response.status} - ${errorText}`);
+      
+      // Parse error if possible
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error('❌ Error details:', errorJson);
+        throw new Error(`DeepSeek API error: ${errorJson.error?.message || errorText}`);
+      } catch {
+        throw new Error(`DeepSeek API error (${response.status}): ${errorText}`);
+      }
     }
     
     const data = await response.json();
     console.log('✅ Received response from DeepSeek');
-    console.log('📦 Full response:', JSON.stringify(data, null, 2));
     
     const assistantMessage = data.choices[0].message;
     let functionName = null;
@@ -584,11 +590,16 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
     
   } catch (error) {
     console.error('❌ AI Assistant error:', error);
+    console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Return more detailed error
     return NextResponse.json(
       { 
         error: 'Failed to process request',
-        details: errorMessage
+        details: errorMessage,
+        timestamp: new Date().toISOString()
       },
       { status: 500 }
     );
