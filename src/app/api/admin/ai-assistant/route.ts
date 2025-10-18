@@ -456,12 +456,16 @@ If the user asks ANY question about:
 - Pickups → Call get_upcoming_pickups
 - Returns → Call get_upcoming_returns
 
-NEVER say things like "you have 5 cameras" or "here are your bookings" without calling the function first!`
+NEVER say things like "you have 5 cameras" or "here are your bookings" without calling the function first!
+
+FUNCTION CALLING FORMAT:
+You MUST use the function_call feature. When you need data, immediately call the appropriate function.
+DO NOT respond with text first - call the function IMMEDIATELY and let me handle showing the user the results.`
     };
     
     const allMessages = [systemMessage, ...messages];
     
-    // Call DeepSeek API
+    // Call DeepSeek API with tools parameter (new format)
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -471,8 +475,8 @@ NEVER say things like "you have 5 cameras" or "here are your bookings" without c
       body: JSON.stringify({
         model: 'deepseek-chat',
         messages: allMessages,
-        functions: functions,
-        function_call: 'auto',
+        tools: functions.map(f => ({ type: 'function', function: f })),
+        tool_choice: 'auto',
         temperature: 0.7,
         max_tokens: 2000
       })
@@ -486,19 +490,56 @@ NEVER say things like "you have 5 cameras" or "here are your bookings" without c
     
     const data = await response.json();
     console.log('✅ Received response from DeepSeek');
-    const assistantMessage = data.choices[0].message;
+    console.log('📦 Full response:', JSON.stringify(data, null, 2));
     
-    // Check if AI wants to call a function
-    if (assistantMessage.function_call) {
-      const functionName = assistantMessage.function_call.name;
-      const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
-      
+    const assistantMessage = data.choices[0].message;
+    let functionName = null;
+    let functionArgs = null;
+    
+    // Check if AI wants to call a function (new tools format)
+    if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
+      const toolCall = assistantMessage.tool_calls[0];
+      if (toolCall.type === 'function') {
+        functionName = toolCall.function.name;
+        functionArgs = JSON.parse(toolCall.function.arguments);
+      }
+    }
+    // Check if AI wants to call a function (old function_call format)
+    else if (assistantMessage.function_call) {
+      functionName = assistantMessage.function_call.name;
+      functionArgs = JSON.parse(assistantMessage.function_call.arguments);
+    }
+    // Check if function call is in the content (XML format - fallback)
+    else if (assistantMessage.content && assistantMessage.content.includes('<function_calls>')) {
+      console.log('🔍 Detected function call in content (XML format)');
+      const invokeMatch = assistantMessage.content.match(/<invoke name="([^"]+)">/);
+      if (invokeMatch) {
+        functionName = invokeMatch[1];
+        functionArgs = {};
+        
+        // Extract parameters
+        const paramMatches = [...assistantMessage.content.matchAll(/<parameter name="([^"]+)">([^<]+)<\/parameter>/g)];
+        for (const match of paramMatches) {
+          const paramName = match[1];
+          const paramValue = match[2];
+          // Try to parse as JSON, otherwise use as string
+          try {
+            functionArgs[paramName] = JSON.parse(paramValue);
+          } catch {
+            functionArgs[paramName] = paramValue;
+          }
+        }
+      }
+    }
+    
+    // If we have a function to call, execute it
+    if (functionName && functionArgs) {
       console.log(`🔧 AI called function: ${functionName}`);
       console.log(`📝 With arguments:`, functionArgs);
       
       // Execute the function
       const functionResult = await executeFunction(functionName, functionArgs);
-      console.log(`✅ Function result:`, functionResult);
+      console.log(`✅ Function result:`, JSON.stringify(functionResult).substring(0, 200) + '...');
       
       // Send function result back to AI
       const secondResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -511,7 +552,7 @@ NEVER say things like "you have 5 cameras" or "here are your bookings" without c
           model: 'deepseek-chat',
           messages: [
             ...allMessages,
-            assistantMessage,
+            { role: 'assistant', content: `I'm calling the ${functionName} function to get you the latest data from the database.` },
             {
               role: 'function',
               name: functionName,
@@ -535,10 +576,10 @@ NEVER say things like "you have 5 cameras" or "here are your bookings" without c
     
     // Return direct response if no function call
     console.log('⚠️ No function was called - AI responded directly');
-    console.log(`💬 Direct response:`, assistantMessage.content.substring(0, 100) + '...');
+    console.log(`💬 Direct response:`, assistantMessage.content?.substring(0, 100) + '...');
     
     return NextResponse.json({
-      message: assistantMessage.content
+      message: assistantMessage.content || 'Sorry, I could not process that request.'
     });
     
   } catch (error) {
