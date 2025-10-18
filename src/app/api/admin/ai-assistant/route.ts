@@ -201,12 +201,12 @@ async function getBookingDetails(params: any) {
 }
 
 async function getRecentBookings(params: any) {
-  const { status, limit = 10 } = params;
+  const { status, limit = 30 } = params;
   
   let query = supabaseAdmin
     .from('bookings')
-    .select('*, customers!customer_id(full_name, email, phone), cameras!camera_id(name)')
-    .order('created_at', { ascending: false })
+    .select('id, booking_status, start_date, end_date, pickup_date, total_amount, customer_id, camera_id, created_at')
+    .order('start_date', { ascending: false })
     .limit(limit);
   
   if (status) {
@@ -215,14 +215,32 @@ async function getRecentBookings(params: any) {
   
   const { data: bookings } = await query;
   
-  return bookings?.map(b => ({
+  if (!bookings || bookings.length === 0) {
+    return { message: 'No bookings found' };
+  }
+  
+  // Batch fetch customers and cameras
+  const customerIds = Array.from(new Set(bookings.map(b => b.customer_id)));
+  const cameraIds = Array.from(new Set(bookings.map(b => b.camera_id)));
+  
+  const [{ data: customers }, { data: cameras }] = await Promise.all([
+    supabaseAdmin.from('customers').select('*').in('id', customerIds),
+    supabaseAdmin.from('cameras').select('*').in('id', cameraIds)
+  ]);
+  
+  const customerMap = new Map(customers?.map(c => [c.id, c]));
+  const cameraMap = new Map(cameras?.map(c => [c.id, c]));
+  
+  return bookings.map(b => ({
     id: b.id.substring(0, 8),
-    customer: b.customers?.full_name || 'N/A',
-    camera: b.cameras?.name || 'N/A',
-    dates: `${b.start_date} to ${b.end_date}`,
+    customer: customerMap.get(b.customer_id)?.full_name || 'N/A',
+    camera: cameraMap.get(b.camera_id)?.name || 'N/A',
+    rental_dates: `${b.start_date} to ${b.end_date}`,
+    pickup_date: b.pickup_date,
     status: b.booking_status,
-    amount: `RM${b.total_amount}`
-  })) || [];
+    amount: `RM${b.total_amount}`,
+    booked_on: b.created_at?.split('T')[0]
+  }));
 }
 
 async function getCustomerInfo(params: any) {
@@ -431,11 +449,17 @@ AVAILABLE FUNCTIONS YOU MUST USE:
 HOW TO RESPOND TO QUESTIONS:
 - "What cameras do you have?" → CALL get_all_cameras function
 - "Is [camera] available on [date]?" → CALL check_camera_availability function
-- "Show me recent bookings" → CALL get_recent_bookings function
+- "Show me recent bookings" or "this week/month bookings" → CALL get_recent_bookings function
 - "What pickups today/tomorrow?" → CALL get_upcoming_pickups function
 - "Find customer [name]" → CALL get_customer_info function
 - "Show booking [id]" → CALL get_booking_details function
 - "What returns are due?" → CALL get_upcoming_returns function
+
+IMPORTANT: 
+- When user asks about "this week" or "this month" bookings, use get_recent_bookings with appropriate limit
+- "This week" means show at least 10-20 recent bookings (not just current week)
+- "This month" or "October" means show recent bookings from the past 30 days
+- The get_recent_bookings function shows recent bookings in chronological order
 
 IMPORTANT:
 - Format all prices in Malaysian Ringgit (RM)
