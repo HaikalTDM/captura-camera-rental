@@ -173,7 +173,14 @@ export default function AIAssistant() {
                       : 'bg-gray-100 text-gray-900'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
+                  <div 
+                    className="text-sm whitespace-pre-wrap break-words prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: msg.content
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\n/g, '<br/>')
+                    }}
+                  />
                   <span className={`text-xs mt-1 block ${
                     msg.role === 'user' ? 'text-blue-100' : 'text-gray-500'
                   }`}>
