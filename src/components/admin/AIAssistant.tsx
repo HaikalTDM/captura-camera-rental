@@ -167,17 +167,25 @@ export default function AIAssistant() {
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-2 ${
+                  className={`max-w-[85%] sm:max-w-[80%] rounded-2xl px-3 py-2 sm:px-4 sm:py-3 shadow-sm ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white'
-                      : 'bg-gray-100 text-gray-900'
+                      : 'bg-white text-gray-900 border border-gray-200'
                   }`}
                 >
                   <div 
-                    className="text-sm whitespace-pre-wrap break-words prose prose-sm max-w-none"
+                    className={`text-sm leading-relaxed break-words ${
+                      msg.role === 'assistant' ? 'ai-response' : ''
+                    }`}
                     dangerouslySetInnerHTML={{
                       __html: msg.content
-                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>')
+                        .replace(/^### (.+)$/gm, '<h3 class="text-base font-bold mt-3 mb-2 first:mt-0">$1</h3>')
+                        .replace(/^## (.+)$/gm, '<h2 class="text-lg font-bold mt-4 mb-2 first:mt-0">$2</h2>')
+                        .replace(/^• (.+)$/gm, '<div class="flex items-start gap-2 my-1"><span class="text-blue-500 font-bold">•</span><span>$1</span></div>')
+                        .replace(/^(\d+)\. (.+)$/gm, '<div class="flex items-start gap-2 my-1"><span class="text-blue-600 font-semibold min-w-[20px]">$1.</span><span>$2</span></div>')
+                        .replace(/---+/g, '<hr class="my-3 border-gray-200"/>')
+                        .replace(/\n\n/g, '<div class="h-2"></div>')
                         .replace(/\n/g, '<br/>')
                     }}
                   />
