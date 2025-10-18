@@ -498,6 +498,11 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
     const data = await response.json();
     console.log('✅ Received response from DeepSeek');
     
+    if (!data.choices || data.choices.length === 0) {
+      console.error('❌ No choices in response:', JSON.stringify(data, null, 2));
+      throw new Error('DeepSeek returned empty response');
+    }
+    
     const assistantMessage = data.choices[0].message;
     let functionName = null;
     let functionArgs = null;
@@ -547,7 +552,22 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
       const functionResult = await executeFunction(functionName, functionArgs);
       console.log(`✅ Function result:`, JSON.stringify(functionResult).substring(0, 200) + '...');
       
-      // Send function result back to AI
+      // Format the function result into a readable response
+      let formattedResult = '';
+      
+      if (Array.isArray(functionResult)) {
+        if (functionResult.length === 0) {
+          formattedResult = 'No results found.';
+        } else {
+          formattedResult = JSON.stringify(functionResult, null, 2);
+        }
+      } else if (typeof functionResult === 'object') {
+        formattedResult = JSON.stringify(functionResult, null, 2);
+      } else {
+        formattedResult = String(functionResult);
+      }
+      
+      // Send function result back to AI with simplified context
       const secondResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -557,21 +577,39 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
         body: JSON.stringify({
           model: 'deepseek-chat',
           messages: [
-            ...allMessages,
-            { role: 'assistant', content: `I'm calling the ${functionName} function to get you the latest data from the database.` },
             {
-              role: 'function',
-              name: functionName,
-              content: JSON.stringify(functionResult)
+              role: 'system',
+              content: 'You are a helpful assistant. Format the data below in a clear, user-friendly way. Be concise and professional.'
+            },
+            {
+              role: 'user',
+              content: messages[messages.length - 1].content
+            },
+            {
+              role: 'assistant',
+              content: `I called the ${functionName} function and got this data:\n\n${formattedResult}\n\nLet me format this for you:`
             }
           ],
           temperature: 0.7,
-          max_tokens: 2000
+          max_tokens: 1500
         })
       });
       
+      if (!secondResponse.ok) {
+        const errorText = await secondResponse.text();
+        console.error('❌ DeepSeek second call error:', secondResponse.status, errorText);
+        throw new Error(`DeepSeek second call failed: ${errorText}`);
+      }
+      
       const secondData = await secondResponse.json();
-      const finalMessage = secondData.choices[0].message.content;
+      console.log('📦 Second response:', JSON.stringify(secondData, null, 2));
+      
+      if (!secondData.choices || secondData.choices.length === 0) {
+        console.error('❌ No choices in second response');
+        throw new Error('DeepSeek returned empty response after function call');
+      }
+      
+      const finalMessage = secondData.choices[0].message?.content || 'Function executed successfully.';
       console.log(`💬 Final response after function call:`, finalMessage.substring(0, 100) + '...');
       
       return NextResponse.json({
