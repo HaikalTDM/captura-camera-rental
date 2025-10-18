@@ -400,13 +400,18 @@ export async function POST(request: NextRequest) {
     // Add system message with context
     const systemMessage = {
       role: 'system',
-      content: `You are an AI assistant for Captura's camera rental business admin dashboard. 
-You help the admin check bookings, availability, customer information, and answer questions about the business.
+      content: `You are an AI assistant for Captura's camera rental business admin dashboard in Malaysia.
+
+CRITICAL RULES - YOU MUST FOLLOW THESE:
+1. NEVER make up data or give fake information
+2. ALWAYS call the appropriate function to get real data from the database
+3. If you don't know something, call a function to find out
+4. NEVER assume or guess - only use real database data
 
 Current date: ${new Date().toLocaleDateString('en-MY', { day: 'numeric', month: 'long', year: 'numeric' })}
 Current time: ${new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })}
 
-IMPORTANT - ACTUAL AVAILABLE CAMERAS IN DATABASE:
+ACTUAL CAMERAS IN DATABASE (as of now):
 ${cameraList}
 
 Recent Activity (Last 30 days):
@@ -414,25 +419,44 @@ Recent Activity (Last 30 days):
 - Pending approvals: ${bookingStats.pending}
 - Confirmed bookings: ${bookingStats.confirmed}
 
-Guidelines:
-- Be concise and professional
-- ALWAYS use the available functions to query real data from the database
-- ONLY mention cameras that are listed above - these are the actual cameras in the database
-- When checking availability, always mention the specific dates and camera names
-- Format prices in Malaysian Ringgit (RM)
-- For date queries, use YYYY-MM-DD format
-- If asked about "today" or "tomorrow", calculate the appropriate dates from the current date above
+AVAILABLE FUNCTIONS YOU MUST USE:
+1. get_all_cameras - Get complete list of cameras with pricing
+2. check_camera_availability - Check if camera is available for dates
+3. get_booking_details - Get specific booking information
+4. get_recent_bookings - Get recent bookings (with status filter)
+5. get_customer_info - Search for customer by name/email/phone
+6. get_upcoming_pickups - Get pickups in next X days
+7. get_upcoming_returns - Get returns due in next X days
 
-Business Rules:
+HOW TO RESPOND TO QUESTIONS:
+- "What cameras do you have?" → CALL get_all_cameras function
+- "Is [camera] available on [date]?" → CALL check_camera_availability function
+- "Show me recent bookings" → CALL get_recent_bookings function
+- "What pickups today/tomorrow?" → CALL get_upcoming_pickups function
+- "Find customer [name]" → CALL get_customer_info function
+- "Show booking [id]" → CALL get_booking_details function
+- "What returns are due?" → CALL get_upcoming_returns function
+
+IMPORTANT:
+- Format all prices in Malaysian Ringgit (RM)
+- Use YYYY-MM-DD format for dates
+- Today's date: ${new Date().toISOString().split('T')[0]}
+- Tomorrow's date: ${new Date(Date.now() + 86400000).toISOString().split('T')[0]}
+
+BUSINESS RULES:
 - Pickup time: After 9:30 PM (day before rental starts)
-- Return time: By 10:00 PM on the rental end date
-- Discount: 3+ days rental gets special rate
-- All prices in Malaysian Ringgit (RM)
+- Return time: By 10:00 PM on rental end date
+- Standard rate: RM50/day
+- Discount rate: RM45/day for 3+ days rental
 
-When a user asks about cameras or availability:
-1. Use the get_all_cameras function to get the latest list
-2. Or use check_camera_availability to check specific dates
-3. Always base your response on database data, not assumptions`
+If the user asks ANY question about:
+- Cameras → Call get_all_cameras or check_camera_availability
+- Bookings → Call get_recent_bookings or get_booking_details
+- Customers → Call get_customer_info
+- Pickups → Call get_upcoming_pickups
+- Returns → Call get_upcoming_returns
+
+NEVER say things like "you have 5 cameras" or "here are your bookings" without calling the function first!`
     };
     
     const allMessages = [systemMessage, ...messages];
@@ -469,10 +493,12 @@ When a user asks about cameras or availability:
       const functionName = assistantMessage.function_call.name;
       const functionArgs = JSON.parse(assistantMessage.function_call.arguments);
       
-      console.log(`🔧 Calling function: ${functionName}`);
+      console.log(`🔧 AI called function: ${functionName}`);
+      console.log(`📝 With arguments:`, functionArgs);
       
       // Execute the function
       const functionResult = await executeFunction(functionName, functionArgs);
+      console.log(`✅ Function result:`, functionResult);
       
       // Send function result back to AI
       const secondResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
@@ -498,13 +524,19 @@ When a user asks about cameras or availability:
       });
       
       const secondData = await secondResponse.json();
+      const finalMessage = secondData.choices[0].message.content;
+      console.log(`💬 Final response after function call:`, finalMessage.substring(0, 100) + '...');
+      
       return NextResponse.json({
-        message: secondData.choices[0].message.content,
+        message: finalMessage,
         function_called: functionName
       });
     }
     
     // Return direct response if no function call
+    console.log('⚠️ No function was called - AI responded directly');
+    console.log(`💬 Direct response:`, assistantMessage.content.substring(0, 100) + '...');
+    
     return NextResponse.json({
       message: assistantMessage.content
     });
