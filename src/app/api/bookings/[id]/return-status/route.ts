@@ -10,7 +10,8 @@ export async function POST(
     const { 
       equipment_returned, 
       equipment_return_notes, 
-      equipment_condition_return 
+      equipment_condition_return,
+      booking_status 
     } = await request.json();
 
     console.log('Updating return status for booking:', bookingId);
@@ -38,21 +39,29 @@ export async function POST(
       updated_at: new Date().toISOString()
     };
 
-    // If marking as returned, set return date
+    // If marking as returned, set return date and update status
     if (equipment_returned) {
       updateData.equipment_return_date = new Date().toISOString();
       
-      // If booking is active and equipment is being returned, set status to completed
-      if (currentBooking.status === 'active') {
-        updateData.status = 'completed';
+      // Auto-complete booking when equipment is returned
+      if (booking_status) {
+        updateData.booking_status = booking_status;
+        console.log('✓ Equipment returned - Auto-completing booking to:', booking_status);
+      } else {
+        // Fallback: auto-complete if not already completed or cancelled
+        if (currentBooking.booking_status !== 'completed' && currentBooking.booking_status !== 'cancelled') {
+          updateData.booking_status = 'completed';
+          console.log('✓ Equipment returned - Auto-completing booking to: completed');
+        }
       }
     } else {
-      // If marking as not returned, clear return date
+      // If marking as not returned (undoing), clear return date
       updateData.equipment_return_date = null;
       
-      // If booking was completed and return is being undone, set back to active
-      if (currentBooking.status === 'completed' && currentBooking.equipment_picked_up) {
-        updateData.status = 'active';
+      // Keep the booking_status as provided (if undoing, frontend sends original status)
+      if (booking_status && booking_status !== 'completed') {
+        updateData.booking_status = booking_status;
+        console.log('↺ Undoing return - Reverting booking status to:', booking_status);
       }
     }
 
@@ -66,6 +75,19 @@ export async function POST(
         customer:customers(*)
       `)
       .single();
+    
+    // Fetch camera separately if needed
+    if (data && data.camera_id) {
+      const { data: cameraData } = await supabase
+        .from('cameras')
+        .select('*')
+        .eq('id', data.camera_id)
+        .single();
+      
+      if (cameraData) {
+        data.camera = cameraData;
+      }
+    }
 
     if (error) {
       console.error('Error updating return status:', error);

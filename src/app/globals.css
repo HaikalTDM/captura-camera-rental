@@ -189,6 +189,17 @@ input[type="radio"] {
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -200,12 +211,100 @@ input[type="radio"] {
   }
 }
 
+/* Elegant Modal Animations */
+@keyframes modalSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalSlideDown {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes backdropFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }
 
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .animate-slideUp {
   animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.animate-modalSlideUp {
+  animation: modalSlideUp 0.5s cubic-bezier(0.34, 0.61, 0.4, 1);
+}
+
+.animate-modalSlideDown {
+  animation: modalSlideDown 0.45s cubic-bezier(0.34, 0.61, 0.4, 1);
+}
+
+.animate-backdropFadeIn {
+  animation: backdropFadeIn 0.4s ease-out;
+}
+
+.animate-backdropFadeOut {
+  animation: backdropFadeOut 0.4s ease-in;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
 
 /* Gateway Page Animations */

@@ -58,6 +58,58 @@ export async function getAllBookings(): Promise<Booking[]> {
   }
 }
 
+// Get booking by ID
+export async function getBookingById(id: string): Promise<Booking | null> {
+  try {
+    console.log('Fetching booking by ID:', id);
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        customer:customers(*)
+      `)
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      console.error('Error fetching booking:', error)
+      if (error.code === 'PGRST116') return null // Not found
+      return null
+    }
+
+    console.log('Fetched booking:', data);
+
+    // Fetch camera information if camera_id exists
+    if (data?.camera_id) {
+      const { data: camera, error: cameraError } = await supabase
+        .from('cameras')
+        .select('id, name, brand, model')
+        .eq('id', data.camera_id)
+        .single()
+
+      if (cameraError) {
+        console.error('Error fetching camera info:', cameraError)
+      }
+
+      // Add camera info to booking
+      return {
+        ...data,
+        camera: camera || {
+          id: data.camera_id,
+          name: `Camera (${data.camera_id})`,
+          brand: 'Unknown',
+          model: 'Unknown'
+        }
+      }
+    }
+
+    return data
+  } catch (error) {
+    console.error('Error in getBookingById:', error)
+    return null
+  }
+}
+
 // Get bookings by date range
 export async function getBookingsByDateRange(startDate: string, endDate: string): Promise<Booking[]> {
   try {

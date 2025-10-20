@@ -18,27 +18,28 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check if current route is photography admin
+  // Check if current route is photography admin or mobile admin
   const isPhotographyRoute = pathname?.startsWith('/admin/photography');
+  const isMobileRoute = pathname?.startsWith('/admin/mobile');
 
   useEffect(() => {
     // Check authentication
     const authStatus = localStorage.getItem('adminAuth');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
-    } else if (pathname !== '/admin/login') {
+    } else if (pathname !== '/admin/login' && !isMobileRoute) {
       router.push('/admin/login');
     }
     setIsLoading(false);
-  }, [pathname, router]);
+  }, [pathname, router, isMobileRoute]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
     router.push('/admin/login');
   };
 
-  // Don't show layout for login page
-  if (pathname === '/admin/login') {
+  // Don't show layout for login page or mobile routes
+  if (pathname === '/admin/login' || isMobileRoute) {
     return children;
   }
 
