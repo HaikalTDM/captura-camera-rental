@@ -1,0 +1,59 @@
+{
+  "name": "CAPTURA - Camera Rental KL",
+  "short_name": "CAPTURA",
+  "description": "Professional DJI camera rental in Kuala Lumpur - Rent premium cameras for your creative projects",
+  "start_url": "/rental",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["photography", "business", "lifestyle"],
+  "icons": [
+    {
+      "src": "/images/captura_logo_big.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/captura_logo_big.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Cameras",
+      "short_name": "Cameras",
+      "description": "View available cameras for rent",
+      "url": "/rental/cameras",
+      "icons": [{ "src": "/images/captura_logo_big.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "View Gallery",
+      "short_name": "Gallery",
+      "description": "See customer photos",
+      "url": "/rental/gallery",
+      "icons": [{ "src": "/images/captura_logo_big.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Events",
+      "short_name": "Events",
+      "description": "Check upcoming events",
+      "url": "/rental/events",
+      "icons": [{ "src": "/images/captura_logo_big.png", "sizes": "96x96" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/captura_logo_big.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+}
+

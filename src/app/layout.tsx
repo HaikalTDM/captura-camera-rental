@@ -14,29 +14,68 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CAPTURA - Premium Camera Rental",
-  description: "Rent professional cameras for your creative projects. Osmo Pocket 3 and Action 5 Pro available for daily rental.",
+  title: "CAPTURA - Premium Camera Rental KL",
+  description: "Rent professional DJI cameras in Kuala Lumpur. Osmo Pocket 3 and Action 5 Pro available for daily rental. Book now!",
+  applicationName: "CAPTURA",
+  keywords: ["camera rental", "DJI", "Osmo Pocket 3", "Action 5 Pro", "Kuala Lumpur", "KL", "professional camera", "rental"],
+  authors: [{ name: "CAPTURA" }],
+  creator: "CAPTURA",
+  publisher: "CAPTURA",
+  formatDetection: {
+    telephone: true,
+    email: true,
+    address: true,
+  },
   icons: {
     icon: [
-      { url: '/images/captura_icon.ico', sizes: 'any' },
-      { url: '/images/captura_icon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/images/captura_logo_big.png', sizes: '192x192', type: 'image/png' },
+      { url: '/images/captura_logo_big.png', sizes: '512x512', type: 'image/png' },
     ],
-    apple: '/images/captura_icon.png',
+    apple: [
+      { url: '/images/captura_logo_big.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' },
-  ],
+  manifest: '/manifest.json',
+  themeColor: '#000000',
   viewport: {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
     userScalable: true,
+    viewportFit: 'cover',
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
     title: 'CAPTURA',
+    startupImage: [
+      {
+        url: '/images/captura_logo_big.png',
+        media: '(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)',
+      },
+    ],
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_MY',
+    url: 'https://capturarentals.com',
+    title: 'CAPTURA - Premium Camera Rental KL',
+    description: 'Rent professional DJI cameras in Kuala Lumpur. Osmo Pocket 3 and Action 5 Pro available.',
+    siteName: 'CAPTURA',
+    images: [
+      {
+        url: '/images/captura_logo_big.png',
+        width: 1200,
+        height: 630,
+        alt: 'CAPTURA Camera Rental',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'CAPTURA - Premium Camera Rental KL',
+    description: 'Rent professional DJI cameras in Kuala Lumpur',
+    images: ['/images/captura_logo_big.png'],
   },
 };
 
