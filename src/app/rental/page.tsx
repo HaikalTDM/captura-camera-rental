@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { getActiveGalleryImages } from '@/lib/api/gallery';
 import type { GalleryImage } from '@/lib/api/gallery';
@@ -11,6 +11,7 @@ export default function RentalHome() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0 });
   const [galleryImages, setGalleryImages] = useState<GalleryImage[]>([]);
   const [isLoadingGallery, setIsLoadingGallery] = useState(true);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Countdown to CNY 2025
@@ -40,13 +41,48 @@ export default function RentalHome() {
   const loadGalleryImages = async () => {
     try {
       const images = await getActiveGalleryImages();
-      setGalleryImages(images.slice(0, 6)); // Show max 6 images
+      setGalleryImages(images.slice(0, 10)); // Show max 10 images
     } catch (error) {
       console.error('Error loading gallery:', error);
     } finally {
       setIsLoadingGallery(false);
     }
   };
+
+  // Auto-scroll carousel
+  useEffect(() => {
+    if (!scrollContainerRef.current || galleryImages.length === 0) return;
+
+    const container = scrollContainerRef.current;
+    let scrollInterval: NodeJS.Timeout;
+
+    const startAutoScroll = () => {
+      scrollInterval = setInterval(() => {
+        if (container.scrollLeft + container.clientWidth >= container.scrollWidth) {
+          // Reset to start for infinite loop
+          container.scrollLeft = 0;
+        } else {
+          // Scroll smoothly
+          container.scrollLeft += 1;
+        }
+      }, 20); // Smooth 50fps scrolling
+    };
+
+    startAutoScroll();
+
+    // Pause on hover
+    const handleMouseEnter = () => clearInterval(scrollInterval);
+    const handleMouseLeave = () => startAutoScroll();
+
+    container.addEventListener('mouseenter', handleMouseEnter);
+    container.addEventListener('mouseleave', handleMouseLeave);
+
+    return () => {
+      clearInterval(scrollInterval);
+      container.removeEventListener('mouseenter', handleMouseEnter);
+      container.removeEventListener('mouseleave', handleMouseLeave);
+    };
+  }, [galleryImages]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -151,166 +187,107 @@ export default function RentalHome() {
         </section>
       )}
 
-      {/* Customer Proof - Bento Box Gallery */}
-      <section className="py-12 px-6 bg-gradient-to-br from-slate-50 to-white">
-        <div className="max-w-lg mx-auto">
+      {/* Customer Proof - Auto-Scroll Carousel */}
+      <section className="py-12 px-6 bg-white overflow-hidden">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-black mb-2">Shot With Our Cameras</h2>
             <p className="text-sm text-slate-600 font-semibold">
               Real content from real creators
             </p>
           </div>
-
+          
           {/* Loading State */}
           {isLoadingGallery ? (
-            <div className="grid grid-cols-6 gap-3 animate-fadeIn">
-              {/* Featured large */}
-              <div className="col-span-6 h-64 bg-slate-200 rounded-2xl animate-pulse"></div>
-              {/* 4 smaller */}
-              <div className="col-span-3 h-40 bg-slate-200 rounded-2xl animate-pulse"></div>
-              <div className="col-span-3 h-40 bg-slate-200 rounded-2xl animate-pulse"></div>
-              <div className="col-span-3 h-40 bg-slate-200 rounded-2xl animate-pulse"></div>
-              <div className="col-span-3 h-40 bg-slate-200 rounded-2xl animate-pulse"></div>
+            <div className="flex gap-4 overflow-hidden">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex-shrink-0 w-[280px] h-[350px] bg-slate-200 rounded-2xl animate-pulse"></div>
+              ))}
             </div>
           ) : galleryImages.length > 0 ? (
             <>
-              {/* Bento Box Grid Layout */}
-              <div className="grid grid-cols-6 gap-3">
-                {/* Featured Image - Large Hero */}
-                {galleryImages[0] && (
+              {/* Auto-Scrolling Carousel */}
+              <div
+                ref={scrollContainerRef}
+                className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                style={{
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                {/* Duplicate images for seamless loop */}
+                {[...galleryImages, ...galleryImages].map((image, index) => (
                   <div
-                    className="col-span-6 h-64 relative rounded-2xl overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 animate-fadeIn shadow-lg hover:shadow-2xl"
-                    style={{ animationDelay: '0ms' }}
-                    onClick={() => router.push('/rental/gallery')}
+                    key={`${image.id}-${index}`}
+                    className="flex-shrink-0 w-[280px] animate-fadeIn"
+                    style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <Image
-                      src={galleryImages[0].image_url}
-                      alt={galleryImages[0].alt_text || `Photo by ${galleryImages[0].customer_name}`}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
-                      sizes="(max-width: 640px) 100vw, 640px"
-                      priority
-                    />
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                    
-                    {/* Featured Badge */}
-                    <div className="absolute top-4 left-4">
-                      <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
-                        <svg className="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="text-xs font-black text-black">Featured</span>
-                      </div>
-                    </div>
+                    <div
+                      className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl aspect-[4/5] relative overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 shadow-lg hover:shadow-2xl"
+                      onClick={() => router.push('/rental/gallery')}
+                    >
+                      {/* Real Customer Photo */}
+                      <Image
+                        src={image.image_url}
+                        alt={image.alt_text || `Photo by ${image.customer_name}`}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="280px"
+                      />
 
-                    {/* Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <div className="flex items-end justify-between gap-4">
-                        <div className="text-white flex-1">
-                          <div className="inline-flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full mb-2">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            </svg>
-                            <span className="text-xs font-black">{galleryImages[0].camera_used}</span>
-                          </div>
-                          <div className="text-base font-black mb-0.5">{galleryImages[0].customer_name}</div>
-                          {galleryImages[0].location && (
-                            <div className="text-xs text-white/80 font-semibold flex items-center gap-1">
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+
+                      {/* Camera Badge */}
+                      <div className="absolute top-3 right-3">
+                        <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black text-black shadow-lg flex items-center gap-1.5">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          </svg>
+                          <span>{image.camera_used}</span>
+                        </div>
+                      </div>
+
+                      {/* Info Overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                        <div className="text-white">
+                          <div className="text-xs font-bold text-white/70 mb-1">Shot with</div>
+                          <div className="text-base font-black mb-1">{image.camera_used}</div>
+                          <div className="text-sm font-bold">{image.customer_name}</div>
+                          {image.location && (
+                            <div className="text-xs text-white/80 font-semibold mt-1 flex items-center gap-1">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                               </svg>
-                              {galleryImages[0].location}
+                              {image.location}
                             </div>
                           )}
                         </div>
-                        <div className="flex-shrink-0">
-                          <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center group-hover:bg-white/30 transition-all">
-                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                            </svg>
-                          </div>
-                        </div>
                       </div>
-                    </div>
-                  </div>
-                )}
 
-                {/* Grid Items - 2 columns */}
-                {galleryImages.slice(1, 5).map((image, index) => (
-                  <div
-                    key={image.id}
-                    className="col-span-3 h-40 relative rounded-2xl overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 animate-fadeIn shadow-md hover:shadow-xl"
-                    style={{ animationDelay: `${(index + 1) * 100}ms` }}
-                    onClick={() => router.push('/rental/gallery')}
-                  >
-                    <Image
-                      src={image.image_url}
-                      alt={image.alt_text || `Photo by ${image.customer_name}`}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      sizes="(max-width: 640px) 50vw, 320px"
-                    />
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-80 group-hover:opacity-100 transition-opacity"></div>
-                    
-                    {/* Compact Info */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <div className="text-white">
-                        <div className="inline-flex items-center gap-1.5 bg-black/40 backdrop-blur-sm px-2.5 py-1 rounded-full mb-1.5">
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      {/* Hover Expand Icon */}
+                      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                           </svg>
-                          <span className="text-xs font-black">{image.camera_used}</span>
                         </div>
-                        <div className="text-sm font-black truncate">{image.customer_name}</div>
-                        {image.location && (
-                          <div className="text-xs text-white/80 font-semibold truncate">{image.location}</div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Hover Expand Icon */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
-                        </svg>
                       </div>
                     </div>
                   </div>
                 ))}
+              </div>
 
-                {/* More Images Indicator */}
-                {galleryImages.length > 5 && (
-                  <div
-                    className="col-span-6 h-20 relative rounded-2xl overflow-hidden cursor-pointer border-2 border-dashed border-slate-300 hover:border-black transition-all duration-300 bg-gradient-to-r from-slate-100 to-slate-50 flex items-center justify-center group animate-fadeIn"
-                    style={{ animationDelay: '500ms' }}
-                    onClick={() => router.push('/rental/gallery')}
-                  >
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <div className="flex -space-x-2">
-                          {galleryImages.slice(5, 8).map((img) => (
-                            <div key={img.id} className="w-10 h-10 rounded-full border-2 border-white overflow-hidden">
-                              <Image
-                                src={img.image_url}
-                                alt=""
-                                width={40}
-                                height={40}
-                                className="object-cover"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="text-sm font-black text-black group-hover:underline">
-                        View +{galleryImages.length - 5} More Photos →
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* View Gallery CTA */}
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => router.push('/rental/gallery')}
+                  className="bg-black text-white font-black py-4 px-8 rounded-xl hover:scale-105 transition-all duration-300 active:scale-95 shadow-xl"
+                >
+                  View Full Gallery →
+                </button>
               </div>
             </>
           ) : (
