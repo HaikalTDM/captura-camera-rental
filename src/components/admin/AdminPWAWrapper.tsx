@@ -96,7 +96,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
         // Wait a bit to ensure old workers are gone
         setTimeout(() => {
           navigator.serviceWorker
-            .register('/admin-sw.js', { scope: '/admin/' })
+            .register('/admin-sw.js', { scope: '/admin/mobile/' })
             .then((registration) => {
               // Force update if there's a waiting worker
               if (registration.waiting) {
