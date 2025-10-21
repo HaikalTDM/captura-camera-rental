@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Camera } from '@/types';
 import CalendarBooking from './CalendarBooking';
 
@@ -12,18 +12,21 @@ interface BookingBottomSheetProps {
 }
 
 export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow }: BookingBottomSheetProps) {
+  const scrollPositionRef = useRef(0);
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       // Save the current scroll position
-      const scrollY = window.scrollY;
+      scrollPositionRef.current = window.scrollY;
       document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
+      document.body.style.top = `-${scrollPositionRef.current}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       
       return () => {
         // Restore the scroll position
+        const scrollY = scrollPositionRef.current;
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
