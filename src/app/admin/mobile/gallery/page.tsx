@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import toast, { Toaster } from 'react-hot-toast';
 import {
   getGalleryImages,
   getGalleryStats,
@@ -64,13 +65,13 @@ export default function MobileGalleryPage() {
   const processFile = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Please select an image file');
       return;
     }
 
     // Validate file size (5MB limit for mobile)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 5MB');
+      toast.error('File size must be less than 5MB');
       return;
     }
 
@@ -152,7 +153,7 @@ export default function MobileGalleryPage() {
 
   const addImage = async () => {
     if (!selectedImage || !newImage.customer || !newImage.camera || !newImage.location) {
-      alert('Please fill in all fields and select an image');
+      toast.error('Please fill in all fields and select an image');
       return;
     }
 
@@ -160,7 +161,7 @@ export default function MobileGalleryPage() {
     try {
       const imageUrl = await uploadImage(selectedImage);
       if (!imageUrl) {
-        alert('Failed to upload image. Please try again.');
+        toast.error('Failed to upload image. Please try again.');
         return;
       }
 
@@ -177,13 +178,16 @@ export default function MobileGalleryPage() {
       if (createdImage) {
         await loadData();
         closeAddForm();
-        alert('Image uploaded successfully! ✓');
+        toast.success('Image uploaded successfully! 🎉', {
+          duration: 3000,
+          icon: '✓',
+        });
       } else {
-        alert('Failed to save image data. Please try again.');
+        toast.error('Failed to save image data. Please try again.');
       }
     } catch (error) {
       console.error('Error adding image:', error);
-      alert('An error occurred while uploading the image.');
+      toast.error('An error occurred while uploading the image.');
     } finally {
       setIsUploading(false);
     }
@@ -203,12 +207,13 @@ export default function MobileGalleryPage() {
       const success = await toggleStatus(id);
       if (success) {
         await loadData();
+        toast.success('Image status updated');
       } else {
-        alert('Failed to update image status');
+        toast.error('Failed to update image status');
       }
     } catch (error) {
       console.error('Error toggling image status:', error);
-      alert('An error occurred while updating the image');
+      toast.error('An error occurred while updating the image');
     }
   };
 
@@ -218,13 +223,13 @@ export default function MobileGalleryPage() {
         const success = await deleteGalleryImage(id);
         if (success) {
           await loadData();
-          alert('Image deleted successfully ✓');
+          toast.success('Image deleted successfully');
         } else {
-          alert('Failed to delete image');
+          toast.error('Failed to delete image');
         }
       } catch (error) {
         console.error('Error deleting image:', error);
-        alert('An error occurred while deleting the image');
+        toast.error('An error occurred while deleting the image');
       }
     }
   };
@@ -514,22 +519,129 @@ export default function MobileGalleryPage() {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-bold mb-2 uppercase tracking-wide ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  <label className={`block text-sm font-bold mb-3 uppercase tracking-wide ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                     Camera Used
                   </label>
-                  <select
-                    value={newImage.camera}
-                    onChange={(e) => setNewImage({...newImage, camera: e.target.value})}
-                    className={`w-full p-4 rounded-xl border-2 outline-none text-base font-semibold transition-all duration-200 ${
-                      isDarkMode 
-                        ? 'bg-slate-800 border-slate-700 text-white focus:border-blue-500' 
-                        : 'bg-white border-slate-200 text-slate-900 focus:border-blue-500'
-                    }`}
-                  >
-                    <option value="">Select camera</option>
-                    <option value="Osmo Pocket 3">Osmo Pocket 3</option>
-                    <option value="Action 5 Pro">Action 5 Pro</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Osmo Pocket 3 */}
+                    <button
+                      type="button"
+                      onClick={() => setNewImage({...newImage, camera: 'Osmo Pocket 3'})}
+                      className={`relative p-4 rounded-2xl border-2 transition-all duration-300 ${
+                        newImage.camera === 'Osmo Pocket 3'
+                          ? 'border-blue-500 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 shadow-lg shadow-blue-500/20 scale-105'
+                          : isDarkMode 
+                            ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600 active:scale-95' 
+                            : 'border-slate-200 bg-slate-50 hover:border-slate-300 active:scale-95'
+                      }`}
+                      style={{
+                        transform: newImage.camera === 'Osmo Pocket 3' ? 'scale(1.05)' : 'scale(1)',
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                      }}
+                    >
+                      {/* Selection Indicator */}
+                      {newImage.camera === 'Osmo Pocket 3' && (
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/50 animate-bounceIn">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      <div className="flex flex-col items-center gap-2">
+                        {/* Camera Icon */}
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          newImage.camera === 'Osmo Pocket 3'
+                            ? 'bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30'
+                            : isDarkMode ? 'bg-slate-700' : 'bg-slate-200'
+                        }`}>
+                          <svg className={`w-6 h-6 transition-colors duration-300 ${
+                            newImage.camera === 'Osmo Pocket 3' ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        
+                        {/* Camera Name */}
+                        <div className="text-center">
+                          <p className={`text-sm font-bold transition-colors duration-300 ${
+                            newImage.camera === 'Osmo Pocket 3'
+                              ? 'text-blue-500'
+                              : isDarkMode ? 'text-white' : 'text-slate-900'
+                          }`}>
+                            Osmo
+                          </p>
+                          <p className={`text-xs font-semibold transition-colors duration-300 ${
+                            newImage.camera === 'Osmo Pocket 3'
+                              ? 'text-blue-400'
+                              : isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            Pocket 3
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Action 5 Pro */}
+                    <button
+                      type="button"
+                      onClick={() => setNewImage({...newImage, camera: 'Action 5 Pro'})}
+                      className={`relative p-4 rounded-2xl border-2 transition-all duration-300 ${
+                        newImage.camera === 'Action 5 Pro'
+                          ? 'border-emerald-500 bg-gradient-to-br from-emerald-500/10 to-teal-500/10 shadow-lg shadow-emerald-500/20 scale-105'
+                          : isDarkMode 
+                            ? 'border-slate-700 bg-slate-800/50 hover:border-slate-600 active:scale-95' 
+                            : 'border-slate-200 bg-slate-50 hover:border-slate-300 active:scale-95'
+                      }`}
+                      style={{
+                        transform: newImage.camera === 'Action 5 Pro' ? 'scale(1.05)' : 'scale(1)',
+                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                      }}
+                    >
+                      {/* Selection Indicator */}
+                      {newImage.camera === 'Action 5 Pro' && (
+                        <div className="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/50 animate-bounceIn">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                      
+                      <div className="flex flex-col items-center gap-2">
+                        {/* Camera Icon */}
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          newImage.camera === 'Action 5 Pro'
+                            ? 'bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/30'
+                            : isDarkMode ? 'bg-slate-700' : 'bg-slate-200'
+                        }`}>
+                          <svg className={`w-6 h-6 transition-colors duration-300 ${
+                            newImage.camera === 'Action 5 Pro' ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        
+                        {/* Camera Name */}
+                        <div className="text-center">
+                          <p className={`text-sm font-bold transition-colors duration-300 ${
+                            newImage.camera === 'Action 5 Pro'
+                              ? 'text-emerald-500'
+                              : isDarkMode ? 'text-white' : 'text-slate-900'
+                          }`}>
+                            Action
+                          </p>
+                          <p className={`text-xs font-semibold transition-colors duration-300 ${
+                            newImage.camera === 'Action 5 Pro'
+                              ? 'text-emerald-400'
+                              : isDarkMode ? 'text-slate-400' : 'text-slate-600'
+                          }`}>
+                            5 Pro
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
 
                 <div>
@@ -579,6 +691,42 @@ export default function MobileGalleryPage() {
           </div>
         </div>
       )}
+
+      {/* Animated Toast Notifications */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: isDarkMode ? '#1e293b' : '#ffffff',
+            color: isDarkMode ? '#ffffff' : '#0f172a',
+            border: `1px solid ${isDarkMode ? '#334155' : '#e2e8f0'}`,
+            borderRadius: '16px',
+            fontSize: '14px',
+            fontWeight: '600',
+            padding: '16px 20px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#ffffff',
+            },
+            style: {
+              border: '2px solid #10b981',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#ffffff',
+            },
+            style: {
+              border: '2px solid #ef4444',
+            },
+          },
+        }}
+      />
     </div>
   );
 }
