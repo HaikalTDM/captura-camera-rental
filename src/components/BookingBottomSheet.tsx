@@ -25,13 +25,19 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
       document.body.style.overflow = 'hidden';
       
       return () => {
-        // Restore the scroll position
+        // Restore the scroll position smoothly
         const scrollY = scrollPositionRef.current;
+        
+        // Remove styles first
         document.body.style.position = '';
         document.body.style.top = '';
         document.body.style.width = '';
         document.body.style.overflow = '';
-        window.scrollTo(0, scrollY);
+        
+        // Use requestAnimationFrame to ensure smooth restoration
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
       };
     }
   }, [isOpen]);
