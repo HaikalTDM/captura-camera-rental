@@ -35,7 +35,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 400); // Match animation duration
+    }, 450); // Match animation duration (400ms + 50ms buffer)
   };
 
   if (!isOpen || !camera) return null;
@@ -89,7 +89,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
           </div>
 
           {/* Specs Content */}
-          <div className="px-6 py-6 space-y-6">
+          <div className="px-6 py-6 pb-24 space-y-6">
             {/* Key Features */}
             <div>
               <h4 className="text-base font-black text-black mb-3 uppercase tracking-wide">Key Features</h4>
@@ -190,7 +190,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
         </div>
       </div>
 
-      {/* Animations - Slower & More Elegant */}
+      {/* Animations - Elegant & Smooth */}
       <style jsx global>{`
         @keyframes backdropFadeIn {
           from {
@@ -210,21 +210,17 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
         }
         @keyframes modalSlideUp {
           from {
-            opacity: 0;
             transform: translateY(100%);
           }
           to {
-            opacity: 1;
             transform: translateY(0);
           }
         }
         @keyframes modalSlideDown {
           from {
-            opacity: 1;
             transform: translateY(0);
           }
           to {
-            opacity: 0;
             transform: translateY(100%);
           }
         }
@@ -239,16 +235,16 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
           }
         }
         .animate-backdropFadeIn {
-          animation: backdropFadeIn 0.5s ease-out forwards;
+          animation: backdropFadeIn 0.4s ease-out forwards;
         }
         .animate-backdropFadeOut {
-          animation: backdropFadeOut 0.4s ease-out forwards;
+          animation: backdropFadeOut 0.3s ease-in forwards;
         }
         .animate-modalSlideUp {
-          animation: modalSlideUp 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+          animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .animate-modalSlideDown {
-          animation: modalSlideDown 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+          animation: modalSlideDown 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
         }
         .animate-fadeIn {
           animation: fadeIn 0.6s ease-out forwards;

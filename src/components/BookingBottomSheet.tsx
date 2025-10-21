@@ -37,7 +37,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 400); // Match animation duration
+    }, 450); // Match animation duration (400ms + 50ms buffer)
   };
 
   if (!isOpen) return null;
@@ -88,7 +88,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
           </div>
 
           {/* Calendar Content - Fade In */}
-          <div className="px-6 py-6 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
+          <div className="px-6 py-6 pb-24 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <CalendarBooking
               camera={camera}
               onBookingComplete={(startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) => {
@@ -100,7 +100,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         </div>
       </div>
 
-      {/* Animations - Slower & More Elegant */}
+      {/* Animations - Elegant & Smooth */}
       <style jsx global>{`
         @keyframes backdropFadeIn {
           from {
@@ -120,21 +120,17 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         }
         @keyframes modalSlideUp {
           from {
-            opacity: 0;
             transform: translateY(100%);
           }
           to {
-            opacity: 1;
             transform: translateY(0);
           }
         }
         @keyframes modalSlideDown {
           from {
-            opacity: 1;
             transform: translateY(0);
           }
           to {
-            opacity: 0;
             transform: translateY(100%);
           }
         }
@@ -149,16 +145,16 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
           }
         }
         .animate-backdropFadeIn {
-          animation: backdropFadeIn 0.5s ease-out forwards;
+          animation: backdropFadeIn 0.4s ease-out forwards;
         }
         .animate-backdropFadeOut {
-          animation: backdropFadeOut 0.4s ease-out forwards;
+          animation: backdropFadeOut 0.3s ease-in forwards;
         }
         .animate-modalSlideUp {
-          animation: modalSlideUp 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+          animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         .animate-modalSlideDown {
-          animation: modalSlideDown 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+          animation: modalSlideDown 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
         }
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out forwards;
