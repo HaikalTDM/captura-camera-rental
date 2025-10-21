@@ -17,27 +17,14 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      // Save the current scroll position
-      scrollPositionRef.current = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = '100%';
+      // Simply prevent scrolling without changing position
       document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = '0px'; // Prevent layout shift from scrollbar
       
       return () => {
-        // Restore the scroll position smoothly
-        const scrollY = scrollPositionRef.current;
-        
-        // Remove styles first
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
+        // Just restore scrolling - position stays the same
         document.body.style.overflow = '';
-        
-        // Use requestAnimationFrame to ensure smooth restoration
-        requestAnimationFrame(() => {
-          window.scrollTo(0, scrollY);
-        });
+        document.body.style.paddingRight = '';
       };
     }
   }, [isOpen]);
