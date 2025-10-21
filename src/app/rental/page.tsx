@@ -61,7 +61,7 @@ export default function RentalHome() {
           <div className="text-center mb-8 animate-fadeIn">
             <div className="inline-flex items-center justify-center bg-white/10 backdrop-blur-md px-2 py-2 rounded-full border border-white/20 mb-8">
               <Image
-                src="/images/captura_logo.png"
+                src="/images/captura_logo_big.png"
                 alt="CAPTURA"
                 width={200}
                 height={50}
