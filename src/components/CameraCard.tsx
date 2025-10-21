@@ -29,8 +29,8 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCar
     return () => clearInterval(interval);
   }, []);
 
-  // Simulate rental count (150-400 based on camera name)
-  const rentalCount = camera.name.includes('Osmo') ? 347 : 276;
+  // Realistic rental count
+  const rentalCount = camera.name.includes('Osmo') ? 24 : 18;
 
   const handleBookClick = () => {
     setShowBookingModal(true);
