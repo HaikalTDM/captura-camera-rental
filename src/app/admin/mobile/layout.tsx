@@ -30,6 +30,7 @@ export default function MobileAdminLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsClosing, setIsNotificationsClosing] = useState(false);
+  const [dismissedNotifications, setDismissedNotifications] = useState<string[]>([]);
   // Swipe-to-dismiss state per notification
   const [touchStartXById, setTouchStartXById] = useState<Record<string, number>>({});
   const [dragDeltaXById, setDragDeltaXById] = useState<Record<string, number>>({});
@@ -59,11 +60,20 @@ export default function MobileAdminLayout({
   }, []);
 
   useEffect(() => {
+    // Load dismissed notifications from localStorage
+    try {
+      const dismissed = localStorage.getItem('dismissedNotifications');
+      if (dismissed) {
+        setDismissedNotifications(JSON.parse(dismissed));
+      }
+    } catch (error) {
+      console.error('Error loading dismissed notifications:', error);
+    }
+
     // Check authentication
     const authStatus = localStorage.getItem('adminAuth');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
-      loadNotifications(); // Load notifications after auth
     } else if (pathname !== '/admin/mobile/login') {
       router.push('/admin/mobile/login');
     }
@@ -82,6 +92,13 @@ export default function MobileAdminLayout({
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [pathname, router]);
+
+  // Load notifications when dismissed list changes or on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadNotifications();
+    }
+  }, [dismissedNotifications, isAuthenticated]);
 
   // Load notifications from bookings
   const loadNotifications = async () => {
@@ -180,8 +197,13 @@ export default function MobileAdminLayout({
         }
       });
       
+      // Filter out dismissed notifications
+      const filteredNotifications = generatedNotifications.filter(
+        notif => !dismissedNotifications.includes(notif.id)
+      );
+      
       // Sort by timestamp (newest first) and limit to 20
-      const sortedNotifications = generatedNotifications
+      const sortedNotifications = filteredNotifications
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .slice(0, 20);
       
@@ -263,12 +285,7 @@ export default function MobileAdminLayout({
     const delta = dragDeltaXById[id] ?? 0;
     const threshold = 80; // px to dismiss
     if (Math.abs(delta) > threshold) {
-      setIsDismissingById(prev => ({ ...prev, [id]: true }));
-      // Animate out then remove
-      setTimeout(() => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-        setIsDismissingById(prev => ({ ...prev, [id]: false }));
-      }, 200);
+      dismissNotification(id);
     }
     // reset
     setDragDeltaXById(prev => ({ ...prev, [id]: 0 }));
@@ -276,6 +293,28 @@ export default function MobileAdminLayout({
       const { [id]: _, ...rest } = prev;
       return rest;
     });
+  };
+
+  // Dismiss a single notification
+  const dismissNotification = (id: string) => {
+    setIsDismissingById(prev => ({ ...prev, [id]: true }));
+    // Animate out then remove and persist
+    setTimeout(() => {
+      const updatedDismissed = [...dismissedNotifications, id];
+      setDismissedNotifications(updatedDismissed);
+      localStorage.setItem('dismissedNotifications', JSON.stringify(updatedDismissed));
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      setIsDismissingById(prev => ({ ...prev, [id]: false }));
+    }, 200);
+  };
+
+  // Clear all notifications
+  const clearAllNotifications = () => {
+    const allIds = notifications.map(n => n.id);
+    const updatedDismissed = [...dismissedNotifications, ...allIds];
+    setDismissedNotifications(updatedDismissed);
+    localStorage.setItem('dismissedNotifications', JSON.stringify(updatedDismissed));
+    setNotifications([]);
   };
 
   const handleNotifClick = (n: Notification) => {
@@ -330,9 +369,23 @@ export default function MobileAdminLayout({
                 <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
                   {notification.title}
                 </p>
-                {!notification.isRead && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                )}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!notification.isRead && (
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissNotification(notification.id);
+                    }}
+                    className={`p-1 rounded-full ${isDarkMode ? 'hover:bg-slate-700' : 'hover:bg-slate-200'} transition-colors`}
+                    aria-label="Dismiss notification"
+                  >
+                    <svg className={`w-4 h-4 ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                 {notification.message}
@@ -521,13 +574,23 @@ export default function MobileAdminLayout({
                     </p>
                   </div>
                 </div>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm font-bold text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    Mark All Read
-                  </button>
+                {notifications.length > 0 && (
+                  <div className="flex items-center gap-3">
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllAsRead}
+                        className="text-sm font-bold text-blue-500 hover:text-blue-600 transition-colors"
+                      >
+                        Mark Read
+                      </button>
+                    )}
+                    <button
+                      onClick={clearAllNotifications}
+                      className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
                 )}
               </div>
 
