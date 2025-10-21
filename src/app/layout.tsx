@@ -23,6 +23,21 @@ export const metadata: Metadata = {
     ],
     apple: '/images/captura_icon.png',
   },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'CAPTURA',
+  },
 };
 
 export default function RootLayout({

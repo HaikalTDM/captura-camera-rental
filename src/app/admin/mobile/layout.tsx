@@ -33,6 +33,27 @@ export default function MobileAdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
+  // Force black theme color for PWA status bar
+  useEffect(() => {
+    // Set meta theme-color to BLACK immediately
+    let themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (!themeColorMeta) {
+      themeColorMeta = document.createElement('meta');
+      themeColorMeta.setAttribute('name', 'theme-color');
+      document.head.appendChild(themeColorMeta);
+    }
+    themeColorMeta.setAttribute('content', '#000000');
+
+    // Set Apple status bar style to BLACK
+    let appleStatusBar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+    if (!appleStatusBar) {
+      appleStatusBar = document.createElement('meta');
+      appleStatusBar.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
+      document.head.appendChild(appleStatusBar);
+    }
+    appleStatusBar.setAttribute('content', 'black-translucent');
+  }, []);
+
   useEffect(() => {
     // Check authentication
     const authStatus = localStorage.getItem('adminAuth');
