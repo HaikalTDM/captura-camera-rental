@@ -8,6 +8,7 @@ export default function CustomerGallery() {
   const [customerImages, setCustomerImages] = useState<GalleryImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
 
   // Load images from database
   useEffect(() => {
@@ -23,6 +24,10 @@ export default function CustomerGallery() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleImageLoad = (imageId: string) => {
+    setLoadedImages(prev => new Set([...prev, imageId]));
   };
 
   return (
@@ -50,45 +55,53 @@ export default function CustomerGallery() {
 
         {/* Loading State */}
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-fadeIn">
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className="aspect-[4/5] bg-slate-200 rounded-2xl animate-pulse"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-fadeIn">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="w-full aspect-[3/4] bg-slate-200 rounded-2xl animate-pulse"></div>
             ))}
           </div>
         ) : customerImages.length > 0 ? (
           <>
-            {/* Bento Box Grid - Responsive Masonry */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {customerImages.map((image, index) => {
-                // Create varied heights for visual interest
-                const isLarge = index % 7 === 0 || index % 11 === 0;
-                const isMedium = index % 5 === 0;
-                
-                return (
-                  <div
-                    key={image.id}
-                    className={`
-                      relative rounded-2xl overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 shadow-md hover:shadow-2xl animate-fadeIn
-                      ${isLarge ? 'col-span-2 row-span-2' : isMedium ? 'row-span-2' : ''}
-                      ${isLarge ? 'h-[400px] sm:h-[500px]' : isMedium ? 'h-[300px] sm:h-[400px]' : 'h-[180px] sm:h-[240px]'}
-                    `}
-                    style={{ animationDelay: `${index * 50}ms` }}
-                    onClick={() => setSelectedImage(image)}
-                  >
-                    {/* Image */}
-                    <Image
-                      src={image.image_url}
-                      alt={image.alt_text || `Photo by ${image.customer_name}`}
-                      fill
-                      className="object-cover group-hover:scale-110 transition-transform duration-700"
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                    />
+            {/* Instagram-Style Grid - Portrait Optimized */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {customerImages.map((image, index) => (
+                <div
+                  key={image.id}
+                  className="group cursor-pointer animate-fadeIn"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  onClick={() => setSelectedImage(image)}
+                >
+                  <div className="relative overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-slate-200 hover:border-black bg-black">
+                    {/* Loading Skeleton */}
+                    {!loadedImages.has(image.id) && (
+                      <div className="absolute inset-0 bg-slate-200 animate-pulse"></div>
+                    )}
+
+                    {/* Image - Natural Aspect Ratio */}
+                    <div className="relative w-full">
+                      <Image
+                        src={image.image_url}
+                        alt={image.alt_text || `Photo by ${image.customer_name}`}
+                        width={800}
+                        height={1000}
+                        className={`w-full h-auto transition-all duration-700 ${
+                          loadedImages.has(image.id) ? 'opacity-100' : 'opacity-0'
+                        } group-hover:scale-105`}
+                        quality={85}
+                        loading={index < 3 ? 'eager' : 'lazy'}
+                        priority={index < 3}
+                        placeholder="blur"
+                        blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCRAA//2Q=="
+                        onLoad={() => handleImageLoad(image.id)}
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
 
                     {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                    {/* Camera Badge - Always visible */}
-                    <div className="absolute top-3 right-3">
+                    {/* Camera Badge - Top Right */}
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black text-black shadow-lg flex items-center gap-1.5">
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -97,7 +110,7 @@ export default function CustomerGallery() {
                       </div>
                     </div>
 
-                    {/* Info Overlay - Shows on hover */}
+                    {/* Info Overlay - Bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="text-white">
                         <div className="text-base font-black mb-1">{image.customer_name}</div>
@@ -113,7 +126,7 @@ export default function CustomerGallery() {
                       </div>
                     </div>
 
-                    {/* Expand Icon - Shows on hover */}
+                    {/* Expand Icon - Top Left */}
                     <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <div className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center">
                         <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,8 +135,8 @@ export default function CustomerGallery() {
                       </div>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
           </>
         ) : (
@@ -184,7 +197,7 @@ export default function CustomerGallery() {
           onClick={() => setSelectedImage(null)}
         >
           <button
-            className="absolute top-6 right-6 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            className="absolute top-6 right-6 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all z-10"
             onClick={() => setSelectedImage(null)}
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,14 +205,16 @@ export default function CustomerGallery() {
             </svg>
           </button>
 
-          <div className="max-w-4xl w-full">
-            <div className="relative aspect-[4/5] sm:aspect-[16/10] rounded-2xl overflow-hidden">
+          <div className="max-w-4xl w-full max-h-[90vh]">
+            <div className="relative w-full h-full flex items-center justify-center">
               <Image
                 src={selectedImage.image_url}
                 alt={selectedImage.alt_text || `Photo by ${selectedImage.customer_name}`}
-                fill
-                className="object-contain"
-                sizes="(max-width: 1024px) 100vw, 1024px"
+                width={1200}
+                height={1600}
+                className="w-auto h-auto max-w-full max-h-[90vh] object-contain rounded-2xl"
+                quality={90}
+                priority
               />
             </div>
 

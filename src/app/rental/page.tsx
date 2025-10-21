@@ -220,27 +220,35 @@ export default function RentalHome() {
                 {[...galleryImages, ...galleryImages].map((image, index) => (
                   <div
                     key={`${image.id}-${index}`}
-                    className="flex-shrink-0 w-[280px] animate-fadeIn"
+                    className="flex-shrink-0 w-[240px] sm:w-[280px] animate-fadeIn"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <div
-                      className="bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl aspect-[4/5] relative overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 shadow-lg hover:shadow-2xl"
+                      className="bg-black rounded-2xl overflow-hidden group cursor-pointer border-2 border-slate-200 hover:border-black transition-all duration-300 shadow-lg hover:shadow-2xl"
                       onClick={() => router.push('/rental/gallery')}
                     >
-                      {/* Real Customer Photo */}
-                      <Image
-                        src={image.image_url}
-                        alt={image.alt_text || `Photo by ${image.customer_name}`}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500"
-                        sizes="280px"
-                      />
+                      {/* Real Customer Photo - Natural Aspect */}
+                      <div className="relative w-full">
+                        <Image
+                          src={image.image_url}
+                          alt={image.alt_text || `Photo by ${image.customer_name}`}
+                          width={240}
+                          height={320}
+                          className="w-full h-auto group-hover:scale-105 transition-transform duration-500"
+                          quality={85}
+                          loading={index < 4 ? 'eager' : 'lazy'}
+                          priority={index < 4}
+                          placeholder="blur"
+                          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCRAA//2Q=="
+                          sizes="280px"
+                        />
+                      </div>
 
                       {/* Gradient Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-                      {/* Camera Badge */}
-                      <div className="absolute top-3 right-3">
+                      {/* Camera Badge - Only on Hover */}
+                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-black text-black shadow-lg flex items-center gap-1.5">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -250,13 +258,11 @@ export default function RentalHome() {
                       </div>
 
                       {/* Info Overlay */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4">
+                      <div className="absolute bottom-0 left-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <div className="text-white">
-                          <div className="text-xs font-bold text-white/70 mb-1">Shot with</div>
-                          <div className="text-base font-black mb-1">{image.camera_used}</div>
-                          <div className="text-sm font-bold">{image.customer_name}</div>
+                          <div className="text-base font-black mb-1">{image.customer_name}</div>
                           {image.location && (
-                            <div className="text-xs text-white/80 font-semibold mt-1 flex items-center gap-1">
+                            <div className="text-xs text-white/80 font-semibold flex items-center gap-1">
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
