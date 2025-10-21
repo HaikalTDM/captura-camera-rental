@@ -486,7 +486,6 @@ export default function MobileGalleryPage() {
                         id="image-upload"
                         type="file"
                         accept="image/*"
-                        capture="environment"
                         onChange={handleImageSelect}
                         className="hidden"
                       />
