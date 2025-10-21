@@ -1,7 +1,7 @@
 {
-  "_comment": "PWA manifest - Currently disabled on main site, will be used for admin dashboard PWA implementation",
-  "name": "CAPTURA - Camera Rental Malaysia",
-  "short_name": "CAPTURA",
+  "_comment": "Main site PWA manifest - DISABLED to avoid conflicts with admin PWA",
+  "name": "CAPTURA Main Site (DISABLED)",
+  "short_name": "CAPTURA (DISABLED)",
   "description": "Professional camera rental service in Malaysia. Rent cameras, lenses, and photography equipment with convenient pickup and delivery.",
   "start_url": "/",
   "display": "standalone",
