@@ -24,33 +24,49 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
   const [isAdminRoute, setIsAdminRoute] = useState(false);
 
   useEffect(() => {
-    // Check if we're on an admin route
-    const adminRoute = pathname?.startsWith('/admin');
-    setIsAdminRoute(adminRoute || false);
+    // ONLY work on mobile admin routes
+    const isMobileAdminRoute = pathname?.startsWith('/admin/mobile');
+    setIsAdminRoute(isMobileAdminRoute || false);
 
-    // Only initialize PWA on admin routes
-    if (!adminRoute) {
+    // Only initialize PWA on mobile admin routes
+    if (!isMobileAdminRoute) {
       return;
     }
 
+    // Unregister ALL old service workers first
+    const unregisterOldWorkers = async () => {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        console.log(`🧹 Found ${registrations.length} service workers, unregistering old ones...`);
+        
+        for (const registration of registrations) {
+          // Unregister any service worker that's not our new mobile admin one
+          if (!registration.active?.scriptURL.includes('admin-sw.js')) {
+            await registration.unregister();
+            console.log('🗑️ Unregistered old service worker:', registration.active?.scriptURL);
+          }
+        }
+      }
+    };
+
     // Add admin PWA meta tags dynamically
     const addAdminMetaTags = () => {
-      // Remove existing manifest link
-      const existingManifest = document.querySelector('link[rel="manifest"]');
-      if (existingManifest) {
-        existingManifest.remove();
-      }
+      // Remove ALL existing manifest links
+      document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
+      
+      // Remove ALL existing theme-color meta tags
+      document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.remove());
 
-      // Add admin manifest
+      // Add FRESH admin manifest with cache buster
       const manifestLink = document.createElement('link');
       manifestLink.rel = 'manifest';
-      manifestLink.href = '/admin-manifest.json';
+      manifestLink.href = `/admin-manifest.json?v=${Date.now()}`;
       document.head.appendChild(manifestLink);
 
-      // Add admin theme color
+      // Add BLACK theme color for mobile admin
       const themeColorMeta = document.createElement('meta');
       themeColorMeta.name = 'theme-color';
-      themeColorMeta.content = '#3b82f6';
+      themeColorMeta.content = '#000000';
       document.head.appendChild(themeColorMeta);
 
       // Add admin app meta tags
@@ -63,21 +79,39 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
       appTitleMeta.name = 'apple-mobile-web-app-title';
       appTitleMeta.content = 'CAPTURA Admin';
       document.head.appendChild(appTitleMeta);
+
+      const appStatusBarMeta = document.createElement('meta');
+      appStatusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+      appStatusBarMeta.content = 'black-translucent';
+      document.head.appendChild(appStatusBarMeta);
     };
 
-    addAdminMetaTags();
+    // Execute the cleanup and setup
+    const setupPWA = async () => {
+      await unregisterOldWorkers();
+      addAdminMetaTags();
 
-    // Register service worker for admin routes only
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/admin-sw.js', { scope: '/admin/' })
-        .then((registration) => {
-          console.log('✅ Admin PWA: Service Worker registered successfully', registration);
-        })
-        .catch((error) => {
-          console.error('❌ Admin PWA: Service Worker registration failed', error);
-        });
-    }
+      // Register NEW service worker for mobile admin only
+      if ('serviceWorker' in navigator) {
+        // Wait a bit to ensure old workers are gone
+        setTimeout(() => {
+          navigator.serviceWorker
+            .register('/admin-sw.js', { scope: '/admin/' })
+            .then((registration) => {
+              // Force update if there's a waiting worker
+              if (registration.waiting) {
+                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
+              console.log('✅ Mobile Admin PWA: Service Worker registered successfully');
+            })
+            .catch((error) => {
+              console.error('❌ Mobile Admin PWA: Service Worker registration failed', error);
+            });
+        }, 500);
+      }
+    };
+
+    setupPWA();
 
     // Check if app is already installed
     if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
@@ -152,7 +186,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
       {/* Admin PWA Install Prompt - Mobile Optimized */}
       {shouldShowInstallPrompt && (
         <div className="fixed bottom-4 left-4 right-4 sm:bottom-4 sm:right-4 sm:left-auto z-50 sm:max-w-sm">
-          <div className="bg-white border border-gray-200 rounded-xl shadow-lg p-4 backdrop-blur-sm bg-white/95">
+          <div className="bg-white/95 border border-gray-200 rounded-xl shadow-lg p-4 backdrop-blur-sm">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
                 <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -161,10 +195,10 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-sm font-semibold text-gray-900 mb-1">
-                  Install Admin Dashboard
+                  Install Mobile Admin
                 </h3>
                 <p className="text-xs text-gray-600 mb-3">
-                  Install as an app for faster access and offline functionality.
+                  Get the mobile admin app for quick access and offline support.
                 </p>
                 <div className="flex gap-2">
                   <button

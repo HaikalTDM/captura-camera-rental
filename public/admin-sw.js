@@ -35,9 +35,19 @@ const ADMIN_API_ENDPOINTS = [
   '/api/calendar/availability'
 ];
 
+// Handle messages from the client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('⏩ Admin Service Worker: Skipping waiting...');
+    self.skipWaiting();
+  }
+});
+
 // Install event - cache admin static assets
 self.addEventListener('install', (event) => {
   console.log('🔧 Admin Service Worker: Installing...');
+  // Force immediate activation
+  self.skipWaiting();
   
   event.waitUntil(
     caches.open(ADMIN_STATIC_CACHE_NAME)
@@ -59,8 +69,13 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   console.log('🚀 Admin Service Worker: Activating...');
   
+  // Take control of all clients immediately
   event.waitUntil(
-    caches.keys()
+    clients.claim().then(() => {
+      console.log('✅ Admin Service Worker: Now controlling all clients');
+      return caches.keys();
+    })
+      .then((cacheNames) => cacheNames)
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
