@@ -128,10 +128,12 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         }
         @keyframes modalSlideDown {
           from {
-            transform: translateY(0);
+            transform: scaleY(1);
+            transform-origin: bottom center;
           }
           to {
-            transform: translateY(100%);
+            transform: scaleY(0);
+            transform-origin: bottom center;
           }
         }
         @keyframes fadeInUp {
@@ -155,6 +157,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         }
         .animate-modalSlideDown {
           animation: modalSlideDown 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+          transform-origin: bottom center;
         }
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out forwards;
