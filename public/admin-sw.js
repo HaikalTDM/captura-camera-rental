@@ -1,6 +1,6 @@
 // CAPTURA Admin Dashboard PWA Service Worker
 // Updated cache version to force cache refresh - increment when deploying updates
-const CACHE_VERSION = 'v1758517386159';
+const CACHE_VERSION = 'v' + Date.now();
 const ADMIN_CACHE_NAME = `captura-admin-${CACHE_VERSION}`;
 const ADMIN_STATIC_CACHE_NAME = `captura-admin-static-${CACHE_VERSION}`;
 const ADMIN_DYNAMIC_CACHE_NAME = `captura-admin-dynamic-${CACHE_VERSION}`;
@@ -8,17 +8,23 @@ const ADMIN_API_CACHE_NAME = `captura-admin-api-${CACHE_VERSION}`;
 
 // Admin-specific files to cache immediately
 const ADMIN_STATIC_ASSETS = [
-  '/admin',
-  '/admin/',
-  '/admin/bookings',
-  '/admin/calendar',
-  '/admin/customers',
-  '/admin/cameras',
+  '/admin/mobile',
+  '/admin/mobile/',
+  '/admin/mobile/analytics',
+  '/admin/mobile/bookings',
+  '/admin/mobile/cameras',
+  '/admin/mobile/customers',
+  '/admin/mobile/settings',
+  '/admin/mobile/profile',
+  '/admin/mobile/notification-settings',
+  '/admin/mobile/system-settings',
+  '/admin/mobile/help',
+  '/admin/mobile/terms',
   '/admin-manifest.json',
+  '/icons/admin-icon-192x192.png',
+  '/icons/admin-icon-512x512.png',
   '/icons/captura-icon-192x192.png',
   '/icons/captura-icon-512x512.png',
-  '/images/captura_logo.png',
-  '/images/captura_icon.png',
 ];
 
 // Admin API endpoints to cache for offline access

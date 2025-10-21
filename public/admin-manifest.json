@@ -1,12 +1,12 @@
 {
   "name": "CAPTURA Admin Dashboard",
   "short_name": "CAPTURA Admin",
-  "description": "Admin dashboard for CAPTURA camera rental management. Manage bookings, customers, and equipment with offline capabilities.",
-  "start_url": "/admin?v=v1758517386159",
+  "description": "Mobile-first admin dashboard for CAPTURA camera rental management. Manage bookings, customers, and equipment with offline capabilities.",
+  "start_url": "/admin/mobile",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#3b82f6",
-  "orientation": "any",
+  "theme_color": "#000000",
+  "orientation": "portrait",
   "scope": "/admin/",
   "lang": "en",
   "categories": [
@@ -87,10 +87,22 @@
   ],
   "shortcuts": [
     {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View admin dashboard overview",
+      "url": "/admin/mobile",
+      "icons": [
+        {
+          "src": "/icons/shortcut-dashboard.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
       "name": "Bookings",
       "short_name": "Bookings",
       "description": "View and manage camera rental bookings",
-      "url": "/admin/bookings",
+      "url": "/admin/mobile/bookings",
       "icons": [
         {
           "src": "/icons/shortcut-bookings.png",
@@ -99,22 +111,10 @@
       ]
     },
     {
-      "name": "Calendar",
-      "short_name": "Calendar",
-      "description": "View booking calendar and availability",
-      "url": "/admin/calendar",
-      "icons": [
-        {
-          "src": "/icons/shortcut-calendar.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
       "name": "Customers",
       "short_name": "Customers",
-      "description": "Manage customer information",
-      "url": "/admin/customers",
+      "description": "Manage customer database",
+      "url": "/admin/mobile/customers",
       "icons": [
         {
           "src": "/icons/shortcut-customers.png",
@@ -123,13 +123,13 @@
       ]
     },
     {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "View admin dashboard overview",
-      "url": "/admin",
+      "name": "Cameras",
+      "short_name": "Cameras",
+      "description": "Manage camera inventory",
+      "url": "/admin/mobile/cameras",
       "icons": [
         {
-          "src": "/icons/shortcut-dashboard.png",
+          "src": "/icons/shortcut-camera.png",
           "sizes": "96x96"
         }
       ]
@@ -138,6 +138,5 @@
   "prefer_related_applications": false,
   "edge_side_panel": {
     "preferred_width": 400
-  },
-  "version": "v1758517386159"
+  }
 }
