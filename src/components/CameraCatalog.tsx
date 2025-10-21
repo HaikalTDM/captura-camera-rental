@@ -131,19 +131,66 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
 
         {cameras.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">No cameras available at the moment. Please check back later!</p>
+            <p className="text-slate-600 text-lg font-medium">No cameras available at the moment. Please check back later!</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {cameras.map((camera) => (
-              <CameraCard
-                key={camera.id}
-                camera={camera}
-                onBookNow={onBookCamera}
-                onViewSpecs={handleViewSpecs}
-              />
-            ))}
-          </div>
+          <>
+            {/* Desktop: All cameras side-by-side (no scrolling!) */}
+            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {cameras.map((camera) => (
+                <CameraCard
+                  key={camera.id}
+                  camera={camera}
+                  onBookNow={onBookCamera}
+                  onViewSpecs={handleViewSpecs}
+                />
+              ))}
+            </div>
+
+            {/* Mobile: Horizontal Scroll Carousel */}
+            <div className="md:hidden">
+              {/* Camera Counter */}
+              <div className="text-center mb-4">
+                <p className="text-sm text-slate-600 font-semibold">
+                  Swipe to browse {cameras.length} camera{cameras.length > 1 ? 's' : ''} →
+                </p>
+              </div>
+
+              {/* Horizontal Scroll Container */}
+              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
+                <div className="flex gap-4 pb-4" style={{ width: `${cameras.length * 100}%`, maxWidth: `${cameras.length * 320}px` }}>
+                  {cameras.map((camera, index) => (
+                    <div 
+                      key={camera.id} 
+                      className="flex-shrink-0" 
+                      style={{ 
+                        width: 'calc(100vw - 48px)', 
+                        maxWidth: '400px',
+                        animationDelay: `${index * 100}ms`
+                      }}
+                    >
+                      <CameraCard
+                        camera={camera}
+                        onBookNow={onBookCamera}
+                        onViewSpecs={handleViewSpecs}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Scroll Indicators */}
+              <div className="flex justify-center gap-2 mt-4">
+                {cameras.map((_, index) => (
+                  <div
+                    key={index}
+                    className="w-2 h-2 rounded-full bg-slate-300"
+                    aria-label={`Camera ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </>
         )}
         
         {/* Additional Info */}
