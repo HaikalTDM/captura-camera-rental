@@ -55,8 +55,24 @@ export default function PushNotificationToggle() {
         return;
       }
 
-      // Register service worker
-      const registration = await navigator.serviceWorker.register('/service-worker.js');
+      // Ensure ONLY the mobile admin service worker is used
+      // Unregister any existing non-admin workers first
+      const existingRegs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        existingRegs.map((reg) => {
+          const url = reg.active?.scriptURL || reg.installing?.scriptURL || reg.waiting?.scriptURL || '';
+          if (!url.includes('admin-sw.js')) {
+            return reg.unregister();
+          }
+          return Promise.resolve(true);
+        })
+      );
+
+      // Register the NEW mobile admin service worker with the correct scope
+      const registration = await navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin/mobile/' });
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
       await navigator.serviceWorker.ready;
 
       // Get VAPID public key from environment
