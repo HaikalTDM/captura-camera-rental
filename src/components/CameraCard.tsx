@@ -5,7 +5,6 @@ import { Camera, CustomerDetails } from '@/types';
 import { formatCurrency } from '@/lib/pricing';
 import ImageGallery from './ImageGallery';
 import BookingBottomSheet from './BookingBottomSheet';
-import SpecsBottomSheet from './SpecsBottomSheet';
 
 interface CameraCardProps {
   camera: Camera;
@@ -15,7 +14,6 @@ interface CameraCardProps {
 
 export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCardProps) {
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showSpecsModal, setShowSpecsModal] = useState(false);
   const [viewerCount, setViewerCount] = useState(0);
 
   // Simulate active viewers for urgency (3-7 random viewers)
@@ -39,8 +37,9 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCar
   };
 
   const handleSpecsClick = () => {
-    setShowSpecsModal(true);
-    if (onViewSpecs) onViewSpecs(camera);
+    if (onViewSpecs) {
+      onViewSpecs(camera);
+    }
   };
 
   return (
@@ -164,18 +163,12 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs }: CameraCar
         </div>
       </div>
 
-      {/* Bottom Sheet Modals */}
+      {/* Booking Modal (Specs Modal is now at catalog level) */}
       <BookingBottomSheet
         camera={camera}
         isOpen={showBookingModal}
         onClose={() => setShowBookingModal(false)}
         onBookNow={onBookNow}
-      />
-
-      <SpecsBottomSheet
-        camera={camera}
-        isOpen={showSpecsModal}
-        onClose={() => setShowSpecsModal(false)}
       />
     </>
   );
