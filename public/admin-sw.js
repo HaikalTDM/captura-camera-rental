@@ -1,10 +1,10 @@
-// CAPTURA Admin Dashboard PWA Service Worker
-// Updated cache version to force cache refresh - increment when deploying updates
-const CACHE_VERSION = 'v' + Date.now();
-const ADMIN_CACHE_NAME = `captura-admin-${CACHE_VERSION}`;
-const ADMIN_STATIC_CACHE_NAME = `captura-admin-static-${CACHE_VERSION}`;
-const ADMIN_DYNAMIC_CACHE_NAME = `captura-admin-dynamic-${CACHE_VERSION}`;
-const ADMIN_API_CACHE_NAME = `captura-admin-api-${CACHE_VERSION}`;
+// CAPTURA Mobile Admin PWA Service Worker - NEW VERSION
+// Completely new cache names to avoid any conflicts with old PWAs
+const CACHE_VERSION = 'mobile-v' + Date.now();
+const ADMIN_CACHE_NAME = `captura-mobile-admin-${CACHE_VERSION}`;
+const ADMIN_STATIC_CACHE_NAME = `captura-mobile-admin-static-${CACHE_VERSION}`;
+const ADMIN_DYNAMIC_CACHE_NAME = `captura-mobile-admin-dynamic-${CACHE_VERSION}`;
+const ADMIN_API_CACHE_NAME = `captura-mobile-admin-api-${CACHE_VERSION}`;
 
 // Admin-specific files to cache immediately
 const ADMIN_STATIC_ASSETS = [
@@ -45,7 +45,7 @@ self.addEventListener('message', (event) => {
 
 // Install event - cache admin static assets
 self.addEventListener('install', (event) => {
-  console.log('🔧 Admin Service Worker: Installing...');
+  console.log('🔧 Mobile Admin Service Worker: Installing NEW VERSION...');
   // Force immediate activation
   self.skipWaiting();
   
@@ -67,24 +67,31 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Admin Service Worker: Activating...');
+  console.log('🚀 Mobile Admin Service Worker: Activating...');
   
   // Take control of all clients immediately
   event.waitUntil(
     clients.claim().then(() => {
-      console.log('✅ Admin Service Worker: Now controlling all clients');
+      console.log('✅ Mobile Admin Service Worker: Now controlling all clients');
       return caches.keys();
     })
       .then((cacheNames) => cacheNames)
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            // Delete all old admin caches (more aggressive cleanup)
-            if (cacheName.startsWith('captura-admin-') &&
+            // Delete ALL old CAPTURA caches (including old admin and main site)
+            // Only keep the new mobile-admin caches
+            if (cacheName.startsWith('captura-') &&
+                !cacheName.startsWith('captura-mobile-admin-')) {
+              console.log('🗑️ Mobile Admin Service Worker: Deleting old cache', cacheName);
+              return caches.delete(cacheName);
+            }
+            // Also delete if it's a current cache but not the latest version
+            if (cacheName.startsWith('captura-mobile-admin-') &&
                 cacheName !== ADMIN_STATIC_CACHE_NAME &&
                 cacheName !== ADMIN_DYNAMIC_CACHE_NAME &&
                 cacheName !== ADMIN_API_CACHE_NAME) {
-              console.log('🗑️ Admin Service Worker: Deleting old cache', cacheName);
+              console.log('🗑️ Mobile Admin Service Worker: Deleting old mobile admin cache', cacheName);
               return caches.delete(cacheName);
             }
           })
