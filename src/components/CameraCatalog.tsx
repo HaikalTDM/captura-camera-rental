@@ -154,7 +154,7 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
               ))}
             </div>
 
-            {/* Mobile: Horizontal Scroll Carousel */}
+            {/* Mobile: Horizontal Scroll Carousel - Optimized */}
             <div className="md:hidden">
               {/* Swipe Indicator */}
               <div className="flex items-center justify-center gap-2 mb-4">
@@ -171,13 +171,20 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                 <span className="text-xs text-slate-500 font-bold">Swipe →</span>
               </div>
 
-              {/* Horizontal Scroll Container */}
-              <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+              {/* Horizontal Scroll Container - Optimized */}
+              <div 
+                className="overflow-x-auto scrollbar-hide -mx-6 px-6 scroll-smooth snap-x snap-mandatory overscroll-x-contain"
+                style={{
+                  WebkitOverflowScrolling: 'touch',
+                  scrollPaddingLeft: '24px',
+                  scrollPaddingRight: '24px'
+                }}
+              >
                 <div className="flex gap-4 pb-4">
                   {cameras.map((camera, index) => (
                     <div 
                       key={camera.id} 
-                      className="flex-shrink-0 w-[calc(100vw-48px)] max-w-[400px] animate-fadeIn" 
+                      className="flex-shrink-0 w-[85vw] sm:w-[70vw] max-w-[400px] snap-center snap-always animate-fadeIn" 
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CameraCard
@@ -187,6 +194,8 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                       />
                     </div>
                   ))}
+                  {/* Spacer for better last card visibility */}
+                  <div className="flex-shrink-0 w-6" aria-hidden="true"></div>
                 </div>
               </div>
             </div>

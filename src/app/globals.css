@@ -307,6 +307,27 @@ input[type="radio"] {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Optimized Scroll Performance */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-center {
+  scroll-snap-align: center;
+}
+
+.snap-always {
+  scroll-snap-stop: always;
+}
+
+.overscroll-x-contain {
+  overscroll-behavior-x: contain;
+}
+
 /* Gateway Page Animations */
 @keyframes blob {
   0% {
