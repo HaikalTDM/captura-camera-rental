@@ -59,14 +59,15 @@ export default function RentalHome() {
         <div className="max-w-lg mx-auto relative z-10">
           {/* Brand Logo */}
           <div className="text-center mb-8 animate-fadeIn">
-            <div className="inline-flex items-center justify-center gap-3 bg-white/10 backdrop-blur-md px-6 py-3 rounded-full border border-white/20 mb-8">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </div>
-              <span className="text-lg font-black tracking-tight">CAPTURA</span>
+            <div className="inline-flex items-center justify-center bg-white/10 backdrop-blur-md px-2 py-2 rounded-full border border-white/20 mb-8">
+              <Image
+                src="/images/captura_logo.png"
+                alt="CAPTURA"
+                width={200}
+                height={50}
+                className="h-10 w-auto"
+                priority
+              />
             </div>
           </div>
 
@@ -79,7 +80,7 @@ export default function RentalHome() {
               Professional DJI cameras without the commitment
             </p>
             <p className="text-slate-400 font-medium text-sm animate-fadeIn" style={{ animationDelay: '0.3s' }}>
-              Kuala Lumpur's trusted camera rental
+              Kuala Lumpur&apos;s trusted camera rental
             </p>
           </div>
 
@@ -156,10 +157,10 @@ export default function RentalHome() {
           <div className="text-center mb-8">
             <h2 className="text-2xl font-black text-black mb-2">Shot With Our Cameras</h2>
             <p className="text-sm text-slate-600 font-semibold">
-              Real content from real creators
+              Real content from future creators!
             </p>
           </div>
-
+          
           {/* Loading State */}
           {isLoadingGallery ? (
             <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 -mx-6 px-6">
@@ -280,7 +281,7 @@ export default function RentalHome() {
                 </svg>
               </div>
               <h3 className="text-sm font-black text-black mb-1">24/7 Support</h3>
-              <p className="text-xs text-slate-600 font-semibold leading-snug">We're here when you need us</p>
+              <p className="text-xs text-slate-600 font-semibold leading-snug">We&apos;re here when you need us</p>
             </div>
           </div>
         </div>
