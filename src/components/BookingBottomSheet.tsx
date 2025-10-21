@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Camera } from '@/types';
 import CalendarBooking from './CalendarBooking';
 
@@ -13,10 +13,12 @@ interface BookingBottomSheetProps {
 
 export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow }: BookingBottomSheetProps) {
   const scrollPositionRef = useRef(0);
+  const [isClosing, setIsClosing] = useState(false);
 
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
+      setIsClosing(false); // Reset closing state when opening
       // Simply prevent scrolling without changing position
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = '0px'; // Prevent layout shift from scrollbar
@@ -29,21 +31,34 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     }
   }, [isOpen]);
 
+  // Handle close with animation
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+      setIsClosing(false);
+    }, 400); // Match animation duration
+  };
+
   if (!isOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[100] flex items-end animate-backdropFadeIn"
-        onClick={onClose}
+        className={`fixed inset-0 z-[100] flex items-end ${
+          isClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
+        }`}
+        onClick={handleClose}
         style={{ touchAction: 'none' }}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-md" style={{ touchAction: 'none' }}></div>
         
         {/* Bottom Sheet */}
         <div 
-          className="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto animate-modalSlideUp border-t-4 border-blue-500"
+          className={`relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto border-t-4 border-blue-500 ${
+            isClosing ? 'animate-modalSlideDown' : 'animate-modalSlideUp'
+          }`}
           onClick={(e) => e.stopPropagation()}
           style={{ touchAction: 'auto' }}
         >
@@ -62,7 +77,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
                 </p>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all active:scale-95"
               >
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,7 +93,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
               camera={camera}
               onBookingComplete={(startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) => {
                 onBookNow(camera, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate);
-                onClose();
+                handleClose();
               }}
             />
           </div>
@@ -95,6 +110,14 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
             opacity: 1;
           }
         }
+        @keyframes backdropFadeOut {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
         @keyframes modalSlideUp {
           from {
             opacity: 0;
@@ -103,6 +126,16 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+        @keyframes modalSlideDown {
+          from {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: translateY(100%);
           }
         }
         @keyframes fadeInUp {
@@ -118,8 +151,14 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         .animate-backdropFadeIn {
           animation: backdropFadeIn 0.5s ease-out forwards;
         }
+        .animate-backdropFadeOut {
+          animation: backdropFadeOut 0.4s ease-out forwards;
+        }
         .animate-modalSlideUp {
           animation: modalSlideUp 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+        }
+        .animate-modalSlideDown {
+          animation: modalSlideDown 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
         }
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out forwards;
