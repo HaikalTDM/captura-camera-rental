@@ -57,10 +57,10 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
       // Remove ALL existing theme-color meta tags
       document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.remove());
 
-      // Add FRESH admin manifest with cache buster
+      // Add COMPLETELY NEW manifest file (not cached)
       const manifestLink = document.createElement('link');
       manifestLink.rel = 'manifest';
-      manifestLink.href = `/admin-manifest.json?v=${Date.now()}`;
+      manifestLink.href = `/mobile-admin.webmanifest?v=${Date.now()}`;
       document.head.appendChild(manifestLink);
 
       // Add BLACK theme color for mobile admin

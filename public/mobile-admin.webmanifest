@@ -1,0 +1,125 @@
+{
+  "id": "/admin/mobile/",
+  "name": "CAPTURA Mobile Admin",
+  "short_name": "Admin Mobile",
+  "description": "Mobile-first admin dashboard for CAPTURA camera rental management. Manage bookings, customers, and equipment with offline capabilities.",
+  "start_url": "/admin/mobile?pwa=true",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "orientation": "portrait",
+  "scope": "/admin/mobile/",
+  "lang": "en",
+  "categories": [
+    "business",
+    "productivity",
+    "utilities"
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "icons": [
+    {
+      "src": "/icons/captura-icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/captura-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "View admin dashboard overview",
+      "url": "/admin/mobile",
+      "icons": [
+        {
+          "src": "/icons/shortcut-dashboard.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "short_name": "Bookings",
+      "description": "View and manage camera rental bookings",
+      "url": "/admin/mobile/bookings",
+      "icons": [
+        {
+          "src": "/icons/shortcut-bookings.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Customers",
+      "short_name": "Customers",
+      "description": "Manage customer database",
+      "url": "/admin/mobile/customers",
+      "icons": [
+        {
+          "src": "/icons/shortcut-customers.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Cameras",
+      "short_name": "Cameras",
+      "description": "Manage camera inventory",
+      "url": "/admin/mobile/cameras",
+      "icons": [
+        {
+          "src": "/icons/shortcut-camera.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}
+

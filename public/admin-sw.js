@@ -20,7 +20,7 @@ const ADMIN_STATIC_ASSETS = [
   '/admin/mobile/system-settings',
   '/admin/mobile/help',
   '/admin/mobile/terms',
-  '/admin-manifest.json',
+  '/mobile-admin.webmanifest',
   '/icons/admin-icon-192x192.png',
   '/icons/admin-icon-512x512.png',
   '/icons/captura-icon-192x192.png',
