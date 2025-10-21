@@ -34,13 +34,10 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const loadCameras = async () => {
     try {
       const dbCameras = await getAllCameras();
-      // Debug logging removed for production
 
-      // Convert database cameras to frontend camera format with static images
       const convertedCameras: Camera[] = dbCameras
-        .filter(cam => cam.is_available) // Show all cameras in inventory (users can book for future dates even if currently rented)
+        .filter(cam => cam.is_available)
         .map(dbCamera => {
-          // Map camera names to static image files with specific variants
           const getStaticImages = (cameraName: string) => {
             const name = cameraName.toLowerCase();
             if (name.includes('osmo') && name.includes('pocket')) {
@@ -77,9 +74,9 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
             name: dbCamera.name,
             description: dbCamera.description || 'Professional camera equipment for your creative projects.',
             image: cameraImages.main,
-            images: [cameraImages.variant], // Only include the variant image, not the main image again
+            images: [cameraImages.variant],
             dailyRate: dbCamera.daily_rate,
-            discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9, // Calculate discount rate
+            discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9,
             features: [
               `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
               `RM${dbCamera.daily_rate}/day rental`,
@@ -89,14 +86,13 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
               'Technical support included'
             ],
             specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications : {},
-            tidyCalPath: `haikaltdm46/${dbCamera.id}` // Use camera ID for TidyCal path
+            tidyCalPath: `haikaltdm46/${dbCamera.id}`
           };
         });
 
       setCameras(convertedCameras);
     } catch (error) {
       console.error('Error loading cameras:', error);
-      // Fallback to empty array if database fails
       setCameras([]);
     } finally {
       setIsLoading(false);
@@ -105,69 +101,82 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
 
   if (isLoading) {
     return (
-      <section id="cameras" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-slate-600 font-medium">Loading available cameras...</p>
-          </div>
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-blue-600 mb-4"></div>
+          <p className="text-slate-600 font-bold text-sm">Loading cameras...</p>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section id="cameras" className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-black mb-4">
+    <>
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Minimal Header - App Style */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-black text-black mb-2">
             Available Cameras
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto font-medium">
-            Choose from our selection of professional cameras. All equipment is regularly maintained
-            and comes with full insurance coverage.
+          <p className="text-sm text-slate-600 font-semibold">
+            Professional equipment • Fully maintained
           </p>
         </div>
 
         {cameras.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-600 text-lg font-medium">No cameras available at the moment. Please check back later!</p>
+          <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-slate-200">
+            <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+              </svg>
+            </div>
+            <p className="text-slate-600 text-base font-bold">No cameras available</p>
+            <p className="text-sm text-slate-500 font-semibold mt-1">Check back soon!</p>
           </div>
         ) : (
           <>
-            {/* Desktop: All cameras side-by-side (no scrolling!) */}
-            <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-              {cameras.map((camera) => (
-                <CameraCard
+            {/* Desktop: Side-by-side grid */}
+            <div className="hidden md:grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+              {cameras.map((camera, index) => (
+                <div 
                   key={camera.id}
-                  camera={camera}
-                  onBookNow={onBookCamera}
-                  onViewSpecs={handleViewSpecs}
-                />
+                  className="animate-fadeIn"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CameraCard
+                    camera={camera}
+                    onBookNow={onBookCamera}
+                    onViewSpecs={handleViewSpecs}
+                  />
+                </div>
               ))}
             </div>
 
             {/* Mobile: Horizontal Scroll Carousel */}
             <div className="md:hidden">
-              {/* Camera Counter */}
-              <div className="text-center mb-4">
-                <p className="text-sm text-slate-600 font-semibold">
-                  Swipe to browse {cameras.length} camera{cameras.length > 1 ? 's' : ''} →
-                </p>
+              {/* Swipe Indicator */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <div className="flex gap-1.5">
+                  {cameras.map((_, index) => (
+                    <div
+                      key={index}
+                      className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"
+                      style={{ animationDelay: `${index * 200}ms` }}
+                      aria-label={`Camera ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-slate-500 font-bold">Swipe →</span>
               </div>
 
               {/* Horizontal Scroll Container */}
-              <div className="overflow-x-auto scrollbar-hide -mx-4 px-4">
-                <div className="flex gap-4 pb-4" style={{ width: `${cameras.length * 100}%`, maxWidth: `${cameras.length * 320}px` }}>
+              <div className="overflow-x-auto scrollbar-hide -mx-6 px-6">
+                <div className="flex gap-4 pb-4">
                   {cameras.map((camera, index) => (
                     <div 
                       key={camera.id} 
-                      className="flex-shrink-0" 
-                      style={{ 
-                        width: 'calc(100vw - 48px)', 
-                        maxWidth: '400px',
-                        animationDelay: `${index * 100}ms`
-                      }}
+                      className="flex-shrink-0 w-[calc(100vw-48px)] max-w-[400px] animate-fadeIn" 
+                      style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CameraCard
                         camera={camera}
@@ -178,57 +187,52 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                   ))}
                 </div>
               </div>
-
-              {/* Scroll Indicators */}
-              <div className="flex justify-center gap-2 mt-4">
-                {cameras.map((_, index) => (
-                  <div
-                    key={index}
-                    className="w-2 h-2 rounded-full bg-slate-300"
-                    aria-label={`Camera ${index + 1}`}
-                  />
-                ))}
-              </div>
             </div>
           </>
         )}
         
-        {/* Additional Info */}
-        <div className="mt-16 bg-slate-50 rounded-2xl p-8 shadow-lg border border-slate-200">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold text-black mb-2">What's Included</h3>
-            <p className="text-slate-600 font-medium">Every rental comes with everything you need</p>
+        {/* What's Included - Compact App Style */}
+        <div className="mt-12 bg-gradient-to-br from-slate-50 to-white rounded-2xl p-8 shadow-xl border-2 border-slate-200">
+          <div className="mb-6">
+            <h3 className="text-xl font-black text-black mb-1">What's Included</h3>
+            <p className="text-sm text-slate-600 font-semibold">Complete rental package</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/30">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-black mb-2">Complete Kit</h4>
-              <p className="text-slate-600 text-sm font-medium">Camera, batteries, charger, memory card, and carrying case</p>
+              <div>
+                <h4 className="text-base font-black text-black mb-1">Complete Kit</h4>
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">Camera • Batteries • Card • Case</p>
+              </div>
             </div>
             
-            <div className="text-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 2.25a9.75 9.75 0 100 19.5 9.75 9.75 0 000-19.5z" />
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-black mb-2">24/7 Support</h4>
-              <p className="text-slate-600 text-sm font-medium">Technical support and troubleshooting throughout your rental</p>
+              <div>
+                <h4 className="text-base font-black text-black mb-1">24/7 Support</h4>
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">Help when you need it</p>
+              </div>
             </div>
             
-            <div className="text-center">
-              <div className="w-14 h-14 bg-gradient-to-br from-slate-900 to-black rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-slate-900 to-black rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
               </div>
-              <h4 className="text-lg font-bold text-black mb-2">Full Insurance</h4>
-              <p className="text-slate-600 text-sm font-medium">All equipment is fully insured for your peace of mind</p>
+              <div>
+                <h4 className="text-base font-black text-black mb-1">Full Insurance</h4>
+                <p className="text-xs text-slate-600 font-semibold leading-relaxed">Complete coverage included</p>
+              </div>
             </div>
           </div>
         </div>
@@ -240,6 +244,6 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
         isOpen={isSpecsModalOpen}
         onClose={handleCloseSpecsModal}
       />
-    </section>
+    </>
   );
 }
