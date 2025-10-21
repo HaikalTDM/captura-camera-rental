@@ -336,35 +336,35 @@ export default function MobileBookingDetail() {
         </div>
       )}
 
-      <div className="px-4 py-6 space-y-5">
-        {/* Hero Summary Card - PREMIUM DESIGN */}
-        <div className={`relative overflow-hidden rounded-3xl ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'} p-6 shadow-2xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-700'}`}>
+      <div className="px-5 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Hero Summary Card - PREMIUM DESIGN - RESPONSIVE */}
+        <div className={`relative overflow-hidden rounded-3xl ${isDarkMode ? 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900' : 'bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900'} p-5 sm:p-6 shadow-2xl border ${isDarkMode ? 'border-slate-700' : 'border-slate-700'}`}>
           {/* Subtle pattern overlay */}
           <div className="absolute inset-0 opacity-5">
             <div className="absolute inset-0" style={{backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '32px 32px'}}></div>
           </div>
           
           <div className="relative z-10">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="flex items-start justify-between gap-3 sm:gap-4 mb-4">
+              <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 flex-shrink-0">
+                  <svg className="w-7 h-7 sm:w-8 sm:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-white leading-tight truncate">
+                  <h2 className="text-base sm:text-lg font-bold text-white leading-tight truncate">
                     {booking.camera?.name}
                   </h2>
-                  <p className="text-xs text-slate-400 mt-1 font-medium">
-                    {new Date(booking.start_date).toLocaleDateString('en-MY', { month: 'short', day: '2-digit' })} → {new Date(booking.end_date).toLocaleDateString('en-MY', { month: 'short', day: '2-digit' })} • {booking.total_days} {booking.total_days === 1 ? 'day' : 'days'}
+                  <p className="text-[11px] sm:text-xs text-slate-400 mt-1 font-medium truncate">
+                    {new Date(booking.start_date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })} → {new Date(booking.end_date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })} • {booking.total_days}d
                   </p>
                 </div>
               </div>
-              <div className="text-right ml-3">
-                <p className="text-3xl font-bold text-white">RM{booking.total_amount}</p>
-                <p className="text-xs text-slate-400 mt-1 font-medium">RM{booking.daily_rate}/day</p>
+              <div className="text-right flex-shrink-0">
+                <p className="text-xl sm:text-2xl md:text-3xl font-bold text-white whitespace-nowrap leading-none">RM{booking.total_amount}</p>
+                <p className="text-[10px] sm:text-xs text-slate-400 mt-1.5 font-medium whitespace-nowrap">RM{booking.daily_rate}/day</p>
               </div>
             </div>
 
@@ -410,71 +410,71 @@ export default function MobileBookingDetail() {
               </div>
             </div>
 
-            {/* Next Action - Premium */}
-            <div className="mt-4 p-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {/* Next Action - Premium - RESPONSIVE */}
+            <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-blue-500/10 border border-blue-500/20 backdrop-blur-sm flex items-center gap-3">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 bg-blue-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-blue-400 uppercase tracking-wide">Next Action</p>
-                <p className="text-sm font-bold text-white truncate mt-0.5">{getNextAction()}</p>
+                <p className="text-[10px] sm:text-xs font-semibold text-blue-400 uppercase tracking-wide">Next Action</p>
+                <p className="text-sm sm:text-base font-bold text-white truncate mt-0.5">{getNextAction()}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* WhatsApp - Professional Green */}
+        {/* WhatsApp - Professional Green - RESPONSIVE */}
         <button
           onClick={handleWhatsAppReminder}
-          className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white p-4 rounded-2xl font-bold text-base shadow-xl shadow-emerald-500/30 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-3 border border-emerald-500/20"
+          className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white p-4 sm:p-5 rounded-2xl font-bold text-sm sm:text-base shadow-xl shadow-emerald-500/30 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-3 border border-emerald-500/20 min-h-[56px]"
         >
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
           </svg>
-          Send Return Reminder
+          <span className="truncate">Send Return Reminder</span>
         </button>
 
-        {/* Equipment Tracking - Premium Cards */}
-        <div className={`${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} border rounded-3xl p-6 shadow-lg backdrop-blur-sm`}>
-          <h3 className="text-xs font-bold mb-5 text-slate-500 uppercase tracking-widest">
+        {/* Equipment Tracking - Premium Cards - RESPONSIVE */}
+        <div className={`${isDarkMode ? 'bg-slate-900/50 border-slate-800' : 'bg-white border-slate-200'} border rounded-3xl p-5 sm:p-6 shadow-lg backdrop-blur-sm`}>
+          <h3 className="text-[10px] sm:text-xs font-bold mb-4 sm:mb-5 text-slate-500 uppercase tracking-widest">
             Equipment Tracking
           </h3>
           
           <div className="space-y-3">
-            {/* Pickup - Premium */}
-            <div className={`rounded-2xl p-5 border-2 transition-all duration-300 ${
+            {/* Pickup - Premium - RESPONSIVE */}
+            <div className={`rounded-2xl p-4 sm:p-5 border-2 transition-all duration-300 ${
               booking.equipment_picked_up
                 ? 'bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border-blue-500/30 shadow-lg shadow-blue-500/10'
                 : isDarkMode ? 'border-slate-800 hover:border-slate-700 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-slate-50'
             }`}>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
+              <div className="flex items-start justify-between mb-4 gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 flex-shrink-0 ${
                     booking.equipment_picked_up 
                       ? 'bg-gradient-to-br from-blue-500 to-blue-600 shadow-blue-500/30' 
                       : isDarkMode ? 'bg-slate-800' : 'bg-slate-200'
                   }`}>
-                    <svg className={`w-6 h-6 ${booking.equipment_picked_up ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${booking.equipment_picked_up ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <div>
-                    <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Equipment Pickup</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs sm:text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} truncate`}>Equipment Pickup</p>
                     {booking.equipment_pickup_date && (
-                      <p className="text-xs text-slate-500 font-medium mt-1">
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-1 truncate">
                         {new Date(booking.equipment_pickup_date).toLocaleDateString('en-MY', { 
                           month: 'short', 
-                          day: '2-digit',
-                          hour: '2-digit',
+                          day: 'numeric',
+                          hour: 'numeric',
                           minute: '2-digit'
                         })}
                       </p>
                     )}
                   </div>
                 </div>
-                <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm ${
+                <span className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-bold shadow-sm flex-shrink-0 ${
                   booking.equipment_picked_up
                     ? 'bg-blue-500 text-white'
                     : isDarkMode ? 'bg-slate-800 text-slate-400 border border-slate-700' : 'bg-slate-200 text-slate-600'
@@ -503,7 +503,7 @@ export default function MobileBookingDetail() {
               <button
                 onClick={() => setShowPickupModal(true)}
                 disabled={isUpdating}
-                className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-[0.98] shadow-lg ${
+                className={`w-full py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 active:scale-[0.98] shadow-lg min-h-[48px] ${
                   booking.equipment_picked_up
                     ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30'
                     : 'bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-blue-500/30'
@@ -513,40 +513,40 @@ export default function MobileBookingDetail() {
               </button>
             </div>
 
-            {/* Return - Premium */}
-            <div className={`rounded-2xl p-5 border-2 transition-all duration-300 ${
+            {/* Return - Premium - RESPONSIVE */}
+            <div className={`rounded-2xl p-4 sm:p-5 border-2 transition-all duration-300 ${
               booking.equipment_returned
                 ? 'bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/30 shadow-lg shadow-purple-500/10'
                 : booking.equipment_picked_up
                   ? isDarkMode ? 'border-slate-800 hover:border-slate-700 bg-slate-800/30' : 'border-slate-200 hover:border-slate-300 bg-slate-50'
                   : 'border-slate-200 bg-slate-100 opacity-60'
             }`}>
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 ${
+              <div className="flex items-start justify-between mb-4 gap-3">
+                <div className="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0">
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300 flex-shrink-0 ${
                     booking.equipment_returned 
                       ? 'bg-gradient-to-br from-purple-500 to-purple-600 shadow-purple-500/30' 
                       : isDarkMode ? 'bg-slate-800' : 'bg-slate-200'
                   }`}>
-                    <svg className={`w-6 h-6 ${booking.equipment_returned ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`w-5 h-5 sm:w-6 sm:h-6 ${booking.equipment_returned ? 'text-white' : 'text-slate-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <div>
-                    <p className={`text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Equipment Return</p>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs sm:text-sm font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'} truncate`}>Equipment Return</p>
                     {booking.equipment_return_date && (
-                      <p className="text-xs text-slate-500 font-medium mt-1">
+                      <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-1 truncate">
                         {new Date(booking.equipment_return_date).toLocaleDateString('en-MY', { 
                           month: 'short', 
-                          day: '2-digit',
-                          hour: '2-digit',
+                          day: 'numeric',
+                          hour: 'numeric',
                           minute: '2-digit'
                         })}
                       </p>
                     )}
                   </div>
                 </div>
-                <span className={`px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm ${
+                <span className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-[10px] sm:text-xs font-bold shadow-sm flex-shrink-0 ${
                   booking.equipment_returned
                     ? 'bg-purple-500 text-white'
                     : booking.equipment_picked_up
@@ -581,7 +581,7 @@ export default function MobileBookingDetail() {
               <button
                 onClick={() => booking.equipment_picked_up && setShowReturnModal(true)}
                 disabled={isUpdating || !booking.equipment_picked_up}
-                className={`w-full py-3.5 rounded-xl text-sm font-bold transition-all duration-200 active:scale-[0.98] shadow-lg ${
+                className={`w-full py-3.5 sm:py-4 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 active:scale-[0.98] shadow-lg min-h-[48px] ${
                   booking.equipment_returned
                     ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/30'
                     : booking.equipment_picked_up
