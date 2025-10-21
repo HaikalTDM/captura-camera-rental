@@ -15,14 +15,22 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
+      // Save the current scroll position
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
+      
+      return () => {
+        // Restore the scroll position
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
     }
-    
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -33,13 +41,15 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
       <div
         className="fixed inset-0 z-[100] flex items-end animate-backdropFadeIn"
         onClick={onClose}
+        style={{ touchAction: 'none' }}
       >
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-md" style={{ touchAction: 'none' }}></div>
         
         {/* Bottom Sheet */}
         <div 
           className="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto animate-modalSlideUp border-t-4 border-blue-500"
           onClick={(e) => e.stopPropagation()}
+          style={{ touchAction: 'auto' }}
         >
           {/* Handle Bar */}
           <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
