@@ -35,16 +35,30 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
 
     // Unregister ALL old service workers first
     const unregisterOldWorkers = async () => {
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        console.log(`🧹 Found ${registrations.length} service workers, unregistering old ones...`);
-        
-        for (const registration of registrations) {
-          // Unregister any service worker that's not our new mobile admin one
-          if (!registration.active?.scriptURL.includes('admin-sw.js')) {
-            await registration.unregister();
-            console.log('🗑️ Unregistered old service worker:', registration.active?.scriptURL);
-          }
+      if (!('serviceWorker' in navigator)) return;
+
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      console.log(`🧹 Found ${registrations.length} service workers, validating scopes...`);
+
+      const expectedScope = new URL('/admin/mobile/', location.origin).href;
+
+      for (const registration of registrations) {
+        const scriptUrl = registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || '';
+        const scope = (registration as any).scope as string | undefined;
+
+        const isAdminSW = scriptUrl.includes('admin-sw.js');
+        const hasWrongScope = scope && scope.endsWith('/admin/') && scope !== expectedScope;
+
+        // Unregister if not admin-sw.js OR it's admin-sw.js with the WRONG scope
+        if (!isAdminSW || hasWrongScope) {
+          await registration.unregister();
+          console.log('🗑️ Unregistered service worker:', { scriptUrl, scope });
+          continue;
+        }
+
+        // If correct admin-sw.js but waiting, force activate
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
         }
       }
     };
