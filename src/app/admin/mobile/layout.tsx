@@ -30,6 +30,10 @@ export default function MobileAdminLayout({
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsClosing, setIsNotificationsClosing] = useState(false);
+  // Swipe-to-dismiss state per notification
+  const [touchStartXById, setTouchStartXById] = useState<Record<string, number>>({});
+  const [dragDeltaXById, setDragDeltaXById] = useState<Record<string, number>>({});
+  const [isDismissingById, setIsDismissingById] = useState<Record<string, boolean>>({});
   const router = useRouter();
   const pathname = usePathname();
 
@@ -239,6 +243,109 @@ export default function MobileAdminLayout({
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  // Swipe gesture handlers
+  const handleNotifTouchStart = (id: string) => (e: React.TouchEvent) => {
+    const x = e.touches[0]?.clientX ?? 0;
+    setTouchStartXById(prev => ({ ...prev, [id]: x }));
+    // Prevent vertical scroll from interfering during horizontal swipe start
+    (e.currentTarget as HTMLElement).style.transition = 'none';
+  };
+
+  const handleNotifTouchMove = (id: string) => (e: React.TouchEvent) => {
+    if (!(id in touchStartXById)) return;
+    const currentX = e.touches[0]?.clientX ?? 0;
+    const delta = currentX - touchStartXById[id];
+    setDragDeltaXById(prev => ({ ...prev, [id]: delta }));
+  };
+
+  const handleNotifTouchEnd = (id: string) => () => {
+    const delta = dragDeltaXById[id] ?? 0;
+    const threshold = 80; // px to dismiss
+    if (Math.abs(delta) > threshold) {
+      setIsDismissingById(prev => ({ ...prev, [id]: true }));
+      // Animate out then remove
+      setTimeout(() => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        setIsDismissingById(prev => ({ ...prev, [id]: false }));
+      }, 200);
+    }
+    // reset
+    setDragDeltaXById(prev => ({ ...prev, [id]: 0 }));
+    setTouchStartXById(prev => {
+      const { [id]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleNotifClick = (n: Notification) => {
+    // If user was swiping, ignore click
+    const delta = dragDeltaXById[n.id] ?? 0;
+    if (Math.abs(delta) > 10) return;
+    handleNotificationClick(n.bookingId, n.id);
+  };
+
+  const renderNotification = (notification: Notification, index: number) => {
+    const deltaX = dragDeltaXById[notification.id] ?? 0;
+    const dismissing = isDismissingById[notification.id] ?? false;
+    const translate = `translateX(${dismissing ? (deltaX >= 0 ? 200 : -200) : deltaX}px)`;
+    const opacity = 1 - Math.min(Math.abs(deltaX) / 220, 0.4);
+
+    return (
+      <div key={notification.id} className="relative overflow-hidden">
+        {/* Delete background */}
+        <div className="absolute inset-0 bg-red-500/10 flex items-center justify-end pr-8 pointer-events-none">
+          <span className="text-red-600 font-semibold text-sm">Remove</span>
+        </div>
+        <button
+          onClick={() => handleNotifClick(notification)}
+          onTouchStart={handleNotifTouchStart(notification.id)}
+          onTouchMove={handleNotifTouchMove(notification.id)}
+          onTouchEnd={handleNotifTouchEnd(notification.id)}
+          className={`relative w-full text-left px-6 py-4 transition-all duration-200 active:scale-[0.98] ${
+            !notification.isRead
+              ? isDarkMode ? 'bg-slate-800/30 hover:bg-slate-800' : 'bg-blue-50 hover:bg-blue-100'
+              : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'
+          }`}
+          style={{
+            animationDelay: `${index * 50}ms`,
+            transform: translate as any,
+            opacity,
+            transition: 'transform 0.2s ease, opacity 0.2s ease'
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              notification.type === 'pickup' ? 'bg-blue-100 dark:bg-blue-900/30' :
+              notification.type === 'payment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
+              notification.type === 'overdue' ? 'bg-red-100 dark:bg-red-900/30' :
+              notification.type === 'approval' ? 'bg-amber-100 dark:bg-amber-900/30' :
+              notification.type === 'return' ? 'bg-purple-100 dark:bg-purple-900/30' :
+              'bg-slate-100 dark:bg-slate-800'
+            }`}>
+              <span className="text-lg">{notification.icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  {notification.title}
+                </p>
+                {!notification.isRead && (
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
+                )}
+              </div>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+                {notification.message}
+              </p>
+              <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
+                {notification.time}
+              </p>
+            </div>
+          </div>
+        </button>
+      </div>
+    );
+  };
 
   // Don't show layout for login page
   if (pathname === '/admin/mobile/login') {
@@ -458,45 +565,7 @@ export default function MobileAdminLayout({
                                 </p>
                               </div>
                               {today.map((notification, index) => (
-                                <button
-                                  key={notification.id}
-                                  onClick={() => handleNotificationClick(notification.bookingId, notification.id)}
-                                  className={`w-full text-left px-6 py-4 transition-all duration-200 active:scale-[0.98] ${
-                                    !notification.isRead
-                                      ? isDarkMode ? 'bg-slate-800/30 hover:bg-slate-800' : 'bg-blue-50 hover:bg-blue-100'
-                                      : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'
-                                  }`}
-                                  style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                      notification.type === 'pickup' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                      notification.type === 'payment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                                      notification.type === 'overdue' ? 'bg-red-100 dark:bg-red-900/30' :
-                                      notification.type === 'approval' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                                      notification.type === 'return' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                                      'bg-slate-100 dark:bg-slate-800'
-                                    }`}>
-                                      <span className="text-lg">{notification.icon}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start justify-between gap-2 mb-1">
-                                        <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                                          {notification.title}
-                                        </p>
-                                        {!notification.isRead && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                                        )}
-                                      </div>
-                                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {notification.message}
-                                      </p>
-                                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                        {notification.time}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </button>
+                                renderNotification(notification, index)
                               ))}
                             </div>
                           )}
@@ -509,45 +578,7 @@ export default function MobileAdminLayout({
                                 </p>
                               </div>
                               {thisWeek.map((notification, index) => (
-                                <button
-                                  key={notification.id}
-                                  onClick={() => handleNotificationClick(notification.bookingId, notification.id)}
-                                  className={`w-full text-left px-6 py-4 transition-all duration-200 active:scale-[0.98] ${
-                                    !notification.isRead
-                                      ? isDarkMode ? 'bg-slate-800/30 hover:bg-slate-800' : 'bg-blue-50 hover:bg-blue-100'
-                                      : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'
-                                  }`}
-                                  style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                      notification.type === 'pickup' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                      notification.type === 'payment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                                      notification.type === 'overdue' ? 'bg-red-100 dark:bg-red-900/30' :
-                                      notification.type === 'approval' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                                      notification.type === 'return' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                                      'bg-slate-100 dark:bg-slate-800'
-                                    }`}>
-                                      <span className="text-lg">{notification.icon}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start justify-between gap-2 mb-1">
-                                        <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                                          {notification.title}
-                                        </p>
-                                        {!notification.isRead && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                                        )}
-                                      </div>
-                                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {notification.message}
-                                      </p>
-                                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                        {notification.time}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </button>
+                                renderNotification(notification, index)
                               ))}
                             </div>
                           )}
@@ -560,45 +591,7 @@ export default function MobileAdminLayout({
                                 </p>
                               </div>
                               {earlier.map((notification, index) => (
-                                <button
-                                  key={notification.id}
-                                  onClick={() => handleNotificationClick(notification.bookingId, notification.id)}
-                                  className={`w-full text-left px-6 py-4 transition-all duration-200 active:scale-[0.98] ${
-                                    !notification.isRead
-                                      ? isDarkMode ? 'bg-slate-800/30 hover:bg-slate-800' : 'bg-blue-50 hover:bg-blue-100'
-                                      : isDarkMode ? 'hover:bg-slate-800/50' : 'hover:bg-slate-50'
-                                  }`}
-                                  style={{ animationDelay: `${index * 50}ms` }}
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                                      notification.type === 'pickup' ? 'bg-blue-100 dark:bg-blue-900/30' :
-                                      notification.type === 'payment' ? 'bg-emerald-100 dark:bg-emerald-900/30' :
-                                      notification.type === 'overdue' ? 'bg-red-100 dark:bg-red-900/30' :
-                                      notification.type === 'approval' ? 'bg-amber-100 dark:bg-amber-900/30' :
-                                      notification.type === 'return' ? 'bg-purple-100 dark:bg-purple-900/30' :
-                                      'bg-slate-100 dark:bg-slate-800'
-                                    }`}>
-                                      <span className="text-lg">{notification.icon}</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-start justify-between gap-2 mb-1">
-                                        <p className={`font-bold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                                          {notification.title}
-                                        </p>
-                                        {!notification.isRead && (
-                                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-1"></div>
-                                        )}
-                                      </div>
-                                      <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-                                        {notification.message}
-                                      </p>
-                                      <p className={`text-xs mt-1 ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
-                                        {notification.time}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </button>
+                                renderNotification(notification, index)
                               ))}
                             </div>
                           )}
