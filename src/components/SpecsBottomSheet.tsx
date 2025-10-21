@@ -87,7 +87,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
                   <div 
                     key={index}
                     className="flex items-start gap-3 bg-slate-50 rounded-xl p-3 animate-fadeIn"
-                    style={{ animationDelay: `${index * 50}ms` }}
+                    style={{ animationDelay: `${0.3 + (index * 0.08)}s` }}
                   >
                     <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
                       className={`flex items-center justify-between p-4 ${
                         index !== Object.entries(specs).length - 1 ? 'border-b border-slate-200' : ''
                       } animate-fadeIn`}
-                      style={{ animationDelay: `${(index + 6) * 50}ms` }}
+                      style={{ animationDelay: `${0.8 + (index * 0.08)}s` }}
                     >
                       <span className="text-sm font-bold text-slate-600 uppercase tracking-wide">{key}</span>
                       <span className="text-sm font-black text-black">{String(value)}</span>
@@ -122,7 +122,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
             )}
 
             {/* What's Included */}
-            <div>
+            <div className="animate-fadeIn" style={{ animationDelay: '1.4s' }}>
               <h4 className="text-base font-black text-black mb-3 uppercase tracking-wide">What's Included</h4>
               <div className="bg-gradient-to-br from-emerald-50 to-white rounded-2xl border-2 border-emerald-200 p-6">
                 <div className="space-y-3">
@@ -164,7 +164,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
             </div>
 
             {/* Insurance Badge */}
-            <div className="bg-gradient-to-r from-slate-900 to-black rounded-2xl p-6 text-white text-center">
+            <div className="bg-gradient-to-r from-slate-900 to-black rounded-2xl p-6 text-white text-center animate-fadeIn" style={{ animationDelay: '1.6s' }}>
               <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -179,7 +179,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
         </div>
       </div>
 
-      {/* Animations */}
+      {/* Animations - Slower & More Elegant */}
       <style jsx global>{`
         @keyframes backdropFadeIn {
           from {
@@ -191,16 +191,18 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
         }
         @keyframes modalSlideUp {
           from {
+            opacity: 0;
             transform: translateY(100%);
           }
           to {
+            opacity: 1;
             transform: translateY(0);
           }
         }
         @keyframes fadeIn {
           from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
@@ -208,13 +210,13 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
           }
         }
         .animate-backdropFadeIn {
-          animation: backdropFadeIn 0.3s ease-out forwards;
+          animation: backdropFadeIn 0.5s ease-out forwards;
         }
         .animate-modalSlideUp {
-          animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          animation: modalSlideUp 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
         }
         .animate-fadeIn {
-          animation: fadeIn 0.4s ease-out forwards;
+          animation: fadeIn 0.6s ease-out forwards;
           opacity: 0;
         }
       `}</style>

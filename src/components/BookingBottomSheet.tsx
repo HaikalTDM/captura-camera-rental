@@ -76,8 +76,8 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
             </div>
           </div>
 
-          {/* Calendar Content */}
-          <div className="px-6 py-6">
+          {/* Calendar Content - Fade In */}
+          <div className="px-6 py-6 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <CalendarBooking
               camera={camera}
               onBookingComplete={(startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) => {
@@ -89,7 +89,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         </div>
       </div>
 
-      {/* Animations */}
+      {/* Animations - Slower & More Elegant */}
       <style jsx global>{`
         @keyframes backdropFadeIn {
           from {
@@ -101,17 +101,33 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         }
         @keyframes modalSlideUp {
           from {
+            opacity: 0;
             transform: translateY(100%);
           }
           to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
             transform: translateY(0);
           }
         }
         .animate-backdropFadeIn {
-          animation: backdropFadeIn 0.3s ease-out forwards;
+          animation: backdropFadeIn 0.5s ease-out forwards;
         }
         .animate-modalSlideUp {
-          animation: modalSlideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          animation: modalSlideUp 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) forwards;
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.6s ease-out forwards;
+          opacity: 0;
         }
       `}</style>
     </>
