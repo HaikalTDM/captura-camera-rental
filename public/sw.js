@@ -1,10 +1,37 @@
-// CAPTURA PWA Service Worker
-// NOTE: Currently disabled on main site, will be used for admin dashboard PWA implementation
+// CAPTURA Main Site PWA Service Worker - DISABLED
+// This service worker is DISABLED to prevent conflicts with admin PWA
+// Admin PWA uses /admin-sw.js instead
+
+console.log('⚠️ Main site service worker is DISABLED');
+
+// Unregister this service worker immediately if it was registered before
+self.addEventListener('install', () => {
+  console.log('🗑️ Uninstalling old main site service worker...');
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log('🧹 Cleaning up old main site caches...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name.startsWith('captura-') && !name.includes('admin'))
+          .map((name) => caches.delete(name))
+      );
+    }).then(() => {
+      console.log('✅ Old caches deleted, unregistering...');
+      return self.registration.unregister();
+    })
+  );
+});
+
+// ORIGINAL CODE (DISABLED):
+/*
 const CACHE_NAME = 'captura-v1';
 const STATIC_CACHE_NAME = 'captura-static-v1';
 const DYNAMIC_CACHE_NAME = 'captura-dynamic-v1';
 
-// Files to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
@@ -213,3 +240,5 @@ async function removeOfflineBooking(bookingId) {
   // Implementation would depend on your storage strategy
   console.log('🗑️ Service Worker: Removed offline booking', bookingId);
 }
+*/
+// END OF DISABLED CODE
