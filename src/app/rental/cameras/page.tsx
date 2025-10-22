@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import CameraCatalog from '@/components/CameraCatalog';
 import RentalSummary from '@/components/RentalSummary';
+import ClientAvailabilityCalendar from '@/components/ClientAvailabilityCalendar';
 import { Camera, BookingDetails, CustomerDetails } from '@/types';
 
 export default function CamerasPage() {
@@ -48,19 +49,16 @@ export default function CamerasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="bg-black text-white pt-16 pb-8 px-6">
-        <div className="max-w-lg mx-auto">
-          <h1 className="text-2xl font-black mb-2">Available Cameras</h1>
-          <p className="text-sm text-slate-300 font-semibold">
-            Professional equipment • Ready to rent
-          </p>
+    <div className="min-h-screen bg-white pt-16">
+      {/* Availability Calendar */}
+      <section className="py-6 px-6">
+        <div className="max-w-4xl mx-auto">
+          <ClientAvailabilityCalendar />
         </div>
-      </div>
+      </section>
 
       {/* Camera Catalog */}
-      <section className="py-8">
+      <section id="camera-catalog" className="py-8">
         <CameraCatalog onBookCamera={handleCameraBookingComplete} />
       </section>
 

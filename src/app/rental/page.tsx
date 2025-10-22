@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getActiveGalleryImages } from '@/lib/api/gallery';
 import type { GalleryImage } from '@/lib/api/gallery';
 import Image from 'next/image';
+import PickupDeliverySection from '@/components/PickupDeliverySection';
 
 export default function RentalHome() {
   const router = useRouter();
@@ -391,6 +392,9 @@ export default function RentalHome() {
           </div>
         </div>
       </section>
+
+      {/* Pickup & Delivery Locations */}
+      <PickupDeliverySection />
 
       {/* Animations */}
       <style jsx global>{`

@@ -6,6 +6,7 @@ import type { Camera as DBCamera } from '@/lib/supabase';
 import { Camera, CustomerDetails } from '@/types';
 import CameraCard from './CameraCard';
 import SpecsBottomSheet from './SpecsBottomSheet';
+import BookingBottomSheet from './BookingBottomSheet';
 
 interface CameraCatalogProps {
   onBookCamera: (camera: Camera, startDate?: Date, endDate?: Date, totalCost?: number, customerDetails?: CustomerDetails, totalDays?: number, dailyRate?: number) => void;
@@ -16,6 +17,8 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCameraForSpecs, setSelectedCameraForSpecs] = useState<Camera | null>(null);
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
+  const [selectedCameraForBooking, setSelectedCameraForBooking] = useState<Camera | null>(null);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   useEffect(() => {
     loadCameras();
@@ -30,6 +33,18 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
     setIsSpecsModalOpen(false);
     setTimeout(() => {
       setSelectedCameraForSpecs(null);
+    }, 300); // Wait for animation to finish
+  };
+
+  const handleBookNow = (camera: Camera) => {
+    setSelectedCameraForBooking(camera);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleCloseBookingModal = () => {
+    setIsBookingModalOpen(false);
+    setTimeout(() => {
+      setSelectedCameraForBooking(null);
     }, 300); // Wait for animation to finish
   };
 
@@ -159,13 +174,13 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   return (
     <>
       <div className="max-w-7xl mx-auto px-6">
-        {/* Minimal Header - App Style */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-black text-black mb-2">
-            Available Cameras
+        {/* Clean Header - Rental Focus */}
+        <div className="mb-10 text-center sm:text-left">
+          <h2 className="text-3xl sm:text-4xl font-black text-black mb-2 tracking-tight">
+            Available for Rent
           </h2>
-          <p className="text-sm text-slate-600 font-semibold">
-            Professional equipment • Fully maintained
+          <p className="text-sm sm:text-base text-slate-600 font-semibold">
+            Professional equipment • Ready to ship • RM100 deposit
           </p>
         </div>
 
@@ -191,55 +206,52 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                 >
                   <CameraCard
                     camera={camera}
-                    onBookNow={onBookCamera}
+                    onBookNow={handleBookNow}
                     onViewSpecs={handleViewSpecs}
                   />
                 </div>
               ))}
             </div>
 
-            {/* Mobile: Horizontal Scroll Carousel - Optimized */}
+            {/* Mobile: Horizontal Scroll Carousel - Edge Peek Design */}
             <div className="md:hidden">
-              {/* Swipe Indicator */}
-              <div className="flex items-center justify-center gap-2 mb-4">
+              {/* Progress Dots - Subtle */}
+              <div className="flex items-center justify-center gap-2 mb-6">
                 <div className="flex gap-1.5">
                   {cameras.map((_, index) => (
                     <div
                       key={index}
-                      className="w-2 h-2 rounded-full bg-slate-300 animate-pulse"
-                      style={{ animationDelay: `${index * 200}ms` }}
+                      className="w-1.5 h-1.5 rounded-full bg-slate-300"
                       aria-label={`Camera ${index + 1}`}
                     />
                   ))}
                 </div>
-                <span className="text-xs text-slate-500 font-bold">Swipe →</span>
               </div>
 
-              {/* Horizontal Scroll Container - Optimized */}
+              {/* Horizontal Scroll Container - Edge Peek for Swipeable Feel */}
               <div 
-                className="overflow-x-auto scrollbar-hide -mx-6 px-6 scroll-smooth snap-x snap-mandatory overscroll-x-contain"
+                className="overflow-x-auto scrollbar-hide -mx-6 pl-6 pr-3 scroll-smooth snap-x snap-mandatory overscroll-x-contain"
                 style={{
                   WebkitOverflowScrolling: 'touch',
-                  scrollPaddingLeft: '24px',
-                  scrollPaddingRight: '24px'
+                  scrollPaddingLeft: '24px'
                 }}
               >
                 <div className="flex gap-4 pb-4">
                   {cameras.map((camera, index) => (
                     <div 
                       key={camera.id} 
-                      className="flex-shrink-0 w-[85vw] sm:w-[70vw] max-w-[400px] snap-center snap-always animate-fadeIn" 
+                      className="flex-shrink-0 w-[88vw] sm:w-[75vw] max-w-[420px] snap-start animate-fadeIn" 
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
                       <CameraCard
                         camera={camera}
-                        onBookNow={onBookCamera}
+                        onBookNow={handleBookNow}
                         onViewSpecs={handleViewSpecs}
                       />
                     </div>
                   ))}
-                  {/* Spacer for better last card visibility */}
-                  <div className="flex-shrink-0 w-6" aria-hidden="true"></div>
+                  {/* End spacer for clean last card scroll */}
+                  <div className="flex-shrink-0 w-3" aria-hidden="true"></div>
                 </div>
               </div>
             </div>
@@ -253,6 +265,16 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
         isOpen={isSpecsModalOpen}
         onClose={handleCloseSpecsModal}
       />
+
+      {/* Booking Modal - Full Screen Overlay */}
+      {selectedCameraForBooking && (
+        <BookingBottomSheet
+          camera={selectedCameraForBooking}
+          isOpen={isBookingModalOpen}
+          onClose={handleCloseBookingModal}
+          onBookNow={onBookCamera}
+        />
+      )}
     </>
   );
 }

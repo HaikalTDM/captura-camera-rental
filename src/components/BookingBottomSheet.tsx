@@ -58,7 +58,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[100] flex items-end ${
+        className={`fixed inset-0 z-[200] flex items-end ${
           isClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
         }`}
         onClick={handleClose}
@@ -68,7 +68,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         
         {/* Bottom Sheet */}
         <div 
-          className={`relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[90vh] overflow-y-auto border-t-4 border-blue-500 ${
+          className={`relative w-full bg-white rounded-t-3xl shadow-2xl h-[95vh] overflow-y-auto border-t-4 border-blue-500 ${
             isClosing ? 'animate-modalSlideDown' : 'animate-modalSlideUp'
           }`}
           onClick={(e) => e.stopPropagation()}

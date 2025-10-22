@@ -185,7 +185,7 @@ export default function AdminCalendar() {
   // Camera color mapping - each camera gets a unique color
   const getCameraColor = (cameraName: string) => {
     const colors: { [key: string]: string } = {
-      'DJI Osmo Pocket 3': 'bg-blue-500',
+      'DJI Osmo Pocket 3': 'bg-slate-900',
       'DJI Osmo Pocket 3 (ii)': 'bg-purple-500',
       'DJI Action 5 Pro': 'bg-orange-500',
       'Insta360 X5': 'bg-pink-500',
@@ -216,7 +216,7 @@ export default function AdminCalendar() {
     return (
       <div className={`flex items-center justify-center h-96 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'} rounded-2xl`}>
         <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${isDarkMode ? 'border-white' : 'border-black'} mx-auto`}></div>
           <p className={`text-sm font-semibold ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
             Loading bookings calendar...
           </p>
@@ -236,7 +236,7 @@ export default function AdminCalendar() {
               onClick={() => setViewMode('month')}
               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 active:scale-95 ${
                 viewMode === 'month'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                  ? 'bg-black text-white'
                   : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -249,7 +249,7 @@ export default function AdminCalendar() {
               onClick={() => setViewMode('list')}
               className={`px-4 py-2 rounded-lg text-sm font-bold transition-all duration-200 active:scale-95 ${
                 viewMode === 'list'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md'
+                  ? 'bg-black text-white'
                   : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -334,20 +334,20 @@ export default function AdminCalendar() {
                     index >= calendarDays.length - 7 ? 'border-b-0' : ''
                   } transition-all duration-200 hover:bg-opacity-80 ${
                     day.isToday
-                      ? isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                      ? isDarkMode ? 'bg-slate-800' : 'bg-slate-200'
                       : day.isCurrentMonth
                       ? isDarkMode ? 'hover:bg-slate-800' : 'hover:bg-slate-50'
                       : isDarkMode ? 'bg-slate-950 hover:bg-slate-900' : 'bg-slate-50/50 hover:bg-slate-100/50'
                   } ${
                     selectedDate && day.date.getTime() === selectedDate.getTime()
-                      ? 'ring-2 ring-blue-500 ring-inset'
+                      ? isDarkMode ? 'ring-2 ring-white ring-inset' : 'ring-2 ring-black ring-inset'
                       : ''
                   } active:scale-[0.98] group`}
                 >
                   {/* Date Number */}
                   <div className={`text-sm font-bold mb-1 ${
                     day.isToday
-                      ? 'text-blue-600'
+                      ? isDarkMode ? 'text-white' : 'text-black'
                       : day.isCurrentMonth
                       ? isDarkMode ? 'text-white' : 'text-slate-900'
                       : isDarkMode ? 'text-slate-600' : 'text-slate-400'

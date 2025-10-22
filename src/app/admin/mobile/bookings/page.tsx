@@ -343,7 +343,7 @@ export default function MobileBookings() {
               onClick={() => setViewMode('list')}
               className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
                 viewMode === 'list'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  ? 'bg-black text-white'
                   : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -356,7 +356,7 @@ export default function MobileBookings() {
               onClick={() => setViewMode('calendar')}
               className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
                 viewMode === 'calendar'
-                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  ? 'bg-black text-white'
                   : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -399,9 +399,9 @@ export default function MobileBookings() {
           {/* Filter Button */}
           <button
             onClick={() => setShowFilterDrawer(true)}
-            className={`relative px-4 py-3.5 rounded-2xl font-bold text-sm shadow-sm border transition-all duration-200 active:scale-95 ${
+              className={`relative px-4 py-3.5 rounded-2xl font-bold text-sm shadow-sm border transition-all duration-200 active:scale-95 ${
               activeFilterCount > 0
-                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-500 shadow-lg shadow-blue-500/30'
+                ? 'bg-black text-white border-black'
                 : isDarkMode ? 'bg-slate-900 text-white border-slate-800' : 'bg-white text-slate-900 border-slate-200'
             }`}
           >
@@ -443,7 +443,7 @@ export default function MobileBookings() {
           {activeFilterCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="text-sm font-bold text-blue-500 hover:text-blue-600 transition-colors"
+              className="text-sm font-bold text-slate-900 hover:text-black transition-colors"
             >
               Clear All
             </button>
@@ -477,7 +477,7 @@ export default function MobileBookings() {
             </p>
           </div>
           <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-3 border shadow-sm text-center`}>
-            <p className="text-xl font-bold text-blue-600">
+            <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               {bookings.filter(b => b.booking_status === 'completed').length}
             </p>
             <p className={`text-xs mt-1 font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
@@ -616,7 +616,7 @@ export default function MobileBookings() {
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" style={{ touchAction: 'none' }}></div>
           <div 
-            className={`relative w-full ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl shadow-2xl animate-modalSlideUp max-h-[85vh] overflow-y-auto border-t-4 border-blue-500`}
+            className={`relative w-full ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl shadow-2xl animate-modalSlideUp max-h-[85vh] overflow-y-auto border-t-4 ${isDarkMode ? 'border-white' : 'border-black'}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -827,8 +827,8 @@ export default function MobileBookings() {
                       className={`px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 border-2 ${
                         filters.status.includes(status)
                           ? status === 'active_deposit'
-                            ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/30'
-                            : 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30'
+                            ? 'bg-emerald-500 text-white border-emerald-500'
+                            : 'bg-black text-white border-black'
                           : isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200'
                       }`}
                     >
@@ -934,7 +934,7 @@ export default function MobileBookings() {
                         onClick={() => setFilters(prev => ({ ...prev, equipmentPickup: status }))}
                         className={`w-full px-3 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 active:scale-95 border-2 ${
                           filters.equipmentPickup === status
-                            ? 'bg-blue-500 text-white border-blue-500'
+                            ? 'bg-black text-white border-black'
                             : isDarkMode ? 'bg-slate-800 text-slate-400 border-slate-700' : 'bg-slate-50 text-slate-600 border-slate-200'
                         }`}
                       >
@@ -995,7 +995,7 @@ export default function MobileBookings() {
               </button>
               <button
                 onClick={() => setShowFilterDrawer(false)}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 shadow-xl shadow-blue-500/30"
+                className="flex-1 bg-black text-white py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95"
               >
                 Apply Filters
               </button>

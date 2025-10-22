@@ -56,7 +56,7 @@ export default function BookingForm({
 
   const depositAmount = 100; // Fixed RM100 deposit
   const finalPaymentAmount = totalCost; // Full rental amount (separate from deposit)
-  const deliveryFee = pickupMethod === 'delivery' ? 50 : 0; // RM50 delivery fee
+  // No fixed delivery fee - customers pay Lalamove/delivery service directly
 
   const handleInputChange = (field: keyof CustomerDetails, value: string) => {
     setCustomerDetails(prev => ({ ...prev, [field]: value }));
@@ -128,7 +128,7 @@ export default function BookingForm({
         emergency_contact_phone: customerDetails.emergencyContactPhone.trim() ? formatPhoneWithCountryCode(customerDetails.emergencyContactPhone.trim()) : undefined,
         pickup_method: pickupMethod,
         pickup_address: pickupMethod === 'delivery' ? pickupAddress.trim() : undefined,
-        delivery_fee: deliveryFee,
+        delivery_fee: 0, // Customer pays Lalamove/delivery service directly
         special_requests: specialRequests.trim() || undefined,
         booking_source: 'website'
       };
@@ -292,7 +292,7 @@ export default function BookingForm({
               <span>Rental Amount:</span>
               <span className="font-semibold">RM{finalPaymentAmount}</span>
             </div>
-            {deliveryFee > 0 && (
+            {pickupMethod === 'delivery' && (
               <div className="flex justify-between text-xs">
                 <span>Delivery Fee:</span>
                 <span className="text-orange-600">Pay to Lalamove directly</span>
@@ -305,9 +305,9 @@ export default function BookingForm({
             <p className="text-xs text-yellow-600 mt-1">
               The RM{depositAmount} deposit is fully refundable when equipment is returned in good condition.
             </p>
-            {deliveryFee > 0 && (
+            {pickupMethod === 'delivery' && (
               <p className="text-xs text-orange-600 mt-1">
-                * Delivery fee will be paid separately to the Lalamove driver upon delivery.
+                * Delivery fee (RM10-RM20 based on distance) will be paid separately to the Lalamove driver upon delivery.
               </p>
             )}
           </div>

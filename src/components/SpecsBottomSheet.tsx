@@ -59,7 +59,7 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[100] flex items-end ${
+        className={`fixed inset-0 z-[200] flex items-end ${
           isClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
         }`}
         onClick={handleClose}

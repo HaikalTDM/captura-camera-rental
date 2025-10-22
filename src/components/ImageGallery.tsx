@@ -32,9 +32,9 @@ export default function ImageGallery({
           priority
         />
         
-        {/* Image Counter */}
+        {/* Image Counter - Moved to bottom-left to avoid badge overlap */}
         {allImages.length > 1 && (
-          <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+          <div className="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full font-bold">
             {allImages.indexOf(currentImage) + 1} / {allImages.length}
           </div>
         )}
