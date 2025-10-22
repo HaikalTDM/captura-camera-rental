@@ -1,32 +1,105 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllBookings, getBookingStats } from '@/lib/api/bookings';
+import { useAdminData } from '@/contexts/AdminDataContext';
 import BookingApprovalCard from '@/components/admin/BookingApprovalCard';
 import StatusManagementDropdown from '@/components/admin/StatusManagementDropdown';
 import { ToastContainer, useToast } from '@/components/admin/Toast';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import { BookingsTableSkeleton } from '@/components/admin/SkeletonLoaders';
+
+// Memoized booking card for mobile view
+const BookingCard = memo(({ 
+  booking, 
+  onStatusChange, 
+  onStatusSuccess, 
+  onStatusError, 
+  onDelete, 
+  isDeleting,
+  getStatusColor,
+  getSourceColor
+}: any) => (
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 max-w-full overflow-hidden">
+    <div className="flex items-start justify-between mb-3">
+      <div className="min-w-0 flex-1 mr-2">
+        <div className="text-sm font-medium text-gray-900 truncate">#{booking.id.slice(0, 8)}</div>
+        <div className="text-xs text-gray-500">{new Date(booking.created_at).toLocaleDateString()}</div>
+      </div>
+      <div className="flex flex-col gap-1 flex-shrink-0">
+        <StatusManagementDropdown
+          bookingId={booking.id}
+          currentStatus={booking.booking_status || 'pending_approval'}
+          onStatusChange={(newStatus) => onStatusChange(booking.id, newStatus)}
+          onSuccess={onStatusSuccess}
+          onError={onStatusError}
+        />
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(booking.booking_source)}`}>
+          {booking.booking_source}
+        </span>
+      </div>
+    </div>
+
+    <div className="space-y-2 mb-4 max-w-full">
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-gray-900 truncate">{booking.customer?.full_name}</div>
+        <div className="text-xs text-gray-500 truncate">{booking.customer?.phone}</div>
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm text-gray-900 truncate">{booking.camera?.name}</div>
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm text-gray-900">
+          {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
+        </div>
+        <div className="text-xs text-gray-500">{booking.total_days} days</div>
+      </div>
+
+      <div className="min-w-0">
+        <div className="text-sm font-medium text-gray-900">RM{booking.total_amount}</div>
+        <div className="text-xs text-gray-500 break-words">
+          Deposit: {booking.deposit_paid ? '✅' : '❌'} RM{booking.deposit_amount} |
+          Final: {booking.final_payment_paid ? '✅' : '❌'} RM{booking.final_payment_amount}
+        </div>
+      </div>
+    </div>
+
+    <div className="flex gap-2">
+      <Link
+        href={`/admin/bookings/${booking.id}`}
+        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
+      >
+        View
+      </Link>
+      <Link
+        href={`/admin/bookings/${booking.id}/edit`}
+        className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
+      >
+        Edit
+      </Link>
+      <button
+        onClick={() => onDelete(booking.id)}
+        disabled={isDeleting === booking.id}
+        className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 touch-manipulation"
+      >
+        {isDeleting === booking.id ? 'Deleting...' : 'Delete'}
+      </button>
+    </div>
+  </div>
+));
+
+BookingCard.displayName = 'BookingCard';
 
 export default function BookingsPage() {
   const router = useRouter();
   const { toasts, success, error, removeToast } = useToast();
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [filteredBookings, setFilteredBookings] = useState<Booking[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { bookings, stats, isLoading, mutateBookings } = useAdminData();
   const [deletingBookingId, setDeletingBookingId] = useState<string | null>(null);
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    confirmed: 0,
-    active: 0,
-    completed: 0,
-    cancelled: 0,
-    bySource: {} as Record<string, number>
-  });
 
-  // Filters and Sorting
+  // Filters and Sorting - using state
   const [statusFilter, setStatusFilter] = useState('all');
   const [sourceFilter, setSourceFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,116 +108,11 @@ export default function BookingsPage() {
   const [dateFilter, setDateFilter] = useState('all');
   const [paymentFilter, setPaymentFilter] = useState('all');
 
-  useEffect(() => {
-    loadBookings();
-  }, []);
-
-  useEffect(() => {
-    applyFiltersAndSorting();
-  }, [bookings, statusFilter, sourceFilter, searchTerm, sortField, sortDirection, dateFilter, paymentFilter]);
-
-  const loadBookings = async () => {
-    setIsLoading(true);
-    try {
-      const [bookingsData, statsData] = await Promise.all([
-        getAllBookings(),
-        getBookingStats()
-      ]);
-      setBookings(bookingsData);
-      setStats(statsData);
-    } catch (error) {
-      console.error('Error loading bookings:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-
-
-  const handleApproveBooking = async (bookingId: string, notes?: string) => {
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}/approve`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ admin_notes: notes }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert('Booking approved successfully!');
-        loadBookings(); // Refresh the list
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error approving booking:', error);
-      alert('Failed to approve booking');
-    }
-  };
-
-  const handleRejectBooking = async (bookingId: string, reason: string, notes?: string) => {
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}/reject`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rejection_reason: reason,
-          admin_notes: notes
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        alert('Booking rejected successfully!');
-        loadBookings(); // Refresh the list
-      } else {
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error rejecting booking:', error);
-      alert('Failed to reject booking');
-    }
-  };
-
-  const handleDeleteBooking = async (bookingId: string) => {
-    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
-      return;
-    }
-
-    setDeletingBookingId(bookingId);
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}/delete`, {
-        method: 'DELETE',
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        // Reload bookings after successful deletion
-        await loadBookings();
-      } else {
-        alert('Failed to delete booking: ' + data.error);
-      }
-    } catch (error) {
-      console.error('Error deleting booking:', error);
-      alert('Failed to delete booking. Please try again.');
-    } finally {
-      setDeletingBookingId(null);
-    }
-  };
-
-
-
-  const applyFiltersAndSorting = () => {
+  // Memoize filtered and sorted bookings
+  const filteredBookings = useMemo(() => {
     let filtered = [...bookings];
 
-    // Status filter (now using booking_status)
+    // Status filter
     if (statusFilter !== 'all') {
       filtered = filtered.filter(booking => booking.booking_status === statusFilter);
     }
@@ -268,7 +236,91 @@ export default function BookingsPage() {
       return 0;
     });
 
-    setFilteredBookings(filtered);
+    return filtered;
+  }, [bookings, statusFilter, sourceFilter, searchTerm, sortField, sortDirection, dateFilter, paymentFilter]);
+
+  // Memoize pending approval bookings
+  const pendingApprovalBookings = useMemo(() => 
+    bookings.filter(booking => booking.booking_status === 'pending_approval'),
+    [bookings]
+  );
+
+  const handleApproveBooking = async (bookingId: string, notes?: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ admin_notes: notes }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        success('Booking Approved', 'Booking has been approved successfully!');
+        mutateBookings(); // Refresh data
+      } else {
+        error('Approval Failed', result.error || 'Failed to approve booking');
+      }
+    } catch (err) {
+      console.error('Error approving booking:', err);
+      error('Approval Failed', 'An error occurred while approving the booking');
+    }
+  };
+
+  const handleRejectBooking = async (bookingId: string, reason: string, notes?: string) => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rejection_reason: reason,
+          admin_notes: notes
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        success('Booking Rejected', 'Booking has been rejected successfully!');
+        mutateBookings(); // Refresh data
+      } else {
+        error('Rejection Failed', result.error || 'Failed to reject booking');
+      }
+    } catch (err) {
+      console.error('Error rejecting booking:', err);
+      error('Rejection Failed', 'An error occurred while rejecting the booking');
+    }
+  };
+
+  const handleDeleteBooking = async (bookingId: string) => {
+    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingBookingId(bookingId);
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/delete`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        success('Booking Deleted', 'Booking has been deleted successfully!');
+        mutateBookings(); // Refresh data
+      } else {
+        error('Delete Failed', data.error || 'Failed to delete booking');
+      }
+    } catch (err) {
+      console.error('Error deleting booking:', err);
+      error('Delete Failed', 'An error occurred while deleting the booking');
+    } finally {
+      setDeletingBookingId(null);
+    }
   };
 
   const handleSort = (field: string) => {
@@ -335,20 +387,9 @@ export default function BookingsPage() {
     document.body.removeChild(link);
   };
 
-
-
   const handleStatusChange = (bookingId: string, newStatus: string) => {
-    // Update the booking in the local state
-    setBookings(prevBookings =>
-      prevBookings.map(booking =>
-        booking.id === bookingId
-          ? { ...booking, booking_status: newStatus as any }
-          : booking
-      )
-    );
-
-    // Optionally reload bookings to ensure data consistency
-    // loadBookings();
+    // Optimistically update - SWR will handle the actual update
+    mutateBookings();
   };
 
   const handleStatusSuccess = (message: string) => {
@@ -359,19 +400,14 @@ export default function BookingsPage() {
     error('Update Failed', message);
   };
 
-  // Get pending approval bookings for priority display
-  const pendingApprovalBookings = bookings.filter(booking => booking.booking_status === 'pending_approval');
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      // Current booking_status values
       case 'pending_approval': return 'bg-yellow-100 text-yellow-800';
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'active': return 'bg-blue-100 text-blue-800';
       case 'completed': return 'bg-gray-100 text-gray-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
-      // Legacy status values (fallback)
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       default: return 'bg-gray-100 text-gray-800';
     }
@@ -390,11 +426,7 @@ export default function BookingsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <BookingsTableSkeleton />;
   }
 
   return (
@@ -734,7 +766,7 @@ export default function BookingsPage() {
                   booking={booking as any}
                   onApprove={handleApproveBooking}
                   onReject={handleRejectBooking}
-                  onRefresh={loadBookings}
+                  onRefresh={mutateBookings}
                 />
               ))}
           </div>
@@ -900,74 +932,17 @@ export default function BookingsPage() {
       {/* Bookings Cards - Mobile */}
       <div className="lg:hidden space-y-4 max-w-full">
         {filteredBookings.map((booking) => (
-          <div key={booking.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 max-w-full overflow-hidden">
-            <div className="flex items-start justify-between mb-3">
-              <div className="min-w-0 flex-1 mr-2">
-                <div className="text-sm font-medium text-gray-900 truncate">#{booking.id.slice(0, 8)}</div>
-                <div className="text-xs text-gray-500">{new Date(booking.created_at).toLocaleDateString()}</div>
-              </div>
-              <div className="flex flex-col gap-1 flex-shrink-0">
-                <StatusManagementDropdown
-                  bookingId={booking.id}
-                  currentStatus={booking.booking_status || 'pending_approval'}
-                  onStatusChange={(newStatus) => handleStatusChange(booking.id, newStatus)}
-                  onSuccess={handleStatusSuccess}
-                  onError={handleStatusError}
-                />
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(booking.booking_source)}`}>
-                  {booking.booking_source}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2 mb-4 max-w-full">
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-gray-900 truncate">{booking.customer?.full_name}</div>
-                <div className="text-xs text-gray-500 truncate">{booking.customer?.phone}</div>
-              </div>
-
-              <div className="min-w-0">
-                <div className="text-sm text-gray-900 truncate">{booking.camera?.name}</div>
-              </div>
-
-              <div className="min-w-0">
-                <div className="text-sm text-gray-900">
-                  {new Date(booking.start_date).toLocaleDateString()} - {new Date(booking.end_date).toLocaleDateString()}
-                </div>
-                <div className="text-xs text-gray-500">{booking.total_days} days</div>
-              </div>
-
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-gray-900">RM{booking.total_amount}</div>
-                <div className="text-xs text-gray-500 break-words">
-                  Deposit: {booking.deposit_paid ? '✅' : '❌'} RM{booking.deposit_amount} |
-                  Final: {booking.final_payment_paid ? '✅' : '❌'} RM{booking.final_payment_amount}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <Link
-                href={`/admin/bookings/${booking.id}`}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
-              >
-                View
-              </Link>
-              <Link
-                href={`/admin/bookings/${booking.id}/edit`}
-                className="flex-1 bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm text-center transition-colors touch-manipulation"
-              >
-                Edit
-              </Link>
-              <button
-                onClick={() => handleDeleteBooking(booking.id)}
-                disabled={deletingBookingId === booking.id}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm transition-colors disabled:opacity-50 touch-manipulation"
-              >
-                {deletingBookingId === booking.id ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
+          <BookingCard
+            key={booking.id}
+            booking={booking}
+            onStatusChange={handleStatusChange}
+            onStatusSuccess={handleStatusSuccess}
+            onStatusError={handleStatusError}
+            onDelete={handleDeleteBooking}
+            isDeleting={deletingBookingId}
+            getStatusColor={getStatusColor}
+            getSourceColor={getSourceColor}
+          />
         ))}
 
         {filteredBookings.length === 0 && (

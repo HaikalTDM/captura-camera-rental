@@ -1,43 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getAllCustomers, getAllBookings } from '@/lib/api/bookings';
+import { useState, useMemo } from 'react';
+import { useAdminData } from '@/contexts/AdminDataContext';
+import { getAllCustomers } from '@/lib/api/bookings';
+import useSWR from 'swr';
 import type { Customer, Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const { bookings, isLoading: bookingsLoading } = useAdminData();
+  const { data: customers = [], isLoading: customersLoading, mutate } = useSWR('admin-customers', getAllCustomers, {
+    revalidateOnFocus: false,
+    refreshInterval: 0, // Disable auto-refresh to prevent unmount issues
+    shouldRetryOnError: false,
+    revalidateIfStale: false,
+    onError: (err) => {
+      console.error('Error fetching customers:', err);
+    },
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'full_name' | 'totalSpent' | 'totalRentals' | 'created_at'>('full_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  useEffect(() => {
-    loadCustomersData();
-  }, []);
+  const isLoading = bookingsLoading || customersLoading;
 
-  const loadCustomersData = async () => {
-    setIsLoading(true);
-    try {
-      const [customersData, bookingsData] = await Promise.all([
-        getAllCustomers(),
-        getAllBookings()
-      ]);
-      setCustomers(customersData);
-      setBookings(bookingsData);
-    } catch (error) {
-      console.error('Error loading customers data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Calculate customer metrics
-  const customersWithMetrics = customers.map(customer => {
+  // Memoize customer metrics calculations
+  const customersWithMetrics = useMemo(() => customers.map(customer => {
     const customerBookings = bookings.filter(b => b.customer_id === customer.id);
     const paidBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
     const totalSpent = paidBookings.reduce((sum, b) => {
@@ -54,18 +46,10 @@ export default function CustomersPage() {
       totalSpent,
       lastRental: lastRental ? new Date(lastRental).toISOString().split('T')[0] : null
     };
-  });
+  }), [customers, bookings]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Filter and sort customers
-  const filteredCustomers = customersWithMetrics
+  // Memoize filtered and sorted customers
+  const filteredCustomers = useMemo(() => customersWithMetrics
     .filter(customer =>
       customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.phone.includes(searchTerm) ||
@@ -85,7 +69,15 @@ export default function CustomersPage() {
       } else {
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
       }
-    });
+    }), [customersWithMetrics, searchTerm, sortBy, sortOrder]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const getReliabilityColor = (totalRentals: number) => {
     if (totalRentals >= 5) return 'bg-green-100 text-green-800';
@@ -154,7 +146,7 @@ export default function CustomersPage() {
         alert(message);
 
         // Reload customers data
-        await loadCustomersData();
+        mutate();
         setSelectedCustomers([]);
       } else {
         alert('Failed to delete customers: ' + data.error);
@@ -185,7 +177,7 @@ export default function CustomersPage() {
 
       if (data.success) {
         alert('Customer deleted successfully');
-        await loadCustomersData();
+        mutate();
       } else {
         alert('Failed to delete customer: ' + data.error);
       }

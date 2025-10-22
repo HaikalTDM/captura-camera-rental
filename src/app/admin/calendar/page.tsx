@@ -24,30 +24,23 @@ interface CalendarEvent {
 }
 
 export default function CalendarPage() {
+  const { bookings, isLoading } = useBookings();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState<'month' | 'week'>('month');
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const [exportNotification, setExportNotification] = useState<{
     show: boolean;
     success: boolean;
     message: string;
   }>({ show: false, success: false, message: '' });
 
-  useEffect(() => {
-    loadCalendarData();
-  }, []);
+  // Memoize calendar events to avoid recalculation on every render
+  const events = useMemo(() => {
+    console.log('Calendar: Loaded bookings:', bookings.length);
 
-  const loadCalendarData = async () => {
-    setIsLoading(true);
-    try {
-      const bookings = await getAllBookings();
-      console.log('Calendar: Loaded bookings:', bookings.length);
-
-      // Filter confirmed and completed bookings for calendar display
-      const displayBookings = bookings.filter(booking => {
+    // Filter confirmed and completed bookings for calendar display
+    const displayBookings = bookings.filter(booking => {
         const status = booking.booking_status || booking.status;
         return status === 'confirmed' || status === 'completed';
       });
@@ -70,15 +63,10 @@ export default function CalendarPage() {
         };
       });
 
-      console.log('Calendar: Created events:', calendarEvents.length);
-      console.log('Calendar: Events:', calendarEvents);
-      setEvents(calendarEvents);
-    } catch (error) {
-      console.error('Error loading calendar data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    console.log('Calendar: Created events:', calendarEvents.length);
+    console.log('Calendar: Events:', calendarEvents);
+    return calendarEvents;
+  }, [bookings]);
 
   const getCameraColor = (cameraName: string, status: string) => {
     // Determine camera type and return appropriate colors

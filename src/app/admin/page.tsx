@@ -1,99 +1,104 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
-import type { Booking, Camera } from '@/lib/supabase';
+import { useMemo } from 'react';
+import { useAdminData } from '@/contexts/AdminDataContext';
 import Link from 'next/link';
 import UpcomingPickupsSection from '@/components/admin/UpcomingPickupsSection';
 import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
+import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 
 export default function AdminDashboard() {
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [cameras, setCameras] = useState<Camera[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    pending: 0,
-    confirmed: 0,
-    active: 0,
-    completed: 0,
-    cancelled: 0,
-    bySource: {} as Record<string, number>
-  });
-  const [isLoading, setIsLoading] = useState(true);
+  const { bookings, cameras, stats, isLoading, mutate } = useAdminData();
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  // Memoize expensive computations
+  const dashboardData = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
 
-  const loadDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      const [bookingsData, statsData, camerasData] = await Promise.all([
-        getAllBookings(),
-        getBookingStats(),
-        getAllCameras()
-      ]);
-      setBookings(bookingsData);
-      setStats(statsData);
-      setCameras(camerasData);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // Today's pickups
+    const todayPickups = bookings.filter(b => {
+      if (b.pickup_date) {
+        return b.pickup_date === today &&
+               (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+               !b.equipment_picked_up;
+      }
+      const startDate = new Date(b.start_date);
+      const pickupDate = new Date(startDate);
+      pickupDate.setDate(pickupDate.getDate() - 1);
+      const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
 
-  // Get today's activities
-  const today = new Date().toISOString().split('T')[0];
-
-  // Today's pickups: customers who need to pick up cameras today
-  // Business rule: pickup_date = start_date - 1 day
-  const todayPickups = bookings.filter(b => {
-    // If pickup_date exists, use it directly
-    if (b.pickup_date) {
-      return b.pickup_date === today &&
+      return calculatedPickupDate === today &&
              (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
              !b.equipment_picked_up;
-    }
-    // Fallback: calculate pickup date as start_date - 1 day
-    const startDate = new Date(b.start_date);
-    const pickupDate = new Date(startDate);
-    pickupDate.setDate(pickupDate.getDate() - 1);
-    const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
+    });
 
-    return calculatedPickupDate === today &&
-           (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
-           !b.equipment_picked_up;
-  });
-  const activeRentals = bookings.filter(b =>
-    b.booking_status === 'confirmed' &&
-    b.equipment_picked_up &&
-    !b.equipment_returned
-  );
-  const todayReturns = bookings.filter(b =>
-    b.end_date === today &&
-    b.equipment_picked_up &&
-    !b.equipment_returned
-  );
-  const recentBookings = bookings.slice(0, 5);
-  const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
-  console.log('Dashboard - Total bookings:', bookings.length);
-  console.log('Dashboard - Pending approvals:', pendingApprovals.length);
-  console.log('Dashboard - Booking statuses:', bookings.map(b => ({ id: b.id, status: b.status, booking_status: b.booking_status })));
-  const overduePayments = bookings.filter(b =>
-    !b.final_payment_paid &&
-    new Date(b.end_date) < new Date() &&
-    (b.booking_status === 'completed' || b.status === 'completed')
-  );
+    const activeRentals = bookings.filter(b =>
+      b.booking_status === 'confirmed' &&
+      b.equipment_picked_up &&
+      !b.equipment_returned
+    );
+
+    const todayReturns = bookings.filter(b =>
+      b.end_date === today &&
+      b.equipment_picked_up &&
+      !b.equipment_returned
+    );
+
+    const recentBookings = bookings.slice(0, 5);
+    const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
+
+    const overduePayments = bookings.filter(b =>
+      !b.final_payment_paid &&
+      new Date(b.end_date) < new Date() &&
+      (b.booking_status === 'completed' || b.status === 'completed')
+    );
+
+    // Calculate revenues
+    const totalRevenue = bookings
+      .filter(b => b.deposit_paid && b.final_payment_paid)
+      .reduce((sum, b) => {
+        const isNewPaymentSystem = b.deposit_amount === 100;
+        return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
+      }, 0);
+
+    const monthlyRevenue = bookings
+      .filter(b =>
+        b.deposit_paid &&
+        b.final_payment_paid &&
+        new Date(b.created_at).getMonth() === new Date().getMonth() &&
+        new Date(b.created_at).getFullYear() === new Date().getFullYear()
+      )
+      .reduce((sum, b) => {
+        const isNewPaymentSystem = b.deposit_amount === 100;
+        return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
+      }, 0);
+
+    return {
+      todayPickups,
+      activeRentals,
+      todayReturns,
+      recentBookings,
+      pendingApprovals,
+      overduePayments,
+      totalRevenue,
+      monthlyRevenue,
+    };
+  }, [bookings]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
+
+  const {
+    todayPickups,
+    activeRentals,
+    todayReturns,
+    recentBookings,
+    pendingApprovals,
+    overduePayments,
+    totalRevenue,
+    monthlyRevenue,
+  } = dashboardData;
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">
@@ -171,18 +176,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">RM{
-                bookings
-                  .filter(b => b.deposit_paid && b.final_payment_paid)
-                  .reduce((sum, b) => {
-                    // FIXED: Only count actual revenue (final payment), exclude refundable deposits
-                    // For new payment system: only final_payment_amount (deposit is refundable)
-                    // For old payment system: total_amount minus deposit_amount (if deposit is refundable)
-                    const isNewPaymentSystem = b.deposit_amount === 100;
-                    return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
-                  }, 0)
-                  .toFixed(0)
-              }</p>
+              <p className="text-3xl font-bold text-green-600 mt-2">RM{totalRevenue.toFixed(0)}</p>
               <p className="text-sm text-gray-500 mt-1">All time (excludes refundable deposits)</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -196,23 +190,7 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600 uppercase tracking-wide">Monthly Revenue</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">RM{
-                bookings
-                  .filter(b =>
-                    b.deposit_paid &&
-                    b.final_payment_paid &&
-                    new Date(b.created_at).getMonth() === new Date().getMonth() &&
-                    new Date(b.created_at).getFullYear() === new Date().getFullYear()
-                  )
-                  .reduce((sum, b) => {
-                    // FIXED: Only count actual revenue (final payment), exclude refundable deposits
-                    // For new payment system: only final_payment_amount (deposit is refundable)
-                    // For old payment system: total_amount minus deposit_amount (if deposit is refundable)
-                    const isNewPaymentSystem = b.deposit_amount === 100;
-                    return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
-                  }, 0)
-                  .toFixed(0)
-              }</p>
+              <p className="text-3xl font-bold text-purple-600 mt-2">RM{monthlyRevenue.toFixed(0)}</p>
               <p className="text-sm text-gray-500 mt-1">{new Date().toLocaleDateString('en-MY', { month: 'long', year: 'numeric' })} (excludes deposits)</p>
             </div>
             <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -262,10 +240,10 @@ export default function AdminDashboard() {
       {/* Today's Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">
         {/* Upcoming Pickups - Enhanced Component */}
-        <UpcomingPickupsSection onPickupUpdate={loadDashboardData} />
+        <UpcomingPickupsSection onPickupUpdate={mutate} />
 
         {/* Upcoming Returns - New Component */}
-        <UpcomingReturnsSection onReturnUpdate={loadDashboardData} />
+        <UpcomingReturnsSection onReturnUpdate={mutate} />
       </div>
 
       {/* Camera Status */}

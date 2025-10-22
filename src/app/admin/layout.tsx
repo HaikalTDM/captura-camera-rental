@@ -6,6 +6,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
 import AIAssistant from '../../components/admin/AIAssistant';
+import { AdminDataProvider } from '@/contexts/AdminDataContext';
+import { ErrorBoundary } from '@/components/admin/ErrorBoundary';
+import { RefreshButton } from '@/components/admin/RefreshButton';
 
 export default function AdminLayout({
   children,
@@ -77,7 +80,9 @@ export default function AdminLayout({
 
   return (
     <AdminPWAWrapper>
-      <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
+      <ErrorBoundary>
+        <AdminDataProvider>
+          <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
       {/* Mobile sidebar overlay */}
       {isSidebarOpen && (
         <div
@@ -127,6 +132,7 @@ export default function AdminLayout({
                   key={item.name}
                   href={item.href}
                   onClick={() => setIsSidebarOpen(false)} // Close sidebar on mobile after navigation
+                  prefetch={true} // Enable prefetching for instant navigation
                   className={`
                     flex items-center px-3 sm:px-4 py-3 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 min-h-[48px] touch-manipulation
                     ${isActive
@@ -179,7 +185,8 @@ export default function AdminLayout({
             </button>
 
             <div className="flex items-center space-x-2 sm:space-x-4 overflow-hidden min-w-0 flex-1 justify-end">
-              <span className="text-xs sm:text-sm text-gray-500 truncate">
+              <RefreshButton />
+              <span className="text-xs sm:text-sm text-gray-500 truncate hidden sm:block">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'long',
                   year: 'numeric',
@@ -201,7 +208,9 @@ export default function AdminLayout({
       
       {/* AI Assistant */}
       <AIAssistant />
-      </div>
+          </div>
+        </AdminDataProvider>
+      </ErrorBoundary>
     </AdminPWAWrapper>
   );
 }
