@@ -7,7 +7,6 @@ import Link from 'next/link';
 
 export default function MobileDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [cameras, setCameras] = useState<Camera[]>([]);
   const [stats, setStats] = useState({
     total: 0,
     pending: 0,
@@ -34,14 +33,12 @@ export default function MobileDashboard() {
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [bookingsData, statsData, camerasData] = await Promise.all([
+      const [bookingsData, statsData] = await Promise.all([
         getAllBookings(),
-        getBookingStats(),
-        getAllCameras()
+        getBookingStats()
       ]);
       setBookings(bookingsData);
       setStats(statsData);
-      setCameras(camerasData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -462,6 +459,229 @@ export default function MobileDashboard() {
       </div>
       )}
 
+      {/* Upcoming Pickups Section - Only show when there are pickups */}
+      {(() => {
+        const upcomingPickupsDetailed = bookings.filter(b => {
+          if (b.equipment_picked_up) return false;
+          if (!(b.booking_status === 'confirmed' || b.booking_status === 'approved')) return false;
+          
+          const pickupDateStr = b.pickup_date || (() => {
+            const startDate = new Date(b.start_date + 'T00:00:00');
+            startDate.setDate(startDate.getDate() - 1);
+            return startDate.toISOString().split('T')[0];
+          })();
+          
+          const [year, month, day] = pickupDateStr.split('-').map(Number);
+          const pickupDate = new Date(year, month - 1, day);
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          
+          const daysDiff = Math.ceil((pickupDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+          
+          return daysDiff >= 0 && daysDiff <= 7;
+        }).sort((a, b) => {
+          const getPickupDate = (booking: Booking) => {
+            const pickupDateStr = booking.pickup_date || (() => {
+              const startDate = new Date(booking.start_date + 'T00:00:00');
+              startDate.setDate(startDate.getDate() - 1);
+              return startDate.toISOString().split('T')[0];
+            })();
+            const [year, month, day] = pickupDateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          };
+          return getPickupDate(a).getTime() - getPickupDate(b).getTime();
+        });
+
+        if (upcomingPickupsDetailed.length === 0) return null;
+
+        return (
+          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden animate-fadeIn`}>
+            <div className={`p-4 ${!isDarkMode && 'border-b border-gray-100'} flex items-center justify-between`}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-white text-sm">📦</span>
+                </div>
+                <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Upcoming Pickups
+                </h3>
+              </div>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${isDarkMode ? 'bg-green-900 text-green-300' : 'bg-green-100 text-green-800'}`}>
+                {upcomingPickupsDetailed.length}
+              </span>
+            </div>
+            <div className={`${!isDarkMode && 'divide-y divide-gray-100'}`}>
+              {upcomingPickupsDetailed.slice(0, 3).map((booking, index) => {
+                const pickupDateStr = booking.pickup_date || (() => {
+                  const startDate = new Date(booking.start_date + 'T00:00:00');
+                  startDate.setDate(startDate.getDate() - 1);
+                  return startDate.toISOString().split('T')[0];
+                })();
+                const [year, month, day] = pickupDateStr.split('-').map(Number);
+                const pickupDate = new Date(year, month - 1, day);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const daysDiff = Math.ceil((pickupDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                const isToday = daysDiff === 0;
+
+                return (
+                  <Link key={booking.id} href={`/admin/mobile/bookings/${booking.id}`}>
+                    <div className={`p-4 transition-all duration-200 active:scale-[0.98] ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} animate-fadeIn`} style={{ animationDelay: `${index * 50}ms` }}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          isToday ? 'bg-gradient-to-br from-green-500 to-emerald-600 shadow-md shadow-green-500/30' : (isDarkMode ? 'bg-gray-800' : 'bg-gray-100')
+                        }`}>
+                          <span className={`text-sm ${isToday ? 'text-white' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {booking.customer?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-bold text-sm truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                              {booking.customer?.full_name}
+                            </p>
+                            {isToday && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-green-500 text-white shadow-sm">
+                                TODAY
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            📷 {booking.camera?.name}
+                          </p>
+                          <p className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
+                            📅 Pickup: {pickupDate.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                            {!isToday && daysDiff === 1 && ' (Tomorrow)'}
+                            {!isToday && daysDiff > 1 && ` (in ${daysDiff} days)`}
+                          </p>
+                        </div>
+                        <svg className={`w-5 h-5 flex-shrink-0 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {upcomingPickupsDetailed.length > 3 && (
+              <div className={`p-3 ${!isDarkMode && 'border-t border-gray-100'} text-center`}>
+                <Link href="/admin/mobile/bookings" className="text-sm font-medium text-gray-500 hover:text-black transition-colors duration-200">
+                  View All {upcomingPickupsDetailed.length} Pickups →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Upcoming Returns Section - Only show when there are returns */}
+      {(() => {
+        const upcomingReturnsDetailed = bookings.filter(b => {
+          if (b.equipment_returned) return false;
+          if (!b.equipment_picked_up) return false;
+          
+          const [year, month, day] = b.end_date.split('-').map(Number);
+          const returnDate = new Date(year, month - 1, day);
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+          
+          const daysDiff = Math.ceil((returnDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+          
+          return daysDiff >= -1 && daysDiff <= 7; // Include yesterday to show overdue
+        }).sort((a, b) => {
+          const getReturnDate = (booking: Booking) => {
+            const [year, month, day] = booking.end_date.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          };
+          return getReturnDate(a).getTime() - getReturnDate(b).getTime();
+        });
+
+        if (upcomingReturnsDetailed.length === 0) return null;
+
+        return (
+          <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden animate-fadeIn`}>
+            <div className={`p-4 ${!isDarkMode && 'border-b border-gray-100'} flex items-center justify-between`}>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="text-white text-sm">📤</span>
+                </div>
+                <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Upcoming Returns
+                </h3>
+              </div>
+              <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${isDarkMode ? 'bg-orange-900 text-orange-300' : 'bg-orange-100 text-orange-800'}`}>
+                {upcomingReturnsDetailed.length}
+              </span>
+            </div>
+            <div className={`${!isDarkMode && 'divide-y divide-gray-100'}`}>
+              {upcomingReturnsDetailed.slice(0, 3).map((booking, index) => {
+                const [year, month, day] = booking.end_date.split('-').map(Number);
+                const returnDate = new Date(year, month - 1, day);
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const daysDiff = Math.ceil((returnDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                const isToday = daysDiff === 0;
+                const isOverdue = daysDiff < 0;
+
+                return (
+                  <Link key={booking.id} href={`/admin/mobile/bookings/${booking.id}`}>
+                    <div className={`p-4 transition-all duration-200 active:scale-[0.98] ${isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'} animate-fadeIn`} style={{ animationDelay: `${index * 50}ms` }}>
+                      <div className="flex items-start gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                          isOverdue ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-md shadow-red-500/30' :
+                          isToday ? 'bg-gradient-to-br from-orange-500 to-orange-600 shadow-md shadow-orange-500/30' : 
+                          (isDarkMode ? 'bg-gray-800' : 'bg-gray-100')
+                        }`}>
+                          <span className={`text-sm ${(isToday || isOverdue) ? 'text-white' : isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {booking.customer?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-bold text-sm truncate ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                              {booking.customer?.full_name}
+                            </p>
+                            {isOverdue && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-500 text-white shadow-sm animate-pulse">
+                                OVERDUE
+                              </span>
+                            )}
+                            {isToday && !isOverdue && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-orange-500 text-white shadow-sm">
+                                TODAY
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs truncate ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-1`}>
+                            📷 {booking.camera?.name}
+                          </p>
+                          <p className={`text-xs ${isOverdue ? 'text-red-500 font-bold' : (isDarkMode ? 'text-gray-500' : 'text-gray-500')}`}>
+                            📅 Return: {returnDate.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' })}
+                            {isOverdue && ` (${Math.abs(daysDiff)} day${Math.abs(daysDiff) > 1 ? 's' : ''} overdue)`}
+                            {!isOverdue && !isToday && daysDiff === 1 && ' (Tomorrow)'}
+                            {!isOverdue && !isToday && daysDiff > 1 && ` (in ${daysDiff} days)`}
+                          </p>
+                        </div>
+                        <svg className={`w-5 h-5 flex-shrink-0 ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            {upcomingReturnsDetailed.length > 3 && (
+              <div className={`p-3 ${!isDarkMode && 'border-t border-gray-100'} text-center`}>
+                <Link href="/admin/mobile/bookings" className="text-sm font-medium text-gray-500 hover:text-black transition-colors duration-200">
+                  View All {upcomingReturnsDetailed.length} Returns →
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Recent Activity Feed - Only show on Total Bookings */}
       {selectedCard === 'total' && (
       <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden animate-fadeIn`}>
@@ -553,52 +773,6 @@ export default function MobileDashboard() {
           )}
         </div>
       </div>
-
-      {/* Camera Status - Only show for Total Bookings view */}
-      {selectedCard === 'total' && (
-        <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden transition-all duration-300 ease-in-out`}>
-          <div className={`p-4 ${!isDarkMode && 'border-b border-gray-100'}`}>
-            <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
-              Camera Inventory
-            </h3>
-          </div>
-          <div className="p-4 space-y-3">
-            {cameras.slice(0, 3).map((camera, index) => (
-              <div 
-                key={camera.id} 
-                className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-50'} rounded-xl p-3 transition-all duration-200 hover:scale-[1.02] animate-fadeIn`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className={`font-medium text-sm ${isDarkMode ? 'text-white' : 'text-black'} transition-colors duration-200`}>
-                      {camera.name}
-                    </p>
-                    <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'} transition-colors duration-200`}>
-                      {camera.is_available
-                        ? `${camera.available_quantity}/${camera.total_quantity} Available`
-                        : 'Currently rented'
-                      }
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
-                    camera.is_available
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-200 text-gray-800'
-                  }`}>
-                    {camera.is_available ? 'Available' : 'Rented'}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {cameras.length > 3 && (
-              <Link href="/admin/mobile/cameras" className="block text-center text-gray-500 text-sm font-medium pt-2 hover:text-black transition-colors duration-200">
-                View All Cameras
-              </Link>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Booking Details Modal - PREMIUM REDESIGN */}
       {isModalOpen && selectedBooking && (

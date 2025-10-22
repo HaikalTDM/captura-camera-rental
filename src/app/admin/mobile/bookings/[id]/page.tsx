@@ -55,6 +55,68 @@ export default function MobileBookingDetail() {
     setTimeout(() => setUpdateMessage(''), 3000);
   };
 
+  const handleApproveBooking = async () => {
+    if (!booking || isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          admin_notes: 'Approved from admin panel'
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setBooking(data.booking);
+        showSuccessMessage('✓ Booking approved successfully!');
+      } else {
+        console.error('Approval failed:', data.error);
+        showSuccessMessage('❌ Failed to approve booking: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error approving booking:', error);
+      showSuccessMessage('❌ Error approving booking');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleRejectBooking = async () => {
+    if (!booking || isUpdating) return;
+    
+    setIsUpdating(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rejection_reason: 'Rejected by admin',
+          admin_notes: 'Booking rejected from admin panel'
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        // Booking was deleted, so redirect back to bookings list
+        showSuccessMessage('✓ Booking rejected successfully!');
+        setTimeout(() => {
+          router.push('/admin/mobile/bookings');
+        }, 1500);
+      } else {
+        console.error('Rejection failed:', data.error);
+        showSuccessMessage('❌ Failed to reject booking: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error rejecting booking:', error);
+      showSuccessMessage('❌ Error rejecting booking');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleDepositToggle = async () => {
     if (!booking || isUpdating) return;
     
@@ -424,6 +486,50 @@ export default function MobileBookingDetail() {
             </div>
           </div>
         </div>
+
+        {/* Approve/Reject Buttons - For Pending Bookings */}
+        {booking.booking_status === 'pending_approval' && (
+          <div className={`${isDarkMode ? 'bg-amber-900/20 border-amber-700' : 'bg-amber-50 border-amber-200'} border-2 rounded-3xl p-5 shadow-xl animate-fadeIn`}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/30 flex-shrink-0">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className={`text-base font-black ${isDarkMode ? 'text-amber-300' : 'text-amber-900'} uppercase tracking-wide`}>
+                  Awaiting Approval
+                </h3>
+                <p className={`text-xs font-semibold ${isDarkMode ? 'text-amber-400' : 'text-amber-700'} mt-0.5`}>
+                  Review this booking request
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleRejectBooking}
+                disabled={isUpdating}
+                className="bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-red-500/30 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Reject
+              </button>
+              <button
+                onClick={handleApproveBooking}
+                disabled={isUpdating}
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-4 rounded-xl font-bold text-sm transition-all duration-200 active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                Approve
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* WhatsApp - Professional Green - RESPONSIVE */}
         <button

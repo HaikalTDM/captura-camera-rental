@@ -10,34 +10,37 @@ interface SpecsBottomSheetProps {
 }
 
 export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBottomSheetProps) {
-  const scrollPositionRef = useRef(0);
   const [isClosing, setIsClosing] = useState(false);
+  const scrollPositionRef = useRef(0);
 
   // Lock body scroll when modal is open - Enhanced for mobile
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false); // Reset closing state when opening
       
-      // Save current scroll position
+      // Save and lock scroll - works on both desktop and mobile
       const scrollY = window.scrollY;
       scrollPositionRef.current = scrollY;
-      
-      // Lock scroll - works on both desktop and mobile
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+    } else {
+      // Restore scroll when modal closes
+      const scrollY = scrollPositionRef.current;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
       
-      return () => {
-        // Restore scroll position and body styles
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
-        window.scrollTo(0, scrollPositionRef.current);
-      };
+      // Double requestAnimationFrame for reliable scroll restoration
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+      });
     }
   }, [isOpen]);
 

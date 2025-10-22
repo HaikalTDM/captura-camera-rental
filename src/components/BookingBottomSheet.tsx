@@ -12,34 +12,50 @@ interface BookingBottomSheetProps {
 }
 
 export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow }: BookingBottomSheetProps) {
-  const scrollPositionRef = useRef(0);
   const [isClosing, setIsClosing] = useState(false);
+  const scrollPositionRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  // Track component mount state
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   // Lock body scroll when modal is open - Enhanced for mobile
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false); // Reset closing state when opening
       
-      // Save current scroll position
+      // Save and lock scroll - works on both desktop and mobile
       const scrollY = window.scrollY;
       scrollPositionRef.current = scrollY;
-      
-      // Lock scroll - works on both desktop and mobile
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+    } else if (!isOpen && isMountedRef.current) {
+      // Restore scroll when modal closes - only if component is still mounted
+      const scrollY = scrollPositionRef.current;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
       
-      return () => {
-        // Restore scroll position and body styles
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
-        document.body.style.overflow = '';
-        document.body.style.touchAction = '';
-        window.scrollTo(0, scrollPositionRef.current);
-      };
+      // Double requestAnimationFrame for reliable scroll restoration
+      requestAnimationFrame(() => {
+        if (isMountedRef.current) {
+          requestAnimationFrame(() => {
+            if (isMountedRef.current) {
+              window.scrollTo(0, scrollY);
+            }
+          });
+        }
+      });
     }
   }, [isOpen]);
 
@@ -52,7 +68,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     }, 450); // Match animation duration (400ms + 50ms buffer)
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !camera) return null;
 
   return (
     <>
