@@ -13,18 +13,30 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
   const scrollPositionRef = useRef(0);
   const [isClosing, setIsClosing] = useState(false);
 
-  // Lock body scroll when modal is open
+  // Lock body scroll when modal is open - Enhanced for mobile
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false); // Reset closing state when opening
-      // Simply prevent scrolling without changing position
+      
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      scrollPositionRef.current = scrollY;
+      
+      // Lock scroll - works on both desktop and mobile
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px'; // Prevent layout shift from scrollbar
+      document.body.style.touchAction = 'none';
       
       return () => {
-        // Just restore scrolling - position stays the same
+        // Restore scroll position and body styles
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
         document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
+        document.body.style.touchAction = '';
+        window.scrollTo(0, scrollPositionRef.current);
       };
     }
   }, [isOpen]);
