@@ -378,7 +378,7 @@ export default function RentalHome() {
             </button>
 
             <a
-              href="https://wa.me/601157119090"
+              href="https://wa.me/60177464121"
               target="_blank"
               rel="noopener noreferrer"
               className="w-full bg-green-500 text-white font-black py-5 px-6 rounded-2xl hover:scale-105 transition-all duration-300 shadow-2xl active:scale-95 flex items-center justify-center gap-2"

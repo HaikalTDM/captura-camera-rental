@@ -57,6 +57,7 @@ export interface Camera {
   is_available: boolean
   total_quantity: number
   available_quantity: number
+  display_order: number
   condition?: 'excellent' | 'good' | 'fair' | 'needs_repair'
   last_maintenance?: string
   next_maintenance?: string

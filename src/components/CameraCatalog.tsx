@@ -36,33 +36,77 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
   const loadCameras = async () => {
     try {
       const dbCameras = await getAllCameras();
+      
+      console.log('🎬 RAW cameras from database:');
+      console.table(dbCameras.map(c => ({ 
+        name: c.name, 
+        display_order: c.display_order,
+        is_available: c.is_available 
+      })));
 
-      const convertedCameras: Camera[] = dbCameras
-        .filter(cam => cam.is_available)
-        .map(dbCamera => {
+      const availableCameras = dbCameras.filter(cam => cam.is_available);
+      
+      console.log('🔄 Before sort:');
+      console.table(availableCameras.map(c => ({ 
+        name: c.name, 
+        display_order: c.display_order,
+        type: typeof c.display_order
+      })));
+      
+      const sortedCameras = [...availableCameras].sort((a, b) => {
+        const orderA = a.display_order ?? 999;
+        const orderB = b.display_order ?? 999;
+        const result = orderA - orderB;
+        console.log(`Sort: "${a.name}" (${orderA}) vs "${b.name}" (${orderB}) = ${result}`);
+        return result;
+      });
+      
+      console.log('🎯 SORTED cameras (final order):');
+      console.table(sortedCameras.map(c => ({ 
+        name: c.name, 
+        display_order: c.display_order 
+      })));
+
+      const convertedCameras: Camera[] = sortedCameras.map(dbCamera => {
           const getStaticImages = (cameraName: string) => {
             const name = cameraName.toLowerCase();
-            if (name.includes('osmo') && name.includes('pocket')) {
+            
+            // Insta360 X5
+            if (name.includes('insta360') && name.includes('x5')) {
               return {
-                main: '/images/osmo-pocket-31.jpg',
-                variant: '/images/osmo_pocket_3_creator_combo.jpg'
+                main: '/images/Insta360-X5.webp',
+                variant: '/images/Insta360-X5-1.webp'
               };
-            } else if (name.includes('action') && name.includes('5')) {
-              return {
-                main: '/images/dji-action-5-pro1.jpg',
-                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
-              };
-            } else if (name.includes('action')) {
-              return {
-                main: '/images/dji-action-5-pro1.jpg',
-                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
-              };
-            } else if (name.includes('osmo')) {
+            }
+            // DJI Osmo Pocket 3
+            else if (name.includes('osmo') && name.includes('pocket')) {
               return {
                 main: '/images/osmo-pocket-31.jpg',
                 variant: '/images/osmo_pocket_3_creator_combo.jpg'
               };
             }
+            // DJI Action 5 Pro
+            else if (name.includes('action') && name.includes('5')) {
+              return {
+                main: '/images/dji-action-5-pro1.jpg',
+                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
+              };
+            }
+            // Generic Action Camera
+            else if (name.includes('action')) {
+              return {
+                main: '/images/dji-action-5-pro1.jpg',
+                variant: '/images/osmo_action_5_pro_adventure_combo.jpg'
+              };
+            }
+            // Generic Osmo Camera
+            else if (name.includes('osmo')) {
+              return {
+                main: '/images/osmo-pocket-31.jpg',
+                variant: '/images/osmo_pocket_3_creator_combo.jpg'
+              };
+            }
+            // Default fallback
             return {
               main: '/images/osmo-pocket-31.jpg',
               variant: '/images/osmo_pocket_3_creator_combo.jpg'

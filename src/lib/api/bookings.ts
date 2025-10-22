@@ -328,7 +328,7 @@ export async function getAllCameras(): Promise<Camera[]> {
     const { data, error } = await supabase
       .from('cameras')
       .select('*')
-      .order('name', { ascending: true })
+      .order('display_order', { ascending: true, nullsFirst: false })
 
     if (error) {
       console.error('Error fetching cameras:', error)
@@ -590,6 +590,52 @@ export async function deleteCamera(id: string): Promise<boolean> {
     return true
   } catch (error) {
     console.error('Error in deleteCamera:', error)
+    return false
+  }
+}
+
+// Update camera display order
+export async function updateCameraDisplayOrder(cameraOrders: { id: string; display_order: number }[]): Promise<boolean> {
+  try {
+    console.log('🔄 Updating camera display order:');
+    console.table(cameraOrders);
+    
+    // Update each camera's display_order
+    const updates = cameraOrders.map(({ id, display_order }) => 
+      supabase
+        .from('cameras')
+        .update({ display_order })
+        .eq('id', id)
+    )
+
+    const results = await Promise.all(updates)
+    
+    console.log('✅ Update results:');
+    results.forEach((result, index) => {
+      if (result.error) {
+        console.error(`❌ Camera ${index}:`, result.error);
+      } else {
+        console.log(`✅ Camera ${index}:`, result.data);
+      }
+    });
+    
+    // Check if any update failed and log the specific errors
+    const errors = results.filter(result => result.error).map(result => result.error)
+    if (errors.length > 0) {
+      console.error('❌ Error updating camera display order:', errors)
+      // Show a more helpful error message
+      const errorMessage = errors[0]?.message || 'Unknown error'
+      if (errorMessage.includes('column') && errorMessage.includes('does not exist')) {
+        console.error('⚠️ The display_order column does not exist in your database!')
+        console.error('Please run the SQL migration in ADD_DISPLAY_ORDER_TO_CAMERAS.sql')
+      }
+      return false
+    }
+
+    console.log('✅ All camera display orders updated successfully!');
+    return true
+  } catch (error) {
+    console.error('❌ Error in updateCameraDisplayOrder:', error)
     return false
   }
 }

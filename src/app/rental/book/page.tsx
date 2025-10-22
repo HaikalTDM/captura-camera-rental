@@ -18,7 +18,22 @@ export default function BookPage() {
   const loadCameras = async () => {
     try {
       const data = await getAllCameras();
+      
+      console.log('📚 Book Page - RAW cameras from database:');
+      console.table(data.map(c => ({ 
+        name: c.name, 
+        display_order: c.display_order,
+        is_available: c.is_available 
+      })));
+      
       const available = data.filter(c => c.is_available);
+      
+      console.log('📚 Book Page - Available cameras (should be sorted):');
+      console.table(available.map(c => ({ 
+        name: c.name, 
+        display_order: c.display_order 
+      })));
+      
       setCameras(available);
       if (available.length > 0) {
         setSelectedCamera(available[0]);
@@ -186,7 +201,7 @@ export default function BookPage() {
               Chat with us on WhatsApp for instant support
             </p>
             <a
-              href="https://wa.me/601157119090"
+              href="https://wa.me/60177464121"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-white text-green-600 font-black px-6 py-3 rounded-xl hover:scale-105 transition-all duration-300 active:scale-95"

@@ -66,7 +66,7 @@ export default function MorePage() {
     {
       label: 'WhatsApp Us',
       description: 'Instant chat support',
-      href: 'https://wa.me/601157119090',
+      href: 'https://wa.me/60177464121',
       external: true,
       icon: (
         <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
@@ -77,8 +77,8 @@ export default function MorePage() {
     },
     {
       label: 'Call Us',
-      description: '+60 11-5711 9090',
-      href: 'tel:+601157119090',
+      description: '+60 17-746 4121',
+      href: 'tel:+60177464121',
       external: true,
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
+import AdminCalendar from '@/components/admin/AdminCalendar';
 
 type FilterState = {
   search: string;
@@ -52,6 +53,7 @@ export default function MobileBookings() {
   };
   
   const [quickFilter, setQuickFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>(getSavedQuickFilter());
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   // Load saved sort option
   const getSavedSort = (): SortOption => {
@@ -334,8 +336,42 @@ export default function MobileBookings() {
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'} pb-24`}>
       <div className="px-4 pt-4 space-y-4">
-        {/* Search & Filter Button */}
-        <div className="flex gap-3">
+        {/* View Mode Toggle */}
+        <div className="flex items-center gap-3">
+          <div className={`flex gap-1 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} p-1 rounded-2xl border ${isDarkMode ? 'border-slate-800' : 'border-slate-200'} shadow-sm flex-1`}>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+                viewMode === 'list'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <svg className="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              List View
+            </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex-1 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 active:scale-95 ${
+                viewMode === 'calendar'
+                  ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30'
+                  : isDarkMode ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <svg className="w-4 h-4 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Calendar View
+            </button>
+          </div>
+        </div>
+
+        {viewMode === 'list' ? (
+          <>
+            {/* Search & Filter Button */}
+            <div className="flex gap-3">
           {/* Search Bar */}
           <div className={`flex-1 relative ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-2xl shadow-sm border ${isDarkMode ? 'border-slate-800' : 'border-slate-200'}`}>
             <svg className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -565,6 +601,11 @@ export default function MobileBookings() {
             </div>
           )}
         </div>
+          </>
+        ) : (
+          /* Calendar View */
+          <AdminCalendar />
+        )}
       </div>
 
       {/* Advanced Filter Drawer */}

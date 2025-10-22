@@ -31,11 +31,21 @@ export async function fetchEventbriteEvents(location: string = 'Kuala Lumpur'): 
   }
 
   try {
+    // Eventbrite API requires Authorization header
     const response = await fetch(
-      `https://www.eventbriteapi.com/v3/events/search/?location.address=${encodeURIComponent(location)}&expand=venue&token=${API_TOKEN}`
+      `https://www.eventbriteapi.com/v3/events/search/?location.address=${encodeURIComponent(location)}&expand=venue`,
+      { 
+        cache: 'no-store',
+        headers: {
+          'Authorization': `Bearer ${API_TOKEN}`
+        }
+      }
     );
 
-    if (!response.ok) throw new Error('Eventbrite API error');
+    if (!response.ok) {
+      console.warn('Eventbrite API returned error:', response.status);
+      return []; // Return empty array instead of throwing
+    }
 
     const data = await response.json();
     
@@ -50,8 +60,8 @@ export async function fetchEventbriteEvents(location: string = 'Kuala Lumpur'): 
       source: 'eventbrite' as const
     })) || [];
   } catch (error) {
-    console.error('Error fetching Eventbrite events:', error);
-    return [];
+    console.warn('Eventbrite API unavailable:', error);
+    return []; // Gracefully return empty array
   }
 }
 
