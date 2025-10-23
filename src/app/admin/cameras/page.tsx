@@ -141,9 +141,10 @@ export default function CamerasPage() {
     return 'Available';
   };
 
-  if (isLoading) {
-    return <CamerasGridSkeleton />;
-  }
+  // REMOVED: Don't block rendering
+  // if (isLoading) {
+  //   return <CamerasGridSkeleton />;
+  // }
 
   return (
     <div className="space-y-6">

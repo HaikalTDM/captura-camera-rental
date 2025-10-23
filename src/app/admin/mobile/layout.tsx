@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
-import AdminPWAWrapper from '../../../components/admin/AdminPWAWrapper';
+import { Toaster } from 'react-hot-toast';
 import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 
@@ -24,9 +24,23 @@ export default function MobileAdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  
+  // Check auth and dark mode immediately (before first render)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('adminAuth') === 'true';
+    }
+    return false;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true';
+    }
+    return false;
+  });
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsClosing, setIsNotificationsClosing] = useState(false);
@@ -35,8 +49,6 @@ export default function MobileAdminLayout({
   const [touchStartXById, setTouchStartXById] = useState<Record<string, number>>({});
   const [dragDeltaXById, setDragDeltaXById] = useState<Record<string, number>>({});
   const [isDismissingById, setIsDismissingById] = useState<Record<string, boolean>>({});
-  const router = useRouter();
-  const pathname = usePathname();
 
   // Force black theme color for PWA status bar
   useEffect(() => {
@@ -70,28 +82,22 @@ export default function MobileAdminLayout({
       console.error('Error loading dismissed notifications:', error);
     }
 
-    // Check authentication
-    const authStatus = localStorage.getItem('adminAuth');
-    if (authStatus === 'true') {
-      setIsAuthenticated(true);
-    } else if (pathname !== '/admin/mobile/login') {
+    // Only redirect if not authenticated (auth already checked in useState)
+    if (!isAuthenticated && pathname !== '/admin/mobile/login') {
       router.push('/admin/mobile/login');
     }
-    
-    // Check dark mode preference and listen for changes
-    const darkMode = localStorage.getItem('darkMode') === 'true';
-    setIsDarkMode(darkMode);
-    setIsLoading(false);
 
     // Listen for storage changes (dark mode toggle from settings)
     const handleStorageChange = () => {
       const updatedDarkMode = localStorage.getItem('darkMode') === 'true';
       setIsDarkMode(updatedDarkMode);
+      const updatedAuth = localStorage.getItem('adminAuth') === 'true';
+      setIsAuthenticated(updatedAuth);
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [pathname, router]);
+  }, [pathname, router, isAuthenticated]);
 
   // Load notifications when dismissed list changes or on mount
   useEffect(() => {
@@ -103,6 +109,11 @@ export default function MobileAdminLayout({
   // Load notifications from bookings
   const loadNotifications = async () => {
     try {
+      const controller = new AbortController();
+      const signal = controller.signal;
+      // expose controller to cleanup
+      (loadNotifications as any).__controller = controller;
+
       const bookings = await getAllBookings();
       const generatedNotifications: Notification[] = [];
       const now = new Date();
@@ -213,6 +224,16 @@ export default function MobileAdminLayout({
     }
   };
 
+  // Abort pending notifications fetch on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        const c = (loadNotifications as any).__controller;
+        if (c && typeof c.abort === 'function') c.abort();
+      } catch {}
+    };
+  }, []);
+
   // Helper function to calculate time ago
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -230,7 +251,11 @@ export default function MobileAdminLayout({
   const openNotifications = () => {
     setShowNotifications(true);
     setIsNotificationsClosing(false);
-    document.body.style.overflow = 'hidden';
+    try {
+      document.body.style.overflow = 'hidden';
+    } catch (e) {
+      // Ignore DOM errors
+    }
   };
 
   // Close notifications modal
@@ -239,9 +264,24 @@ export default function MobileAdminLayout({
     setTimeout(() => {
       setShowNotifications(false);
       setIsNotificationsClosing(false);
-      document.body.style.overflow = 'auto';
+      try {
+        document.body.style.overflow = 'auto';
+      } catch (e) {
+        // Ignore DOM errors
+      }
     }, 300);
   };
+
+  // Cleanup notifications scroll lock on unmount or navigation
+  useEffect(() => {
+    return () => {
+      try {
+        document.body.style.overflow = 'auto';
+      } catch (e) {
+        // Ignore DOM errors during cleanup
+      }
+    };
+  }, []);
 
   // Mark notification as read
   const markAsRead = (notificationId: string) => {
@@ -265,6 +305,7 @@ export default function MobileAdminLayout({
   };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
 
   // Swipe gesture handlers
   const handleNotifTouchStart = (id: string) => (e: React.TouchEvent) => {
@@ -400,21 +441,10 @@ export default function MobileAdminLayout({
     );
   };
 
-  // Don't show layout for login page
   if (pathname === '/admin/mobile/login') {
     return children;
   }
 
-  // Show loading while checking auth
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return null;
   }
@@ -470,7 +500,8 @@ export default function MobileAdminLayout({
   ];
 
   return (
-    <AdminPWAWrapper>
+    <>
+      <Toaster position="top-center" />
       <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-white'} pb-20`}>
         {/* Top Bar */}
         <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
@@ -507,7 +538,7 @@ export default function MobileAdminLayout({
         </main>
 
         {/* Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-black safe-bottom">
+        <nav className="fixed bottom-0 left-0 right-0 bg-black safe-bottom z-50">
           <div className="flex items-center justify-around h-16 px-2">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
@@ -515,9 +546,10 @@ export default function MobileAdminLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex flex-col items-center justify-center gap-1 min-w-[60px] h-full transition-all ${
+                  className={`flex flex-col items-center justify-center gap-1 min-w-[60px] h-full transition-all relative ${
                     isActive ? 'text-white' : 'text-gray-500'
-                  }`}
+                  } active:scale-95`}
+                  prefetch={true}
                 >
                   <div className={`transition-transform ${isActive ? 'scale-110' : 'scale-100'}`}>
                     {item.icon}
@@ -537,7 +569,7 @@ export default function MobileAdminLayout({
         {/* Notifications Bottom Sheet Modal */}
         {showNotifications && (
           <div 
-            className={`fixed inset-0 z-50 flex items-end ${
+            className={`fixed inset-0 z-[100] flex items-end ${
               isNotificationsClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
             }`}
             onClick={closeNotifications}
@@ -681,8 +713,8 @@ export default function MobileAdminLayout({
             </div>
           </div>
         )}
-      </div>
-    </AdminPWAWrapper>
+        </div>
+    </>
   );
 }
 

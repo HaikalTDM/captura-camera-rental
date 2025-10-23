@@ -1,22 +1,32 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Warning: This allows production builds to successfully complete even if
     // your project has type errors.
     ignoreBuildErrors: true,
   },
   images: {
-    domains: ['api.placeholder.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.placeholder.com',
+      },
+    ],
     unoptimized: true
   },
   // Reduce console warnings
   experimental: {
     optimizePackageImports: ['@supabase/supabase-js']
+  },
+  turbopack: {
+    // Ensure correct project root to avoid conflicts (e.g., favicon) and dev mis-detection
+    root: __dirname,
   },
   // Custom headers to reduce some warnings
   async headers() {

@@ -325,16 +325,17 @@ export default function MobileBookings() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center h-64 ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-      </div>
-    );
-  }
-
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'} pb-24`}>
+      {/* Loading State - Inline, doesn't block navigation */}
+      {isLoading && (
+        <div className={`flex items-center justify-center h-64`}>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+        </div>
+      )}
+
+      {/* Content - Always rendered, just hidden when loading */}
+      <div className={isLoading ? 'hidden' : ''}>
       <div className="px-4 pt-4 space-y-4">
         {/* View Mode Toggle */}
         <div className="flex items-center gap-3">
@@ -606,6 +607,7 @@ export default function MobileBookings() {
           /* Calendar View */
           <AdminCalendar />
         )}
+      </div>
       </div>
 
       {/* Advanced Filter Drawer */}

@@ -14,15 +14,23 @@ export default function CameraSpecsModal({ camera, isOpen, onClose }: CameraSpec
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+    try {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'unset';
+      }
+    } catch (e) {
+      // Ignore DOM errors
     }
 
     // Cleanup function to restore scroll when component unmounts
     return () => {
-      document.body.style.overflow = 'unset';
+      try {
+        document.body.style.overflow = 'unset';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [isOpen]);
 

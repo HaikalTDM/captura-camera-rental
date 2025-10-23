@@ -117,16 +117,17 @@ export default function MobileAnalytics() {
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div className={`px-4 pt-4 space-y-4 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+      {/* Loading State - Inline, doesn't block rendering */}
+      {isLoading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+
+      {/* Content - Always rendered, just hidden when loading */}
+      <div className={isLoading ? 'hidden' : ''}>
       {/* Summary Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className={`${
@@ -329,6 +330,7 @@ export default function MobileAnalytics() {
             );
           })}
         </div>
+      </div>
       </div>
     </div>
   );

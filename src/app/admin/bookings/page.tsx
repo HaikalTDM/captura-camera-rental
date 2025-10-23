@@ -425,9 +425,11 @@ export default function BookingsPage() {
     }
   };
 
-  if (isLoading) {
-    return <BookingsTableSkeleton />;
-  }
+  // REMOVED: Don't block rendering
+  // Show content immediately with cached data
+  // if (isLoading) {
+  //   return <BookingsTableSkeleton />;
+  // }
 
   return (
     <div className="space-y-6 max-w-full overflow-x-hidden">

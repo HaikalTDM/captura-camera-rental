@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useAdminData } from '@/contexts/AdminDataContext';
 import Link from 'next/link';
 import UpcomingPickupsSection from '@/components/admin/UpcomingPickupsSection';
@@ -9,7 +9,14 @@ import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
 import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 
 export default function AdminDashboard() {
-  const { bookings, cameras, stats, isLoading, mutate } = useAdminData();
+  const { bookings, cameras, stats, mutate } = useAdminData();
+
+  // Debug navigation - log on every render
+  console.log('Dashboard render:', { 
+    bookingsCount: bookings.length, 
+    camerasCount: cameras.length,
+    hasStats: !!stats
+  });
 
   // Memoize expensive computations
   const dashboardData = useMemo(() => {
@@ -85,9 +92,11 @@ export default function AdminDashboard() {
     };
   }, [bookings]);
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
+  // REMOVED: Don't block rendering with loading check
+  // Pages should always render with available data
+  // if (isLoading) {
+  //   return <DashboardSkeleton />;
+  // }
 
   const {
     todayPickups,

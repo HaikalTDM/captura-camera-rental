@@ -58,14 +58,22 @@ export default function BookingModal({ isOpen, onClose, selectedDate, onSubmit }
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+    try {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'unset';
+      }
+    } catch (e) {
+      // Ignore DOM errors
     }
     
     return () => {
-      document.body.style.overflow = 'unset';
+      try {
+        document.body.style.overflow = 'unset';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [isOpen]);
 

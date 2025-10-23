@@ -32,21 +32,33 @@ export default function CustomerGallery() {
   // Lock body scroll when modal open
   useEffect(() => {
     if (selectedImage) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
+      try {
+        const scrollY = window.scrollY;
+        document.body.style.position = 'fixed';
+        document.body.style.top = `-${scrollY}px`;
+        document.body.style.width = '100%';
+      } catch {
+        // Ignore DOM errors
+      }
     } else {
-      const scrollY = document.body.style.top;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      try {
+        const scrollY = document.body.style.top;
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, parseInt(scrollY || '0') * -1);
+      } catch {
+        // Ignore scroll errors
+      }
     }
     return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
+      try {
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+      } catch {
+        // Ignore cleanup errors
+      }
     };
   }, [selectedImage]);
 
@@ -108,8 +120,8 @@ export default function CustomerGallery() {
 
                     {/* Image - Cover to fill square */}
                     <Image
-                      src={image.image_url}
-                      alt={image.alt_text || `Photo by ${image.customer_name}`}
+                            src={image.image_url}
+                            alt={image.alt_text || `Photo by ${image.customer_name}`}
                       fill
                       className={`transition-all duration-700 object-cover rounded-2xl sm:rounded-3xl ${
                         loadedImages.has(image.id) ? 'opacity-100' : 'opacity-0'
@@ -148,8 +160,8 @@ export default function CustomerGallery() {
                           </svg>
                           <span className="text-xs sm:text-sm text-black font-black">{image.camera_used}</span>
                         </div>
-                      </div>
-                    </div>
+                          </div>
+                        </div>
 
                     {/* Expand Icon - Center */}
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
@@ -217,7 +229,7 @@ export default function CustomerGallery() {
             <p className="text-slate-500 text-base font-bold">No images yet</p>
           </div>
         )}
-      </div>
+        </div>
 
       {/* Full Screen Modal */}
       {selectedImage && (
@@ -245,7 +257,7 @@ export default function CustomerGallery() {
                 quality={95}
                 priority
               />
-            </div>
+              </div>
 
             {/* Image Info */}
             <div className="mt-8 text-center text-white animate-slideUp">
@@ -262,7 +274,7 @@ export default function CustomerGallery() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   </svg>
                   {selectedImage.location}
-                </div>
+              </div>
               )}
             </div>
           </div>

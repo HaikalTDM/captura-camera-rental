@@ -110,21 +110,22 @@ export default function MobileCustomers() {
     new: customersWithMetrics.filter(c => c.totalRentals === 0).length,
   };
 
-  if (isLoading) {
-    return (
-      <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-300 border-t-blue-600"></div>
-          <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-            Loading customers...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
+      {/* Loading State - Inline, doesn't block navigation */}
+      {isLoading && (
+        <div className={`flex items-center justify-center h-screen ${isDarkMode ? 'bg-slate-950' : 'bg-slate-50'}`}>
+          <div className="flex flex-col items-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-300 border-t-blue-600"></div>
+            <p className={`text-sm font-medium ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Loading customers...
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Content - Always rendered, just hidden when loading */}
+      <div className={isLoading ? 'hidden' : ''}>
       {/* Animated Toast Notification */}
       {showToast && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 animate-slideDown">
@@ -417,6 +418,7 @@ export default function MobileCustomers() {
             </div>
           </div>
         )}
+      </div>
       </div>
 
       <style jsx global>{`

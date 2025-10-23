@@ -71,13 +71,14 @@ export default function CustomersPage() {
       }
     }), [customersWithMetrics, searchTerm, sortBy, sortOrder]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
+  // REMOVED: Don't block rendering
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   );
+  // }
 
   const getReliabilityColor = (totalRentals: number) => {
     if (totalRentals >= 5) return 'bg-green-100 text-green-800';

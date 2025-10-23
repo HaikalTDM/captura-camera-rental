@@ -225,16 +225,17 @@ export default function MobileDashboard() {
     }, 450);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
   return (
     <div className={`px-4 pt-4 space-y-4 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+      {/* Loading State - Inline, doesn't block navigation */}
+      {isLoading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      )}
+
+      {/* Content - Always rendered, just hidden when loading */}
+      <div className={isLoading ? 'hidden' : ''}>
       {/* Quick Search Bar */}
       <div className="animate-fadeIn">
         <div className={`relative ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} rounded-2xl overflow-hidden transition-all duration-300`}>
@@ -772,6 +773,7 @@ export default function MobileDashboard() {
             </div>
           )}
         </div>
+      </div>
       </div>
 
       {/* Booking Details Modal - PREMIUM REDESIGN */}

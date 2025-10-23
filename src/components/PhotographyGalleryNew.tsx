@@ -46,13 +46,32 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
 
   const openLightbox = (index: number) => {
     setLightboxIndex(index);
-    document.body.style.overflow = 'hidden';
+    try {
+      document.body.style.overflow = 'hidden';
+    } catch (e) {
+      // Ignore DOM errors
+    }
   };
 
   const closeLightbox = () => {
     setLightboxIndex(null);
-    document.body.style.overflow = 'unset';
+    try {
+      document.body.style.overflow = 'unset';
+    } catch (e) {
+      // Ignore DOM errors
+    }
   };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        document.body.style.overflow = 'unset';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
+    };
+  }, []);
 
   const nextImage = () => {
     if (lightboxIndex !== null) {

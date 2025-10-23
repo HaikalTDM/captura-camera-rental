@@ -93,7 +93,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out border-r border-gray-200
+        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:transition-none transition-transform duration-200 ease-in-out border-r border-gray-200
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:relative lg:flex lg:flex-shrink-0
       `}>
@@ -131,10 +131,9 @@ export default function AdminLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setIsSidebarOpen(false)} // Close sidebar on mobile after navigation
-                  prefetch={true} // Enable prefetching for instant navigation
+                  onClick={() => setIsSidebarOpen(false)}
                   className={`
-                    flex items-center px-3 sm:px-4 py-3 sm:py-3 text-sm font-medium rounded-lg transition-all duration-200 min-h-[48px] touch-manipulation
+                    flex items-center px-3 sm:px-4 py-3 sm:py-3 text-sm font-medium rounded-lg transition-colors duration-150 min-h-[48px] touch-manipulation
                     ${isActive
                       ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100'

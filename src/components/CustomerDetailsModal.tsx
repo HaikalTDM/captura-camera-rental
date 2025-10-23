@@ -47,17 +47,25 @@ export default function CustomerDetailsModal({
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px'; // Prevent layout shift
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+    try {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.paddingRight = '0px'; // Prevent layout shift
+      } else {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }
+    } catch (e) {
+      // Ignore DOM errors
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      try {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [isOpen]);
 

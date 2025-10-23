@@ -12,6 +12,29 @@ interface SpecsBottomSheetProps {
 export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBottomSheetProps) {
   const [isClosing, setIsClosing] = useState(false);
   const scrollPositionRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  // Track component mount state
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Force cleanup on unmount
+      try {
+        const scrollY = scrollPositionRef.current;
+        if (document.body) {
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          document.body.style.touchAction = '';
+          window.scrollTo(0, scrollY);
+        }
+      } catch {
+        // Silent fail
+      }
+    };
+  }, []);
 
   // Lock body scroll when modal is open - Enhanced for mobile
   useEffect(() => {
@@ -26,8 +49,8 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
-    } else {
-      // Restore scroll when modal closes
+    } else if (!isOpen && isMountedRef.current) {
+      // Restore scroll when modal closes - only if component is still mounted
       const scrollY = scrollPositionRef.current;
       document.body.style.position = '';
       document.body.style.top = '';
@@ -37,11 +60,16 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
       
       // Double requestAnimationFrame for reliable scroll restoration
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.scrollTo(0, scrollY);
-        });
+        if (isMountedRef.current) {
+          requestAnimationFrame(() => {
+            if (isMountedRef.current) {
+              window.scrollTo(0, scrollY);
+            }
+          });
+        }
       });
     }
+
   }, [isOpen]);
 
   // Handle close with animation
@@ -53,7 +81,9 @@ export default function SpecsBottomSheet({ camera, isOpen, onClose }: SpecsBotto
     }, 450); // Match animation duration (400ms + 50ms buffer)
   };
 
-  if (!isOpen || !camera) return null;
+  // Early return before any effects run
+  if (!camera) return null;
+  if (!isOpen && !isClosing) return null;
 
   const specs = camera.specifications;
   const hasSpecs = specs && Object.keys(specs).length > 0;

@@ -21,6 +21,20 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
+      // Force cleanup on unmount
+      try {
+        const scrollY = scrollPositionRef.current;
+        if (document.body) {
+          document.body.style.position = '';
+          document.body.style.top = '';
+          document.body.style.width = '';
+          document.body.style.overflow = '';
+          document.body.style.touchAction = '';
+          window.scrollTo(0, scrollY);
+        }
+      } catch {
+        // Silent fail
+      }
     };
   }, []);
 
@@ -57,6 +71,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
         }
       });
     }
+
   }, [isOpen]);
 
   // Handle close with animation
@@ -68,7 +83,9 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     }, 450); // Match animation duration (400ms + 50ms buffer)
   };
 
-  if (!isOpen || !camera) return null;
+  // Early return before any effects run
+  if (!camera) return null;
+  if (!isOpen && !isClosing) return null;
 
   return (
     <>

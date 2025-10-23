@@ -48,14 +48,22 @@ export default function CalendarPricing({
 
   // Prevent background scrolling when modal is open
   useEffect(() => {
-    if (showBookingForm) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
+    try {
+      if (showBookingForm) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'unset';
+      }
+    } catch (e) {
+      // Ignore DOM errors
     }
     
     return () => {
-      document.body.style.overflow = 'unset';
+      try {
+        document.body.style.overflow = 'unset';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [showBookingForm]);
 

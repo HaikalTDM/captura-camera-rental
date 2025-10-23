@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import "../styles/terms-modal.css";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import DOMSafetyPatch from "@/components/DOMSafetyPatch";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +13,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -36,14 +45,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: '/manifest.json',
-  themeColor: '#000000',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-    viewportFit: 'cover',
-  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
@@ -77,6 +78,17 @@ export const metadata: Metadata = {
     description: 'Rent professional DJI cameras in Kuala Lumpur',
     images: ['/images/captura_logo_big.png'],
   },
+  metadataBase: new URL('https://capturarentals.com'),
+};
+
+// Separate viewport export (Next.js 14+ requirement)
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+  themeColor: '#000000',
 };
 
 export default function RootLayout({
@@ -86,10 +98,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="google" content="notranslate" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
       >
-        {children}
+        <ErrorBoundary>
+          <DOMSafetyPatch />
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

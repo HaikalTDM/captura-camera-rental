@@ -56,17 +56,25 @@ export default function WelcomeModal({ isOpen, onClose, onDontShowAgain }: Welco
 
   // Prevent body scroll when modal is open
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+    try {
+      if (isOpen) {
+        document.body.style.overflow = 'hidden';
+        document.body.style.paddingRight = '0px';
+      } else {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      }
+    } catch (e) {
+      // Ignore DOM errors
     }
 
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
+      try {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+      } catch (e) {
+        // Ignore cleanup errors
+      }
     };
   }, [isOpen]);
 

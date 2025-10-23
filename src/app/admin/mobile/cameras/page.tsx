@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllCameras, createCameraRecord, updateCamera, deleteCamera, getAllBookings, updateCameraDisplayOrder } from '@/lib/api/bookings';
+import { getAllCameras, createCameraRecord, updateCamera, deleteCamera, getAllBookings } from '@/lib/api/bookings';
 import { uploadImage } from '@/lib/api/gallery';
 import type { Camera, Booking } from '@/lib/supabase';
 import toast from 'react-hot-toast';
@@ -17,11 +17,6 @@ export default function MobileCameraManagementPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
-  const [holdingIndex, setHoldingIndex] = useState<number | null>(null);
-  const [isDraggable, setIsDraggable] = useState<number | null>(null);
-  const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -49,19 +44,6 @@ export default function MobileCameraManagementPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
-
-  // Cleanup drag state on unmount
-  useEffect(() => {
-    return () => {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-      setHoldingIndex(null);
-      setIsDraggable(null);
-      if (holdTimerRef.current) {
-        clearTimeout(holdTimerRef.current);
-      }
-    };
   }, []);
 
   const loadData = async () => {
@@ -99,141 +81,6 @@ export default function MobileCameraManagementPage() {
       toast.error('Failed to load cameras');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Hold and Drag Handlers
-  const handleMouseDown = (index: number) => {
-    setHoldingIndex(index);
-    
-    // Start the hold timer - 500ms delay
-    holdTimerRef.current = setTimeout(() => {
-      setIsDraggable(index);
-      setHoldingIndex(null);
-      // Vibration feedback if available
-      if ('vibrate' in navigator) {
-        navigator.vibrate(50);
-      }
-    }, 500);
-  };
-
-  const handleMouseUp = () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-    }
-    setHoldingIndex(null);
-    // Reset ready state when user lets go
-    setTimeout(() => {
-      setIsDraggable(null);
-    }, 100);
-  };
-
-  const handleMouseLeave = () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-    }
-    setHoldingIndex(null);
-    // Reset ready state when mouse leaves
-    setTimeout(() => {
-      setIsDraggable(null);
-    }, 100);
-  };
-
-  // Drag and Drop Handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    // Only allow drag if card is ready
-    if (isDraggable !== index) {
-      e.preventDefault();
-      return;
-    }
-    e.stopPropagation();
-    setDraggedIndex(index);
-    setIsDraggable(null);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (draggedIndex !== null && draggedIndex !== index) {
-      setDragOverIndex(index);
-    }
-  };
-
-  const handleDragEnd = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDraggedIndex(null);
-    setDragOverIndex(null);
-    setIsDraggable(null);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverIndex(null);
-  };
-
-  const handleDrop = async (e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      requestAnimationFrame(() => {
-        setDraggedIndex(null);
-        setDragOverIndex(null);
-      });
-      return;
-    }
-
-    // Reorder the cameras array
-    const newCameras = [...cameras];
-    const draggedCamera = newCameras[draggedIndex];
-    newCameras.splice(draggedIndex, 1);
-    newCameras.splice(dropIndex, 0, draggedCamera);
-
-    // Clear drag state immediately
-    requestAnimationFrame(() => {
-      setDraggedIndex(null);
-      setDragOverIndex(null);
-    });
-
-    // Update local state immediately for smooth UX
-    setCameras(newCameras);
-
-    // Update display_order in database
-    const updates = newCameras.map((camera, index) => ({
-      id: camera.id,
-      display_order: index
-    }));
-
-    try {
-      const success = await updateCameraDisplayOrder(updates);
-      if (success) {
-        toast.success('✅ Camera order updated!');
-      } else {
-        toast.error('⚠️ Database error! Run ADD_DISPLAY_ORDER_TO_CAMERAS.sql first', {
-          duration: 5000,
-          style: {
-            background: '#FEE2E2',
-            color: '#991B1B',
-            fontWeight: 'bold'
-          }
-        });
-        // Reload data if update failed
-        await loadData();
-      }
-    } catch (error) {
-      console.error('Error updating camera order:', error);
-      toast.error('⚠️ Database error! Run ADD_DISPLAY_ORDER_TO_CAMERAS.sql first', {
-        duration: 5000,
-        style: {
-          background: '#FEE2E2',
-          color: '#991B1B',
-          fontWeight: 'bold'
-        }
-      });
-      // Reload data if update failed
-      await loadData();
     }
   };
 
@@ -509,28 +356,6 @@ export default function MobileCameraManagementPage() {
 
       {/* Camera List */}
       <div className="px-4 space-y-4">
-        {!isLoading && cameras.length > 0 && (
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-3">
-            <div className="flex items-center gap-3 mb-2">
-              <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-              </svg>
-              <p className="text-xs font-bold text-blue-900">
-                💡 Hold & Drag to reorder cameras
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-xs ml-8">
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded border-2 border-blue-300 animate-pulse"></div>
-                <span className="text-slate-600">Holding...</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded border-2 border-green-400 animate-bounce"></div>
-                <span className="text-slate-600">Ready!</span>
-              </div>
-            </div>
-          </div>
-        )}
         {isLoading ? (
           <div className="space-y-4">
             {[1, 2, 3].map(i => (
@@ -548,102 +373,13 @@ export default function MobileCameraManagementPage() {
             <p className="text-sm text-slate-500 mt-1">Add your first camera to get started</p>
           </div>
         ) : (
-          cameras.map((camera, index) => {
+          cameras.map((camera) => {
             const metrics = getCameraMetrics(camera.id);
-            const isDragging = draggedIndex === index;
-            const isOver = dragOverIndex === index;
-            const isHolding = holdingIndex === index;
-            const isReady = isDraggable === index;
             return (
               <div 
                 key={camera.id} 
-                draggable={isReady}
-                onMouseDown={() => handleMouseDown(index)}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseLeave}
-                onTouchStart={(e) => {
-                  e.preventDefault();
-                  handleMouseDown(index);
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  handleMouseUp();
-                }}
-                onTouchCancel={(e) => {
-                  e.preventDefault();
-                  handleMouseUp();
-                }}
-                onDragStart={(e) => handleDragStart(e, index)}
-                onDragOver={(e) => handleDragOver(e, index)}
-                onDragEnd={handleDragEnd}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
-                className={`relative bg-white rounded-xl shadow-md p-4 border-2 transition-all duration-200 ${
-                  isDragging 
-                    ? 'opacity-50 scale-95 border-blue-500 cursor-grabbing' 
-                    : isOver 
-                    ? 'border-blue-400 scale-105' 
-                    : isHolding
-                    ? 'scale-105 border-blue-300 animate-pulse cursor-grab'
-                    : isReady
-                    ? 'scale-110 border-green-400 shadow-xl shadow-green-200 animate-bounce cursor-grab'
-                    : 'border-slate-200 cursor-grab hover:border-slate-300'
-                }`}
+                className="relative bg-white rounded-xl shadow-md p-4 border-2 border-slate-200 hover:border-slate-300 transition-all duration-200"
               >
-                {/* Ready to Drag Overlay */}
-                {isReady && (
-                  <div key={`overlay-${camera.id}`} className="absolute inset-0 bg-green-100/50 rounded-xl flex items-center justify-center backdrop-blur-sm z-10 pointer-events-none">
-                    <div className="bg-white rounded-full p-4 shadow-2xl">
-                      <svg className="w-12 h-12 text-green-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                  </div>
-                )}
-
-                {/* Drag Handle */}
-                <div className="flex items-center justify-center mb-2 relative">
-                  {/* Holding Progress Ring */}
-                  {isHolding && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <svg className="w-16 h-16 -rotate-90" viewBox="0 0 64 64">
-                        <circle 
-                          cx="32" 
-                          cy="32" 
-                          r="28" 
-                          fill="none" 
-                          stroke="#E0E7FF" 
-                          strokeWidth="4"
-                        />
-                        <circle 
-                          cx="32" 
-                          cy="32" 
-                          r="28" 
-                          fill="none" 
-                          stroke="#3B82F6" 
-                          strokeWidth="4"
-                          strokeDasharray="176"
-                          strokeDashoffset="0"
-                          strokeLinecap="round"
-                          style={{
-                            animation: 'progressRing 0.5s linear forwards'
-                          }}
-                        />
-                      </svg>
-                    </div>
-                  )}
-                  
-                  <svg className={`w-6 h-6 transition-colors relative z-10 ${isHolding ? 'text-blue-400' : isReady ? 'text-green-500' : 'text-slate-300'}`} fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M9 3h2v2H9V3zm0 4h2v2H9V7zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm0 4h2v2H9v-2zm4-16h2v2h-2V3zm0 4h2v2h-2V7zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2zm0 4h2v2h-2v-2z"/>
-                  </svg>
-                  
-                  {isHolding && (
-                    <div className="absolute -top-8 bg-blue-500 text-white text-xs px-3 py-1 rounded-full shadow-lg">
-                      <span className="font-bold">Hold...</span>
-                    </div>
-                  )}
-                </div>
-
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
                     <h3 className="text-lg font-black text-black">{camera.name}</h3>
@@ -1010,15 +746,6 @@ export default function MobileCameraManagementPage() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-        
-        @keyframes progressRing {
-          from {
-            stroke-dashoffset: 176;
-          }
-          to {
-            stroke-dashoffset: 0;
           }
         }
         
