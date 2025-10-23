@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Toaster } from 'react-hot-toast';
 import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
-import { useAdminPWA } from '@/hooks/useAdminPWA';
 
 type Notification = {
   id: string;
@@ -27,9 +26,6 @@ export default function MobileAdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  
-  // Setup PWA (non-blocking, runs in background)
-  useAdminPWA();
   
   // Check auth and dark mode immediately (before first render)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
