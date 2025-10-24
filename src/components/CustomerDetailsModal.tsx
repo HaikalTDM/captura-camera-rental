@@ -86,7 +86,8 @@ export default function CustomerDetailsModal({
       day: 'numeric'
     });
 
-    const isDiscounted = totalDays >= 3;
+    const discountThreshold = camera.discountThreshold || 3;
+    const isDiscounted = totalDays >= discountThreshold;
     const dailyRate = totalCost / totalDays;
     const savings = isDiscounted ? (camera.dailyRate - camera.discountRate) * totalDays : 0;
 
@@ -108,7 +109,7 @@ export default function CustomerDetailsModal({
 
 💰 *Pricing Breakdown:*
 • Daily Rate: ${formatCurrency(dailyRate)}${isDiscounted ? ' (Bulk Discount Applied)' : ''}
-${savings > 0 ? `• Savings: ${formatCurrency(savings)} (3+ days discount)\n` : ''}• *Total Cost: ${formatCurrency(totalCost)}*
+${savings > 0 ? `• Savings: ${formatCurrency(savings)} (${discountThreshold}+ days discount)\n` : ''}• *Total Cost: ${formatCurrency(totalCost)}*
 
 📋 *Next Steps:*
 Please confirm this booking and provide pickup/delivery details.

@@ -13,8 +13,9 @@ export function calculateRentalCost(
   // Use the utility function for consistent date calculation
   const totalDays = calculateDaysBetween(startDate, endDate);
 
-  // Apply discount for 3+ days
-  const dailyRate = totalDays >= 3 ? camera.discountRate : camera.dailyRate;
+  // Apply discount based on camera's specific threshold (default: 3 days)
+  const discountThreshold = camera.discountThreshold || 3;
+  const dailyRate = totalDays >= discountThreshold ? camera.discountRate : camera.dailyRate;
   const totalCost = dailyRate * totalDays;
 
   return {

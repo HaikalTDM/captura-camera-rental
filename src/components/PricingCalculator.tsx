@@ -44,7 +44,7 @@ export default function PricingCalculator({
             <span className="font-semibold">{formatCurrency(camera.dailyRate)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="font-medium">3+ Days Rate:</span>
+            <span className="font-medium">{(camera.discountThreshold || 3)}+ Days Rate:</span>
             <span className="font-semibold">{formatCurrency(camera.discountRate)}</span>
           </div>
           <div className="text-xs text-gray-700 mt-2 font-medium">
@@ -55,7 +55,8 @@ export default function PricingCalculator({
     );
   }
 
-  const isDiscounted = pricing.totalDays >= 3;
+  const discountThreshold = camera.discountThreshold || 3;
+  const isDiscounted = pricing.totalDays >= discountThreshold;
   const savings = isDiscounted ? (camera.dailyRate - camera.discountRate) * pricing.totalDays : 0;
 
   return (

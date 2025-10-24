@@ -37,7 +37,7 @@ const faqData: FAQItem[] = [
     id: '4',
     category: 'pricing',
     question: 'What are your rental rates?',
-    answer: 'Our daily rental rates vary by equipment type. DJI Osmo Pocket 3 starts from RM80/day, and DJI Action 5 Pro starts from RM60/day. Multi-day rentals receive discounted rates.'
+    answer: 'Our rental rates start from RM50/day. Multi-day rentals receive discounted rates (typically from 3-4 days onwards depending on the equipment). Visit our rental page or contact us for specific pricing on each camera model.'
   },
   {
     id: '5',

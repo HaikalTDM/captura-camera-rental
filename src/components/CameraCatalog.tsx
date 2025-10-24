@@ -138,6 +138,7 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
             images: [cameraImages.variant],
             dailyRate: dbCamera.daily_rate,
             discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9,
+            discountThreshold: dbCamera.discount_threshold,
             features: [
               `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
               `RM${dbCamera.daily_rate}/day rental`,

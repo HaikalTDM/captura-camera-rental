@@ -51,6 +51,7 @@ export interface Camera {
   weekly_rate: number
   monthly_rate: number
   deposit_amount: number
+  discount_threshold?: number
   description: string
   specifications: Record<string, any>
   image_url: string

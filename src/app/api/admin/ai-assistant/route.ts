@@ -395,12 +395,16 @@ export async function POST(request: NextRequest) {
     // Fetch actual cameras from database
     const { data: cameras } = await supabaseAdmin
       .from('cameras')
-      .select('name, daily_rate, weekly_rate, monthly_rate, status')
+      .select('name, daily_rate, weekly_rate, monthly_rate, discount_threshold, status')
       .eq('status', 'available')
       .order('name', { ascending: true });
     
     const cameraList = cameras && cameras.length > 0
-      ? cameras.map(c => `- ${c.name} (Daily: RM${c.daily_rate}, 3+ days: RM${c.weekly_rate || c.daily_rate}/day)`).join('\n')
+      ? cameras.map(c => {
+          const threshold = c.discount_threshold || 3;
+          const discountRate = c.weekly_rate ? Math.round(c.weekly_rate / 7) : c.daily_rate;
+          return `- ${c.name} (Daily: RM${c.daily_rate}, ${threshold}+ days: RM${discountRate}/day)`;
+        }).join('\n')
       : '- No cameras currently available';
     
     // Fetch recent booking stats

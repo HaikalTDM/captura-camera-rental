@@ -5,7 +5,8 @@ export interface Camera {
   image: string;
   images?: string[]; // Additional gallery images
   dailyRate: number;
-  discountRate: number; // Rate for 3+ days
+  discountRate: number; // Rate for extended rentals
+  discountThreshold?: number; // Days needed for discount (default: 3)
   features: string[];
   specifications: {
     [key: string]: string;

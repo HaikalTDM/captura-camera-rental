@@ -69,7 +69,8 @@ export default function CalendarPricing({
 
   useEffect(() => {
     if (startDate && endDate && totalDays > 0) {
-      const isDiscounted = totalDays >= 3;
+      const discountThreshold = camera.discountThreshold || 3;
+      const isDiscounted = totalDays >= discountThreshold;
       const savings = isDiscounted ?
         (camera.dailyRate - camera.discountRate) * totalDays : 0;
 
@@ -104,11 +105,11 @@ export default function CalendarPricing({
               <span className="font-semibold text-gray-900">{formatCurrency(camera.dailyRate)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-800">3+ Days Rate:</span>
+              <span className="text-gray-800">{(camera.discountThreshold || 3)}+ Days Rate:</span>
               <span className="font-semibold text-green-600">{formatCurrency(camera.discountRate)}</span>
             </div>
             <div className="text-xs text-gray-700 mt-3 p-2 bg-blue-50 rounded">
-              💡 Book for 3+ days and save {formatCurrency(camera.dailyRate - camera.discountRate)} per day!
+              💡 Book for {(camera.discountThreshold || 3)}+ days and save {formatCurrency(camera.dailyRate - camera.discountRate)} per day!
             </div>
           </div>
         </div>

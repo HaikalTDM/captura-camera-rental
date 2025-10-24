@@ -1,5 +1,5 @@
 -- Add Insta360 X5 Motorcycle Bundle Set
--- Pricing: RM60/day for 1-2 days, RM50/day for 3+ days
+-- Pricing: RM50/day for 1-3 days, RM45/day for 4+ days
 
 INSERT INTO cameras (
     name,
@@ -9,6 +9,7 @@ INSERT INTO cameras (
     daily_rate,
     weekly_rate,
     monthly_rate,
+    discount_threshold,
     image_url,
     is_available,
     location,
@@ -24,13 +25,14 @@ INSERT INTO cameras (
     'Insta360',
     'X5',
     'Ultimate motorcycle bundle set with 360° capture. Perfect for action shots and immersive footage. Includes all mounting accessories.',
-    60,  -- Daily rate for 1-2 days
-    350, -- Weekly rate (50 x 7 = 350)
-    1500, -- Monthly rate (50 x 30 = 1500)
+    50,  -- Daily rate for 1-3 days
+    315, -- Weekly rate (45 x 7 = 315)
+    1350, -- Monthly rate (45 x 30 = 1350)
+    4, -- Discount threshold: 4+ days for discounted rate
     '/images/Insta360-X5-1.webp',
     true,
     'Kuala Lumpur',
-    'Motorcycle bundle set. Special pricing: RM60/day for 1-2 days, RM50/day for 3+ days. Weekly rate: RM350 (RM50/day). Monthly rate: RM1500 (RM50/day).',
+    'Motorcycle bundle set. Special pricing: RM50/day for 1-3 days, RM45/day for 4+ days. Weekly rate: RM315 (RM45/day). Monthly rate: RM1350 (RM45/day).',
     3, -- Display after Osmo Pocket 3 (0), Osmo Pocket 3 (ii) (1), Action 5 Pro (2)
     0,
     100, -- Standard RM100 deposit
