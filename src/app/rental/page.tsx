@@ -153,6 +153,12 @@ export default function RentalHome() {
             <p className="text-sm text-slate-400 font-semibold">
               ✓ Free pickup • ✓ Fully insured • ✓ 24/7 support
             </p>
+            <a 
+              href="/admin/mobile/login" 
+              className="text-xs text-slate-600/40 hover:text-slate-500/60 transition-colors mt-2 inline-block"
+            >
+              •
+            </a>
           </div>
         </div>
       </section>
