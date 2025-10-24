@@ -27,7 +27,7 @@ export default function MobileAdminLayout({
   const router = useRouter();
   const pathname = usePathname();
   
-  // Check auth and dark mode immediately (before first render)
+  // Check auth immediately (before first render)
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('adminAuth') === 'true';
@@ -35,12 +35,9 @@ export default function MobileAdminLayout({
     return false;
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true';
-    }
-    return false;
-  });
+  // Initialize dark mode to false to match server render (prevents hydration mismatch)
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsClosing, setIsNotificationsClosing] = useState(false);
@@ -50,8 +47,12 @@ export default function MobileAdminLayout({
   const [dragDeltaXById, setDragDeltaXById] = useState<Record<string, number>>({});
   const [isDismissingById, setIsDismissingById] = useState<Record<string, boolean>>({});
 
-  // Force black theme color for PWA status bar
+  // Initialize dark mode after mount (prevents hydration mismatch)
   useEffect(() => {
+    setMounted(true);
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    setIsDarkMode(darkMode);
+
     // Set meta theme-color to BLACK immediately
     let themeColorMeta = document.querySelector('meta[name="theme-color"]');
     if (!themeColorMeta) {
@@ -82,11 +83,6 @@ export default function MobileAdminLayout({
       console.error('Error loading dismissed notifications:', error);
     }
 
-    // Only redirect if not authenticated (auth already checked in useState)
-    if (!isAuthenticated && pathname !== '/admin/mobile/login') {
-      router.push('/admin/mobile/login');
-    }
-
     // Listen for storage changes (dark mode toggle from settings)
     const handleStorageChange = () => {
       const updatedDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -97,14 +93,7 @@ export default function MobileAdminLayout({
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [pathname, router, isAuthenticated]);
-
-  // Load notifications when dismissed list changes or on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadNotifications();
-    }
-  }, [dismissedNotifications, isAuthenticated]);
+  }, []);
 
   // Load notifications from bookings
   const loadNotifications = async () => {
@@ -223,6 +212,21 @@ export default function MobileAdminLayout({
       console.error('Error loading notifications:', error);
     }
   };
+
+  // Redirect to login if not authenticated (only on admin routes)
+  useEffect(() => {
+    const isAdminRoute = pathname?.startsWith('/admin/mobile');
+    if (!isAuthenticated && isAdminRoute && pathname !== '/admin/mobile/login') {
+      router.replace('/admin/mobile/login');
+    }
+  }, [isAuthenticated, pathname, router]);
+
+  // Load notifications when dismissed list changes or on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadNotifications();
+    }
+  }, [dismissedNotifications, isAuthenticated]);
 
   // Abort pending notifications fetch on unmount
   useEffect(() => {
@@ -502,9 +506,9 @@ export default function MobileAdminLayout({
   return (
     <>
       <Toaster position="top-center" />
-      <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-white'} pb-20`}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-white'} pb-20`} suppressHydrationWarning>
         {/* Top Bar */}
-        <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-black' : 'bg-white'}`}>
+        <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-black' : 'bg-white'}`} suppressHydrationWarning>
           <div className="flex items-center justify-between px-4 h-14">
             <div>
               <h1 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
