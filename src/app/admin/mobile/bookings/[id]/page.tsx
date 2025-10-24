@@ -286,7 +286,20 @@ export default function MobileBookingDetail() {
         month: 'short',
         year: 'numeric'
       });
-      message = `Hi ${customerName}! 📷\n\nThis is a friendly reminder that your ${cameraName} is ready for pickup on ${pickupDate} after 8.00PM.\n\nPlease collect your equipment at the scheduled time.\n\nThank you for choosing Captura! 😊`;
+      
+      // Check if final payment is pending (deposit is separate and will be returned)
+      const hasOutstandingBalance = !booking.final_payment_paid && booking.final_payment_amount > 0;
+      const outstandingAmount = hasOutstandingBalance ? booking.final_payment_amount : 0;
+      
+      // Base message
+      message = `Hi ${customerName}! 📷\n\nThis is a friendly reminder that your ${cameraName} is ready for pickup on ${pickupDate} after 8.00PM.`;
+      
+      // Add payment reminder if there's an outstanding balance
+      if (hasOutstandingBalance) {
+        message += `\n\n💳 *Payment Reminder*\nPlease settle the outstanding balance of *RM${outstandingAmount}* before pickup.\n\nRental Amount: RM${outstandingAmount}\nDeposit (refundable): RM${booking.deposit_amount}`;
+      }
+      
+      message += `\n\nPlease collect your equipment at the scheduled time.\n\nThank you for choosing Captura! 😊`;
     } 
     // If equipment IS picked up but NOT returned - send RETURN reminder
     else if (booking.equipment_picked_up && !booking.equipment_returned) {
