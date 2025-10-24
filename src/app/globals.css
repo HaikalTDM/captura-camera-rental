@@ -518,12 +518,27 @@ input[type="radio"] {
   }
 }
 
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .animate-slideInRight {
   animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .animate-shrink {
   animation: shrink linear;
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {

@@ -274,8 +274,8 @@ export default function MobileDashboard() {
           onClick={() => setSelectedCard('total')}
           className={`rounded-2xl p-4 relative overflow-hidden text-left transition-all duration-300 ease-in-out transform ${
             selectedCard === 'total' 
-              ? 'bg-black text-white scale-105 shadow-lg' 
-              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80`
+              ? 'bg-black text-white scale-105 shadow-lg ring-2 ring-black ring-offset-2' 
+              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80 active:scale-95`
           }`}
         >
           <div className={`relative z-10 transition-transform duration-200 ${selectedCard === 'total' ? 'translate-y-0' : ''}`}>
@@ -293,8 +293,8 @@ export default function MobileDashboard() {
           onClick={() => setSelectedCard('pickups')}
           className={`rounded-2xl p-4 relative overflow-hidden text-left transition-all duration-300 ease-in-out transform ${
             selectedCard === 'pickups' 
-              ? 'bg-black text-white scale-105 shadow-lg' 
-              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80`
+              ? 'bg-black text-white scale-105 shadow-lg ring-2 ring-black ring-offset-2' 
+              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80 active:scale-95`
           }`}
         >
           <div className={`relative z-10 transition-transform duration-200 ${selectedCard === 'pickups' ? 'translate-y-0' : ''}`}>
@@ -312,8 +312,8 @@ export default function MobileDashboard() {
           onClick={() => setSelectedCard('deposits')}
           className={`rounded-2xl p-4 relative overflow-hidden text-left transition-all duration-300 ease-in-out transform ${
             selectedCard === 'deposits' 
-              ? 'bg-black text-white scale-105 shadow-lg' 
-              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80`
+              ? 'bg-black text-white scale-105 shadow-lg ring-2 ring-black ring-offset-2' 
+              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80 active:scale-95`
           }`}
         >
           <div className={`relative z-10 transition-transform duration-200 ${selectedCard === 'deposits' ? 'translate-y-0' : ''}`}>
@@ -336,8 +336,8 @@ export default function MobileDashboard() {
           onClick={() => setSelectedCard('returns')}
           className={`rounded-2xl p-4 relative overflow-hidden text-left transition-all duration-300 ease-in-out transform ${
             selectedCard === 'returns' 
-              ? 'bg-black text-white scale-105 shadow-lg' 
-              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80`
+              ? 'bg-black text-white scale-105 shadow-lg ring-2 ring-black ring-offset-2' 
+              : `${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} ${isDarkMode ? 'text-white' : 'text-black'} opacity-60 hover:opacity-80 active:scale-95`
           }`}
         >
           <div className={`relative z-10 transition-transform duration-200 ${selectedCard === 'returns' ? 'translate-y-0' : ''}`}>
@@ -353,8 +353,62 @@ export default function MobileDashboard() {
 
       {/* Urgent Alerts Section */}
       <div className="space-y-3 animate-fadeIn">
+        {upcomingPickups.length > 0 && upcomingPickups.length <= 3 && (
+          <button
+            onClick={() => {
+              setSelectedCard('pickups');
+              // Scroll to filtered bookings section after a short delay
+              setTimeout(() => {
+                document.getElementById('filtered-bookings')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }, 100);
+            }}
+            className={`w-full ${isDarkMode ? 'bg-blue-900/50 border border-blue-800' : 'bg-blue-50 border border-blue-200'} rounded-2xl p-4 transition-transform duration-200 active:scale-[0.98] animate-fadeIn`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 ${isDarkMode ? 'bg-blue-800/50' : 'bg-blue-100'} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                <span className="text-xl">🔔</span>
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className={`font-bold text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-900'}`}>
+                  {upcomingPickups.length} Pickup{upcomingPickups.length !== 1 ? 's' : ''} Today
+                </p>
+                <p className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Tap to view pickups below</p>
+              </div>
+              <svg className={`w-5 h-5 flex-shrink-0 ${isDarkMode ? 'text-blue-300' : 'text-blue-900'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+        )}
+
+        {overdueReturns.length > 0 && (
+          <button
+            onClick={() => {
+              setSelectedCard('returns');
+              // Scroll to filtered bookings section after a short delay
+              setTimeout(() => {
+                document.getElementById('filtered-bookings')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }, 100);
+            }}
+            className="w-full bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-lg transition-transform duration-200 active:scale-[0.98] animate-fadeIn"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-xl">🚨</span>
+              </div>
+              <div className="flex-1 min-w-0 text-left">
+                <p className="font-bold text-sm">{overdueReturns.length} Overdue Return{overdueReturns.length !== 1 ? 's' : ''}</p>
+                <p className="text-xs text-red-100">Tap to view returns below</p>
+              </div>
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+        )}
+
         {pendingApprovals.length > 0 && (
-          <Link href="/admin/mobile/bookings">
+          <Link href="/admin/mobile/bookings?filter=pending">
             <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-4 text-white shadow-lg transition-transform duration-200 active:scale-[0.98]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -362,49 +416,9 @@ export default function MobileDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm">{pendingApprovals.length} Pending Approval{pendingApprovals.length !== 1 ? 's' : ''}</p>
-                  <p className="text-xs text-orange-100">Tap to review</p>
+                  <p className="text-xs text-orange-100">Go to bookings page</p>
                 </div>
                 <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {overdueReturns.length > 0 && (
-          <Link href="/admin/mobile/bookings">
-            <div className="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-4 text-white shadow-lg transition-transform duration-200 active:scale-[0.98] animate-fadeIn">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl">🚨</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm">{overdueReturns.length} Overdue Return{overdueReturns.length !== 1 ? 's' : ''}</p>
-                  <p className="text-xs text-red-100">Equipment not returned on time</p>
-                </div>
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-        )}
-
-        {upcomingPickups.length > 0 && upcomingPickups.length <= 3 && (
-          <Link href="/admin/mobile/bookings">
-            <div className={`${isDarkMode ? 'bg-blue-900/50 border border-blue-800' : 'bg-blue-50 border border-blue-200'} rounded-2xl p-4 transition-transform duration-200 active:scale-[0.98] animate-fadeIn`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 ${isDarkMode ? 'bg-blue-800/50' : 'bg-blue-100'} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-xl">🔔</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-bold text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-900'}`}>
-                    {upcomingPickups.length} Pickup{upcomingPickups.length !== 1 ? 's' : ''} Today
-                  </p>
-                  <p className={`text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>Equipment ready for collection</p>
-                </div>
-                <svg className={`w-5 h-5 flex-shrink-0 ${isDarkMode ? 'text-blue-300' : 'text-blue-900'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </div>
@@ -720,22 +734,41 @@ export default function MobileDashboard() {
       )}
 
       {/* Filtered Bookings with Fade Animation */}
-      <div className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden transition-all duration-300 ease-in-out`}>
+      <div id="filtered-bookings" className={`${isDarkMode ? 'bg-gray-900' : 'bg-white'} rounded-2xl ${!isDarkMode && 'border border-gray-100'} overflow-hidden transition-all duration-300 ease-in-out animate-fadeIn`}>
         <div className={`p-4 ${!isDarkMode && 'border-b border-gray-100'} flex items-center justify-between transition-all duration-200`}>
-          <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300`}>
-            {getSectionTitle()}
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className={`font-bold ${isDarkMode ? 'text-white' : 'text-black'} transition-all duration-300`}>
+              {getSectionTitle()}
+            </h3>
+            {selectedCard !== 'total' && (
+              <button
+                onClick={() => {
+                  setSelectedCard('total');
+                  // Scroll back up to the top of the page
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-medium rounded-lg transition-colors duration-200 animate-fadeIn"
+              >
+                ← Back
+              </button>
+            )}
+          </div>
           <Link href="/admin/mobile/bookings" className="text-gray-500 text-sm font-medium hover:text-black transition-colors duration-200">
             View All
           </Link>
         </div>
-        <div className={`${!isDarkMode && 'divide-y divide-gray-100'}`}>
+        <div className={`${!isDarkMode && 'divide-y divide-gray-100'}`} key={selectedCard}>
           {filteredBookings.length > 0 ? filteredBookings.map((booking, index) => (
             <button
               key={booking.id} 
               onClick={() => openBookingModal(booking)}
-              className="w-full p-4 transition-all duration-200 hover:bg-opacity-50 animate-fadeIn active:scale-[0.98] text-left"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className={`w-full p-4 transition-all duration-200 animate-slideIn active:scale-[0.98] text-left ${
+                isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-50'
+              }`}
+              style={{ 
+                animationDelay: `${index * 50}ms`,
+                animationDuration: '0.3s'
+              }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3 flex-1 min-w-0">

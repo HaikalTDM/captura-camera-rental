@@ -505,7 +505,7 @@ export default function MobileAdminLayout({
 
   return (
     <>
-      <Toaster position="top-center" />
+      {mounted && <Toaster position="top-center" />}
       <div className={`min-h-screen ${isDarkMode ? 'bg-black' : 'bg-white'} pb-20`} suppressHydrationWarning>
         {/* Top Bar */}
         <div className={`sticky top-0 z-40 ${isDarkMode ? 'bg-black' : 'bg-white'}`} suppressHydrationWarning>
