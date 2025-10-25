@@ -197,6 +197,19 @@ export default function MobileBookingDetail() {
     }
   };
 
+  // Lock body scroll when modals are open
+  useEffect(() => {
+    if (showPickupModal || showReturnModal || showDeleteConfirm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showPickupModal, showReturnModal, showDeleteConfirm]);
+
   const handlePickupUpdate = async () => {
     if (!booking) return;
     
@@ -1047,67 +1060,73 @@ export default function MobileBookingDetail() {
       {/* Pickup Modal */}
       {showPickupModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-backdropFadeIn"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
           onClick={() => setShowPickupModal(false)}
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
           <div 
-            className={`relative w-full sm:max-w-lg ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-modalSlideUp border-t-4 border-blue-500`}
+            className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-blue-500`}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              {booking.equipment_picked_up ? 'Undo Equipment Pickup?' : 'Equipment Pickup'}
-            </h3>
-            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
-              {booking.equipment_picked_up ? 'This will mark the equipment as not picked up.' : 'Record the equipment condition and any notes.'}
-            </p>
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto flex-1 p-6">
+              <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                {booking.equipment_picked_up ? 'Undo Equipment Pickup?' : 'Equipment Pickup'}
+              </h3>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
+                {booking.equipment_picked_up ? 'This will mark the equipment as not picked up.' : 'Record the equipment condition and any notes.'}
+              </p>
+              
+              {!booking.equipment_picked_up && (
+                <div className="space-y-4">
+                  <div>
+                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                      Equipment Condition
+                    </label>
+                    <select
+                      value={pickupCondition}
+                      onChange={(e) => setPickupCondition(e.target.value)}
+                      className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+                    >
+                      <option value="excellent">✨ Excellent</option>
+                      <option value="good">👍 Good</option>
+                      <option value="fair">⚠️ Fair</option>
+                      <option value="poor">❌ Poor</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      value={pickupNotes}
+                      onChange={(e) => setPickupNotes(e.target.value)}
+                      placeholder="e.g., All accessories included, minor scratch on lens cap..."
+                      className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             
-            {!booking.equipment_picked_up && (
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                    Equipment Condition
-                  </label>
-                  <select
-                    value={pickupCondition}
-                    onChange={(e) => setPickupCondition(e.target.value)}
-                    className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
-                  >
-                    <option value="excellent">✨ Excellent</option>
-                    <option value="good">👍 Good</option>
-                    <option value="fair">⚠️ Fair</option>
-                    <option value="poor">❌ Poor</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                    Notes (Optional)
-                  </label>
-                  <textarea
-                    value={pickupNotes}
-                    onChange={(e) => setPickupNotes(e.target.value)}
-                    placeholder="e.g., All accessories included, minor scratch on lens cap..."
-                    className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
-                  />
-                </div>
+            {/* Sticky Buttons */}
+            <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowPickupModal(false)}
+                  className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePickupUpdate}
+                  disabled={isUpdating}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-blue-500/30"
+                >
+                  {isUpdating ? 'Updating...' : booking.equipment_picked_up ? 'Undo' : 'Confirm'}
+                </button>
               </div>
-            )}
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPickupModal(false)}
-                className={`flex-1 py-4 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePickupUpdate}
-                disabled={isUpdating}
-                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-blue-500/30"
-              >
-                {isUpdating ? 'Updating...' : booking.equipment_picked_up ? 'Undo' : 'Confirm'}
-              </button>
             </div>
           </div>
         </div>
@@ -1116,67 +1135,73 @@ export default function MobileBookingDetail() {
       {/* Return Modal */}
       {showReturnModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-backdropFadeIn"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
           onClick={() => setShowReturnModal(false)}
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
           <div 
-            className={`relative w-full sm:max-w-lg ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-modalSlideUp border-t-4 border-purple-500`}
+            className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-purple-500`}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-              {booking.equipment_returned ? 'Undo Equipment Return?' : 'Equipment Return'}
-            </h3>
-            <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
-              {booking.equipment_returned ? 'This will mark the equipment as not returned.' : 'Record the equipment condition and any notes.'}
-            </p>
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto flex-1 p-6">
+              <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                {booking.equipment_returned ? 'Undo Equipment Return?' : 'Equipment Return'}
+              </h3>
+              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
+                {booking.equipment_returned ? 'This will mark the equipment as not returned.' : 'Record the equipment condition and any notes.'}
+              </p>
+              
+              {!booking.equipment_returned && (
+                <div className="space-y-4">
+                  <div>
+                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                      Equipment Condition
+                    </label>
+                    <select
+                      value={returnCondition}
+                      onChange={(e) => setReturnCondition(e.target.value)}
+                      className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+                    >
+                      <option value="excellent">✨ Excellent</option>
+                      <option value="good">👍 Good</option>
+                      <option value="fair">⚠️ Fair</option>
+                      <option value="poor">❌ Poor</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                      Notes (Optional)
+                    </label>
+                    <textarea
+                      value={returnNotes}
+                      onChange={(e) => setReturnNotes(e.target.value)}
+                      placeholder="e.g., All accessories returned, battery fully charged..."
+                      className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             
-            {!booking.equipment_returned && (
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                    Equipment Condition
-                  </label>
-                  <select
-                    value={returnCondition}
-                    onChange={(e) => setReturnCondition(e.target.value)}
-                    className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
-                  >
-                    <option value="excellent">✨ Excellent</option>
-                    <option value="good">👍 Good</option>
-                    <option value="fair">⚠️ Fair</option>
-                    <option value="poor">❌ Poor</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                    Notes (Optional)
-                  </label>
-                  <textarea
-                    value={returnNotes}
-                    onChange={(e) => setReturnNotes(e.target.value)}
-                    placeholder="e.g., All accessories returned, battery fully charged..."
-                    className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
-                  />
-                </div>
+            {/* Sticky Buttons */}
+            <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowReturnModal(false)}
+                  className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReturnUpdate}
+                  disabled={isUpdating}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-purple-500/30"
+                >
+                  {isUpdating ? 'Updating...' : booking.equipment_returned ? 'Undo' : 'Confirm'}
+                </button>
               </div>
-            )}
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowReturnModal(false)}
-                className={`flex-1 py-4 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleReturnUpdate}
-                disabled={isUpdating}
-                className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-purple-500/30"
-              >
-                {isUpdating ? 'Updating...' : booking.equipment_returned ? 'Undo' : 'Confirm'}
-              </button>
             </div>
           </div>
         </div>

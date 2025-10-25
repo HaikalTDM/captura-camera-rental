@@ -451,40 +451,91 @@ export default function MobileBookings() {
           )}
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats Summary - Interactive Cards */}
         <div className="grid grid-cols-4 gap-2">
-          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-3 border shadow-sm text-center`}>
+          {/* Total Card */}
+          <button
+            onClick={() => setQuickFilter('all')}
+            className={`rounded-2xl p-3 border text-center transition-all duration-300 active:scale-95 ${
+              quickFilter === 'all'
+                ? isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 shadow-lg shadow-slate-700/30' 
+                  : 'bg-slate-50 border-slate-300 shadow-lg shadow-slate-300/30'
+                : isDarkMode 
+                  ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' 
+                  : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+            }`}
+          >
             <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               {bookings.length}
             </p>
             <p className={`text-xs mt-1 font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               Total
             </p>
-          </div>
-          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-3 border shadow-sm text-center`}>
+          </button>
+
+          {/* Pending Card */}
+          <button
+            onClick={() => setQuickFilter('pending')}
+            className={`rounded-2xl p-3 border text-center transition-all duration-300 active:scale-95 ${
+              quickFilter === 'pending'
+                ? isDarkMode 
+                  ? 'bg-amber-950/40 border-amber-800/50 shadow-lg shadow-amber-500/20' 
+                  : 'bg-amber-50 border-amber-200 shadow-lg shadow-amber-300/30'
+                : isDarkMode 
+                  ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' 
+                  : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+            }`}
+          >
             <p className="text-xl font-bold text-amber-600">
               {bookings.filter(b => b.booking_status === 'pending_approval').length}
             </p>
             <p className={`text-xs mt-1 font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               Pending
             </p>
-          </div>
-          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-3 border shadow-sm text-center`}>
+          </button>
+
+          {/* Active Card */}
+          <button
+            onClick={() => setQuickFilter('confirmed')}
+            className={`rounded-2xl p-3 border text-center transition-all duration-300 active:scale-95 ${
+              quickFilter === 'confirmed'
+                ? isDarkMode 
+                  ? 'bg-emerald-950/40 border-emerald-800/50 shadow-lg shadow-emerald-500/20' 
+                  : 'bg-emerald-50 border-emerald-200 shadow-lg shadow-emerald-300/30'
+                : isDarkMode 
+                  ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' 
+                  : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+            }`}
+          >
             <p className="text-xl font-bold text-emerald-600">
               {bookings.filter(b => b.booking_status === 'confirmed' || b.booking_status === 'approved').length}
             </p>
             <p className={`text-xs mt-1 font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               Active
             </p>
-          </div>
-          <div className={`${isDarkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-200'} rounded-2xl p-3 border shadow-sm text-center`}>
+          </button>
+
+          {/* Done Card */}
+          <button
+            onClick={() => setQuickFilter('completed')}
+            className={`rounded-2xl p-3 border text-center transition-all duration-300 active:scale-95 ${
+              quickFilter === 'completed'
+                ? isDarkMode 
+                  ? 'bg-slate-800 border-slate-700 shadow-lg shadow-slate-700/30' 
+                  : 'bg-slate-50 border-slate-300 shadow-lg shadow-slate-300/30'
+                : isDarkMode 
+                  ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' 
+                  : 'bg-white border-slate-200 hover:bg-slate-50 shadow-sm'
+            }`}
+          >
             <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
               {bookings.filter(b => b.booking_status === 'completed').length}
             </p>
             <p className={`text-xs mt-1 font-semibold ${isDarkMode ? 'text-slate-500' : 'text-slate-500'}`}>
               Done
             </p>
-          </div>
+          </button>
         </div>
 
         {/* Bookings List */}
@@ -613,12 +664,12 @@ export default function MobileBookings() {
       {/* Advanced Filter Drawer */}
       {showFilterDrawer && (
         <div 
-          className="fixed inset-0 z-50 flex items-end animate-backdropFadeIn overflow-hidden"
+          className="fixed inset-0 z-50 flex items-end animate-backdropFadeIn overflow-hidden p-0 pb-8"
           onClick={() => setShowFilterDrawer(false)}
         >
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" style={{ touchAction: 'none' }}></div>
           <div 
-            className={`relative w-full ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl shadow-2xl animate-modalSlideUp max-h-[85vh] overflow-y-auto border-t-4 ${isDarkMode ? 'border-white' : 'border-black'}`}
+            className={`relative w-full ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl shadow-2xl animate-modalSlideUp max-h-[75vh] flex flex-col border-t-4 ${isDarkMode ? 'border-white' : 'border-black'}`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -641,7 +692,8 @@ export default function MobileBookings() {
               </button>
             </div>
 
-            <div className="px-6 py-6 space-y-6">
+            {/* Scrollable Content */}
+            <div className="px-6 py-6 space-y-6 overflow-y-auto flex-1">
               {/* Sort By Section - REDESIGNED */}
               <div>
                 {/* Current Sort Indicator */}
@@ -988,16 +1040,16 @@ export default function MobileBookings() {
             </div>
 
             {/* Footer Actions */}
-            <div className={`sticky bottom-0 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-200'} px-6 py-4 flex gap-3 backdrop-blur-lg bg-opacity-95`}>
+            <div className={`flex-shrink-0 ${isDarkMode ? 'bg-slate-900' : 'bg-white'} border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-200'} px-4 pt-4 pb-[50px] flex gap-3 backdrop-blur-lg bg-opacity-95`}>
               <button
                 onClick={clearAllFilters}
-                className={`flex-1 py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+                className={`flex-1 py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
               >
                 Clear All
               </button>
               <button
                 onClick={() => setShowFilterDrawer(false)}
-                className="flex-1 bg-black text-white py-4 rounded-xl font-bold text-base transition-all duration-200 active:scale-95"
+                className="flex-1 bg-black text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95"
               >
                 Apply Filters
               </button>
