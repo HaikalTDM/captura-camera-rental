@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCameraById, updateCamera, getAllAccessories, linkAccessoryToCamera, removeAccessoryFromCamera } from '@/lib/api/bookings';
+import { getCameraById, updateCamera, deleteCamera, getAllAccessories, linkAccessoryToCamera, removeAccessoryFromCamera } from '@/lib/api/bookings';
 import type { Camera, Accessory } from '@/lib/supabase';
 import Link from 'next/link';
+import { Trash2 } from 'lucide-react';
 
 export default function EditCameraPage() {
   const params = useParams();
@@ -15,6 +16,8 @@ export default function EditCameraPage() {
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<'details' | 'accessories' | 'maintenance'>('details');
 
   const [formData, setFormData] = useState({
@@ -140,6 +143,27 @@ export default function EditCameraPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!camera) return;
+
+    setIsDeleting(true);
+    try {
+      const success = await deleteCamera(camera.id);
+      if (success) {
+        alert('Camera deleted successfully!');
+        router.push('/admin/cameras');
+      } else {
+        alert('Failed to delete camera. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error deleting camera:', error);
+      alert('Error deleting camera. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -168,6 +192,13 @@ export default function EditCameraPage() {
           <p className="text-gray-700 mt-1">Update camera details and manage accessories</p>
         </div>
         <div className="flex gap-3">
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" />
+            Delete
+          </button>
           <Link
             href={`/admin/cameras/${camera.id}`}
             className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
@@ -462,6 +493,59 @@ export default function EditCameraPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Delete Camera</h3>
+                <p className="text-sm text-gray-600">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800 font-medium mb-2">
+                Are you sure you want to delete <span className="font-bold">{camera.name}</span>?
+              </p>
+              <p className="text-xs text-red-600">
+                This will permanently remove the camera from your inventory. All associated data will be deleted.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Delete Camera
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

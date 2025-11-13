@@ -54,8 +54,20 @@ export default function BookingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Social media discount state (Canon R50 only)
+  const [socialMediaDiscount, setSocialMediaDiscount] = useState(false);
+  const discountPerDay = 5; // Fixed RM5 per day for Canon R50
+
+  // Check if camera is Canon R50
+  const isCanonR50 = camera.name.toLowerCase().includes('canon') && camera.name.toLowerCase().includes('r50');
+
+  // Calculate pricing with discount
+  const discountAmount = isCanonR50 && socialMediaDiscount ? discountPerDay * totalDays : 0;
+  const discountedTotalCost = totalCost - discountAmount;
+  const discountedDailyRate = isCanonR50 && socialMediaDiscount ? dailyRate - discountPerDay : dailyRate;
+
   const depositAmount = 100; // Fixed RM100 deposit
-  const finalPaymentAmount = totalCost; // Full rental amount (separate from deposit)
+  const finalPaymentAmount = discountedTotalCost; // Full rental amount (separate from deposit)
   // No fixed delivery fee - customers pay Lalamove/delivery service directly
 
   const handleInputChange = (field: keyof CustomerDetails, value: string) => {
@@ -108,14 +120,21 @@ export default function BookingForm({
 
       console.log('BookingForm: Final camera name used:', cameraName);
 
+      // Prepare notes with discount info if applicable
+      let finalNotes = specialRequests;
+      if (isCanonR50 && socialMediaDiscount) {
+        const discountNote = `\n\n💰 SOCIAL MEDIA DISCOUNT APPLIED:\n- Original Rate: RM${dailyRate}/day\n- Discounted Rate: RM${discountedDailyRate}/day\n- Discount: RM${discountPerDay}/day × ${totalDays} days = RM${discountAmount}\n- Customer shared/reposted/followed our account`;
+        finalNotes = (finalNotes || '') + discountNote;
+      }
+
       const bookingData: WebsiteBookingData = {
         camera_id: camera.id,
         camera_name: cameraName,
         start_date: formatDateForAPI(startDate),
         end_date: formatDateForAPI(endDate),
         total_days: totalDays,
-        daily_rate: dailyRate,
-        total_amount: totalCost, // Rental amount only (delivery fee handled separately)
+        daily_rate: discountedDailyRate,
+        total_amount: discountedTotalCost, // Rental amount only (delivery fee handled separately)
         deposit_amount: depositAmount, // Fixed RM100 deposit
         final_payment_amount: finalPaymentAmount, // Same as total_amount (rental only)
         customer_name: customerDetails.name.trim(),
@@ -129,7 +148,7 @@ export default function BookingForm({
         pickup_method: pickupMethod,
         pickup_address: pickupMethod === 'delivery' ? pickupAddress.trim() : undefined,
         delivery_fee: 0, // Customer pays Lalamove/delivery service directly
-        special_requests: specialRequests.trim() || undefined,
+        special_requests: finalNotes.trim() || undefined,
         booking_source: 'website'
       };
 
@@ -266,6 +285,39 @@ export default function BookingForm({
           )}
         </div>
 
+        {/* Social Media Discount - Canon R50 Only */}
+        {isCanonR50 && (
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h3 className="text-sm font-bold text-gray-900">🎉 Get RM5 OFF per day!</h3>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Follow/Share our Instagram or Facebook
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={socialMediaDiscount}
+                  onChange={(e) => setSocialMediaDiscount(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+            {socialMediaDiscount && (
+              <div className="mt-2 p-2 bg-white rounded border border-purple-200 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs text-purple-700 font-medium">
+                  ✅ Discount Applied: -RM{discountAmount} total
+                </p>
+                <p className="text-xs text-gray-600 mt-1">
+                  Please show proof of follow/share when picking up
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Special Requests */}
         <div>
           <label className="block text-xs font-medium text-gray-700 mb-1">
@@ -284,6 +336,23 @@ export default function BookingForm({
         <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
           <h4 className="font-semibold text-yellow-800 mb-2 text-xs">Payment Information</h4>
           <div className="text-xs text-yellow-700 space-y-1">
+            {isCanonR50 && socialMediaDiscount && (
+              <>
+                <div className="flex justify-between text-gray-500">
+                  <span className="line-through">Original Rate:</span>
+                  <span className="line-through">RM{dailyRate}/day</span>
+                </div>
+                <div className="flex justify-between text-purple-700 font-semibold">
+                  <span>Discounted Rate:</span>
+                  <span>RM{discountedDailyRate}/day 🎉</span>
+                </div>
+                <div className="flex justify-between text-green-700 font-semibold">
+                  <span>You Save:</span>
+                  <span>-RM{discountAmount}</span>
+                </div>
+                <div className="border-t border-yellow-300 my-1"></div>
+              </>
+            )}
             <div className="flex justify-between">
               <span>Deposit (Refundable):</span>
               <span className="font-semibold">RM{depositAmount}</span>
@@ -302,6 +371,11 @@ export default function BookingForm({
               <span className="font-semibold">Total Due:</span>
               <span className="font-bold text-base">RM{depositAmount + finalPaymentAmount}</span>
             </div>
+            {isCanonR50 && socialMediaDiscount && (
+              <p className="text-xs text-green-700 font-semibold mt-1 bg-green-50 border border-green-200 rounded p-1">
+                💰 You saved RM{discountAmount} with social media discount!
+              </p>
+            )}
             <p className="text-xs text-yellow-600 mt-1">
               The RM{depositAmount} deposit is fully refundable when equipment is returned in good condition.
             </p>

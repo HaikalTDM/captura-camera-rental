@@ -12,7 +12,8 @@ import {
   Calendar,
   Eye,
   Edit,
-  TrendingUp
+  TrendingUp,
+  Plus
 } from 'lucide-react';
 
 // Memoized camera card component
@@ -169,9 +170,18 @@ export default function CamerasPage() {
             <h1 className="text-4xl font-bold text-slate-900 mb-2">Camera Inventory</h1>
             <p className="text-slate-600 text-lg">Manage your camera equipment and availability</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Cameras</p>
-            <p className="text-3xl font-bold text-slate-900">{cameras.length}</p>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/mobile/cameras"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-xl font-bold transition-all hover:shadow-lg hover:scale-105 flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add Camera
+            </Link>
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Cameras</p>
+              <p className="text-3xl font-bold text-slate-900">{cameras.length}</p>
+            </div>
           </div>
         </div>
 

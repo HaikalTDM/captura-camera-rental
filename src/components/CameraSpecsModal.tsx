@@ -105,6 +105,47 @@ export default function CameraSpecsModal({ camera, isOpen, onClose }: CameraSpec
           'Voice control'
         ]
       };
+    } else if (name.includes('canon') && name.includes('r50')) {
+      return {
+        specs: {
+          'Sensor': '24.2MP APS-C CMOS',
+          'Processor': 'DIGIC X',
+          'Video Resolution': '4K/30fps, 1080p/120fps',
+          'Photo Resolution': '24.2MP (6000 x 4000)',
+          'ISO Range': '100-32000 (expandable to 51200)',
+          'Autofocus': 'Dual Pixel CMOS AF II',
+          'Continuous Shooting': 'Up to 15 fps',
+          'Battery Life': 'Approx. 370 shots',
+          'Weight': '328g',
+          'Storage': 'SD/SDHC/SDXC card',
+          'Connectivity': 'Wi-Fi, Bluetooth, USB-C',
+          'Daily Capacity': '1000 snaps/day'
+        },
+        accessories: [
+          'Canon R50 Camera Body',
+          'Professional Tripod',
+          'UV Filter Lens',
+          'Premium Carrying Bag',
+          '64GB SD Card (ready to use)',
+          'Battery Charger',
+          'USB-C Cable',
+          'Lens Cap',
+          'Camera Strap',
+          'Quick Start Guide'
+        ],
+        features: [
+          '24.2MP APS-C sensor',
+          '4K/30fps video recording',
+          'Dual Pixel CMOS AF II with Eye Detection',
+          'Up to 15 fps continuous shooting',
+          '1000 snaps per day capacity',
+          'Vari-angle touchscreen LCD',
+          'Creative Assist mode',
+          'Wi-Fi & Bluetooth connectivity',
+          'Compact mirrorless design',
+          'Perfect for weddings & events'
+        ]
+      };
     }
     
     // Default specs

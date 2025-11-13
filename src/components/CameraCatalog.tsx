@@ -93,6 +93,13 @@ export default function CameraCatalog({ onBookCamera }: CameraCatalogProps) {
                 variant: '/images/Insta360-X5-1.webp'
               };
             }
+            // Canon R50
+            else if (name.includes('canon') && name.includes('r50')) {
+              return {
+                main: '/images/R50.png',
+                variant: '/images/R50-1.png'
+              };
+            }
             // DJI Osmo Pocket 3
             else if (name.includes('osmo') && name.includes('pocket')) {
               return {
