@@ -98,7 +98,7 @@ export default function AdminLayout({
     <AdminPWAWrapper>
       <ErrorBoundary>
         <AdminDataProvider>
-          <div className="min-h-screen bg-slate-100 flex overflow-x-hidden">
+          <div className="h-screen bg-slate-100 flex overflow-hidden">
       {/* Mobile sidebar overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -115,7 +115,7 @@ export default function AdminLayout({
 
       {/* Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0 lg:relative">
-        <div className="flex flex-col h-full w-[280px] bg-slate-50 m-4 rounded-3xl shadow-lg">
+        <div className="flex flex-col h-[calc(100vh-2rem)] w-[280px] bg-slate-50 m-4 rounded-3xl shadow-lg overflow-hidden">
           {/* Logo */}
           <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-200">
             <div className="flex items-center gap-3">
@@ -246,12 +246,12 @@ export default function AdminLayout({
       </motion.div>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-0 w-full max-w-full">
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-0 w-full max-w-full overflow-hidden">
         {/* Top bar */}
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white border-b border-slate-200 sticky top-0 z-30 w-full"
+          className="bg-white border-b border-slate-200 z-30 w-full flex-shrink-0"
         >
           <div className="flex items-center justify-between h-16 px-6 max-w-full">
             <div className="flex items-center gap-4">
@@ -287,12 +287,12 @@ export default function AdminLayout({
         </motion.div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 bg-slate-100 overflow-x-hidden w-full max-w-full">
+        <main className="flex-1 p-6 bg-slate-100 overflow-y-auto overflow-x-hidden w-full max-w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="max-w-full overflow-x-hidden"
+            className="max-w-full"
           >
             {children}
           </motion.div>
