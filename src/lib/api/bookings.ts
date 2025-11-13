@@ -190,10 +190,19 @@ export async function createBooking(bookingData: {
   notes?: string | null
 }): Promise<Booking | null> {
   try {
+    // Clean the data to convert empty strings to null for date fields
+    const cleanedData = {
+      ...bookingData,
+      deposit_paid_date: bookingData.deposit_paid_date || null,
+      final_payment_paid_date: bookingData.final_payment_paid_date || null,
+      pickup_address: bookingData.pickup_address || null,
+      notes: bookingData.notes || null
+    };
+
     // First, insert the booking without joins
     const { data: bookingRecord, error } = await supabase
       .from('bookings')
-      .insert([bookingData])
+      .insert([cleanedData])
       .select('*')
       .single()
 
@@ -285,7 +294,7 @@ export async function getAllCustomers(): Promise<Customer[]> {
   }
 }
 
-// Create new customer
+// Create new customer or return existing one
 export async function createCustomer(customerData: {
   full_name: string
   email: string
@@ -297,11 +306,61 @@ export async function createCustomer(customerData: {
   emergency_contact_phone?: string
 }): Promise<Customer | null> {
   try {
-    // Map full_name to both name and full_name for database insertion
+    // First, check if customer already exists by email
+    const { data: existingCustomers, error: searchError } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('email', customerData.email)
+      .limit(1);
+
+    if (searchError) {
+      console.error('Error searching for existing customer:', searchError);
+      return null;
+    }
+
+    // If customer exists, update their info and return
+    if (existingCustomers && existingCustomers.length > 0) {
+      const existingCustomer = existingCustomers[0];
+      console.log('Found existing customer:', existingCustomer.id);
+
+      // Update customer info with new data
+      const customerUpdates: Partial<Customer> = {
+        full_name: customerData.full_name,
+        name: customerData.full_name,
+        phone: customerData.phone,
+        whatsapp: customerData.whatsapp || customerData.phone,
+        address: customerData.address || existingCustomer.address,
+        id_number: customerData.id_number || existingCustomer.id_number,
+        emergency_contact_name: customerData.emergency_contact_name || existingCustomer.emergency_contact_name,
+        emergency_contact_phone: customerData.emergency_contact_phone || existingCustomer.emergency_contact_phone,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data: updatedCustomer, error: updateError } = await supabase
+        .from('customers')
+        .update(customerUpdates)
+        .eq('id', existingCustomer.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error('Error updating customer:', updateError);
+        // Return existing customer even if update fails
+        return existingCustomer;
+      }
+
+      return updatedCustomer;
+    }
+
+    // Customer doesn't exist, create new one
+    console.log('Creating new customer');
     const dbCustomerData = {
       ...customerData,
       name: customerData.full_name,
-      full_name: customerData.full_name
+      full_name: customerData.full_name,
+      whatsapp: customerData.whatsapp || customerData.phone,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
 
     const { data, error } = await supabase
@@ -311,8 +370,21 @@ export async function createCustomer(customerData: {
       .single()
 
     if (error) {
-      console.error('Error creating customer:', error)
-      return null
+      console.error('Error creating customer:', error);
+
+      // Handle duplicate key error (race condition)
+      if (error.code === '23505') {
+        console.log('Duplicate customer detected (race condition), fetching existing customer');
+        const { data: existingCustomer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('email', customerData.email)
+          .single();
+
+        return existingCustomer || null;
+      }
+
+      return null;
     }
 
     return data

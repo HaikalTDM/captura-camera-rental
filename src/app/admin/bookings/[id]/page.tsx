@@ -6,6 +6,28 @@ import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import {
+  ArrowLeft,
+  Edit3,
+  Trash2,
+  User,
+  Camera,
+  FileText,
+  DollarSign,
+  Settings,
+  Package,
+  Zap,
+  MessageCircle,
+  Phone,
+  Printer,
+  Bell,
+  Calendar,
+  MapPin,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
 
 export default function BookingDetailsPage() {
   const params = useParams();
@@ -390,417 +412,523 @@ Thank you for choosing Captura! 😊`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/admin/bookings"
-            className="text-gray-600 hover:text-gray-900 text-2xl"
-          >
-            ←
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Booking #{booking.id.slice(0, 8)}</h1>
-            <p className="text-gray-600">Created on {new Date(booking.created_at).toLocaleDateString()}</p>
-          </div>
-        </div>
-        <div className="flex gap-3">
-          <span className={`px-4 py-2 rounded-lg text-sm font-medium border ${getStatusColor(booking.booking_status || 'pending')}`}>
-            {(booking.booking_status || 'pending').toUpperCase()}
-          </span>
-          <Link
-            href={`/admin/bookings/${booking.id}/edit`}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Edit
-          </Link>
-          <button
-            onClick={handleDeleteBooking}
-            disabled={isDeleting}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-          >
-            {isDeleting ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Customer Information */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              👤 Customer Information
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Name</label>
-                <p className="text-lg font-semibold text-gray-900">
-                  {booking.customer?.full_name || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Phone</label>
-                <p className="text-lg text-gray-900">
-                  {booking.customer?.phone ? (
-                    <a href={`tel:${booking.customer.phone}`} className="hover:text-blue-600">
-                      {booking.customer.phone}
-                    </a>
-                  ) : (
-                    'N/A'
-                  )}
-                </p>
-              </div>
-              <div className="md:col-span-2">
-                <label className="text-sm font-medium text-gray-500">Email</label>
-                <p className="text-lg text-gray-900">
-                  {booking.customer?.email ? (
-                    <a href={`mailto:${booking.customer.email}`} className="hover:text-blue-600">
-                      {booking.customer.email}
-                    </a>
-                  ) : (
-                    'N/A'
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Camera & Rental Details */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              📷 Rental Details
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Camera</label>
-                <p className="text-lg font-semibold text-gray-900">{booking.camera_name}</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Start Date</label>
-                  <p className="text-lg text-gray-900">{booking.start_date}</p>
-                  <p className="text-sm text-gray-500">Method: {booking.pickup_method}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">End Date</label>
-                  <p className="text-lg text-gray-900">{booking.end_date}</p>
-                  <p className="text-sm text-gray-500">Source: {booking.booking_source}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">Duration</label>
-                  <p className="text-lg text-gray-900">{booking.total_days} days</p>
-                  <p className="text-sm text-gray-500">RM{booking.daily_rate}/day</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                📝 Notes
-              </h3>
-              <button
-                onClick={() => isEditing ? saveNotes() : setIsEditing(true)}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-              >
-                {isEditing ? 'Save' : 'Edit'}
-              </button>
-            </div>
-            {isEditing ? (
-              <textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Add notes about this booking..."
-              />
-            ) : (
-              <p className="text-gray-700 whitespace-pre-wrap">
-                {booking.notes || 'No notes added yet.'}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/bookings"
+              className="group flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200 shadow-sm"
+            >
+              <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:text-slate-900 transition-colors" />
+            </Link>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                Booking #{booking.id.slice(0, 8)}
+              </h1>
+              <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Created on {new Date(booking.created_at).toLocaleDateString('en-MY', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
               </p>
-            )}
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 ${getStatusColor(booking.booking_status || 'pending')}`}>
+              {(booking.booking_status || 'pending').toUpperCase()}
+            </span>
+            <Link
+              href={`/admin/bookings/${booking.id}/edit`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+            >
+              <Edit3 className="w-4 h-4" />
+              Edit
+            </Link>
+            <button
+              onClick={handleDeleteBooking}
+              disabled={isDeleting}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4" />
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </button>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Payment Summary */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              💰 Payment Summary
-            </h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Total Amount</span>
-                <span className="font-semibold">RM{booking.total_amount}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Details */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Customer Information */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <User className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Customer Information</h3>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Deposit Amount</span>
-                <span className="text-blue-600 font-semibold">RM{booking.deposit_amount}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Deposit Paid</span>
-                <span className={`font-semibold ${booking.deposit_paid ? 'text-green-600' : 'text-red-600'}`}>
-                  {booking.deposit_paid ? 'Yes' : 'No'}
-                </span>
-              </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Final Payment</span>
-                  <span className="font-bold text-gray-900">RM{booking.final_payment_amount}</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</label>
+                  <p className="text-base font-semibold text-slate-900">
+                    {booking.customer?.full_name || 'N/A'}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Phone</label>
+                  <p className="text-base text-slate-900">
+                    {booking.customer?.phone ? (
+                      <a
+                        href={`tel:${booking.customer.phone}`}
+                        className="hover:text-slate-600 transition-colors inline-flex items-center gap-2 group"
+                      >
+                        <Phone className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
+                        {booking.customer.phone}
+                      </a>
+                    ) : (
+                      'N/A'
+                    )}
+                  </p>
+                </div>
+                <div className="md:col-span-2 space-y-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</label>
+                  <p className="text-base text-slate-900">
+                    {booking.customer?.email ? (
+                      <a
+                        href={`mailto:${booking.customer.email}`}
+                        className="hover:text-slate-600 transition-colors"
+                      >
+                        {booking.customer.email}
+                      </a>
+                    ) : (
+                      'N/A'
+                    )}
+                  </p>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Final Payment Paid</span>
-                <span className={`font-semibold ${booking.final_payment_paid ? 'text-green-600' : 'text-red-600'}`}>
-                  {booking.final_payment_paid ? 'Yes' : 'No'}
-                </span>
+            </div>
+
+            {/* Camera & Rental Details */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <Camera className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Rental Details</h3>
               </div>
-              <div className="border-t pt-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Deposit Refunded</span>
-                  <span className={`font-semibold ${booking.deposit_refunded ? 'text-green-600' : 'text-orange-600'}`}>
-                    {booking.deposit_refunded ? 'Yes' : 'Pending'}
+              <div className="space-y-6">
+                <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Camera</label>
+                  <p className="text-xl font-bold text-slate-900">{booking.camera_name}</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      Start Date
+                    </label>
+                    <p className="text-base font-semibold text-slate-900">{booking.start_date}</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {booking.pickup_method === 'pickup' ? 'Pickup' : 'Delivery'}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
+                      End Date
+                    </label>
+                    <p className="text-base font-semibold text-slate-900">{booking.end_date}</p>
+                    <p className="text-xs text-slate-500 capitalize">{booking.booking_source}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5" />
+                      Duration
+                    </label>
+                    <p className="text-base font-semibold text-slate-900">{booking.total_days} days</p>
+                    <p className="text-xs text-slate-500">RM{booking.daily_rate}/day</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                    <FileText className="w-5 h-5 text-slate-700" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Notes</h3>
+                </div>
+                <button
+                  onClick={() => isEditing ? saveNotes() : setIsEditing(true)}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all duration-200"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  {isEditing ? 'Save' : 'Edit'}
+                </button>
+              </div>
+              {isEditing ? (
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="w-full h-32 p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-all duration-200 text-slate-900 placeholder:text-slate-400"
+                  placeholder="Add notes about this booking..."
+                />
+              ) : (
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <p className="text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
+                    {booking.notes || 'No notes added yet.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Payment Summary */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <DollarSign className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Payment Summary</h3>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Total Amount</span>
+                  <span className="text-lg font-bold text-slate-900">RM{booking.total_amount}</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
+                  <span className="text-sm font-medium text-blue-900">Deposit Amount</span>
+                  <span className="text-lg font-bold text-blue-600">RM{booking.deposit_amount}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Deposit Paid</span>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                    booking.deposit_paid
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {booking.deposit_paid ? (
+                      <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
+                    ) : (
+                      <><XCircle className="w-3.5 h-3.5" /> No</>
+                    )}
                   </span>
                 </div>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-3">
-                <p className="text-xs text-blue-700">
-                  <strong>New Payment Structure:</strong><br/>
-                  • Deposit: RM100 (refundable)<br/>
-                  • Rental: RM{booking.final_payment_amount}<br/>
-                  • Total Due: RM{100 + booking.final_payment_amount}
-                </p>
-              </div>
-            </div>
-
-            {!booking.deposit_paid && (
-              <button
-                onClick={() => handleDepositPaymentUpdate(true)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-4 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'Mark Deposit as Paid'
-                )}
-              </button>
-            )}
-
-            {booking.deposit_paid && (
-              <button
-                onClick={() => handleDepositPaymentUpdate(false)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-4 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'Mark Deposit as Unpaid'
-                )}
-              </button>
-            )}
-
-            {!booking.final_payment_paid && booking.deposit_paid && (
-              <button
-                onClick={() => handleFinalPaymentUpdate(true)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-2 bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'Mark Final Payment as Paid'
-                )}
-              </button>
-            )}
-
-            {booking.final_payment_paid && (
-              <button
-                onClick={() => handleFinalPaymentUpdate(false)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-2 bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Updating...
-                  </>
-                ) : (
-                  'Mark Final Payment as Unpaid'
-                )}
-              </button>
-            )}
-
-            {/* Deposit Refund Management */}
-            {booking.deposit_paid && !booking.deposit_refunded && (
-              <button
-                onClick={() => handleDepositRefundUpdate(true)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-2 bg-purple-500 hover:bg-purple-600 disabled:bg-purple-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Processing...
-                  </>
-                ) : (
-                  'Process Deposit Refund'
-                )}
-              </button>
-            )}
-
-            {booking.deposit_refunded && (
-              <button
-                onClick={() => handleDepositRefundUpdate(false)}
-                disabled={isUpdatingPayment}
-                className="w-full mt-2 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                {isUpdatingPayment ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Processing...
-                  </>
-                ) : (
-                  'Cancel Deposit Refund'
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Status Management */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              🔄 Status Management
-            </h3>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium text-gray-500 block mb-2">Booking Status</label>
-                <select
-                  value={booking.booking_status || 'pending'}
-                  onChange={(e) => updateBookingStatus(e.target.value as any)}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500 block mb-2">Deposit Status</label>
-                <select
-                  value={booking.deposit_paid ? 'paid' : 'unpaid'}
-                  onChange={(e) => handleDepositPaymentUpdate(e.target.value === 'paid')}
-                  disabled={isUpdatingPayment}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white disabled:bg-gray-100"
-                >
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500 block mb-2">Final Payment Status</label>
-                <select
-                  value={booking.final_payment_paid ? 'paid' : 'unpaid'}
-                  onChange={(e) => handleFinalPaymentUpdate(e.target.value === 'paid')}
-                  disabled={isUpdatingPayment}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white disabled:bg-gray-100"
-                >
-                  <option value="unpaid">Unpaid</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Equipment Pickup & Return Management */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              📦 Equipment Pickup & Return
-            </h3>
-            <div className="space-y-6">
-              {/* Pickup Status */}
-              <div className="border-b border-gray-200 pb-4">
-                <h4 className="text-md font-semibold text-gray-800 mb-3">Equipment Pickup</h4>
-                <div className="space-y-3">
+                <div className="border-t border-slate-200 pt-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Pickup Status:</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      booking.equipment_picked_up
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                    <span className="text-sm text-slate-600">Final Payment</span>
+                    <span className="text-lg font-bold text-slate-900">RM{booking.final_payment_amount}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-slate-600">Final Payment Paid</span>
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                    booking.final_payment_paid
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {booking.final_payment_paid ? (
+                      <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
+                    ) : (
+                      <><XCircle className="w-3.5 h-3.5" /> No</>
+                    )}
+                  </span>
+                </div>
+                <div className="border-t border-slate-200 pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-600">Deposit Refunded</span>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                      booking.deposit_refunded
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
                     }`}>
-                      {booking.equipment_picked_up ? 'Picked Up' : 'Not Picked Up'}
+                      {booking.deposit_refunded ? (
+                        <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
+                      ) : (
+                        <><AlertCircle className="w-3.5 h-3.5" /> Pending</>
+                      )}
                     </span>
                   </div>
+                </div>
+                <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-4 mt-4">
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    <span className="font-bold text-slate-900 block mb-2">Payment Structure:</span>
+                    • Deposit: RM100 (refundable)<br/>
+                    • Rental: RM{booking.final_payment_amount}<br/>
+                    • <span className="font-semibold">Total Due: RM{100 + booking.final_payment_amount}</span>
+                  </p>
+                </div>
+              </div>
 
-                  {booking.equipment_pickup_date && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Pickup Date:</span>
-                      <span className="text-sm text-gray-900">
-                        {new Date(booking.equipment_pickup_date).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
+              <div className="space-y-2 mt-6">
+                {!booking.deposit_paid && (
+                  <button
+                    onClick={() => handleDepositPaymentUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-300 disabled:to-blue-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Mark Deposit as Paid
+                      </>
+                    )}
+                  </button>
+                )}
 
-                  {booking.equipment_condition_pickup && (
+                {booking.deposit_paid && (
+                  <button
+                    onClick={() => handleDepositPaymentUpdate(false)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-amber-300 disabled:to-amber-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4" />
+                        Mark Deposit as Unpaid
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {!booking.final_payment_paid && booking.deposit_paid && (
+                  <button
+                    onClick={() => handleFinalPaymentUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-emerald-300 disabled:to-emerald-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Mark Final Payment as Paid
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {booking.final_payment_paid && (
+                  <button
+                    onClick={() => handleFinalPaymentUpdate(false)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-red-300 disabled:to-red-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4" />
+                        Mark Final Payment as Unpaid
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Deposit Refund Management */}
+                {booking.deposit_paid && !booking.deposit_refunded && (
+                  <button
+                    onClick={() => handleDepositRefundUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-purple-300 disabled:to-purple-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Process Deposit Refund
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {booking.deposit_refunded && (
+                  <button
+                    onClick={() => handleDepositRefundUpdate(false)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-amber-300 disabled:to-amber-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    {isUpdatingPayment ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="w-4 h-4" />
+                        Cancel Deposit Refund
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Status Management */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <Settings className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Status Management</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Booking Status</label>
+                  <select
+                    value={booking.booking_status || 'pending'}
+                    onChange={(e) => updateBookingStatus(e.target.value as any)}
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white transition-all duration-200 font-medium"
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Deposit Status</label>
+                  <select
+                    value={booking.deposit_paid ? 'paid' : 'unpaid'}
+                    onChange={(e) => handleDepositPaymentUpdate(e.target.value === 'paid')}
+                    disabled={isUpdatingPayment}
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  >
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Final Payment Status</label>
+                  <select
+                    value={booking.final_payment_paid ? 'paid' : 'unpaid'}
+                    onChange={(e) => handleFinalPaymentUpdate(e.target.value === 'paid')}
+                    disabled={isUpdatingPayment}
+                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  >
+                    <option value="unpaid">Unpaid</option>
+                    <option value="paid">Paid</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Equipment Pickup & Return Management */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <Package className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Equipment Pickup & Return</h3>
+              </div>
+              <div className="space-y-6">
+                {/* Pickup Status */}
+                <div className="border-b border-slate-200 pb-6">
+                  <h4 className="text-sm font-bold text-slate-900 mb-4">Equipment Pickup</h4>
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Condition at Pickup:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        booking.equipment_condition_pickup === 'excellent' ? 'bg-green-100 text-green-800' :
-                        booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-800' :
-                        booking.equipment_condition_pickup === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
+                      <span className="text-sm text-slate-600">Pickup Status</span>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                        booking.equipment_picked_up
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
                       }`}>
-                        {booking.equipment_condition_pickup.charAt(0).toUpperCase() + booking.equipment_condition_pickup.slice(1)}
+                        {booking.equipment_picked_up ? (
+                          <><CheckCircle2 className="w-3.5 h-3.5" /> Picked Up</>
+                        ) : (
+                          <><AlertCircle className="w-3.5 h-3.5" /> Not Picked Up</>
+                        )}
                       </span>
                     </div>
-                  )}
 
-                  {booking.equipment_pickup_notes && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-600 block mb-1">Pickup Notes:</span>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                        {booking.equipment_pickup_notes}
-                      </p>
-                    </div>
-                  )}
+                    {booking.equipment_pickup_date && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Pickup Date</span>
+                        <span className="text-sm font-medium text-slate-900">
+                          {new Date(booking.equipment_pickup_date).toLocaleString('en-MY', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="flex gap-2">
+                    {booking.equipment_condition_pickup && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Condition</span>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                          booking.equipment_condition_pickup === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
+                          booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
+                          booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {booking.equipment_condition_pickup.charAt(0).toUpperCase() + booking.equipment_condition_pickup.slice(1)}
+                        </span>
+                      </div>
+                    )}
+
+                    {booking.equipment_pickup_notes && (
+                      <div>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Pickup Notes</span>
+                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                          {booking.equipment_pickup_notes}
+                        </p>
+                      </div>
+                    )}
+
                     <button
                       onClick={() => handlePickupStatusUpdate(!booking.equipment_picked_up, '', 'excellent')}
                       disabled={isUpdatingPickup}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${
                         booking.equipment_picked_up
-                          ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                          : 'bg-green-500 hover:bg-green-600 text-white'
-                      } disabled:bg-gray-400`}
+                          ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
+                          : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
+                      } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingPickup ? (
                         <>
-                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Updating...
                         </>
+                      ) : booking.equipment_picked_up ? (
+                        <><XCircle className="w-4 h-4" /> Mark as Not Picked Up</>
                       ) : (
-                        booking.equipment_picked_up ? 'Mark as Not Picked Up' : 'Mark as Picked Up'
+                        <><CheckCircle2 className="w-4 h-4" /> Mark as Picked Up</>
                       )}
                     </button>
                   </div>
                 </div>
-              </div>
 
               {/* Return Status */}
               <div>
