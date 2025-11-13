@@ -24,7 +24,8 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Heart
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -92,6 +93,7 @@ export default function AdminLayout({
     { name: 'Customers', href: '/admin/customers', icon: Users },
     { name: 'Gallery', href: '/admin/gallery', icon: ImageIcon },
     { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { name: 'Mother', href: '/admin/mother', icon: Heart },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 

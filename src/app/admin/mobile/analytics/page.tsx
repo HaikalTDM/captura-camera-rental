@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAllBookings } from '@/lib/api/bookings';
-import type { Booking } from '@/lib/supabase';
+import { getAllBookings, getAllCameras } from '@/lib/api/bookings';
+import type { Booking, Camera } from '@/lib/supabase';
+import { excludeMotherBookings } from '@/lib/utils/revenue';
 
 type TimeFilter = 'monthly' | 'weekly' | 'today';
 
 export default function MobileAnalytics() {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [cameras, setCameras] = useState<Camera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [revenueFilter, setRevenueFilter] = useState<TimeFilter>('weekly');
@@ -22,8 +24,12 @@ export default function MobileAnalytics() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const bookingsData = await getAllBookings();
+      const [bookingsData, camerasData] = await Promise.all([
+        getAllBookings(),
+        getAllCameras()
+      ]);
       setBookings(bookingsData);
+      setCameras(camerasData);
     } catch (error) {
       console.error('Error loading analytics data:', error);
     } finally {
@@ -31,9 +37,12 @@ export default function MobileAnalytics() {
     }
   };
 
+  // Exclude Mother's R50 bookings from main CAPTURA analytics
+  const capturaBookings = excludeMotherBookings(bookings, cameras);
+
   // Calculate metrics
-  const totalBookings = bookings.length;
-  const totalRevenue = bookings
+  const totalBookings = capturaBookings.length;
+  const totalRevenue = capturaBookings
     .filter(b => b.deposit_paid && b.final_payment_paid)
     .reduce((sum, b) => {
       const isNewPaymentSystem = b.deposit_amount === 100;
@@ -46,13 +55,13 @@ export default function MobileAnalytics() {
   const getRevenueChartData = () => {
     const data = [];
     const days = revenueFilter === 'weekly' ? 7 : revenueFilter === 'monthly' ? 30 : 1;
-    
+
     for (let i = days - 1; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      
-      const dayBookings = bookings.filter(b => b.created_at?.startsWith(dateStr));
+
+      const dayBookings = capturaBookings.filter(b => b.created_at?.startsWith(dateStr));
       const revenue = dayBookings
         .filter(b => b.deposit_paid && b.final_payment_paid)
         .reduce((sum, b) => {

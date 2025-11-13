@@ -23,6 +23,7 @@ import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
 import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { excludeMotherBookings } from '@/lib/utils/revenue';
 
 export default function AdminDashboard() {
   const { bookings, cameras, stats, mutate } = useAdminData();
@@ -38,8 +39,11 @@ export default function AdminDashboard() {
   const dashboardData = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
 
+    // Exclude Mother's R50 bookings from main CAPTURA dashboard
+    const capturaBookings = excludeMotherBookings(bookings, cameras);
+
     // Today's pickups
-    const todayPickups = bookings.filter(b => {
+    const todayPickups = capturaBookings.filter(b => {
       if (b.pickup_date) {
         return b.pickup_date === today &&
                (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
@@ -55,36 +59,36 @@ export default function AdminDashboard() {
              !b.equipment_picked_up;
     });
 
-    const activeRentals = bookings.filter(b =>
+    const activeRentals = capturaBookings.filter(b =>
       b.booking_status === 'confirmed' &&
       b.equipment_picked_up &&
       !b.equipment_returned
     );
 
-    const todayReturns = bookings.filter(b =>
+    const todayReturns = capturaBookings.filter(b =>
       b.end_date === today &&
       b.equipment_picked_up &&
       !b.equipment_returned
     );
 
-    const recentBookings = bookings.slice(0, 5);
-    const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
+    const recentBookings = capturaBookings.slice(0, 5);
+    const pendingApprovals = capturaBookings.filter(b => b.booking_status === 'pending_approval');
 
-    const overduePayments = bookings.filter(b =>
+    const overduePayments = capturaBookings.filter(b =>
       !b.final_payment_paid &&
       new Date(b.end_date) < new Date() &&
       (b.booking_status === 'completed' || b.status === 'completed')
     );
 
-    // Calculate revenues
-    const totalRevenue = bookings
+    // Calculate revenues (excluding Mother's R50)
+    const totalRevenue = capturaBookings
       .filter(b => b.deposit_paid && b.final_payment_paid)
       .reduce((sum, b) => {
         const isNewPaymentSystem = b.deposit_amount === 100;
         return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
       }, 0);
 
-    const monthlyRevenue = bookings
+    const monthlyRevenue = capturaBookings
       .filter(b =>
         b.deposit_paid &&
         b.final_payment_paid &&

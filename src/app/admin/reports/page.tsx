@@ -20,6 +20,7 @@ import {
   Users,
   ShoppingBag
 } from 'lucide-react';
+import { excludeMotherBookings } from '@/lib/utils/revenue';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('month');
@@ -60,8 +61,11 @@ export default function ReportsPage() {
     );
   }
 
+  // Exclude Mother's R50 bookings from main CAPTURA reports
+  const capturaBookings = excludeMotherBookings(bookings, cameras);
+
   // Calculate revenue metrics - only count fully paid bookings
-  const fullyPaidBookings = bookings.filter(b => b.deposit_paid && b.final_payment_paid);
+  const fullyPaidBookings = capturaBookings.filter(b => b.deposit_paid && b.final_payment_paid);
   const totalRevenue = fullyPaidBookings.reduce((sum, b) => {
     // FIXED: Only count actual revenue (final payment), exclude refundable deposits
     // Backward compatible: new system (deposit=100) vs old system (use total_amount minus deposit)
@@ -77,35 +81,37 @@ export default function ReportsPage() {
       return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
 
-  // Calculate booking metrics
-  const totalBookings = bookings.length;
-  const activeBookings = bookings.filter(b => b.status === 'active').length;
-  const pendingBookings = bookings.filter(b => b.status === 'pending').length;
-  const completedBookings = bookings.filter(b => b.status === 'completed');
+  // Calculate booking metrics (using CAPTURA bookings only)
+  const totalBookings = capturaBookings.length;
+  const activeBookings = capturaBookings.filter(b => b.status === 'active').length;
+  const pendingBookings = capturaBookings.filter(b => b.status === 'pending').length;
+  const completedBookings = capturaBookings.filter(b => b.status === 'completed');
   const completedBookingsCount = completedBookings.length;
 
-  // Calculate camera performance
-  const cameraPerformance = cameras.map(camera => {
-    const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
-    const paidCameraBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
-    const revenue = paidCameraBookings.reduce((sum, b) => {
-      // FIXED: Only count actual revenue (final payment), exclude refundable deposits
-      const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
-    }, 0);
-    const utilization = totalBookings > 0 ? (cameraBookings.length / totalBookings) * 100 : 0;
+  // Calculate camera performance (exclude Mother's R50 from performance metrics)
+  const cameraPerformance = cameras
+    .filter(camera => camera.name !== 'Canon R50 - Mother')
+    .map(camera => {
+      const cameraBookings = capturaBookings.filter(b => b.camera_id === camera.id);
+      const paidCameraBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
+      const revenue = paidCameraBookings.reduce((sum, b) => {
+        // FIXED: Only count actual revenue (final payment), exclude refundable deposits
+        const isNewPaymentSystem = b.deposit_amount === 100;
+        return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
+      }, 0);
+      const utilization = totalBookings > 0 ? (cameraBookings.length / totalBookings) * 100 : 0;
 
-    return {
-      ...camera,
-      bookings: cameraBookings.length,
-      revenue,
-      utilization: Math.round(utilization)
-    };
-  }).sort((a, b) => b.revenue - a.revenue);
+      return {
+        ...camera,
+        bookings: cameraBookings.length,
+        revenue,
+        utilization: Math.round(utilization)
+      };
+    }).sort((a, b) => b.revenue - a.revenue);
 
-  // Calculate customer metrics
+  // Calculate customer metrics (using CAPTURA bookings only)
   const customerMetrics = customers.map(customer => {
-    const customerBookings = bookings.filter(b => b.customer_id === customer.id);
+    const customerBookings = capturaBookings.filter(b => b.customer_id === customer.id);
     const paidCustomerBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
     const totalSpent = paidCustomerBookings.reduce((sum, b) => {
       // FIXED: Only count actual revenue (final payment), exclude refundable deposits

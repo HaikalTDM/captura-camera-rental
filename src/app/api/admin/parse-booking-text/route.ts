@@ -16,6 +16,7 @@ interface ParsedBookingData {
   pickup_method?: 'pickup' | 'delivery';
   pickup_address?: string;
   notes?: string;
+  is_mother_booking?: boolean; // Flag for Mother's R50 bookings
   confidence: {
     customer_name: 'high' | 'medium' | 'low' | 'none';
     customer_phone: 'high' | 'medium' | 'low' | 'none';
@@ -43,6 +44,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check for Mother's R50 booking keyword
+    const isMotherBooking = text.toLowerCase().includes('mother') &&
+                           (text.toLowerCase().includes('r50') || text.toLowerCase().includes('canon'));
+
     // Build camera list for AI context
     const cameraList = availableCameras?.map((c: any) => `${c.name} (${c.brand} ${c.model})`).join(', ') || 'Sony A7 III, GoPro Hero 11, Canon EOS R6, DJI Osmo Action 4';
 
@@ -50,6 +55,10 @@ export async function POST(request: NextRequest) {
 
 AVAILABLE CAMERAS:
 ${cameraList}
+
+SPECIAL KEYWORD DETECTION:
+- If the message contains "mother" + "R50" or "mother" + "Canon", this is a booking for Mother's Canon R50 camera
+- Set camera_name to "Canon R50 - Mother" for these bookings
 
 EXTRACTION RULES:
 1. **Customer Name**: Extract full name (first + last name if available)
@@ -80,12 +89,13 @@ RESPONSE FORMAT (JSON only, no markdown):
   "customer_phone": "formatted as +60xxxxxxxxx or null",
   "customer_email": "extracted email or null",
   "customer_whatsapp": "same as phone or null",
-  "camera_name": "matched camera name or null",
+  "camera_name": "matched camera name or null (use 'Canon R50 - Mother' if mother keyword detected)",
   "start_date": "YYYY-MM-DD or null",
   "end_date": "YYYY-MM-DD or null",
   "pickup_method": "pickup or delivery or null",
   "pickup_address": "extracted address or null",
   "notes": "special requests or null",
+  "is_mother_booking": true if mother keyword detected, false otherwise,
   "confidence": {
     "customer_name": "high/medium/low/none",
     "customer_phone": "high/medium/low/none",
@@ -160,6 +170,7 @@ IMPORTANT:
       pickup_method: parsedData.pickup_method || undefined,
       pickup_address: parsedData.pickup_address || undefined,
       notes: parsedData.notes || undefined,
+      is_mother_booking: isMotherBooking || parsedData.is_mother_booking || false,
       confidence: parsedData.confidence || {
         customer_name: 'none',
         customer_phone: 'none',
@@ -168,6 +179,11 @@ IMPORTANT:
         dates: 'none'
       }
     };
+
+    // Override camera name if Mother booking detected
+    if (isMotherBooking && !cleanedData.camera_name?.includes('Mother')) {
+      cleanedData.camera_name = 'Canon R50 - Mother';
+    }
 
     return NextResponse.json({
       success: true,

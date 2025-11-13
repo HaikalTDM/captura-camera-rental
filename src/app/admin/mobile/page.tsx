@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
 import type { Booking, Camera } from '@/lib/supabase';
 import Link from 'next/link';
+import { excludeMotherBookings } from '@/lib/utils/revenue';
 
 export default function MobileDashboard() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -30,15 +31,19 @@ export default function MobileDashboard() {
     setIsDarkMode(darkMode);
   }, []);
 
+  const [cameras, setCameras] = useState<Camera[]>([]);
+
   const loadDashboardData = async () => {
     setIsLoading(true);
     try {
-      const [bookingsData, statsData] = await Promise.all([
+      const [bookingsData, statsData, camerasData] = await Promise.all([
         getAllBookings(),
-        getBookingStats()
+        getBookingStats(),
+        getAllCameras()
       ]);
       setBookings(bookingsData);
       setStats(statsData);
+      setCameras(camerasData);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -46,10 +51,13 @@ export default function MobileDashboard() {
     }
   };
 
+  // Exclude Mother's R50 bookings from main CAPTURA mobile dashboard
+  const capturaBookings = excludeMotherBookings(bookings, cameras);
+
   // Calculate metrics
   const today = new Date().toISOString().split('T')[0];
-  
-  const todayPickups = bookings.filter(b => {
+
+  const todayPickups = capturaBookings.filter(b => {
     if (b.pickup_date) {
       return b.pickup_date === today &&
              (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
@@ -64,19 +72,19 @@ export default function MobileDashboard() {
            !b.equipment_picked_up;
   });
 
-  const activeRentals = bookings.filter(b =>
+  const activeRentals = capturaBookings.filter(b =>
     b.booking_status === 'confirmed' &&
     b.equipment_picked_up &&
     !b.equipment_returned
   );
 
-  const todayReturns = bookings.filter(b =>
+  const todayReturns = capturaBookings.filter(b =>
     b.end_date === today &&
     b.equipment_picked_up &&
     !b.equipment_returned
   );
 
-  const monthlyRevenue = bookings
+  const monthlyRevenue = capturaBookings
     .filter(b =>
       b.deposit_paid &&
       b.final_payment_paid &&
@@ -88,7 +96,7 @@ export default function MobileDashboard() {
       return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
     }, 0);
 
-  const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
+  const pendingApprovals = capturaBookings.filter(b => b.booking_status === 'pending_approval');
   
   // Urgent alerts calculations
   const overdueReturns = bookings.filter(b => {
