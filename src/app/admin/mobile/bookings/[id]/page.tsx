@@ -188,7 +188,10 @@ export default function MobileBookingDetail() {
       const data = await response.json();
       if (data.success) {
         setBooking(data.booking);
-        showSuccessMessage(data.booking.deposit_refunded ? 'Deposit refunded ✓' : 'Deposit refund cancelled');
+        showSuccessMessage(data.message || (data.booking.deposit_refunded ? 'Deposit refunded ✓' : 'Deposit refund cancelled'));
+
+        // Reload booking data to ensure all fields are updated
+        await loadBooking();
       }
     } catch (error) {
       console.error('Error updating deposit refund:', error);

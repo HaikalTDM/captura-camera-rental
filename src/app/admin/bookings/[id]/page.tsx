@@ -185,7 +185,10 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(`Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
+        alert(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
+
+        // Reload booking data to ensure all fields are updated
+        await loadBookingData();
       } else {
         alert('Failed to update deposit refund status: ' + data.error);
       }

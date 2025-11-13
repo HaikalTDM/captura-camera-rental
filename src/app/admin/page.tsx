@@ -163,16 +163,16 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
       >
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500 mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+          <p className="text-slate-500 mt-0.5 sm:mt-1 text-xs sm:text-sm">
             {new Date().toLocaleDateString('en-MY', {
               weekday: 'long',
               month: 'long',
@@ -189,20 +189,20 @@ export default function AdminDashboard() {
         variants={container}
         initial="hidden"
         animate="show"
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4"
       >
         {/* Active Rentals */}
         <motion.div variants={item}>
-          <Card className="hover:shadow-md transition-all duration-200 border-slate-200">
-            <CardContent className="p-5">
+          <Card className="hover:shadow-md transition-all duration-200 border-slate-200 rounded-lg sm:rounded-xl">
+            <CardContent className="p-3 sm:p-4 md:p-5">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Active Rentals</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-2">{activeRentals.length}</p>
-                  <p className="text-xs text-slate-500 mt-1">Currently rented</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide">Active Rentals</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 mt-1 sm:mt-2">{activeRentals.length}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">Currently rented</p>
                 </div>
-                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-blue-600" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -211,16 +211,16 @@ export default function AdminDashboard() {
 
         {/* Today's Pickups */}
         <motion.div variants={item}>
-          <Card className="hover:shadow-md transition-all duration-200 border-slate-200">
-            <CardContent className="p-5">
+          <Card className="hover:shadow-md transition-all duration-200 border-slate-200 rounded-lg sm:rounded-xl">
+            <CardContent className="p-3 sm:p-4 md:p-5">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Today's Pickups</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-2">{todayPickups.length}</p>
-                  <p className="text-xs text-slate-500 mt-1">Scheduled today</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide">Today's Pickups</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 mt-1 sm:mt-2">{todayPickups.length}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">Scheduled today</p>
                 </div>
-                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
-                  <Package className="w-5 h-5 text-green-600" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <Package className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -229,16 +229,16 @@ export default function AdminDashboard() {
 
         {/* Today's Returns */}
         <motion.div variants={item}>
-          <Card className="hover:shadow-md transition-all duration-200 border-slate-200">
-            <CardContent className="p-5">
+          <Card className="hover:shadow-md transition-all duration-200 border-slate-200 rounded-lg sm:rounded-xl">
+            <CardContent className="p-3 sm:p-4 md:p-5">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Today's Returns</p>
-                  <p className="text-2xl font-bold text-slate-900 mt-2">{todayReturns.length}</p>
-                  <p className="text-xs text-slate-500 mt-1">Due today</p>
+                  <p className="text-[10px] sm:text-xs font-semibold text-slate-600 uppercase tracking-wide">Today's Returns</p>
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 mt-1 sm:mt-2">{todayReturns.length}</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">Due today</p>
                 </div>
-                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
-                  <PackageOpen className="w-5 h-5 text-orange-600" />
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                  <PackageOpen className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600" />
                 </div>
               </div>
             </CardContent>
@@ -247,7 +247,7 @@ export default function AdminDashboard() {
 
         {/* Monthly Revenue */}
         <motion.div variants={item}>
-          <Card className="hover:shadow-md transition-all duration-200 border-slate-200">
+          <Card className="hover:shadow-md transition-all duration-200 border-slate-200 rounded-lg sm:rounded-xl">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="flex-1">

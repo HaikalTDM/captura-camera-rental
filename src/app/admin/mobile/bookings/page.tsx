@@ -5,6 +5,7 @@ import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import AdminCalendar from '@/components/admin/AdminCalendar';
+import { Plus } from 'lucide-react';
 
 type FilterState = {
   search: string;
@@ -140,6 +141,27 @@ export default function MobileBookings() {
     loadBookings();
     const darkMode = localStorage.getItem('darkMode') === 'true';
     setIsDarkMode(darkMode);
+  }, []);
+
+  // Refresh bookings when page becomes visible (e.g., navigating back from detail page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadBookings();
+      }
+    };
+
+    const handleFocus = () => {
+      loadBookings();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const loadBookings = async () => {
@@ -1057,6 +1079,19 @@ export default function MobileBookings() {
           </div>
         </div>
       )}
+
+      {/* Floating Action Button - Add Booking */}
+      <Link href="/admin/mobile/bookings/add">
+        <button
+          className={`fixed bottom-24 right-6 z-40 w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 active:scale-90 ${
+            isDarkMode
+              ? 'bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+              : 'bg-gradient-to-br from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700'
+          }`}
+        >
+          <Plus className="w-8 h-8 text-white" strokeWidth={3} />
+        </button>
+      </Link>
     </div>
   );
 }

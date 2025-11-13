@@ -10,6 +10,7 @@ import AIAssistant from '../../components/admin/AIAssistant';
 import { AdminDataProvider } from '@/contexts/AdminDataContext';
 import { ErrorBoundary } from '@/components/admin/ErrorBoundary';
 import { RefreshButton } from '@/components/admin/RefreshButton';
+import './globals-admin.css';
 import {
   LayoutDashboard,
   Clock,
@@ -253,13 +254,13 @@ export default function AdminLayout({
           animate={{ y: 0, opacity: 1 }}
           className="bg-white border-b border-slate-200 z-30 w-full flex-shrink-0"
         >
-          <div className="flex items-center justify-between h-16 px-6 max-w-full">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 max-w-full">
+            <div className="flex items-center gap-2 sm:gap-4">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSidebarOpen(true)}
-                className="lg:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                className="lg:hidden text-slate-600 hover:text-slate-900 p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 transition-colors"
               >
                 <Menu className="w-5 h-5" />
               </motion.button>
@@ -273,8 +274,8 @@ export default function AdminLayout({
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-slate-500 hidden md:block font-medium">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-[10px] sm:text-xs text-slate-500 hidden md:block font-medium">
                 {new Date().toLocaleDateString('en-MY', {
                   weekday: 'short',
                   month: 'short',
@@ -287,7 +288,7 @@ export default function AdminLayout({
         </motion.div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 bg-slate-100 overflow-y-auto overflow-x-hidden w-full max-w-full">
+        <main className="flex-1 p-3 sm:p-4 md:p-6 bg-slate-100 overflow-y-auto overflow-x-hidden w-full max-w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

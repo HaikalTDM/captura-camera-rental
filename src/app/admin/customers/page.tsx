@@ -200,53 +200,53 @@ export default function CustomersPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto p-8 space-y-8">
+      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 md:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">Customer Database</h1>
-            <p className="text-slate-600 text-lg">Manage customer relationships and rental history</p>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">Customer Database</h1>
+            <p className="text-slate-600 text-sm sm:text-base md:text-lg">Manage customer relationships and rental history</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-4">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Customers</p>
-            <p className="text-3xl font-bold text-slate-900">{customers.length}</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 px-4 sm:px-6 py-3 sm:py-4">
+            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5 sm:mb-1">Total Customers</p>
+            <p className="text-2xl sm:text-3xl font-bold text-slate-900">{customers.length}</p>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</p>
-              <Users className="w-5 h-5 text-slate-400" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
+          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</p>
+              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
             </div>
-            <p className="text-3xl font-bold text-slate-900">{customerStats.total}</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{customerStats.total}</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Excellent</p>
-              <Star className="w-5 h-5 text-green-600 fill-green-600" />
+          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <p className="text-[10px] sm:text-xs font-semibold text-green-600 uppercase tracking-wide">Excellent</p>
+              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 fill-green-600" />
             </div>
-            <p className="text-3xl font-bold text-green-600">{customerStats.excellent}</p>
-            <p className="text-xs text-slate-500 mt-1">5+ rentals</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">{customerStats.excellent}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">5+ rentals</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Good</p>
-              <TrendingUp className="w-5 h-5 text-blue-600" />
+          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <p className="text-[10px] sm:text-xs font-semibold text-blue-600 uppercase tracking-wide">Good</p>
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
-            <p className="text-3xl font-bold text-blue-600">{customerStats.good}</p>
-            <p className="text-xs text-slate-500 mt-1">2-4 rentals</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">{customerStats.good}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">2-4 rentals</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-amber-600 uppercase tracking-wide">Fair</p>
-              <ShoppingBag className="w-5 h-5 text-amber-600" />
+          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
+            <div className="flex items-center justify-between mb-1 sm:mb-2">
+              <p className="text-[10px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wide">Fair</p>
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
             </div>
-            <p className="text-3xl font-bold text-amber-600">{customerStats.fair}</p>
-            <p className="text-xs text-slate-500 mt-1">1 rental</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600">{customerStats.fair}</p>
+            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">1 rental</p>
           </div>
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">New</p>
               <UserPlus className="w-5 h-5 text-purple-600" />
