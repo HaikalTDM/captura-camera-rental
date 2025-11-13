@@ -105,6 +105,7 @@ IMPORTANT:
     const userMessage = `Extract booking information from this customer message:\n\n${text}`;
 
     // Call DeepSeek API
+    console.log('Calling DeepSeek API...');
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -123,10 +124,12 @@ IMPORTANT:
       })
     });
 
+    console.log('DeepSeek API response status:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('DeepSeek API error:', errorText);
-      throw new Error(`DeepSeek API error: ${response.status}`);
+      console.error('DeepSeek API error response:', errorText);
+      throw new Error(`DeepSeek API error (${response.status}): ${errorText.substring(0, 200)}`);
     }
 
     const data = await response.json();
@@ -175,12 +178,25 @@ IMPORTANT:
   } catch (error) {
     console.error('Error parsing booking text:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    // Log detailed error for debugging
+    console.error('Detailed error:', {
+      message: errorMessage,
+      stack: errorStack,
+      hasApiKey: !!process.env.DEEPSEEK_API_KEY,
+      apiKeyPrefix: process.env.DEEPSEEK_API_KEY?.substring(0, 10) + '...'
+    });
+
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to parse booking text',
-        details: errorMessage
+        details: errorMessage,
+        debug: {
+          hasApiKey: !!process.env.DEEPSEEK_API_KEY,
+          timestamp: new Date().toISOString()
+        }
       },
       { status: 500 }
     );

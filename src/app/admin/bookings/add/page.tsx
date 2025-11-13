@@ -129,7 +129,20 @@ export default function AddBookingPage() {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to parse text');
+        console.error('API Error Details:', result);
+        const errorMsg = result.details
+          ? `${result.error}: ${result.details}`
+          : result.error || 'Failed to parse text';
+
+        // Show debug info if available
+        if (result.debug) {
+          console.error('Debug Info:', result.debug);
+          if (!result.debug.hasApiKey) {
+            throw new Error('DeepSeek API key is not configured in production. Please add DEEPSEEK_API_KEY to Vercel environment variables.');
+          }
+        }
+
+        throw new Error(errorMsg);
       }
 
       setParseResult(result.data);
