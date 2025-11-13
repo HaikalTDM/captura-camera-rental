@@ -1,7 +1,10 @@
 /**
  * Service Worker for Captura Admin PWA
  * Handles push notifications and offline functionality
+ * Version: 2.0.0 - Updated cache strategy
  */
+
+const CACHE_VERSION = 'v2.0.0';
 
 // Listen for push events
 self.addEventListener('push', function(event) {
@@ -67,13 +70,27 @@ self.addEventListener('notificationclick', function(event) {
 
 // Install event - cache assets
 self.addEventListener('install', function(event) {
-  console.log('Service Worker installing...');
+  console.log('Service Worker installing...', CACHE_VERSION);
+  // Force the waiting service worker to become the active service worker
   self.skipWaiting();
 });
 
 // Activate event
 self.addEventListener('activate', function(event) {
-  console.log('Service Worker activating...');
-  event.waitUntil(clients.claim());
+  console.log('Service Worker activating...', CACHE_VERSION);
+  event.waitUntil(
+    // Clear all caches on activation to ensure fresh content
+    caches.keys().then(function(cacheNames) {
+      return Promise.all(
+        cacheNames.map(function(cacheName) {
+          console.log('Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(function() {
+      // Take control of all pages immediately
+      return clients.claim();
+    })
+  );
 });
 
