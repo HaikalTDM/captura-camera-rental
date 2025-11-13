@@ -930,123 +930,142 @@ Thank you for choosing Captura! 😊`;
                   </div>
                 </div>
 
-              {/* Return Status */}
-              <div>
-                <h4 className="text-md font-semibold text-gray-800 mb-3">Equipment Return</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Return Status:</span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      booking.equipment_returned
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {booking.equipment_returned ? 'Returned' : 'Not Returned'}
-                    </span>
-                  </div>
-
-                  {booking.equipment_return_date && (
+                {/* Return Status */}
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 mb-4">Equipment Return</h4>
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Return Date:</span>
-                      <span className="text-sm text-gray-900">
-                        {new Date(booking.equipment_return_date).toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  {booking.equipment_condition_return && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Condition at Return:</span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        booking.equipment_condition_return === 'excellent' ? 'bg-green-100 text-green-800' :
-                        booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-800' :
-                        booking.equipment_condition_return === 'fair' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-red-100 text-red-800'
+                      <span className="text-sm text-slate-600">Return Status</span>
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
+                        booking.equipment_returned
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-amber-100 text-amber-700'
                       }`}>
-                        {booking.equipment_condition_return.charAt(0).toUpperCase() + booking.equipment_condition_return.slice(1)}
+                        {booking.equipment_returned ? (
+                          <><CheckCircle2 className="w-3.5 h-3.5" /> Returned</>
+                        ) : (
+                          <><AlertCircle className="w-3.5 h-3.5" /> Not Returned</>
+                        )}
                       </span>
                     </div>
-                  )}
 
-                  {booking.equipment_return_notes && (
-                    <div>
-                      <span className="text-sm font-medium text-gray-600 block mb-1">Return Notes:</span>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                        {booking.equipment_return_notes}
-                      </p>
-                    </div>
-                  )}
+                    {booking.equipment_return_date && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Return Date</span>
+                        <span className="text-sm font-medium text-slate-900">
+                          {new Date(booking.equipment_return_date).toLocaleString('en-MY', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </span>
+                      </div>
+                    )}
 
-                  <div className="flex gap-2">
+                    {booking.equipment_condition_return && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-slate-600">Condition</span>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
+                          booking.equipment_condition_return === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
+                          booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
+                          booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {booking.equipment_condition_return.charAt(0).toUpperCase() + booking.equipment_condition_return.slice(1)}
+                        </span>
+                      </div>
+                    )}
+
+                    {booking.equipment_return_notes && (
+                      <div>
+                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Return Notes</span>
+                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                          {booking.equipment_return_notes}
+                        </p>
+                      </div>
+                    )}
+
                     <button
                       onClick={() => handleReturnStatusUpdate(!booking.equipment_returned, '', 'excellent')}
                       disabled={isUpdatingReturn || !booking.equipment_picked_up}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${
                         booking.equipment_returned
-                          ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
-                          : 'bg-green-500 hover:bg-green-600 text-white'
-                      } disabled:bg-gray-400`}
+                          ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
+                          : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
+                      } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingReturn ? (
                         <>
-                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                           Updating...
                         </>
+                      ) : booking.equipment_returned ? (
+                        <><XCircle className="w-4 h-4" /> Mark as Not Returned</>
                       ) : (
-                        booking.equipment_returned ? 'Mark as Not Returned' : 'Mark as Returned'
+                        <><CheckCircle2 className="w-4 h-4" /> Mark as Returned</>
                       )}
                     </button>
-                  </div>
 
-                  {!booking.equipment_picked_up && (
-                    <p className="text-xs text-gray-500 italic">
-                      Equipment must be picked up before it can be marked as returned.
-                    </p>
-                  )}
+                    {!booking.equipment_picked_up && (
+                      <p className="text-xs text-slate-500 italic mt-2 flex items-center gap-1.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
+                        Equipment must be picked up before it can be marked as returned.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-              ⚡ Quick Actions
-            </h3>
-            <div className="space-y-3">
-              {booking.customer?.phone && (
-                <a
-                  href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  💬 WhatsApp Customer
-                </a>
-              )}
-              {booking.customer?.phone && (
+            {/* Quick Actions */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
+                  <Zap className="w-5 h-5 text-slate-700" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">Quick Actions</h3>
+              </div>
+              <div className="space-y-3">
+                {booking.customer?.phone && (
+                  <a
+                    href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    WhatsApp Customer
+                  </a>
+                )}
+                {booking.customer?.phone && (
+                  <button
+                    onClick={handleReturnReminder}
+                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    <Bell className="w-4 h-4" />
+                    Return Reminder
+                  </button>
+                )}
+                {booking.customer?.phone && (
+                  <a
+                    href={`tel:${booking.customer.phone}`}
+                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Call Customer
+                  </a>
+                )}
                 <button
-                  onClick={handleReturnReminder}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  onClick={() => window.print()}
+                  className="w-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
                 >
-                  🔔 Return Reminder
+                  <Printer className="w-4 h-4" />
+                  Print Details
                 </button>
-              )}
-              {booking.customer?.phone && (
-                <a
-                  href={`tel:${booking.customer.phone}`}
-                  className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  📞 Call Customer
-                </a>
-              )}
-              <button
-                onClick={() => window.print()}
-                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
-              >
-                🖨️ Print Details
-              </button>
+              </div>
             </div>
           </div>
         </div>

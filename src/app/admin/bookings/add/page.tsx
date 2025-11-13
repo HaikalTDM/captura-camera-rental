@@ -324,7 +324,25 @@ ${bookingData.pickup_method === 'delivery' && bookingData.pickup_address ? `📍
 ${bookingData.notes ? `📝 *Notes:* ${bookingData.notes}\n` : ''}
 ⏰ *Pickup Time:* After 9:30 PM (day before rental starts)
 🔙 *Return Time:* By 10:00 PM on return date
+${socialMediaDiscount ? `
+━━━━━━━━━━━━━━━━━━━━━━
 
+📱 *GET EXTRA RM10 OFF!*
+Complete these steps before pickup:
+
+🎵 *TikTok Promo (RM5 OFF):*
+1️⃣ Follow @captura.my on TikTok
+2️⃣ Repost our latest video
+3️⃣ Show proof at pickup = *RM5 OFF*
+
+📸 *Instagram Promo (RM5 OFF):*
+4️⃣ Tag @captura.my_ in your IG story
+5️⃣ Show proof at pickup = *RM5 OFF*
+
+�💡 *Complete both promos = Extra RM10 OFF per day of your total!*
+
+━━━━━━━━━━━━━━━━━━━━━━
+` : ''}
 Thank you for choosing CAPTURA! 📸
 
 If you have any questions, feel free to reply to this message.`;
