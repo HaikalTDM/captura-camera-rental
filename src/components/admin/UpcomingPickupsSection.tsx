@@ -195,7 +195,7 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b border-green-100">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">📦</span>
             </span>
@@ -218,7 +218,7 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b border-green-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <span className="w-8 h-8 bg-green-500 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">📦</span>
             </span>
@@ -237,7 +237,7 @@ export default function UpcomingPickupsSection({ onPickupUpdate }: UpcomingPicku
             )}
           </div>
         </div>
-        <p className="text-sm text-gray-600 mt-2">
+        <p className="text-sm text-slate-500 mt-2">
           Equipment pickups scheduled for today and the next week
         </p>
       </div>

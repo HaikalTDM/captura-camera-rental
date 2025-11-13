@@ -3,6 +3,23 @@
 import { useState, useEffect } from 'react';
 import { getAllBookings, getAllCameras, getAllCustomers, getBookingStats } from '@/lib/api/bookings';
 import type { Booking, Camera, Customer } from '@/lib/supabase';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  TrendingUp,
+  DollarSign,
+  Calendar,
+  AlertTriangle,
+  BarChart3,
+  CreditCard,
+  Camera as CameraIcon,
+  Crown,
+  Download,
+  FileText,
+  Users,
+  ShoppingBag
+} from 'lucide-react';
 
 export default function ReportsPage() {
   const [dateRange, setDateRange] = useState('month');
@@ -38,6 +55,7 @@ export default function ReportsPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="ml-4 text-slate-600 font-medium">Loading reports...</p>
       </div>
     );
   }
@@ -169,22 +187,29 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl border border-slate-700">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Reports & Analytics</h1>
-            <p className="text-blue-100 text-lg">Business insights and performance metrics</p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="bg-white/10 backdrop-blur-sm p-3 rounded-xl">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold">Reports & Analytics</h1>
+                <p className="text-slate-300 text-lg mt-1">Business insights and performance metrics</p>
+              </div>
+            </div>
           </div>
           <div className="flex gap-3">
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="bg-white border border-gray-300 text-gray-900 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500"
+              className="bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-xl px-4 py-3 focus:ring-2 focus:ring-white/50 font-medium"
             >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="quarter">This Quarter</option>
-              <option value="year">This Year</option>
+              <option value="week" className="text-slate-900">This Week</option>
+              <option value="month" className="text-slate-900">This Month</option>
+              <option value="quarter" className="text-slate-900">This Quarter</option>
+              <option value="year" className="text-slate-900">This Year</option>
             </select>
           </div>
         </div>
@@ -192,212 +217,275 @@ export default function ReportsPage() {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Revenue</p>
-              <p className="text-3xl font-bold text-green-600 mt-2">RM{totalRevenue}</p>
-              <p className="text-sm text-gray-400 mt-1">All time</p>
+        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Revenue</p>
+                <p className="text-3xl font-bold text-green-600">RM{totalRevenue}</p>
+                <p className="text-sm text-slate-500 mt-1 font-medium">All time</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                <DollarSign className="w-7 h-7 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">💰</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Monthly Revenue</p>
-              <p className="text-3xl font-bold text-blue-600 mt-2">RM{monthlyRevenue}</p>
-              <p className="text-sm text-gray-400 mt-1">January 2024</p>
+        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Monthly Revenue</p>
+                <p className="text-3xl font-bold text-blue-600">RM{monthlyRevenue}</p>
+                <p className="text-sm text-slate-500 mt-1 font-medium">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <TrendingUp className="w-7 h-7 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📈</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Total Bookings</p>
-              <p className="text-3xl font-bold text-purple-600 mt-2">{totalBookings}</p>
-              <p className="text-sm text-gray-400 mt-1">{activeBookings} active</p>
+        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Total Bookings</p>
+                <p className="text-3xl font-bold text-purple-600">{totalBookings}</p>
+                <p className="text-sm text-slate-500 mt-1 font-medium">
+                  <Badge variant="info" className="text-xs">{activeBookings} active</Badge>
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <Calendar className="w-7 h-7 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">📋</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Overdue Amount</p>
-              <p className="text-3xl font-bold text-red-600 mt-2">RM{overdueAmount}</p>
-              <p className="text-sm text-gray-400 mt-1">{paymentAnalysis.overdue} customers</p>
+        <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Overdue Amount</p>
+                <p className="text-3xl font-bold text-red-600">RM{overdueAmount}</p>
+                <p className="text-sm text-slate-500 mt-1 font-medium">
+                  <Badge variant="destructive" className="text-xs">{paymentAnalysis.overdue} customers</Badge>
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                <AlertTriangle className="w-7 h-7 text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-              <span className="text-2xl">⚠️</span>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue Trend */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            📊 Revenue Trend
-          </h3>
-          <div className="space-y-4">
-            {monthlyTrend.map((month, index) => (
-              <div key={`${month.month}-${month.year}`} className="flex items-center gap-3 min-w-0">
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">{month.month}</span>
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <TrendingUp className="w-5 h-5 text-blue-600" />
+              Revenue Trend
+            </CardTitle>
+            <CardDescription>Last 6 months performance</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {monthlyTrend.map((month, index) => (
+                <div key={`${month.month}-${month.year}`} className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 flex-shrink-0 min-w-[140px]">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-sm">
+                      <span className="text-sm font-bold text-white">{month.month}</span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">RM{month.revenue}</p>
+                      <p className="text-xs text-slate-500">{month.bookings} bookings</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-gray-900 truncate">RM{month.revenue}</p>
-                    <p className="text-sm text-gray-500 truncate">{month.bookings} bookings</p>
-                    <p className="text-xs text-gray-400">{month.year}</p>
+                  <div className="flex-1">
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-500 shadow-sm"
+                        style={{ width: `${Math.min((month.revenue / 1500) * 100, 100)}%` }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0 ml-auto">
-                  <div className="w-full max-w-24 sm:max-w-32 bg-gray-200 rounded-full h-2 ml-auto">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min((month.revenue / 1500) * 100, 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Payment Status */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            💳 Payment Status
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-green-500 rounded-full"></div>
-                <span className="text-gray-700">Fully Paid</span>
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <CreditCard className="w-5 h-5 text-green-600" />
+              Payment Status
+            </CardTitle>
+            <CardDescription>Current payment breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-xl border border-green-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full shadow-sm"></div>
+                  <span className="text-slate-700 font-semibold">Fully Paid</span>
+                </div>
+                <Badge variant="success" className="text-base px-3 py-1">{paymentAnalysis.fullyPaid}</Badge>
               </div>
-              <span className="font-semibold text-gray-900">{paymentAnalysis.fullyPaid}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-orange-500 rounded-full"></div>
-                <span className="text-gray-700">Deposit Paid</span>
+              <div className="flex items-center justify-between p-4 bg-orange-50 rounded-xl border border-orange-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-orange-500 rounded-full shadow-sm"></div>
+                  <span className="text-slate-700 font-semibold">Deposit Paid</span>
+                </div>
+                <Badge variant="warning" className="text-base px-3 py-1">{paymentAnalysis.depositPaid}</Badge>
               </div>
-              <span className="font-semibold text-gray-900">{paymentAnalysis.depositPaid}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
-                <span className="text-gray-700">Pending</span>
+              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-yellow-500 rounded-full shadow-sm"></div>
+                  <span className="text-slate-700 font-semibold">Pending</span>
+                </div>
+                <Badge variant="secondary" className="text-base px-3 py-1">{paymentAnalysis.pending}</Badge>
               </div>
-              <span className="font-semibold text-gray-900">{paymentAnalysis.pending}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                <span className="text-gray-700">Overdue</span>
+              <div className="flex items-center justify-between p-4 bg-red-50 rounded-xl border border-red-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
+                  <span className="text-slate-700 font-semibold">Overdue</span>
+                </div>
+                <Badge variant="destructive" className="text-base px-3 py-1">{paymentAnalysis.overdue}</Badge>
               </div>
-              <span className="font-semibold text-red-600">{paymentAnalysis.overdue}</span>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Camera Performance */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            📷 Camera Performance
-          </h3>
-          <div className="space-y-4">
-            {cameraPerformance.map((camera) => (
-              <div key={camera.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-gray-900">{camera.name}</h4>
-                  <span className="text-sm text-gray-500">{camera.utilization}% utilization</span>
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <CameraIcon className="w-5 h-5 text-purple-600" />
+              Camera Performance
+            </CardTitle>
+            <CardDescription>Equipment utilization and revenue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {cameraPerformance.map((camera) => (
+                <div key={camera.id} className="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow bg-slate-50">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-slate-900">{camera.name}</h4>
+                    <Badge variant="info" className="text-xs">
+                      {camera.utilization}% utilization
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-white rounded-lg p-3 border border-slate-200">
+                      <p className="text-xs text-slate-500 font-semibold mb-1">Revenue</p>
+                      <p className="font-bold text-green-600">RM{camera.revenue}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-slate-200">
+                      <p className="text-xs text-slate-500 font-semibold mb-1">Bookings</p>
+                      <p className="font-bold text-slate-900">{camera.bookings}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-slate-200">
+                      <p className="text-xs text-slate-500 font-semibold mb-1">Avg/Booking</p>
+                      <p className="font-bold text-blue-600">
+                        RM{camera.bookings > 0 ? Math.round(camera.revenue / camera.bookings) : 0}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Revenue</p>
-                    <p className="font-semibold text-green-600">RM{camera.revenue}</p>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Customers */}
+        <Card className="border-slate-200 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Crown className="w-5 h-5 text-amber-500" />
+              Top Customers
+            </CardTitle>
+            <CardDescription>Highest spending customers</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {topCustomers.map((customer, index) => (
+                <div key={customer.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-sm ${
+                      index === 0 ? 'bg-gradient-to-br from-amber-400 to-amber-500' :
+                      index === 1 ? 'bg-gradient-to-br from-slate-400 to-slate-500' :
+                      index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-500' :
+                      'bg-gradient-to-br from-blue-400 to-blue-500'
+                    }`}>
+                      <span className="text-sm font-bold text-white">#{index + 1}</span>
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900">{customer.name}</p>
+                      <p className="text-sm text-slate-600 flex items-center gap-1">
+                        <ShoppingBag className="w-3 h-3" />
+                        {customer.totalRentals} rentals
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-500">Bookings</p>
-                    <p className="font-semibold text-gray-900">{camera.bookings}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Avg/Booking</p>
-                    <p className="font-semibold text-blue-600">
-                      RM{camera.bookings > 0 ? Math.round(camera.revenue / camera.bookings) : 0}
+                  <div className="text-right">
+                    <p className="font-bold text-green-600 text-lg">RM{customer.totalSpent}</p>
+                    <p className="text-xs text-slate-500 font-medium">
+                      RM{Math.round(customer.totalSpent / customer.totalRentals)}/rental
                     </p>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top Customers */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
-            👑 Top Customers
-          </h3>
-          <div className="space-y-4">
-            {topCustomers.map((customer, index) => (
-              <div key={customer.id} className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-sm font-bold text-blue-600">#{index + 1}</span>
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{customer.name}</p>
-                    <p className="text-sm text-gray-500">{customer.totalRentals} rentals</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-green-600">RM{customer.totalSpent}</p>
-                  <p className="text-xs text-gray-500">
-                    RM{Math.round(customer.totalSpent / customer.totalRentals)}/rental
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Export Options */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          📄 Export Reports
-        </h3>
-        <div className="flex flex-wrap gap-3">
-          <button className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-            📊 Export Revenue Report
-          </button>
-          <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-            📋 Export Booking Report
-          </button>
-          <button className="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-            👥 Export Customer Report
-          </button>
-          <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-            💰 Export Payment Report
-          </button>
-        </div>
-      </div>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <Download className="w-5 h-5 text-slate-600" />
+            Export Reports
+          </CardTitle>
+          <CardDescription>Download detailed reports in various formats</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Button
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md hover:shadow-lg transition-all h-auto py-4 flex-col gap-2"
+            >
+              <FileText className="w-5 h-5" />
+              <span className="font-semibold">Revenue Report</span>
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all h-auto py-4 flex-col gap-2"
+            >
+              <Calendar className="w-5 h-5" />
+              <span className="font-semibold">Booking Report</span>
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-md hover:shadow-lg transition-all h-auto py-4 flex-col gap-2"
+            >
+              <Users className="w-5 h-5" />
+              <span className="font-semibold">Customer Report</span>
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white shadow-md hover:shadow-lg transition-all h-auto py-4 flex-col gap-2"
+            >
+              <CreditCard className="w-5 h-5" />
+              <span className="font-semibold">Payment Report</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

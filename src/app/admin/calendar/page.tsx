@@ -1,9 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import TikTokCalendarExport from '@/components/TikTokCalendarExport';
+import { useBookings, useAdminData } from '@/contexts/AdminDataContext';
+import {
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Eye,
+  X
+} from 'lucide-react';
 
 interface CalendarDay {
   date: Date;
@@ -24,7 +34,9 @@ interface CalendarEvent {
 }
 
 export default function CalendarPage() {
-  const { bookings, isLoading } = useBookings();
+  const [isMounted, setIsMounted] = useState(false);
+  const { bookings = [], isLoading = false, error = null } = useBookings() || {};
+  const { cameras = [] } = useAdminData();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState<'month' | 'week'>('month');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -35,39 +47,11 @@ export default function CalendarPage() {
     message: string;
   }>({ show: false, success: false, message: '' });
 
-  // Memoize calendar events to avoid recalculation on every render
-  const events = useMemo(() => {
-    console.log('Calendar: Loaded bookings:', bookings.length);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-    // Filter confirmed and completed bookings for calendar display
-    const displayBookings = bookings.filter(booking => {
-        const status = booking.booking_status || booking.status;
-        return status === 'confirmed' || status === 'completed';
-      });
-      console.log('Calendar: Display bookings (confirmed + completed):', displayBookings.length);
-
-      // Convert bookings to calendar events
-      const calendarEvents = displayBookings.map(booking => {
-        const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
-        const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
-
-        return {
-          id: booking.id,
-          title: cameraName,
-          camera: cameraName,
-          customer: customerName,
-          startDate: new Date(booking.start_date),
-          endDate: new Date(booking.end_date),
-          status: booking.booking_status || booking.status,
-          color: getCameraColor(cameraName, booking.booking_status || booking.status)
-        };
-      });
-
-    console.log('Calendar: Created events:', calendarEvents.length);
-    console.log('Calendar: Events:', calendarEvents);
-    return calendarEvents;
-  }, [bookings]);
-
+  // Helper function to get camera color - defined before useMemo
   const getCameraColor = (cameraName: string, status: string) => {
     // Determine camera type and return appropriate colors
     const isActionPro = cameraName.includes('Action 5 Pro');
@@ -125,6 +109,44 @@ export default function CalendarPage() {
         }
     }
   };
+
+  // Memoize calendar events to avoid recalculation on every render
+  const events = useMemo(() => {
+    if (!bookings || bookings.length === 0) {
+      console.log('Calendar: No bookings available');
+      return [];
+    }
+
+    console.log('Calendar: Loaded bookings:', bookings.length);
+
+    // Filter confirmed and completed bookings for calendar display
+    const displayBookings = bookings.filter(booking => {
+        const status = booking.booking_status || booking.status;
+        return status === 'confirmed' || status === 'completed';
+      });
+      console.log('Calendar: Display bookings (confirmed + completed):', displayBookings.length);
+
+      // Convert bookings to calendar events
+      const calendarEvents = displayBookings.map(booking => {
+        const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
+        const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
+
+        return {
+          id: booking.id,
+          title: cameraName,
+          camera: cameraName,
+          customer: customerName,
+          startDate: new Date(booking.start_date),
+          endDate: new Date(booking.end_date),
+          status: booking.booking_status || booking.status,
+          color: getCameraColor(cameraName, booking.booking_status || booking.status)
+        };
+      });
+
+    console.log('Calendar: Created events:', calendarEvents.length);
+    console.log('Calendar: Events:', calendarEvents);
+    return calendarEvents;
+  }, [bookings]);
 
   const generateCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear();
@@ -220,180 +242,227 @@ export default function CalendarPage() {
   ];
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  return (
-    <div className="p-4 sm:p-6 max-w-full overflow-x-hidden">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4 max-w-full">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Rental Calendar</h1>
-          <p className="text-gray-700 mt-1 sm:mt-2 text-sm sm:text-base">View and manage camera rental schedules</p>
+  if (!isMounted || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-900"></div>
+          <p className="text-sm text-slate-600 font-medium">Loading calendar...</p>
         </div>
+      </div>
+    );
+  }
 
-        <div className="flex items-center gap-2 sm:gap-4 w-full sm:w-auto flex-shrink-0">
-          {/* View Toggle */}
-          <div className="flex bg-gray-100 rounded-lg p-1 flex-1 sm:flex-none">
-            <button
-              onClick={() => setSelectedView('month')}
-              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation ${
-                selectedView === 'month'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 active:bg-gray-200'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => setSelectedView('week')}
-              className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors touch-manipulation ${
-                selectedView === 'week'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 active:bg-gray-200'
-              }`}
-            >
-              Week
-            </button>
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3 max-w-md text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center">
+            <X className="w-8 h-8 text-red-600" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900">Error Loading Calendar</h3>
+          <p className="text-sm text-slate-600">{error.message || 'Something went wrong. Please try refreshing the page.'}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm mt-2"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 shadow-xl border border-slate-700">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center shadow-lg">
+              <CalendarIcon className="w-7 h-7 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-1">Rental Calendar</h1>
+              <p className="text-slate-300 text-sm">View and manage camera rental schedules</p>
+            </div>
           </div>
 
-          <button
-            onClick={goToToday}
-            className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-lg font-medium transition-colors text-sm touch-manipulation min-h-[44px] flex-shrink-0"
-          >
-            Today
-          </button>
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {/* View Toggle */}
+            <div className="flex bg-slate-700/50 rounded-xl p-1 flex-1 sm:flex-none border border-slate-600">
+              <button
+                onClick={() => setSelectedView('month')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  selectedView === 'month'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Month
+              </button>
+              <button
+                onClick={() => setSelectedView('week')}
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
+                  selectedView === 'week'
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-300 hover:text-white'
+                }`}
+              >
+                Week
+              </button>
+            </div>
+
+            <button
+              onClick={goToToday}
+              className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 text-sm shadow-sm flex-shrink-0"
+            >
+              Today
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Calendar Navigation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-        <div className="flex items-center gap-2 sm:gap-4">
-          <button
-            onClick={() => navigateMonth('prev')}
-            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigateMonth('prev')}
+              className="w-10 h-10 hover:bg-slate-100 rounded-xl transition-all duration-200 flex items-center justify-center hover:scale-105 active:scale-95"
+            >
+              <ChevronLeft className="w-5 h-5 text-slate-600" />
+            </button>
 
-          <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-          </h2>
+            <h2 className="text-2xl font-bold text-slate-900 min-w-[200px] text-center">
+              {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            </h2>
 
-          <button
-            onClick={() => navigateMonth('next')}
-            className="p-2 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
-          >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+            <button
+              onClick={() => navigateMonth('next')}
+              className="w-10 h-10 hover:bg-slate-100 rounded-xl transition-all duration-200 flex items-center justify-center hover:scale-105 active:scale-95"
+            >
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+          </div>
 
-        {/* Export Button */}
-        <div className="flex items-center gap-4">
-          <TikTokCalendarExport
-            currentDate={currentDate}
-            calendarDays={calendarDays}
-            events={events}
-            onExportComplete={handleExportComplete}
-          />
+          {/* Export Button */}
+          <div className="flex items-center gap-4">
+            <TikTokCalendarExport
+              currentDate={currentDate}
+              calendarDays={calendarDays}
+              events={events}
+              onExportComplete={handleExportComplete}
+            />
+          </div>
         </div>
       </div>
 
       {/* Export Notification */}
       {exportNotification.show && (
-        <div className={`mb-4 p-4 rounded-lg border ${
+        <div className={`rounded-2xl border p-4 shadow-sm ${
           exportNotification.success
-            ? 'bg-green-50 border-green-200 text-green-800'
-            : 'bg-red-50 border-red-200 text-red-800'
+            ? 'bg-green-50 border-green-200'
+            : 'bg-red-50 border-red-200'
         }`}>
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              exportNotification.success ? 'bg-green-100' : 'bg-red-100'
+            }`}>
               {exportNotification.success ? (
-                <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
+                <Download className="w-5 h-5 text-green-600" />
               ) : (
-                <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
+                <X className="w-5 h-5 text-red-600" />
               )}
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium">{exportNotification.message}</p>
+            <div className="flex-1">
+              <p className={`text-sm font-semibold ${
+                exportNotification.success ? 'text-green-900' : 'text-red-900'
+              }`}>
+                {exportNotification.message}
+              </p>
             </div>
-            <div className="ml-auto pl-3">
-              <button
-                onClick={() => setExportNotification({ show: false, success: false, message: '' })}
-                className="inline-flex text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </button>
-            </div>
+            <button
+              onClick={() => setExportNotification({ show: false, success: false, message: '' })}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                exportNotification.success
+                  ? 'hover:bg-green-100 text-green-600'
+                  : 'hover:bg-red-100 text-red-600'
+              }`}
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
-        {/* Legend */}
-        <div className="space-y-2">
+      {/* Legend */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div className="space-y-4">
           {/* Status Legend */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-            <span className="text-gray-700 font-semibold mr-1">Status:</span>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded"></div>
-              <span className="text-gray-800 font-medium">Pending</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span className="text-gray-800 font-medium">Confirmed</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
-              <span className="text-gray-800 font-medium">Active</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-gray-400 rounded opacity-75"></div>
-              <span className="text-gray-800 font-medium">Completed (Historical)</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-3">Booking Status</h3>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 rounded-lg border border-yellow-200">
+                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Pending</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Confirmed</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Active</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="w-3 h-3 bg-slate-400 rounded-full opacity-75"></div>
+                <span className="text-sm font-medium text-slate-700">Completed</span>
+              </div>
             </div>
           </div>
 
           {/* Camera Legend */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm">
-            <span className="text-gray-700 font-semibold mr-1">Cameras:</span>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-blue-500 rounded"></div>
-              <span className="text-gray-800 font-medium">DJI Action 5 Pro</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-orange-500 rounded"></div>
-              <span className="text-gray-800 font-medium">DJI Osmo Pocket 3</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-teal-500 rounded"></div>
-              <span className="text-gray-800 font-medium">DJI Osmo Pocket 3 (ii)</span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-3 h-3 bg-purple-500 rounded"></div>
-              <span className="text-gray-800 font-medium">Other Cameras</span>
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 mb-3">Camera Types</h3>
+            <div className="flex flex-wrap gap-3">
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">DJI Action 5 Pro</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-orange-50 rounded-lg border border-orange-200">
+                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">DJI Osmo Pocket 3</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-teal-50 rounded-lg border border-teal-200">
+                <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">DJI Osmo Pocket 3 (ii)</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg border border-purple-200">
+                <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Other Cameras</span>
+              </div>
             </div>
           </div>
 
           {/* Additional Info */}
-          <div className="text-xs text-gray-600 italic">
-            * Completed bookings appear with muted colors and reduced opacity
+          <div className="flex items-start gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-xs text-slate-600">ℹ</span>
+            </div>
+            <p className="text-xs text-slate-600">
+              Completed bookings appear with muted colors and reduced opacity
+            </p>
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden max-w-full">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         {/* Day Headers */}
-        <div className="grid grid-cols-7 border-b border-gray-200">
+        <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
           {dayNames.map(day => (
-            <div key={day} className="p-2 sm:p-4 text-center font-semibold text-gray-800 bg-gray-50 text-xs sm:text-sm">
+            <div key={day} className="p-3 sm:p-4 text-center font-bold text-slate-900 text-xs sm:text-sm">
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.slice(0, 1)}</span>
             </div>
@@ -405,13 +474,13 @@ export default function CalendarPage() {
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-b border-gray-100 ${
-                !day.isCurrentMonth ? 'bg-gray-50' : 'bg-white'
-              } ${day.isToday ? 'bg-blue-50' : ''}`}
+              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-b border-slate-100 transition-colors ${
+                !day.isCurrentMonth ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50/30'
+              } ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}`}
             >
               {/* Date Number */}
-              <div className={`text-xs sm:text-sm font-medium mb-1 sm:mb-2 ${
-                !day.isCurrentMonth ? 'text-gray-400' : 'text-gray-900'
+              <div className={`text-xs sm:text-sm font-semibold mb-1 sm:mb-2 ${
+                !day.isCurrentMonth ? 'text-slate-400' : 'text-slate-900'
               } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
                 {day.date.getDate()}
               </div>
@@ -442,63 +511,73 @@ export default function CalendarPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-6 sm:mt-8 max-w-full">
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-4 sm:p-6 max-w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1 mr-3">
-              <p className="text-xs sm:text-sm font-medium text-gray-700 uppercase tracking-wide">This Month</p>
-              <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-2">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">This Month</p>
+              <p className="text-3xl font-bold text-blue-600">
                 {events.filter(e => e.startDate.getMonth() === currentDate.getMonth()).length}
               </p>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">Total Bookings</p>
+              <p className="text-sm text-slate-600 mt-1">Total Bookings</p>
             </div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
-              <span className="text-lg sm:text-xl">📅</span>
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <CalendarIcon className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Active Now</p>
-              <p className="text-2xl font-bold text-green-600 mt-2">
-                {events.filter(e => e.status === 'active').length}
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Active Now</p>
+              <p className="text-3xl font-bold text-green-600">
+                {(() => {
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return events.filter(e => {
+                    const start = new Date(e.startDate);
+                    const end = new Date(e.endDate);
+                    start.setHours(0, 0, 0, 0);
+                    end.setHours(0, 0, 0, 0);
+                    return today >= start && today <= end && (e.status === 'confirmed' || e.status === 'active');
+                  }).length;
+                })()}
               </p>
-              <p className="text-sm text-gray-600 mt-1">Cameras Out</p>
+              <p className="text-sm text-slate-600 mt-1">Cameras Out</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-              <span className="text-xl">📷</span>
+            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+              <Eye className="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600 mt-2">
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Pending</p>
+              <p className="text-3xl font-bold text-amber-600">
                 {events.filter(e => e.status === 'pending_approval' || e.status === 'pending').length}
               </p>
-              <p className="text-sm text-gray-600 mt-1">Need Confirmation</p>
+              <p className="text-sm text-slate-600 mt-1">Need Confirmation</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl flex items-center justify-center">
-              <span className="text-xl">⏳</span>
+            <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
+              <CalendarIcon className="w-6 h-6 text-amber-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700 uppercase tracking-wide">Available</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {2 - events.filter(e => e.status === 'active').length}
+            <div className="flex-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Available</p>
+              <p className="text-3xl font-bold text-slate-900">
+                {cameras.filter(c => c.is_available && c.available_quantity > 0).length}
               </p>
-              <p className="text-sm text-gray-600 mt-1">Cameras Ready</p>
+              <p className="text-sm text-slate-600 mt-1">Cameras Ready</p>
             </div>
-            <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-xl flex items-center justify-center">
-              <span className="text-xl">✅</span>
+            <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center">
+              <Eye className="w-6 h-6 text-slate-600" />
             </div>
           </div>
         </div>
@@ -506,75 +585,84 @@ export default function CalendarPage() {
 
       {/* Event Details Modal */}
       {showEventModal && selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6">
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">{selectedEvent.camera}</h3>
-                  <p className="text-gray-700 mt-1">Rental Details</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                    <CalendarIcon className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">{selectedEvent.camera}</h3>
+                    <p className="text-slate-300 text-sm mt-0.5">Rental Details</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowEventModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  className="w-8 h-8 rounded-lg hover:bg-white/10 flex items-center justify-center transition-colors"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <X className="w-5 h-5 text-white" />
                 </button>
               </div>
             </div>
 
+            {/* Content */}
             <div className="p-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-800">Customer</label>
-                <p className="text-gray-900 font-medium">{selectedEvent.customer}</p>
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Customer</label>
+                <p className="text-slate-900 font-semibold mt-1">{selectedEvent.customer}</p>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-800">Camera</label>
-                <p className="text-gray-900 font-medium">{selectedEvent.camera}</p>
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Camera</label>
+                <p className="text-slate-900 font-semibold mt-1">{selectedEvent.camera}</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-800">Start Date</label>
-                  <p className="text-gray-900">{selectedEvent.startDate.toLocaleDateString()}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                  <label className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Start Date</label>
+                  <p className="text-slate-900 font-semibold mt-1 text-sm">
+                    {selectedEvent.startDate.toLocaleDateString('en-MY', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-800">End Date</label>
-                  <p className="text-gray-900">{selectedEvent.endDate.toLocaleDateString()}</p>
+                <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                  <label className="text-xs font-semibold text-purple-600 uppercase tracking-wide">End Date</label>
+                  <p className="text-slate-900 font-semibold mt-1 text-sm">
+                    {selectedEvent.endDate.toLocaleDateString('en-MY', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </p>
                 </div>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-800">Status</label>
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${selectedEvent.color}`}>
-                  {selectedEvent.status.charAt(0).toUpperCase() + selectedEvent.status.slice(1)}
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Status</label>
+                <span className={`inline-flex px-3 py-1.5 rounded-lg text-sm font-semibold ${selectedEvent.color}`}>
+                  {selectedEvent.status.replace('_', ' ').charAt(0).toUpperCase() + selectedEvent.status.replace('_', ' ').slice(1)}
                 </span>
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-800">Duration</label>
-                <p className="text-gray-900">
+              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                <label className="text-xs font-semibold text-green-600 uppercase tracking-wide">Duration</label>
+                <p className="text-slate-900 font-bold mt-1 text-lg">
                   {Math.ceil((selectedEvent.endDate.getTime() - selectedEvent.startDate.getTime()) / (1000 * 60 * 60 * 24))} days
                 </p>
               </div>
             </div>
 
-            <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+            {/* Footer */}
+            <div className="p-6 border-t border-slate-200 flex gap-3">
               <button
                 onClick={() => setShowEventModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 px-5 py-2.5 border border-slate-300 rounded-xl text-slate-700 font-semibold hover:bg-slate-50 transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 Close
               </button>
               <button
                 onClick={() => {
-                  // Navigate to booking details
                   window.location.href = `/admin/bookings/${selectedEvent.id}`;
                 }}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                className="flex-1 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
               >
                 View Booking
               </button>

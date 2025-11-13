@@ -171,7 +171,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
     return (
       <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 border-b border-orange-100">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <span className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">📤</span>
             </span>
@@ -191,7 +191,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 border-b border-orange-100">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+          <h3 className="text-xl font-bold text-slate-900 flex items-center gap-3">
             <span className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm">📤</span>
             </span>
@@ -217,7 +217,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-medium text-gray-900 truncate">{returnItem.customer_name}</h4>
+                        <h4 className="font-medium text-slate-900 truncate">{returnItem.customer_name}</h4>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${urgency.color} bg-white`}>
                           {urgency.icon} {urgency.text}
                         </span>

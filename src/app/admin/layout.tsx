@@ -4,11 +4,27 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
 import AIAssistant from '../../components/admin/AIAssistant';
 import { AdminDataProvider } from '@/contexts/AdminDataContext';
 import { ErrorBoundary } from '@/components/admin/ErrorBoundary';
 import { RefreshButton } from '@/components/admin/RefreshButton';
+import {
+  LayoutDashboard,
+  Clock,
+  Calendar,
+  BookOpen,
+  Camera,
+  Wrench,
+  Users,
+  Image as ImageIcon,
+  BarChart3,
+  Settings,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
 
 export default function AdminLayout({
   children,
@@ -66,145 +82,223 @@ export default function AdminLayout({
   }
 
   const navigation = [
-    { name: 'Dashboard', href: '/admin', icon: '📊' },
-    { name: 'Approvals', href: '/admin/booking-approvals', icon: '⏳' },
-    { name: 'Calendar', href: '/admin/calendar', icon: '📅' },
-    { name: 'Bookings', href: '/admin/bookings', icon: '📋' },
-    { name: 'Cameras', href: '/admin/cameras', icon: '📷' },
-    { name: 'Accessories', href: '/admin/accessories', icon: '🔧' },
-    { name: 'Customers', href: '/admin/customers', icon: '👥' },
-    { name: 'Gallery', href: '/admin/gallery', icon: '📸' },
-    { name: 'Reports', href: '/admin/reports', icon: '📈' },
-    { name: 'Settings', href: '/admin/settings', icon: '⚙️' },
+    { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+    { name: 'Approvals', href: '/admin/booking-approvals', icon: Clock },
+    { name: 'Calendar', href: '/admin/calendar', icon: Calendar },
+    { name: 'Bookings', href: '/admin/bookings', icon: BookOpen },
+    { name: 'Cameras', href: '/admin/cameras', icon: Camera },
+    { name: 'Accessories', href: '/admin/accessories', icon: Wrench },
+    { name: 'Customers', href: '/admin/customers', icon: Users },
+    { name: 'Gallery', href: '/admin/gallery', icon: ImageIcon },
+    { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
+    { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
 
   return (
     <AdminPWAWrapper>
       <ErrorBoundary>
         <AdminDataProvider>
-          <div className="min-h-screen bg-gray-100 flex overflow-x-hidden">
+          <div className="min-h-screen bg-slate-100 flex overflow-x-hidden">
       {/* Mobile sidebar overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Sidebar */}
-      <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform lg:transition-none transition-transform duration-200 ease-in-out border-r border-gray-200
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:relative lg:flex lg:flex-shrink-0
-      `}>
-        <div className="flex flex-col h-full w-full">
+      <div className="hidden lg:flex lg:flex-shrink-0 lg:relative">
+        <div className="flex flex-col h-full w-[280px] bg-slate-50 m-4 rounded-3xl shadow-lg">
           {/* Logo */}
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-700">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center p-1">
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center"
+              >
                 <Image
                   src="/images/captura_icon.png"
                   alt="CAPTURA"
-                  width={24}
-                  height={24}
-                  className="w-full h-full object-contain"
+                  width={22}
+                  height={22}
+                  className="w-5.5 h-5.5 object-contain brightness-0 invert"
                 />
-              </div>
+              </motion.div>
               <div>
-                <h1 className="text-base sm:text-lg font-bold text-white">CAPTURA</h1>
-                <p className="text-xs text-blue-100">Admin Panel</p>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">CAPTURA</h1>
+                <p className="text-xs text-slate-500">Admin Panel</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="lg:hidden text-white hover:text-gray-200 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
-            >
-              ✕
-            </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-2 sm:px-4 py-4 sm:py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
             {navigation.map((item) => {
               const isActive = pathname === item.href;
+              const Icon = item.icon;
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setIsSidebarOpen(false)}
-                  className={`
-                    flex items-center px-3 sm:px-4 py-3 sm:py-3 text-sm font-medium rounded-lg transition-colors duration-150 min-h-[48px] touch-manipulation
-                    ${isActive
-                      ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-600 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 active:bg-gray-100'
-                    }
-                  `}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-md'
+                      : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  }`}
                 >
-                  <span className="mr-3 text-lg flex-shrink-0">{item.icon}</span>
-                  <span className="font-medium truncate">{item.name}</span>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-sm">{item.name}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* User info & logout */}
-          <div className="p-3 sm:p-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center min-w-0">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-bold">A</span>
-                </div>
-                <div className="ml-3 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">Admin</p>
-                  <p className="text-xs text-gray-600 truncate">CAPTURA Owner</p>
-                </div>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-gray-600 hover:text-red-600 transition-colors p-2 rounded-lg hover:bg-red-50 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
-                title="Logout"
-              >
-                🚪
-              </button>
-            </div>
+          {/* Logout Button */}
+          <div className="p-4 border-t border-slate-200">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium text-sm">Logout</span>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Mobile Sidebar */}
+      <motion.div
+        initial={false}
+        animate={{ x: isSidebarOpen ? 0 : -300 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="fixed inset-y-0 left-0 z-50 w-[280px] lg:hidden"
+      >
+        <div className="flex flex-col h-full w-full bg-slate-50 shadow-lg">
+          {/* Logo */}
+          <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center"
+              >
+                <Image
+                  src="/images/captura_icon.png"
+                  alt="CAPTURA"
+                  width={22}
+                  height={22}
+                  className="w-5.5 h-5.5 object-contain brightness-0 invert"
+                />
+              </motion.div>
+              <div>
+                <h1 className="text-lg font-bold text-slate-900 tracking-tight">CAPTURA</h1>
+                <p className="text-xs text-slate-500">Admin Panel</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+            {navigation.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsSidebarOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? 'bg-slate-900 text-white shadow-md'
+                      : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className="font-medium text-sm">{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Logout Button */}
+          <div className="p-4 border-t border-slate-200">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+            >
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium text-sm">Logout</span>
+            </button>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 lg:pl-0 w-full max-w-full">
         {/* Top bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30 w-full">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6 max-w-full">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden text-gray-600 hover:text-gray-900 p-2 rounded-lg hover:bg-gray-100 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation flex-shrink-0"
-            >
-              <span className="text-xl">☰</span>
-            </button>
+        <motion.div
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-white border-b border-slate-200 sticky top-0 z-30 w-full"
+        >
+          <div className="flex items-center justify-between h-16 px-6 max-w-full">
+            <div className="flex items-center gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsSidebarOpen(true)}
+                className="lg:hidden text-slate-600 hover:text-slate-900 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </motion.button>
 
-            <div className="flex items-center space-x-2 sm:space-x-4 overflow-hidden min-w-0 flex-1 justify-end">
-              <RefreshButton />
-              <span className="text-xs sm:text-sm text-gray-500 truncate hidden sm:block">
+              <div className="hidden lg:block">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="w-80 px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent transition-all placeholder:text-slate-400"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-slate-500 hidden md:block font-medium">
                 {new Date().toLocaleDateString('en-MY', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
+                  weekday: 'short',
+                  month: 'short',
                   day: 'numeric'
                 })}
               </span>
+              <RefreshButton />
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 bg-gray-100 overflow-x-hidden w-full max-w-full">
-          <div className="max-w-full overflow-x-hidden">
+        <main className="flex-1 p-6 bg-slate-100 overflow-x-hidden w-full max-w-full">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="max-w-full overflow-x-hidden"
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
-      
+
       {/* AI Assistant */}
       <AIAssistant />
           </div>
