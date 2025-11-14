@@ -56,6 +56,13 @@ export default function BookingApprovalsPage() {
   const loadPendingBookings = async () => {
     setIsLoading(true);
     try {
+      // First, get Mother's camera ID
+      const { data: motherCamera } = await supabase
+        .from('cameras')
+        .select('id')
+        .eq('name', 'Canon R50 - Mother')
+        .single();
+
       const { data: bookings, error } = await supabase
         .from('bookings')
         .select(`
@@ -70,7 +77,13 @@ export default function BookingApprovalsPage() {
       } else {
         console.log('Approvals page - Loaded bookings:', bookings?.length || 0);
         console.log('Approvals page - Booking statuses:', bookings?.map(b => ({ id: b.id, status: b.status, booking_status: b.booking_status })));
-        setPendingBookings(bookings || []);
+
+        // Filter out Mother's R50 bookings from main admin approvals
+        const filteredBookings = motherCamera
+          ? (bookings || []).filter(b => b.camera_id !== motherCamera.id)
+          : (bookings || []);
+
+        setPendingBookings(filteredBookings);
       }
     } catch (error) {
       console.error('Error in loadPendingBookings:', error);

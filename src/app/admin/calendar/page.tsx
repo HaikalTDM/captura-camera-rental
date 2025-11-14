@@ -119,8 +119,12 @@ export default function CalendarPage() {
 
     console.log('Calendar: Loaded bookings:', bookings.length);
 
+    // Filter out Mother's R50 bookings from main admin calendar
+    const adminBookings = bookings.filter(b => b.camera?.name !== 'Canon R50 - Mother');
+    console.log('Calendar: Admin bookings (excluding Mother):', adminBookings.length);
+
     // Filter confirmed and completed bookings for calendar display
-    const displayBookings = bookings.filter(booking => {
+    const displayBookings = adminBookings.filter(booking => {
         const status = booking.booking_status || booking.status;
         return status === 'confirmed' || status === 'completed';
       });

@@ -22,7 +22,8 @@ import {
   AlertCircle,
   X,
   SlidersHorizontal,
-  ArrowUpDown
+  ArrowUpDown,
+  Heart
 } from 'lucide-react';
 import { useAdminData } from '@/contexts/AdminDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +72,7 @@ export default function BookingsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [quickFilter, setQuickFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
+  const [includeMotherBookings, setIncludeMotherBookings] = useState(false);
 
   // Load saved sort option
   const getSavedSort = (): SortOption => {
@@ -153,15 +155,23 @@ export default function BookingsPage() {
     };
   }, [mutateBookings]);
 
+  // Filter out Mother's R50 bookings from main admin (unless toggle is on)
+  const adminBookings = useMemo(() => {
+    if (includeMotherBookings) {
+      return bookings; // Show all bookings including Mother's
+    }
+    return bookings.filter(b => b.camera?.name !== 'Canon R50 - Mother');
+  }, [bookings, includeMotherBookings]);
+
   // Get unique cameras for filter
   const uniqueCameras = useMemo(() => {
-    const cameras = bookings.map(b => b.camera?.name).filter(Boolean);
+    const cameras = adminBookings.map(b => b.camera?.name).filter(Boolean);
     return Array.from(new Set(cameras));
-  }, [bookings]);
+  }, [adminBookings]);
 
   // Advanced filtering logic
   const filteredBookings = useMemo(() => {
-    return bookings.filter(booking => {
+    return adminBookings.filter(booking => {
       // Quick filter
       if (quickFilter !== 'all') {
         if (quickFilter === 'pending' && booking.booking_status !== 'pending_approval') return false;
@@ -552,9 +562,25 @@ export default function BookingsPage() {
 
             {/* Results count */}
             <div className="mt-2 sm:mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs sm:text-sm">
-              <p className="text-slate-600">
-                Showing <span className="font-semibold text-slate-900">{filteredBookings.length}</span> of <span className="font-semibold text-slate-900">{bookings.length}</span> bookings
-              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-slate-600">
+                  Showing <span className="font-semibold text-slate-900">{filteredBookings.length}</span> of <span className="font-semibold text-slate-900">{adminBookings.length}</span> bookings
+                </p>
+
+                {/* Toggle Mother's Bookings */}
+                <button
+                  onClick={() => setIncludeMotherBookings(!includeMotherBookings)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
+                    includeMotherBookings
+                      ? 'bg-pink-100 text-pink-700 border border-pink-300'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                  }`}
+                  title={includeMotherBookings ? "Hide Mother's bookings" : "Show Mother's bookings"}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${includeMotherBookings ? 'fill-pink-700' : ''}`} />
+                  <span className="hidden sm:inline">Mother's R50</span>
+                </button>
+              </div>
               <div className="flex items-center gap-1.5 sm:gap-2">
                 <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
                 <select
