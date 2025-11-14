@@ -386,7 +386,7 @@ export default function AdminLayout({
         <motion.div
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-white border-b border-slate-200 z-30 w-full flex-shrink-0"
+          className="bg-white m-4 mb-0 rounded-2xl shadow-sm z-30 w-auto flex-shrink-0"
         >
           <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 max-w-full">
             <div className="flex items-center gap-2 sm:gap-4">
