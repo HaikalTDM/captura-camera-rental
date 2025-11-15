@@ -10,6 +10,7 @@ import {
 import type { Camera } from '@/lib/supabase';
 import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown } from 'lucide-react';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import toast from 'react-hot-toast';
 
 export default function AddBookingPage() {
   const router = useRouter();
@@ -269,11 +270,11 @@ export default function AddBookingPage() {
         // Show WhatsApp confirmation modal
         setShowWhatsAppConfirmation(true);
       } else {
-        alert('Failed to create booking');
+        toast.error('Failed to create booking');
       }
     } catch (error) {
       console.error('Error creating booking:', error);
-      alert('An error occurred while creating the booking');
+      toast.error('An error occurred while creating the booking');
     } finally {
       setIsLoading(false);
     }

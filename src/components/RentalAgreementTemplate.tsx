@@ -84,318 +84,395 @@ export default function RentalAgreementTemplate({
     }
   };
 
-  const maxReplacementCost = 3600; // As per terms
+  // Inline styles for better PDF compatibility
+  const styles = {
+    container: {
+      maxWidth: '800px',
+      margin: '0 auto',
+      padding: '40px',
+      backgroundColor: '#ffffff',
+      fontFamily: 'Arial, sans-serif',
+      color: '#000000',
+      lineHeight: '1.6'
+    },
+    header: {
+      textAlign: 'center' as const,
+      marginBottom: '30px',
+      borderBottom: '3px solid #2563eb',
+      paddingBottom: '20px'
+    },
+    title: {
+      fontSize: '32px',
+      fontWeight: 'bold',
+      color: '#000000',
+      marginBottom: '8px',
+      letterSpacing: '2px'
+    },
+    subtitle: {
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#000000',
+      marginBottom: '12px'
+    },
+    infoText: {
+      fontSize: '12px',
+      color: '#333333',
+      margin: '4px 0'
+    },
+    sectionTitle: {
+      fontSize: '16px',
+      fontWeight: 'bold',
+      color: '#000000',
+      marginTop: '24px',
+      marginBottom: '12px',
+      paddingBottom: '8px',
+      borderBottom: '2px solid #e5e7eb',
+      textTransform: 'uppercase' as const
+    },
+    partiesContainer: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '20px',
+      marginBottom: '24px'
+    },
+    partyBox: {
+      border: '1px solid #d1d5db',
+      borderRadius: '8px',
+      padding: '16px',
+      backgroundColor: '#f9fafb'
+    },
+    partyTitle: {
+      fontSize: '12px',
+      fontWeight: 'bold',
+      color: '#000000',
+      marginBottom: '12px',
+      textTransform: 'uppercase' as const
+    },
+    partyInfo: {
+      fontSize: '11px',
+      color: '#000000',
+      margin: '6px 0'
+    },
+    detailsGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '12px',
+      marginBottom: '20px'
+    },
+    detailRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '8px 0',
+      borderBottom: '1px solid #e5e7eb'
+    },
+    detailLabel: {
+      fontSize: '12px',
+      color: '#000000',
+      fontWeight: '500'
+    },
+    detailValue: {
+      fontSize: '12px',
+      color: '#000000',
+      fontWeight: 'bold'
+    },
+    summaryBox: {
+      border: '2px solid #2563eb',
+      borderRadius: '8px',
+      padding: '20px',
+      marginTop: '24px',
+      backgroundColor: '#f8fafc'
+    },
+    summaryTitle: {
+      fontSize: '14px',
+      fontWeight: 'bold',
+      color: '#000000',
+      marginBottom: '16px',
+      textTransform: 'uppercase' as const
+    },
+    summaryRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '8px 0',
+      fontSize: '12px',
+      color: '#000000'
+    },
+    totalRow: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      padding: '12px 0',
+      fontSize: '16px',
+      fontWeight: 'bold',
+      color: '#000000',
+      borderTop: '2px solid #2563eb',
+      marginTop: '8px'
+    },
+    termsBox: {
+      marginTop: '24px',
+      padding: '16px',
+      backgroundColor: '#f9fafb',
+      border: '1px solid #d1d5db',
+      borderRadius: '8px'
+    },
+    termsList: {
+      fontSize: '10px',
+      color: '#000000',
+      lineHeight: '1.8',
+      paddingLeft: '20px'
+    },
+    signatureSection: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '40px',
+      marginTop: '40px',
+      paddingTop: '24px',
+      borderTop: '2px solid #9ca3af'
+    },
+    signatureBox: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      gap: '16px'
+    },
+    signatureLabel: {
+      fontSize: '12px',
+      fontWeight: '500',
+      color: '#000000',
+      marginBottom: '12px'
+    },
+    signatureLine: {
+      borderBottom: '2px solid #9ca3af',
+      height: '64px',
+      marginBottom: '0'
+    },
+    signatureImage: {
+      height: '128px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'flex-start'
+    },
+    signatureInfo: {
+      fontSize: '12px',
+      color: '#000000',
+      margin: '4px 0'
+    },
+    signatureDate: {
+      fontSize: '12px',
+      color: '#000000',
+      marginTop: '8px'
+    },
+    acknowledgment: {
+      marginTop: '24px',
+      padding: '16px',
+      backgroundColor: '#f3f4f6',
+      border: '1px solid #d1d5db',
+      borderRadius: '4px',
+      fontSize: '10px',
+      color: '#000000',
+      fontStyle: 'italic'
+    },
+    footer: {
+      textAlign: 'center' as const,
+      marginTop: '40px',
+      paddingTop: '20px',
+      borderTop: '1px solid #d1d5db',
+      fontSize: '10px',
+      color: '#666666'
+    }
+  };
 
   return (
-    <div ref={agreementRef} className="bg-white p-8 max-w-4xl mx-auto">
+    <div ref={agreementRef} style={styles.container}>
       {/* Header */}
-      <div className="text-center mb-8 border-b-4 border-blue-600 pb-6">
-        <h1 className="text-3xl font-bold text-black mb-2">CAPTURA</h1>
-        <h2 className="text-xl font-semibold text-black">Camera Rental Agreement</h2>
-        {confirmationNumber && (
-          <p className="text-sm text-black mt-2">
-            Confirmation No: <span className="font-mono font-bold text-black">{confirmationNumber}</span>
-          </p>
-        )}
-        <p className="text-xs text-gray-700 mt-1">
+      <div style={styles.header}>
+        <h1 style={styles.title}>CAPTURA</h1>
+        <h2 style={styles.subtitle}>Camera Rental Agreement</h2>
+        <p style={styles.infoText}>
+          <strong>Confirmation No:</strong> {confirmationNumber || booking.id.substring(0, 8).toUpperCase()}
+        </p>
+        <p style={styles.infoText}>
           Agreement Date: {formatDateTime(booking.created_at)}
         </p>
       </div>
 
       {/* Agreement Parties */}
-      <div className="mb-8 grid grid-cols-2 gap-6">
+      <div style={styles.partiesContainer}>
         {/* Rental Company */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-          <h3 className="font-bold text-black mb-3 text-sm uppercase tracking-wide">Rental Company (Lessor)</h3>
-          <div className="space-y-1 text-sm">
-            <p className="font-semibold text-black">CAPTURA</p>
-            <p className="text-black">Camera Rental Services</p>
-            <p className="text-black">Malaysia</p>
-            <p className="text-black">Contact: +60 17-746 4121</p>
-          </div>
+        <div style={styles.partyBox}>
+          <div style={styles.partyTitle}>Rental Company (Lessor)</div>
+          <div style={styles.partyInfo}><strong>CAPTURA</strong></div>
+          <div style={styles.partyInfo}>Camera Rental Services</div>
+          <div style={styles.partyInfo}>Malaysia</div>
+          <div style={styles.partyInfo}>Contact: +60 17-746 4121</div>
         </div>
 
         {/* Customer */}
-        <div className="border border-gray-300 rounded-lg p-4 bg-blue-50">
-          <h3 className="font-bold text-black mb-3 text-sm uppercase tracking-wide">Customer (Renter)</h3>
-          <div className="space-y-1 text-sm">
-            <p className="font-semibold text-black">{customer.full_name}</p>
-            {customer.id_number && (
-              <p className="text-black">IC/Passport: {customer.id_number}</p>
-            )}
-            <p className="text-black">Email: {customer.email}</p>
-            <p className="text-black">Phone: {customer.phone}</p>
-            {customer.address && (
-              <p className="text-black">Address: {customer.address}</p>
-            )}
-          </div>
+        <div style={styles.partyBox}>
+          <div style={styles.partyTitle}>Customer (Renter)</div>
+          <div style={styles.partyInfo}><strong>{customer.full_name}</strong></div>
+          <div style={styles.partyInfo}>Email: {customer.email}</div>
+          <div style={styles.partyInfo}>Phone: {customer.phone}</div>
+          {customer.id_number && (
+            <div style={styles.partyInfo}>IC/Passport: {customer.id_number}</div>
+          )}
         </div>
       </div>
 
       {/* Rental Details */}
-      <div className="mb-8">
-        <h3 className="font-bold text-black mb-4 text-lg border-b-2 border-gray-300 pb-2">
-          Rental Details
-        </h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-3">
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Equipment:</span>
-              <span className="font-semibold text-black">{camera.name}</span>
-            </div>
-            {camera.serial_number && (
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-black font-medium">Serial Number:</span>
-                <span className="font-mono text-sm text-black">{camera.serial_number}</span>
-              </div>
-            )}
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Rental Start:</span>
-              <span className="font-semibold text-black">{formatDate(booking.start_date)}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Rental End:</span>
-              <span className="font-semibold text-black">{formatDate(booking.end_date)}</span>
-            </div>
+      <h3 style={styles.sectionTitle}>Rental Details</h3>
+      <div style={styles.detailsGrid}>
+        <div>
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Equipment:</span>
+            <span style={styles.detailValue}>{camera.name}</span>
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Total Days:</span>
-              <span className="font-semibold text-black">{booking.total_days} day{booking.total_days > 1 ? 's' : ''}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Daily Rate:</span>
-              <span className="font-semibold text-black">{formatCurrency(booking.daily_rate)}</span>
-            </div>
-            <div className="flex justify-between border-b border-gray-200 pb-2">
-              <span className="text-black font-medium">Pickup Method:</span>
-              <span className="font-semibold text-black capitalize">{booking.pickup_method}</span>
-            </div>
-            {booking.pickup_method === 'delivery' && booking.delivery_fee && (
-              <div className="flex justify-between border-b border-gray-200 pb-2">
-                <span className="text-black font-medium">Delivery Fee:</span>
-                <span className="font-semibold text-black">{formatCurrency(booking.delivery_fee)}</span>
-              </div>
-            )}
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Rental Start:</span>
+            <span style={styles.detailValue}>{formatDate(booking.start_date)}</span>
+          </div>
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Rental End:</span>
+            <span style={styles.detailValue}>{formatDate(booking.end_date)}</span>
           </div>
         </div>
-
-        {booking.pickup_method === 'delivery' && booking.pickup_address && (
-          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
-            <p className="text-sm font-medium text-black">Delivery Address:</p>
-            <p className="text-sm text-black">{booking.pickup_address}</p>
+        <div>
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Total Days:</span>
+            <span style={styles.detailValue}>{booking.total_days} day{booking.total_days > 1 ? 's' : ''}</span>
           </div>
-        )}
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Daily Rate:</span>
+            <span style={styles.detailValue}>{formatCurrency(booking.daily_rate)}</span>
+          </div>
+          <div style={styles.detailRow}>
+            <span style={styles.detailLabel}>Pickup Method:</span>
+            <span style={styles.detailValue} style={{textTransform: 'capitalize'}}>{booking.pickup_method}</span>
+          </div>
+        </div>
       </div>
 
       {/* Payment Summary */}
-      <div className="mb-8 bg-gray-50 border-2 border-gray-300 rounded-lg p-6">
-        <h3 className="font-bold text-black mb-4 text-lg">Payment Summary</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between text-sm">
-            <span className="text-black">Rental Amount ({booking.total_days} days × {formatCurrency(booking.daily_rate)}):</span>
-            <span className="font-semibold text-black">{formatCurrency(booking.total_amount)}</span>
+      <div style={styles.summaryBox}>
+        <div style={styles.summaryTitle}>Payment Summary</div>
+        <div style={styles.summaryRow}>
+          <span>Rental Amount ({booking.total_days} days × {formatCurrency(booking.daily_rate)}):</span>
+          <span style={{fontWeight: 'bold'}}>{formatCurrency(booking.total_days * booking.daily_rate)}</span>
+        </div>
+        {booking.pickup_method === 'delivery' && booking.delivery_fee && (
+          <div style={styles.summaryRow}>
+            <span>Delivery Fee:</span>
+            <span style={{fontWeight: 'bold'}}>{formatCurrency(booking.delivery_fee)}</span>
           </div>
-          {booking.delivery_fee && booking.delivery_fee > 0 && (
-            <div className="flex justify-between text-sm">
-              <span className="text-black">Delivery Fee:</span>
-              <span className="font-semibold text-black">{formatCurrency(booking.delivery_fee)}</span>
-            </div>
-          )}
-          <div className="flex justify-between text-sm border-t border-gray-300 pt-3">
-            <span className="text-black font-medium">Security Deposit (Refundable):</span>
-            <span className="font-semibold text-blue-600">{formatCurrency(booking.deposit_amount)}</span>
-          </div>
-          <div className="flex justify-between text-lg font-bold border-t-2 border-gray-400 pt-3">
-            <span className="text-black">Total Amount Due:</span>
-            <span className="text-blue-600">{formatCurrency(booking.final_payment_amount + (booking.delivery_fee || 0))}</span>
-          </div>
+        )}
+        <div style={styles.summaryRow}>
+          <span>Security Deposit (Refundable):</span>
+          <span style={{fontWeight: 'bold'}}>{formatCurrency(booking.deposit_amount)}</span>
+        </div>
+        <div style={styles.totalRow}>
+          <span>TOTAL AMOUNT:</span>
+          <span>{formatCurrency(booking.total_amount)}</span>
         </div>
       </div>
 
-      {/* Emergency Contact */}
-      {customer.emergency_contact_name && customer.emergency_contact_phone && (
-        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h3 className="font-bold text-black mb-2 text-sm">Emergency Contact</h3>
-          <div className="text-sm space-y-1 text-black">
-            <p><span className="font-medium">Name:</span> {customer.emergency_contact_name}</p>
-            <p><span className="font-medium">Phone:</span> {customer.emergency_contact_phone}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Terms & Conditions */}
-      <div className="mb-8 page-break-before">
-        <h3 className="font-bold text-black mb-4 text-lg border-b-2 border-gray-300 pb-2">
-          Terms & Conditions
-        </h3>
-
-        <div className="space-y-4 text-sm">
-          {/* Section 1 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">1. General Terms</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>The Renter must be at least 18 years old with valid IC/Passport.</li>
-              <li>By signing this agreement, the Renter agrees to all terms herein.</li>
-              <li>Captura reserves the right to refuse rental service at its discretion.</li>
-            </ul>
-          </div>
-
-          {/* Section 2 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">2. Rental Period & Late Returns</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Rental period: <strong>{formatDate(booking.start_date)}</strong> to <strong>{formatDate(booking.end_date)}</strong></li>
-              <li>Late returns incur penalty: <strong>RM10 per hour</strong> or <strong>RM50 per day</strong></li>
-              <li>Extensions must be requested in advance and are subject to availability.</li>
-            </ul>
-          </div>
-
-          {/* Section 3 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">3. Security Deposit</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Security deposit: <strong>{formatCurrency(booking.deposit_amount)}</strong> (refundable)</li>
-              <li>Refunded upon return if equipment is undamaged with all accessories.</li>
-              <li>May be forfeited partially/fully to cover repair or replacement costs.</li>
-            </ul>
-          </div>
-
-          {/* Section 4 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">4. Equipment Liability & Responsibility</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Renter is fully responsible for equipment from pickup to return.</li>
-              <li>Must not be used for unlawful activities or hazardous conditions.</li>
-              <li>Must take reasonable care to prevent damage, loss, or theft.</li>
-              <li>Report technical issues immediately to Captura.</li>
-            </ul>
-          </div>
-
-          {/* Section 5 */}
-          <div className="bg-yellow-50 border border-yellow-300 rounded p-3">
-            <h4 className="font-bold text-black mb-2">5. Damage, Loss & Replacement</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Renter pays repair costs for damaged equipment.</li>
-              <li>Full replacement cost if damaged beyond repair or lost: <strong>up to {formatCurrency(maxReplacementCost)}</strong></li>
-              <li>Do not attempt to repair or tamper with equipment.</li>
-            </ul>
-          </div>
-
-          {/* Section 6 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">6. Cancellations & Refunds</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Cancellations 24+ hours before rental: Full refund eligible</li>
-              <li>Cancellations within 24 hours: 50% charge of rental fee</li>
-              <li>Booking deposit is non-refundable if cancelled anytime</li>
-              <li>No refunds for early returns</li>
-            </ul>
-          </div>
-
-          {/* Section 7 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">7. Privacy & Data Protection</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>Personal information used solely for verification and rental processing.</li>
-              <li>Information will not be shared without consent.</li>
-            </ul>
-          </div>
-
-          {/* Section 8 */}
-          <div>
-            <h4 className="font-bold text-black mb-2">8. Legal Compliance</h4>
-            <ul className="list-disc list-inside space-y-1 text-black ml-2">
-              <li>This agreement is governed by the laws of Malaysia.</li>
-              <li>Failure to comply may result in legal action.</li>
-              <li>Captura reserves the right to amend these terms without prior notice.</li>
-            </ul>
-          </div>
-        </div>
+      {/* Terms and Conditions */}
+      <div style={styles.termsBox}>
+        <h3 style={styles.sectionTitle}>Terms and Conditions</h3>
+        <ol style={styles.termsList}>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Rental Period:</strong> Equipment must be picked up one day before the rental start date and returned on the rental end date.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Security Deposit:</strong> A refundable security deposit of {formatCurrency(booking.deposit_amount)} is required. The deposit will be refunded within 7 business days after equipment return, subject to inspection.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Equipment Care:</strong> The renter agrees to use the equipment with reasonable care and return it in the same condition as received.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Damage/Loss:</strong> The renter is responsible for any damage or loss of equipment. Repair or replacement costs will be deducted from the security deposit. Maximum liability is RM3,600.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Late Returns:</strong> Late returns will incur additional daily rental charges at the agreed daily rate.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Cancellation:</strong> Cancellations must be made at least 48 hours before the rental start date for a full refund.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Insurance:</strong> The renter is advised to obtain insurance coverage for the rented equipment.
+          </li>
+          <li style={{marginBottom: '8px'}}>
+            <strong>Prohibited Use:</strong> Equipment may not be used for illegal purposes or subleased to third parties.
+          </li>
+        </ol>
       </div>
-
-      {/* Additional Notes */}
-      {booking.notes && (
-        <div className="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-bold text-black mb-2 text-sm">Special Notes/Requests</h3>
-          <p className="text-sm text-black">{booking.notes}</p>
-        </div>
-      )}
 
       {/* Signature Section */}
-      <div className="mb-8 border-t-2 border-gray-400 pt-6">
-        <h3 className="font-bold text-black mb-6 text-lg">Agreement Acknowledgment</h3>
+      <div style={{marginBottom: '32px', borderTop: '2px solid #9ca3af', paddingTop: '24px'}}>
+        <h3 style={{fontSize: '16px', fontWeight: 'bold', color: '#000000', marginBottom: '24px'}}>
+          Agreement Acknowledgment
+        </h3>
 
-        <div className="grid grid-cols-2 gap-8">
+        <div style={styles.signatureSection}>
           {/* Renter Signature */}
-          <div className="space-y-4">
+          <div style={styles.signatureBox}>
             <div>
-              <p className="text-sm font-medium text-black mb-3">Renter's Signature:</p>
-              <div className="border-b-2 border-gray-400 h-16"></div>
+              <p style={styles.signatureLabel}>Renter's Signature:</p>
+              <div style={styles.signatureLine}></div>
             </div>
             <div>
-              <p className="text-sm text-black">Name: <span className="font-semibold">{customer.full_name}</span></p>
-              <p className="text-sm text-black mt-1">IC/Passport: {customer.id_number || '___________________'}</p>
+              <p style={styles.signatureInfo}>
+                Name: <span style={{fontWeight: 'bold'}}>{customer.full_name}</span>
+              </p>
+              <p style={styles.signatureInfo}>
+                IC/Passport: {customer.id_number || '___________________'}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-black">Date: <span className="font-semibold">{getPickupDate()}</span></p>
+              <p style={styles.signatureDate}>
+                Date: <span style={{fontWeight: 'bold'}}>{getPickupDate()}</span>
+              </p>
             </div>
           </div>
 
           {/* Lessor Signature */}
-          <div className="space-y-4">
+          <div style={styles.signatureBox}>
             <div>
-              <p className="text-sm font-medium text-black mb-3">Lessor's Signature (Captura):</p>
-              <div className="h-32 flex items-center">
+              <p style={styles.signatureLabel}>Lessor's Signature (Captura):</p>
+              <div style={styles.signatureImage}>
                 <img
                   src="/images/HaikalSign.png"
                   alt="Muhammad Haikal Signature"
-                  className="max-h-32 w-auto object-contain"
-                  style={{ maxWidth: '300px' }}
+                  style={{maxHeight: '128px', width: 'auto', objectFit: 'contain', maxWidth: '300px'}}
                 />
               </div>
             </div>
             <div>
-              <p className="text-sm text-black">Name: <span className="font-semibold">Muhammad Haikal</span></p>
-              <p className="text-sm text-black mt-1">Position: Owner / CEO</p>
+              <p style={styles.signatureInfo}>
+                Name: <span style={{fontWeight: 'bold'}}>Muhammad Haikal</span>
+              </p>
+              <p style={styles.signatureInfo}>Position: Owner / CEO</p>
             </div>
             <div>
-              <p className="text-sm text-black">Date: <span className="font-semibold">{getPickupDate()}</span></p>
+              <p style={styles.signatureDate}>
+                Date: <span style={{fontWeight: 'bold'}}>{getPickupDate()}</span>
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-gray-100 border border-gray-300 rounded">
-          <p className="text-xs text-black italic">
+        <div style={styles.acknowledgment}>
+          <p>
             By signing this agreement, both parties acknowledge that they have read, understood, and agree to be bound by all terms and conditions stated herein. The Renter confirms receipt of the equipment in good working condition and agrees to return it in the same condition, subject to normal wear and tear.
           </p>
         </div>
       </div>
 
-
-
       {/* Footer */}
-      <div className="text-center text-xs text-gray-700 border-t border-gray-300 pt-4">
-        <p>CAPTURA Camera Rental Services | Malaysia</p>
-        <p className="mt-1">Contact: +60 17-746 4121 | This is a legally binding agreement</p>
-        <p className="mt-1">Agreement ID: {booking.id}</p>
+      <div style={styles.footer}>
+        <p><strong>CAPTURA Camera Rental Services | Malaysia</strong></p>
+        <p style={{marginTop: '4px'}}>Contact: +60 17-746 4121 | This is a legally binding agreement</p>
+        <p style={{marginTop: '4px'}}>Agreement ID: {booking.id}</p>
         {confirmationNumber && (
-          <p className="mt-1 font-mono">Confirmation: {confirmationNumber}</p>
+          <p style={{marginTop: '4px'}}>Confirmation: {confirmationNumber}</p>
         )}
       </div>
-
-      {/* Print Styles */}
-      <style jsx>{`
-        @media print {
-          .page-break-before {
-            page-break-before: always;
-          }
-
-          @page {
-            margin: 1.5cm;
-          }
-        }
-      `}</style>
     </div>
   );
 }

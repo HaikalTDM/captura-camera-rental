@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export default function PushNotificationToggle() {
   const [isSupported, setIsSupported] = useState(false);
@@ -50,7 +51,7 @@ export default function PushNotificationToggle() {
       setPermission(permission);
 
       if (permission !== 'granted') {
-        alert('Please allow notifications to receive booking alerts');
+        toast.error('Please allow notifications to receive booking alerts');
         setIsLoading(false);
         return;
       }
@@ -79,7 +80,7 @@ export default function PushNotificationToggle() {
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
         console.error('VAPID public key not configured');
-        alert('Push notifications not configured. Please contact administrator.');
+        toast.error('Push notifications not configured. Please contact administrator.');
         setIsLoading(false);
         return;
       }
@@ -103,13 +104,13 @@ export default function PushNotificationToggle() {
 
       if (result.success) {
         setIsSubscribed(true);
-        alert('✅ Push notifications enabled! You will receive alerts for new bookings.');
+        toast.success('Push notifications enabled! You will receive alerts for new bookings.');
       } else {
-        alert('Failed to enable push notifications. Please try again.');
+        toast.error('Failed to enable push notifications. Please try again.');
       }
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
-      alert('Error enabling push notifications. Please try again.');
+      toast.error('Error enabling push notifications. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -135,11 +136,11 @@ export default function PushNotificationToggle() {
         });
 
         setIsSubscribed(false);
-        alert('Push notifications disabled');
+        toast.success('Push notifications disabled');
       }
     } catch (error) {
       console.error('Error unsubscribing from push notifications:', error);
-      alert('Error disabling push notifications. Please try again.');
+      toast.error('Error disabling push notifications. Please try again.');
     } finally {
       setIsLoading(false);
     }

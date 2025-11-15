@@ -4,6 +4,7 @@ import "./globals.css";
 import "../styles/terms-modal.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import DOMSafetyPatch from "@/components/DOMSafetyPatch";
+import { ToastProvider } from "@/components/ui/toast-config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -107,6 +108,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <DOMSafetyPatch />
           {children}
+          <ToastProvider />
         </ErrorBoundary>
       </body>
     </html>

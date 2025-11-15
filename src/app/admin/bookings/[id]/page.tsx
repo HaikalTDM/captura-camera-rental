@@ -6,6 +6,7 @@ import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Edit3,
@@ -119,13 +120,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(`Deposit marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+        toast.success(`Deposit marked as ${paid ? 'paid' : 'unpaid'} successfully`);
       } else {
-        alert('Failed to update deposit status: ' + data.error);
+        toast.error('Failed to update deposit status: ' + data.error);
       }
     } catch (error) {
       console.error('Error updating deposit status:', error);
-      alert('Failed to update deposit status. Please try again.');
+      toast.error('Failed to update deposit status. Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -151,13 +152,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(`Final payment marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+        toast.success(`Final payment marked as ${paid ? 'paid' : 'unpaid'} successfully`);
       } else {
-        alert('Failed to update final payment status: ' + data.error);
+        toast.error('Failed to update final payment status: ' + data.error);
       }
     } catch (error) {
       console.error('Error updating final payment status:', error);
-      alert('Failed to update final payment status. Please try again.');
+      toast.error('Failed to update final payment status. Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -185,16 +186,16 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
+        toast.success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
 
         // Reload booking data to ensure all fields are updated
         await loadBookingData();
       } else {
-        alert('Failed to update deposit refund status: ' + data.error);
+        toast.error('Failed to update deposit refund status: ' + data.error);
       }
     } catch (error) {
       console.error('Error updating deposit refund status:', error);
-      alert('Failed to update deposit refund status. Please try again.');
+      toast.error('Failed to update deposit refund status. Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -221,13 +222,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'} successfully`);
+        toast.success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'} successfully`);
       } else {
-        alert('Failed to update pickup status: ' + data.error);
+        toast.error('Failed to update pickup status: ' + data.error);
       }
     } catch (error) {
       console.error('Error updating pickup status:', error);
-      alert('Failed to update pickup status. Please try again.');
+      toast.error('Failed to update pickup status. Please try again.');
     } finally {
       setIsUpdatingPickup(false);
     }
@@ -254,13 +255,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        alert(`Equipment marked as ${returned ? 'returned' : 'not returned'} successfully`);
+        toast.success(`Equipment marked as ${returned ? 'returned' : 'not returned'} successfully`);
       } else {
-        alert('Failed to update return status: ' + data.error);
+        toast.error('Failed to update return status: ' + data.error);
       }
     } catch (error) {
       console.error('Error updating return status:', error);
-      alert('Failed to update return status. Please try again.');
+      toast.error('Failed to update return status. Please try again.');
     } finally {
       setIsUpdatingReturn(false);
     }
@@ -280,13 +281,14 @@ export default function BookingDetailsPage() {
       const data = await response.json();
 
       if (data.success) {
+        toast.success('Booking deleted successfully');
         router.push('/admin/bookings');
       } else {
-        alert('Failed to delete booking: ' + data.error);
+        toast.error('Failed to delete booking: ' + data.error);
       }
     } catch (error) {
       console.error('Error deleting booking:', error);
-      alert('Failed to delete booking. Please try again.');
+      toast.error('Failed to delete booking. Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -384,7 +386,7 @@ Thank you for choosing Captura! 😊`;
 
   const handleReturnReminder = () => {
     if (!booking?.customer?.phone) {
-      alert('Customer phone number not available');
+      toast.error('Customer phone number not available');
       return;
     }
 

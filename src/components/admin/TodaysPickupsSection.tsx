@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getTodaysPickups, markEquipmentPickedUp, type PickupSchedule } from '@/lib/api/pickup-scheduling';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import toast from 'react-hot-toast';
 
 interface TodaysPickupsSectionProps {
   onPickupUpdate?: () => void;
@@ -39,12 +40,13 @@ export default function TodaysPickupsSection({ onPickupUpdate }: TodaysPickupsSe
         setPickups(prev => prev.filter(p => p.id !== bookingId));
         // Notify parent component
         onPickupUpdate?.();
+        toast.success('Equipment marked as picked up successfully');
       } else {
-        alert('Failed to mark equipment as picked up. Please try again.');
+        toast.error('Failed to mark equipment as picked up. Please try again.');
       }
     } catch (error) {
       console.error('Error marking pickup:', error);
-      alert('Error occurred while marking pickup. Please try again.');
+      toast.error('Error occurred while marking pickup. Please try again.');
     } finally {
       setProcessingPickup(null);
     }
