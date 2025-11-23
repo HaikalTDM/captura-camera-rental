@@ -74,7 +74,7 @@ export default function MotherBookingsPage() {
       // Quick filter
       if (quickFilter !== 'all') {
         if (quickFilter === 'pending' && booking.booking_status !== 'pending_approval') return false;
-        if (quickFilter === 'confirmed' && booking.booking_status !== 'confirmed' && booking.booking_status !== 'approved') return false;
+        if (quickFilter === 'confirmed' && booking.booking_status !== 'confirmed') return false;
         if (quickFilter === 'completed' && booking.booking_status !== 'completed') return false;
       }
 
@@ -106,7 +106,7 @@ export default function MotherBookingsPage() {
 
   // Sort by newest first
   const sortedBookings = useMemo(() => {
-    return [...filteredBookings].sort((a, b) => 
+    return [...filteredBookings].sort((a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     );
   }, [filteredBookings]);
@@ -170,7 +170,7 @@ export default function MotherBookingsPage() {
           <CardHeader>
             <CardTitle className="text-red-600">Camera Not Found</CardTitle>
             <CardDescription>
-              Mother's Canon R50 camera has not been set up yet.
+              Canon R50 - Mother camera has not been set up yet.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -199,7 +199,7 @@ export default function MotherBookingsPage() {
           <h1 className="text-2xl sm:text-3xl font-bold">Mother's Bookings</h1>
         </div>
         <p className="text-pink-100 text-sm sm:text-base">
-          Manage all Canon R50 - Mother rental bookings
+          Manage all Mother's Canon R50 rental bookings
         </p>
       </motion.div>
 
@@ -239,7 +239,7 @@ export default function MotherBookingsPage() {
               <p className="text-xs font-semibold text-slate-500 uppercase">Confirmed</p>
             </div>
             <p className="text-2xl font-bold text-slate-900">
-              {motherBookings.filter(b => b.booking_status === 'confirmed' || b.booking_status === 'approved').length}
+              {motherBookings.filter(b => b.booking_status === 'confirmed').length}
             </p>
           </CardContent>
         </Card>
@@ -350,12 +350,29 @@ export default function MotherBookingsPage() {
                       </span>
                     </div>
 
+                    <div className="flex gap-1.5 flex-wrap">
+                      <Badge variant={booking.deposit_paid ? 'success' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                        {booking.deposit_paid ? '✓' : '○'} Deposit
+                      </Badge>
+                      <Badge variant={booking.equipment_picked_up ? 'info' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                        {booking.equipment_picked_up ? '✓' : '○'} Pickup
+                      </Badge>
+                      <Badge variant={booking.equipment_returned ? 'success' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                        {booking.equipment_returned ? '✓' : '○'} Return
+                      </Badge>
+                    </div>
+
                     <div className="flex items-center justify-between pt-2 border-t border-slate-100">
                       <p className="font-bold text-pink-600">RM{booking.total_amount}</p>
                       <div className="flex gap-1">
                         <Link href={`/admin/mother/bookings/${booking.id}`}>
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                             <Eye className="w-3.5 h-3.5" />
+                          </Button>
+                        </Link>
+                        <Link href={`/admin/bookings/${booking.id}/edit`}>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <Edit className="w-3.5 h-3.5" />
                           </Button>
                         </Link>
                         <Button
@@ -427,7 +444,29 @@ export default function MotherBookingsPage() {
                           <p className="font-bold text-pink-600">RM{booking.total_amount}</p>
                         </TableCell>
                         <TableCell>
-                          {getStatusBadge(booking.booking_status || 'pending_approval')}
+                          <div className="space-y-2">
+                            {getStatusBadge(booking.booking_status || 'pending_approval')}
+                            <div className="flex gap-1.5">
+                              <Badge
+                                variant={booking.deposit_paid ? 'success' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {booking.deposit_paid ? '✓' : '○'} Deposit
+                              </Badge>
+                              <Badge
+                                variant={booking.equipment_picked_up ? 'info' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {booking.equipment_picked_up ? '✓' : '○'} Pickup
+                              </Badge>
+                              <Badge
+                                variant={booking.equipment_returned ? 'success' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {booking.equipment_returned ? '✓' : '○'} Return
+                              </Badge>
+                            </div>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex gap-2 justify-end">
@@ -435,6 +474,12 @@ export default function MotherBookingsPage() {
                               <Button variant="ghost" size="sm">
                                 <Eye className="w-4 h-4 mr-1" />
                                 View
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/bookings/${booking.id}/edit`}>
+                              <Button variant="ghost" size="sm">
+                                <Edit className="w-4 h-4 mr-1" />
+                                Edit
                               </Button>
                             </Link>
                             <Button

@@ -7,6 +7,7 @@ import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import {
   ArrowLeft,
   Heart,
@@ -34,6 +35,9 @@ export default function MotherBookingDetailsPage() {
 
   const [booking, setBooking] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [isUpdatingPickup, setIsUpdatingPickup] = useState(false);
+  const [isUpdatingReturn, setIsUpdatingReturn] = useState(false);
 
   useEffect(() => {
     loadBookingData();
@@ -44,7 +48,7 @@ export default function MotherBookingDetailsPage() {
     try {
       const bookings = await getAllBookings();
       const foundBooking = bookings.find(b => b.id === bookingId);
-      
+
       // Verify this is a Mother's booking
       if (foundBooking && foundBooking.camera?.name === 'Canon R50 - Mother') {
         setBooking(foundBooking);
@@ -101,7 +105,172 @@ export default function MotherBookingDetailsPage() {
     );
   };
 
-  const customerPhone = booking.customer?.phone_number || '';
+  const handleDepositPaymentUpdate = async (paid: boolean) => {
+    if (!booking) return;
+
+    setIsUpdatingPayment(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/deposit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          deposit_paid: paid,
+          deposit_paid_date: paid ? new Date().toISOString() : null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.booking);
+        toast.success(`Deposit marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+      } else {
+        toast.error('Failed to update deposit status: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating deposit status:', error);
+      toast.error('Failed to update deposit status. Please try again.');
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
+
+  const handleFinalPaymentUpdate = async (paid: boolean) => {
+    if (!booking) return;
+
+    setIsUpdatingPayment(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/final-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          final_payment_paid: paid,
+          final_payment_paid_date: paid ? new Date().toISOString() : null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.booking);
+        toast.success(`Final payment marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+      } else {
+        toast.error('Failed to update final payment status: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating final payment status:', error);
+      toast.error('Failed to update final payment status. Please try again.');
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
+
+  const handleDepositRefundUpdate = async (refunded: boolean) => {
+    if (!booking) return;
+
+    setIsUpdatingPayment(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/deposit-refund`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          deposit_refunded: refunded,
+          deposit_refund_date: refunded ? new Date().toISOString() : null,
+          deposit_refund_notes: refunded ? 'Equipment returned in good condition' : null,
+          deposit_refund_amount: 100
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.booking);
+        toast.success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
+        await loadBookingData();
+      } else {
+        toast.error('Failed to update deposit refund status: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating deposit refund status:', error);
+      toast.error('Failed to update deposit refund status. Please try again.');
+    } finally {
+      setIsUpdatingPayment(false);
+    }
+  };
+
+  const handlePickupStatusUpdate = async (pickedUp: boolean) => {
+    if (!booking) return;
+
+    setIsUpdatingPickup(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/pickup-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          equipment_picked_up: pickedUp,
+          equipment_pickup_notes: null,
+          equipment_condition_pickup: null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.booking);
+        toast.success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'} successfully`);
+      } else {
+        toast.error('Failed to update pickup status: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating pickup status:', error);
+      toast.error('Failed to update pickup status. Please try again.');
+    } finally {
+      setIsUpdatingPickup(false);
+    }
+  };
+
+  const handleReturnStatusUpdate = async (returned: boolean) => {
+    if (!booking) return;
+
+    setIsUpdatingReturn(true);
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/return-status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          equipment_returned: returned,
+          equipment_return_notes: null,
+          equipment_condition_return: null
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.booking);
+        toast.success(`Equipment marked as ${returned ? 'returned' : 'not returned'} successfully`);
+      } else {
+        toast.error('Failed to update return status: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error updating return status:', error);
+      toast.error('Failed to update return status. Please try again.');
+    } finally {
+      setIsUpdatingReturn(false);
+    }
+  };
+
+  const customerPhone = booking.customer?.phone || '';
   const whatsappPhone = formatPhoneWithCountryCode(customerPhone);
   const whatsappMessage = `Hi ${booking.customer?.full_name || 'there'}! This is regarding your Canon R50 booking (${booking.id.slice(0, 8)}).`;
   const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(whatsappMessage)}`;
@@ -170,10 +339,6 @@ export default function MotherBookingDetailsPage() {
                   <p className="text-sm text-slate-500 mb-1">Email</p>
                   <p className="font-semibold text-slate-900">{booking.customer?.email || 'N/A'}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">IC Number</p>
-                  <p className="font-semibold text-slate-900">{booking.customer?.ic_number || 'N/A'}</p>
-                </div>
               </div>
               {booking.customer?.address && (
                 <div>
@@ -204,47 +369,34 @@ export default function MotherBookingDetailsPage() {
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Booking Date</p>
                   <p className="font-semibold text-slate-900">
-                    {new Date(booking.created_at).toLocaleDateString('en-MY', { 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    {new Date(booking.created_at).toLocaleDateString('en-MY', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
                     })}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Start Date</p>
                   <p className="font-semibold text-slate-900">
-                    {new Date(booking.start_date).toLocaleDateString('en-MY', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {new Date(booking.start_date).toLocaleDateString('en-MY', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
                     })}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-500 mb-1">End Date</p>
                   <p className="font-semibold text-slate-900">
-                    {new Date(booking.end_date).toLocaleDateString('en-MY', { 
-                      year: 'numeric', 
-                      month: 'short', 
-                      day: 'numeric' 
+                    {new Date(booking.end_date).toLocaleDateString('en-MY', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
                     })}
                   </p>
                 </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Pickup Location</p>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-pink-600" />
-                    <p className="font-semibold text-slate-900">{booking.pickup_location || 'N/A'}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-slate-500 mb-1">Return Location</p>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-pink-600" />
-                    <p className="font-semibold text-slate-900">{booking.return_location || 'N/A'}</p>
-                  </div>
-                </div>
+
               </div>
 
               {booking.notes && (
@@ -272,10 +424,10 @@ export default function MotherBookingDetailsPage() {
                 <p className="text-sm text-slate-500 mb-1">Total Amount</p>
                 <p className="text-2xl font-bold text-pink-600">RM{booking.total_amount}</p>
               </div>
-              
+
               <div className="space-y-3 pt-3 border-t border-slate-200">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Deposit</span>
+                  <span className="text-sm font-medium">Back to Mother's Bookings</span>
                   <span className="font-semibold">RM{booking.deposit_amount}</span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -302,6 +454,37 @@ export default function MotherBookingDetailsPage() {
                   )}
                 </div>
               </div>
+
+              <div className="space-y-2 pt-4 border-t border-slate-200">
+                {!booking.deposit_paid && (
+                  <Button
+                    onClick={() => handleDepositPaymentUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-pink-600 hover:bg-pink-700"
+                  >
+                    {isUpdatingPayment ? 'Updating...' : 'Receive Deposit'}
+                  </Button>
+                )}
+                {booking.deposit_paid && !booking.final_payment_paid && (
+                  <Button
+                    onClick={() => handleFinalPaymentUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    className="w-full bg-pink-600 hover:bg-pink-700"
+                  >
+                    {isUpdatingPayment ? 'Updating...' : 'Receive Final Payment'}
+                  </Button>
+                )}
+                {booking.deposit_paid && !booking.deposit_refunded && (
+                  <Button
+                    onClick={() => handleDepositRefundUpdate(true)}
+                    disabled={isUpdatingPayment}
+                    variant="outline"
+                    className="w-full border-pink-200 text-pink-700 hover:bg-pink-50"
+                  >
+                    {isUpdatingPayment ? 'Processing...' : 'Refund Deposit'}
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -322,10 +505,15 @@ export default function MotherBookingDetailsPage() {
                     Yes
                   </Badge>
                 ) : (
-                  <Badge className="bg-slate-100 text-slate-700 border-slate-300">
-                    <XCircle className="w-3 h-3 mr-1" />
-                    No
-                  </Badge>
+                  <Button
+                    onClick={() => handlePickupStatusUpdate(true)}
+                    disabled={isUpdatingPickup}
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-pink-200 text-pink-700 hover:bg-pink-50"
+                  >
+                    {isUpdatingPickup ? '...' : 'Mark Picked Up'}
+                  </Button>
                 )}
               </div>
               <div className="flex items-center justify-between">
@@ -336,10 +524,15 @@ export default function MotherBookingDetailsPage() {
                     Yes
                   </Badge>
                 ) : (
-                  <Badge className="bg-slate-100 text-slate-700 border-slate-300">
-                    <XCircle className="w-3 h-3 mr-1" />
-                    No
-                  </Badge>
+                  <Button
+                    onClick={() => handleReturnStatusUpdate(true)}
+                    disabled={isUpdatingReturn}
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-pink-200 text-pink-700 hover:bg-pink-50"
+                  >
+                    {isUpdatingReturn ? '...' : 'Mark Returned'}
+                  </Button>
                 )}
               </div>
             </CardContent>

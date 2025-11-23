@@ -152,8 +152,8 @@ export default function CalendarPage() {
 
     // Convert bookings to calendar events
     const calendarEvents = displayBookings.map(booking => {
-      const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
-      const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
+      const cameraName = booking.camera?.name || 'Camera';
+      const customerName = booking.customer?.full_name || 'Customer';
 
       return {
         id: booking.id,
@@ -162,7 +162,7 @@ export default function CalendarPage() {
         customer: customerName,
         startDate: new Date(booking.start_date),
         endDate: new Date(booking.end_date),
-        status: booking.booking_status || booking.status,
+        status: (booking.booking_status === 'pending_approval' ? 'pending' : booking.booking_status) as 'pending' | 'confirmed' | 'active' | 'completed',
         color: getCameraColor(cameraName, booking.booking_status || booking.status)
       };
     });
@@ -318,8 +318,8 @@ export default function CalendarPage() {
               <button
                 onClick={() => setSelectedView('month')}
                 className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedView === 'month'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-300 hover:text-white'
                   }`}
               >
                 Month
@@ -327,8 +327,8 @@ export default function CalendarPage() {
               <button
                 onClick={() => setSelectedView('week')}
                 className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedView === 'week'
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-300 hover:text-white'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-300 hover:text-white'
                   }`}
               >
                 Week
@@ -383,8 +383,8 @@ export default function CalendarPage() {
       {/* Export Notification */}
       {exportNotification.show && (
         <div className={`rounded-2xl border p-4 shadow-sm ${exportNotification.success
-            ? 'bg-green-50 border-green-200'
-            : 'bg-red-50 border-red-200'
+          ? 'bg-green-50 border-green-200'
+          : 'bg-red-50 border-red-200'
           }`}>
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${exportNotification.success ? 'bg-green-100' : 'bg-red-100'
@@ -404,8 +404,8 @@ export default function CalendarPage() {
             <button
               onClick={() => setExportNotification({ show: false, success: false, message: '' })}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${exportNotification.success
-                  ? 'hover:bg-green-100 text-green-600'
-                  : 'hover:bg-red-100 text-red-600'
+                ? 'hover:bg-green-100 text-green-600'
+                : 'hover:bg-red-100 text-red-600'
                 }`}
             >
               <X className="w-4 h-4" />
@@ -462,7 +462,7 @@ export default function CalendarPage() {
               </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-pink-50 rounded-lg border border-pink-200">
                 <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
-                <span className="text-sm font-medium text-slate-700">Canon R50 (Mother)</span>
+                <span className="text-sm font-medium text-slate-700">Canon R50 - Mother</span>
               </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
@@ -581,7 +581,7 @@ export default function CalendarPage() {
             <div className="flex-1">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Pending</p>
               <p className="text-3xl font-bold text-amber-600">
-                {events.filter(e => e.status === 'pending_approval' || e.status === 'pending').length}
+                {events.filter(e => e.status === 'pending').length}
               </p>
               <p className="text-sm text-slate-600 mt-1">Need Confirmation</p>
             </div>
@@ -669,7 +669,7 @@ export default function CalendarPage() {
               <div className="bg-green-50 rounded-xl p-4 border border-green-200">
                 <label className="text-xs font-semibold text-green-600 uppercase tracking-wide">Duration</label>
                 <p className="text-slate-900 font-bold mt-1 text-lg">
-                  {Math.ceil((selectedEvent.endDate.getTime() - selectedEvent.startDate.getTime()) / (1000 * 60 * 60 * 24))} days
+                  {Math.round((selectedEvent.endDate.getTime() - selectedEvent.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} days
                 </p>
               </div>
             </div>

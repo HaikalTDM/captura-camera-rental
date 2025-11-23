@@ -23,14 +23,13 @@ import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
 import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { excludeMotherBookings } from '@/lib/utils/revenue';
 
 export default function AdminDashboard() {
   const { bookings, cameras, stats, mutate } = useAdminData();
 
   // Debug navigation - log on every render
-  console.log('Dashboard render:', { 
-    bookingsCount: bookings.length, 
+  console.log('Dashboard render:', {
+    bookingsCount: bookings.length,
     camerasCount: cameras.length,
     hasStats: !!stats
   });
@@ -39,15 +38,15 @@ export default function AdminDashboard() {
   const dashboardData = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
 
-    // Exclude Mother's R50 bookings from main CAPTURA dashboard
-    const capturaBookings = excludeMotherBookings(bookings, cameras);
+    // Use all bookings for dashboard stats
+    const capturaBookings = bookings;
 
     // Today's pickups
     const todayPickups = capturaBookings.filter(b => {
       if (b.pickup_date) {
         return b.pickup_date === today &&
-               (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
-               !b.equipment_picked_up;
+          (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+          !b.equipment_picked_up;
       }
       const startDate = new Date(b.start_date);
       const pickupDate = new Date(startDate);
@@ -55,8 +54,8 @@ export default function AdminDashboard() {
       const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
 
       return calculatedPickupDate === today &&
-             (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
-             !b.equipment_picked_up;
+        (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+        !b.equipment_picked_up;
     });
 
     const activeRentals = capturaBookings.filter(b =>
@@ -326,8 +325,8 @@ export default function AdminDashboard() {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -496,10 +495,10 @@ export default function AdminDashboard() {
                       <Badge
                         variant={
                           booking.booking_status === 'confirmed' ? 'success' :
-                          booking.booking_status === 'pending_approval' ? 'warning' :
-                          booking.booking_status === 'completed' ? 'info' :
-                          booking.booking_status === 'rejected' ? 'destructive' :
-                          'secondary'
+                            booking.booking_status === 'pending_approval' ? 'warning' :
+                              booking.booking_status === 'completed' ? 'info' :
+                                booking.booking_status === 'rejected' ? 'destructive' :
+                                  'secondary'
                         }
                         className="text-xs"
                       >

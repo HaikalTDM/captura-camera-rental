@@ -125,7 +125,7 @@ export default function MotherDashboard() {
         const startDate = new Date(b.start_date);
         const endDate = new Date(b.end_date);
         return (startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear) ||
-               (endDate.getMonth() === currentMonth && endDate.getFullYear() === currentYear);
+          (endDate.getMonth() === currentMonth && endDate.getFullYear() === currentYear);
       })
       .reduce((sum, b) => sum + b.total_days, 0);
     const utilizationRate = Math.round((bookedDaysThisMonth / daysInMonth) * 100);
@@ -149,29 +149,29 @@ export default function MotherDashboard() {
   const chartData = useMemo(() => {
     const months = [];
     const currentDate = new Date();
-    
+
     for (let i = 5; i >= 0; i--) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const monthStr = date.toISOString().slice(0, 7); // YYYY-MM
-      
+
       const monthBookings = bookings.filter(b =>
         b.created_at.startsWith(monthStr) &&
         b.deposit_paid &&
         b.final_payment_paid
       );
-      
+
       const revenue = monthBookings.reduce((sum, b) => {
         const isNewPaymentSystem = b.deposit_amount === 100;
         return sum + (isNewPaymentSystem ? b.final_payment_amount : (b.total_amount - b.deposit_amount));
       }, 0);
-      
+
       months.push({
         month: date.toLocaleDateString('en-MY', { month: 'short' }),
         revenue,
         bookings: monthBookings.length
       });
     }
-    
+
     return months;
   }, [bookings]);
 
@@ -269,9 +269,7 @@ export default function MotherDashboard() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600 mb-4">Run this command to add the camera:</p>
-            <code className="block bg-slate-900 text-white p-4 rounded-lg">
-              node scripts/add-mother-r50.js
-            </code>
+            <code className="bg-slate-900 text-white px-4 py-2 rounded-lg block mb-2">node scripts/add-mother-r50.js</code>
           </CardContent>
         </Card>
       </div>
@@ -303,10 +301,10 @@ export default function MotherDashboard() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <Heart className="w-8 h-8" />
-              <h1 className="text-2xl sm:text-3xl font-bold">Mother's Dashboard</h1>
+              <h1 className="text-2xl font-bold text-slate-900">Mother's Dashboard</h1>
             </div>
             <p className="text-pink-100 text-sm sm:text-base">
-              Canon R50 Rental Management - Simple & Easy
+              Mother's Canon R50 Rental Management - Simple & Easy
             </p>
           </div>
 
@@ -556,22 +554,19 @@ export default function MotherDashboard() {
                                 {day.bookings.slice(0, 2).map((_, i) => (
                                   <div
                                     key={i}
-                                    className={`w-2 h-2 rounded-full ${
-                                      day.isToday ? 'bg-white shadow-sm' : 'bg-red-500 shadow-sm'
-                                    }`}
+                                    className={`w-2 h-2 rounded-full ${day.isToday ? 'bg-white shadow-sm' : 'bg-red-500 shadow-sm'
+                                      }`}
                                   />
                                 ))}
                                 {day.bookings.length > 2 && (
-                                  <div className={`w-2 h-2 rounded-full ${
-                                    day.isToday ? 'bg-white/70' : 'bg-red-400'
-                                  }`} />
+                                  <div className={`w-2 h-2 rounded-full ${day.isToday ? 'bg-white/70' : 'bg-red-400'
+                                    }`} />
                                 )}
                               </>
                             ) : (
                               // Grey dot for available dates
-                              <div className={`w-2 h-2 rounded-full ${
-                                day.isToday ? 'bg-white/50' : 'bg-slate-300'
-                              }`} />
+                              <div className={`w-2 h-2 rounded-full ${day.isToday ? 'bg-white/50' : 'bg-slate-300'
+                                }`} />
                             )
                           )}
                         </div>

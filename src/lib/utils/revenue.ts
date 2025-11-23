@@ -13,13 +13,13 @@ export function isMotherBooking(booking: Booking, cameras?: Camera[]): boolean {
   if (booking.camera?.name === 'Canon R50 - Mother') {
     return true;
   }
-  
+
   // Check by camera_id if cameras array is provided
   if (cameras && booking.camera_id) {
     const camera = cameras.find(c => c.id === booking.camera_id);
     return camera?.name === 'Canon R50 - Mother';
   }
-  
+
   return false;
 }
 

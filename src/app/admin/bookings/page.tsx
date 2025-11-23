@@ -171,11 +171,18 @@ export default function BookingsPage() {
 
   // Advanced filtering logic
   const filteredBookings = useMemo(() => {
-    return adminBookings.filter(booking => {
+    console.log('Filtering debug:', {
+      total: adminBookings.length,
+      filters,
+      quickFilter,
+      includeMotherBookings
+    });
+
+    const result = adminBookings.filter(booking => {
       // Quick filter
       if (quickFilter !== 'all') {
         if (quickFilter === 'pending' && booking.booking_status !== 'pending_approval') return false;
-        if (quickFilter === 'confirmed' && booking.booking_status !== 'confirmed' && booking.booking_status !== 'approved') return false;
+        if (quickFilter === 'confirmed' && booking.booking_status !== 'confirmed') return false;
         if (quickFilter === 'completed' && booking.booking_status !== 'completed') return false;
       }
 
@@ -194,9 +201,9 @@ export default function BookingsPage() {
         // Check for special "active_deposit" filter
         if (filters.status.includes('active_deposit')) {
           const hasActiveDeposit = booking.deposit_paid &&
-                                   !booking.deposit_refunded &&
-                                   booking.booking_status !== 'completed' &&
-                                   booking.booking_status !== 'cancelled';
+            !booking.deposit_refunded &&
+            booking.booking_status !== 'completed' &&
+            booking.booking_status !== 'cancelled';
           if (!hasActiveDeposit) return false;
         }
         // Check regular booking statuses (exclude special filters)
@@ -238,7 +245,20 @@ export default function BookingsPage() {
       if (filters.camera && booking.camera?.name !== filters.camera) return false;
 
       return true;
-    }).sort((a, b) => {
+    });
+
+    console.log('Filtered result:', result.length);
+    if (result.length !== adminBookings.length) {
+      const missing = adminBookings.filter(b => !result.includes(b));
+      console.log('Missing bookings:', missing.map(b => ({
+        id: b.id,
+        camera: b.camera?.name,
+        status: b.booking_status,
+        customer: b.customer?.full_name
+      })));
+    }
+
+    return result.sort((a, b) => {
       // Sorting logic
       switch (sortBy) {
         case 'name_asc':
@@ -269,11 +289,12 @@ export default function BookingsPage() {
           return 0;
       }
     });
-  }, [bookings, filters, quickFilter, sortBy]);
+  }, [bookings, filters, quickFilter, sortBy, adminBookings, includeMotherBookings]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
+    if (quickFilter !== 'all') count++;
     if (filters.search) count++;
     if (filters.status.length > 0) count++;
     if (filters.dateRange.start && filters.dateRange.end) count++;
@@ -283,7 +304,7 @@ export default function BookingsPage() {
     if (filters.equipmentReturn !== 'all') count++;
     if (filters.camera) count++;
     return count;
-  }, [filters]);
+  }, [filters, quickFilter]);
 
   const clearAllFilters = () => {
     const defaultFilters = {
@@ -321,7 +342,7 @@ export default function BookingsPage() {
     return {
       total: bookings.length,
       pending: bookings.filter(b => b.booking_status === 'pending_approval').length,
-      confirmed: bookings.filter(b => b.booking_status === 'confirmed' || b.booking_status === 'approved').length,
+      confirmed: bookings.filter(b => b.booking_status === 'confirmed').length,
       completed: bookings.filter(b => b.booking_status === 'completed').length,
     };
   }, [bookings]);
@@ -348,7 +369,7 @@ export default function BookingsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this booking?')) return;
-    
+
     setDeletingId(id);
     try {
       const response = await fetch(`/api/bookings/${id}`, {
@@ -493,11 +514,10 @@ export default function BookingsPage() {
             key={tab}
             onClick={() => setQuickFilter(tab)}
             variant={quickFilter === tab ? 'default' : 'outline'}
-            className={`whitespace-nowrap font-semibold text-xs sm:text-sm ${
-              quickFilter === tab
-                ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
-            }`}
+            className={`whitespace-nowrap font-semibold text-xs sm:text-sm ${quickFilter === tab
+              ? 'bg-slate-900 hover:bg-slate-800 text-white'
+              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+              }`}
             size="sm"
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -570,11 +590,10 @@ export default function BookingsPage() {
                 {/* Toggle Mother's Bookings */}
                 <button
                   onClick={() => setIncludeMotherBookings(!includeMotherBookings)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${
-                    includeMotherBookings
-                      ? 'bg-pink-100 text-pink-700 border border-pink-300'
-                      : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
-                  }`}
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all ${includeMotherBookings
+                    ? 'bg-pink-100 text-pink-700 border border-pink-300'
+                    : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'
+                    }`}
                   title={includeMotherBookings ? "Hide Mother's bookings" : "Show Mother's bookings"}
                 >
                   <Heart className={`w-3.5 h-3.5 ${includeMotherBookings ? 'fill-pink-700' : ''}`} />
@@ -655,11 +674,10 @@ export default function BookingsPage() {
                         key={status}
                         onClick={() => toggleStatus(status)}
                         variant={filters.status.includes(status) ? 'default' : 'outline'}
-                        className={`justify-start font-semibold ${
-                          filters.status.includes(status)
-                            ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
-                        }`}
+                        className={`justify-start font-semibold ${filters.status.includes(status)
+                          ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                          : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                          }`}
                         size="sm"
                       >
                         {status === 'active_deposit' ? '💰 Active Deposit' : status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
@@ -732,11 +750,10 @@ export default function BookingsPage() {
                           key={status}
                           onClick={() => setFilters(prev => ({ ...prev, paymentStatus: status }))}
                           variant={filters.paymentStatus === status ? 'default' : 'outline'}
-                          className={`w-full justify-start font-semibold ${
-                            filters.paymentStatus === status
-                              ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
-                          }`}
+                          className={`w-full justify-start font-semibold ${filters.paymentStatus === status
+                            ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                            }`}
                           size="sm"
                         >
                           {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -754,11 +771,10 @@ export default function BookingsPage() {
                           key={status}
                           onClick={() => setFilters(prev => ({ ...prev, equipmentPickup: status }))}
                           variant={filters.equipmentPickup === status ? 'default' : 'outline'}
-                          className={`w-full justify-start font-semibold ${
-                            filters.equipmentPickup === status
-                              ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
-                          }`}
+                          className={`w-full justify-start font-semibold ${filters.equipmentPickup === status
+                            ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                            }`}
                           size="sm"
                         >
                           {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
@@ -776,11 +792,10 @@ export default function BookingsPage() {
                           key={status}
                           onClick={() => setFilters(prev => ({ ...prev, equipmentReturn: status }))}
                           variant={filters.equipmentReturn === status ? 'default' : 'outline'}
-                          className={`w-full justify-start font-semibold ${
-                            filters.equipmentReturn === status
-                              ? 'bg-slate-900 hover:bg-slate-800 text-white'
-                              : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
-                          }`}
+                          className={`w-full justify-start font-semibold ${filters.equipmentReturn === status
+                            ? 'bg-slate-900 hover:bg-slate-800 text-white'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-300'
+                            }`}
                           size="sm"
                         >
                           {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}

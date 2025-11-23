@@ -50,7 +50,7 @@ export default function AddBookingPage() {
     final_payment_amount: 0,
     final_payment_paid: false,
     final_payment_paid_date: null as string | null,
-    pickup_method: 'pickup' as const,
+    pickup_method: 'pickup' as 'pickup' | 'delivery',
     pickup_address: '',
     delivery_fee: 0,
     booking_source: 'manual' as const,
@@ -73,9 +73,19 @@ export default function AddBookingPage() {
   // Calculate totals when dates or camera change
   useEffect(() => {
     if (bookingData.start_date && bookingData.end_date && bookingData.camera_id) {
-      const start = new Date(bookingData.start_date);
-      const end = new Date(bookingData.end_date);
-      const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      // Ensure we only use the date part (YYYY-MM-DD) to avoid time/timezone issues
+      const startDateStr = bookingData.start_date.split('T')[0];
+      const endDateStr = bookingData.end_date.split('T')[0];
+
+      const start = new Date(startDateStr);
+      const end = new Date(endDateStr);
+
+      // Calculate difference in milliseconds
+      const diffTime = end.getTime() - start.getTime();
+
+      // Calculate days: divide by milliseconds per day, round up, add 1 (inclusive)
+      // Use Math.round for the division to handle potential DST shifts or slight offsets
+      const days = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
       const camera = cameras.find(c => c.id === bookingData.camera_id);
       if (camera && days > 0) {
