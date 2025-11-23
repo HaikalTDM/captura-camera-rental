@@ -57,6 +57,8 @@ export default function CalendarPage() {
     const isActionPro = cameraName.includes('Action 5 Pro');
     const isOsmoPocket2 = cameraName.includes('Osmo Pocket 3 (ii)'); // Second Osmo Pocket 3
     const isOsmoPocket = cameraName.includes('Osmo Pocket 3') && !isOsmoPocket2; // First Osmo Pocket 3
+    const isR50Mother = cameraName.includes('Canon R50 - Mother');
+    const isR50 = cameraName.includes('Canon R50') && !isR50Mother;
 
     // Status-based colors with camera-specific themes
     switch (status) {
@@ -69,6 +71,10 @@ export default function CalendarPage() {
           return 'bg-teal-100 border-l-4 border-teal-500 text-teal-900'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
           return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900'; // First Osmo = Orange
+        } else if (isR50Mother) {
+          return 'bg-pink-100 border-l-4 border-pink-500 text-pink-900'; // Mother = Pink
+        } else if (isR50) {
+          return 'bg-indigo-100 border-l-4 border-indigo-500 text-indigo-900'; // R50 = Indigo
         } else {
           return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
         }
@@ -79,6 +85,10 @@ export default function CalendarPage() {
           return 'bg-teal-200 border-l-4 border-teal-600 text-teal-900 font-semibold'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
           return 'bg-orange-200 border-l-4 border-orange-600 text-orange-900 font-semibold'; // First Osmo = Orange
+        } else if (isR50Mother) {
+          return 'bg-pink-200 border-l-4 border-pink-600 text-pink-900 font-semibold'; // Mother = Pink
+        } else if (isR50) {
+          return 'bg-indigo-200 border-l-4 border-indigo-600 text-indigo-900 font-semibold'; // R50 = Indigo
         } else {
           return 'bg-purple-200 border-l-4 border-purple-600 text-purple-900 font-semibold';
         }
@@ -89,6 +99,10 @@ export default function CalendarPage() {
           return 'bg-teal-50 border-l-4 border-teal-300 text-teal-700 opacity-75'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
           return 'bg-orange-50 border-l-4 border-orange-300 text-orange-700 opacity-75'; // First Osmo = Orange
+        } else if (isR50Mother) {
+          return 'bg-pink-50 border-l-4 border-pink-300 text-pink-700 opacity-75'; // Mother = Pink
+        } else if (isR50) {
+          return 'bg-indigo-50 border-l-4 border-indigo-300 text-indigo-700 opacity-75'; // R50 = Indigo
         } else {
           return 'bg-purple-50 border-l-4 border-purple-300 text-purple-700 opacity-75';
         }
@@ -104,6 +118,10 @@ export default function CalendarPage() {
           return 'bg-teal-100 border-l-4 border-teal-500 text-teal-900'; // Second Osmo = Teal
         } else if (isOsmoPocket) {
           return 'bg-orange-100 border-l-4 border-orange-500 text-orange-900'; // First Osmo = Orange
+        } else if (isR50Mother) {
+          return 'bg-pink-100 border-l-4 border-pink-500 text-pink-900'; // Mother = Pink
+        } else if (isR50) {
+          return 'bg-indigo-100 border-l-4 border-indigo-500 text-indigo-900'; // R50 = Indigo
         } else {
           return 'bg-purple-100 border-l-4 border-purple-500 text-purple-900';
         }
@@ -120,32 +138,34 @@ export default function CalendarPage() {
     console.log('Calendar: Loaded bookings:', bookings.length);
 
     // Filter out Mother's R50 bookings from main admin calendar
-    const adminBookings = bookings.filter(b => b.camera?.name !== 'Canon R50 - Mother');
-    console.log('Calendar: Admin bookings (excluding Mother):', adminBookings.length);
+    // const adminBookings = bookings.filter(b => b.camera?.name !== 'Canon R50 - Mother');
+    // console.log('Calendar: Admin bookings (excluding Mother):', adminBookings.length);
+
+    const adminBookings = bookings; // Show all bookings including Mother's
 
     // Filter confirmed and completed bookings for calendar display
     const displayBookings = adminBookings.filter(booking => {
-        const status = booking.booking_status || booking.status;
-        return status === 'confirmed' || status === 'completed';
-      });
-      console.log('Calendar: Display bookings (confirmed + completed):', displayBookings.length);
+      const status = booking.booking_status || booking.status;
+      return status === 'confirmed' || status === 'completed';
+    });
+    console.log('Calendar: Display bookings (confirmed + completed):', displayBookings.length);
 
-      // Convert bookings to calendar events
-      const calendarEvents = displayBookings.map(booking => {
-        const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
-        const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
+    // Convert bookings to calendar events
+    const calendarEvents = displayBookings.map(booking => {
+      const cameraName = booking.camera?.name || booking.camera_name || 'Camera';
+      const customerName = booking.customer?.full_name || booking.customer?.name || 'Customer';
 
-        return {
-          id: booking.id,
-          title: cameraName,
-          camera: cameraName,
-          customer: customerName,
-          startDate: new Date(booking.start_date),
-          endDate: new Date(booking.end_date),
-          status: booking.booking_status || booking.status,
-          color: getCameraColor(cameraName, booking.booking_status || booking.status)
-        };
-      });
+      return {
+        id: booking.id,
+        title: cameraName,
+        camera: cameraName,
+        customer: customerName,
+        startDate: new Date(booking.start_date),
+        endDate: new Date(booking.end_date),
+        status: booking.booking_status || booking.status,
+        color: getCameraColor(cameraName, booking.booking_status || booking.status)
+      };
+    });
 
     console.log('Calendar: Created events:', calendarEvents.length);
     console.log('Calendar: Events:', calendarEvents);
@@ -155,12 +175,12 @@ export default function CalendarPage() {
   const generateCalendarDays = (): CalendarDay[] => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    
+
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const startDate = new Date(firstDay);
     startDate.setDate(startDate.getDate() - firstDay.getDay());
-    
+
     const days: CalendarDay[] = [];
     const today = new Date();
 
@@ -170,7 +190,7 @@ export default function CalendarPage() {
     for (let i = 0; i < 42; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
-      
+
       const dayEvents = events.filter(event => {
         const eventStart = new Date(event.startDate);
         const eventEnd = new Date(event.endDate);
@@ -197,7 +217,7 @@ export default function CalendarPage() {
 
         return isInRange;
       });
-      
+
       days.push({
         date: new Date(date),
         isCurrentMonth: date.getMonth() === month,
@@ -205,7 +225,7 @@ export default function CalendarPage() {
         bookings: dayEvents
       });
     }
-    
+
     return days;
   };
 
@@ -297,21 +317,19 @@ export default function CalendarPage() {
             <div className="flex bg-slate-700/50 rounded-xl p-1 flex-1 sm:flex-none border border-slate-600">
               <button
                 onClick={() => setSelectedView('month')}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  selectedView === 'month'
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedView === 'month'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-300 hover:text-white'
-                }`}
+                  }`}
               >
                 Month
               </button>
               <button
                 onClick={() => setSelectedView('week')}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
-                  selectedView === 'week'
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${selectedView === 'week'
                     ? 'bg-white text-slate-900 shadow-sm'
                     : 'text-slate-300 hover:text-white'
-                }`}
+                  }`}
               >
                 Week
               </button>
@@ -364,15 +382,13 @@ export default function CalendarPage() {
 
       {/* Export Notification */}
       {exportNotification.show && (
-        <div className={`rounded-2xl border p-4 shadow-sm ${
-          exportNotification.success
+        <div className={`rounded-2xl border p-4 shadow-sm ${exportNotification.success
             ? 'bg-green-50 border-green-200'
             : 'bg-red-50 border-red-200'
-        }`}>
+          }`}>
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-              exportNotification.success ? 'bg-green-100' : 'bg-red-100'
-            }`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${exportNotification.success ? 'bg-green-100' : 'bg-red-100'
+              }`}>
               {exportNotification.success ? (
                 <Download className="w-5 h-5 text-green-600" />
               ) : (
@@ -380,19 +396,17 @@ export default function CalendarPage() {
               )}
             </div>
             <div className="flex-1">
-              <p className={`text-sm font-semibold ${
-                exportNotification.success ? 'text-green-900' : 'text-red-900'
-              }`}>
+              <p className={`text-sm font-semibold ${exportNotification.success ? 'text-green-900' : 'text-red-900'
+                }`}>
                 {exportNotification.message}
               </p>
             </div>
             <button
               onClick={() => setExportNotification({ show: false, success: false, message: '' })}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                exportNotification.success
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${exportNotification.success
                   ? 'hover:bg-green-100 text-green-600'
                   : 'hover:bg-red-100 text-red-600'
-              }`}
+                }`}
             >
               <X className="w-4 h-4" />
             </button>
@@ -442,6 +456,14 @@ export default function CalendarPage() {
                 <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
                 <span className="text-sm font-medium text-slate-700">DJI Osmo Pocket 3 (ii)</span>
               </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 rounded-lg border border-indigo-200">
+                <div className="w-3 h-3 bg-indigo-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Canon R50</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-2 bg-pink-50 rounded-lg border border-pink-200">
+                <div className="w-3 h-3 bg-pink-500 rounded-full"></div>
+                <span className="text-sm font-medium text-slate-700">Canon R50 (Mother)</span>
+              </div>
               <div className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
                 <span className="text-sm font-medium text-slate-700">Other Cameras</span>
@@ -478,14 +500,12 @@ export default function CalendarPage() {
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-b border-slate-100 transition-colors ${
-                !day.isCurrentMonth ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50/30'
-              } ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}`}
+              className={`min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 border-r border-b border-slate-100 transition-colors ${!day.isCurrentMonth ? 'bg-slate-50/50' : 'bg-white hover:bg-slate-50/30'
+                } ${day.isToday ? 'bg-blue-50 border-blue-200' : ''}`}
             >
               {/* Date Number */}
-              <div className={`text-xs sm:text-sm font-semibold mb-1 sm:mb-2 ${
-                !day.isCurrentMonth ? 'text-slate-400' : 'text-slate-900'
-              } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
+              <div className={`text-xs sm:text-sm font-semibold mb-1 sm:mb-2 ${!day.isCurrentMonth ? 'text-slate-400' : 'text-slate-900'
+                } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
                 {day.date.getDate()}
               </div>
 

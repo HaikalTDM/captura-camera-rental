@@ -8,7 +8,7 @@ import {
   getAllCameras
 } from '@/lib/api/bookings';
 import type { Camera } from '@/lib/supabase';
-import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown } from 'lucide-react';
+import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown, X } from 'lucide-react';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
 
@@ -474,9 +474,9 @@ If you have any questions, feel free to reply to this message.`;
                     {Object.entries(parseResult.confidence).map(([field, level]: [string, any]) => (
                       <div key={field} className="flex items-center gap-2">
                         <div className={`w-2 h-2 rounded-full ${level === 'high' ? 'bg-green-500' :
-                            level === 'medium' ? 'bg-yellow-500' :
-                              level === 'low' ? 'bg-orange-500' :
-                                'bg-slate-300'
+                          level === 'medium' ? 'bg-yellow-500' :
+                            level === 'low' ? 'bg-orange-500' :
+                              'bg-slate-300'
                           }`} />
                         <span className="text-xs text-slate-600 capitalize">{field.replace('_', ' ')}</span>
                       </div>
@@ -800,14 +800,22 @@ If you have any questions, feel free to reply to this message.`;
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">Booking Created Successfully!</h2>
+                    <p className="text-slate-600">Send confirmation to customer via WhatsApp</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">Booking Created Successfully!</h2>
-                  <p className="text-slate-600">Send confirmation to customer via WhatsApp</p>
-                </div>
+                <button
+                  onClick={() => setShowWhatsAppConfirmation(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
             </div>
 
