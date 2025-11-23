@@ -10,6 +10,7 @@ import {
 import type { Camera } from '@/lib/supabase';
 import { Sparkles, Loader2, ChevronLeft, Send, X } from 'lucide-react';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import toast from 'react-hot-toast';
 
 export default function MobileAddBookingPage() {
   const router = useRouter();
@@ -202,12 +203,12 @@ export default function MobileAddBookingPage() {
     e.preventDefault();
 
     if (!customerDetails.full_name || !customerDetails.email || !customerDetails.phone) {
-      alert('Please fill in customer name, email, and phone');
+      toast.error('Please fill in customer name, email, and phone');
       return;
     }
 
     if (!bookingData.camera_id || !bookingData.start_date || !bookingData.end_date) {
-      alert('Please select camera and dates');
+      toast.error('Please select camera and dates');
       return;
     }
 
@@ -222,7 +223,7 @@ export default function MobileAddBookingPage() {
       });
 
       if (!customer) {
-        alert('Failed to create customer');
+        toast.error('Failed to create customer');
         setIsLoading(false);
         return;
       }
@@ -237,37 +238,50 @@ export default function MobileAddBookingPage() {
         finalNotes = (finalNotes || '') + discountNote;
       }
 
-      const booking = await createBooking({
-        customer_id: customer.id,
-        camera_id: bookingData.camera_id,
-        start_date: bookingData.start_date,
-        end_date: bookingData.end_date,
-        total_days: bookingData.total_days,
-        daily_rate: bookingData.daily_rate,
-        total_amount: bookingData.total_amount,
-        deposit_amount: bookingData.deposit_amount,
-        deposit_paid: bookingData.deposit_paid,
-        deposit_paid_date: bookingData.deposit_paid_date,
-        final_payment_amount: bookingData.final_payment_amount,
-        final_payment_paid: bookingData.final_payment_paid,
-        final_payment_paid_date: bookingData.final_payment_paid_date,
-        pickup_method: bookingData.pickup_method,
-        pickup_address: bookingData.pickup_address,
-        delivery_fee: bookingData.delivery_fee,
-        booking_source: bookingData.booking_source,
-        notes: finalNotes,
-        booking_status: 'pending_approval'
-      });
+      try {
+        const booking = await createBooking({
+          customer_id: customer.id,
+          camera_id: bookingData.camera_id,
+          start_date: bookingData.start_date,
+          end_date: bookingData.end_date,
+          total_days: bookingData.total_days,
+          daily_rate: bookingData.daily_rate,
+          total_amount: bookingData.total_amount,
+          deposit_amount: bookingData.deposit_amount,
+          deposit_paid: bookingData.deposit_paid,
+          deposit_paid_date: bookingData.deposit_paid_date,
+          final_payment_amount: bookingData.final_payment_amount,
+          final_payment_paid: bookingData.final_payment_paid,
+          final_payment_paid_date: bookingData.final_payment_paid_date,
+          pickup_method: bookingData.pickup_method,
+          pickup_address: bookingData.pickup_address,
+          delivery_fee: bookingData.delivery_fee,
+          booking_source: bookingData.booking_source,
+          notes: finalNotes,
+          booking_status: 'pending_approval'
+        });
 
-      if (booking) {
-        alert('Booking created successfully!');
-        router.push('/admin/mobile/bookings');
-      } else {
-        alert('Failed to create booking');
+        if (booking) {
+          toast.success('Booking created successfully!');
+          router.push('/admin/mobile/bookings');
+        } else {
+          toast.error('Failed to create booking');
+        }
+      } catch (bookingError: any) {
+        // Handle availability errors specifically
+        if (bookingError.message && bookingError.message.includes('Camera not available')) {
+          toast.error(bookingError.message, { duration: 6000 });
+        } else {
+          toast.error('Failed to create booking. Please try again.');
+        }
+        throw bookingError; // Re-throw to be caught by outer catch
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating booking:', error);
-      alert('Failed to create booking');
+      // Only show generic error if we haven't already shown a specific error
+      if (!error.message || !error.message.includes('Camera not available')) {
+        toast.error('Failed to create booking');
+      }
     } finally {
       setIsLoading(false);
     }

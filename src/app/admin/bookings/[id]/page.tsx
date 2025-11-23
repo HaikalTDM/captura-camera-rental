@@ -274,7 +274,7 @@ export default function BookingDetailsPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/bookings/${bookingId}/delete`, {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'DELETE',
       });
 

@@ -81,6 +81,14 @@ export default function AddBookingPage() {
       if (camera && days > 0) {
         let dailyRate = camera.daily_rate;
 
+        // Dynamic pricing for Osmo Pocket 3 and Action 5 Pro
+        const isPromoCamera = camera.name.toLowerCase().includes('osmo pocket 3') ||
+          camera.name.toLowerCase().includes('action 5 pro');
+
+        if (isPromoCamera && days >= 3) {
+          dailyRate = 45;
+        }
+
         // Apply social media discount if enabled
         if (socialMediaDiscount) {
           dailyRate = dailyRate - discountPerDay;
@@ -250,31 +258,44 @@ export default function AddBookingPage() {
       }
 
       // Create booking with customer ID
-      const booking = await createBooking({
-        ...bookingData,
-        notes: finalNotes,
-        customer_id: customer.id,
-        status: 'pending' as const
-      });
-
-      if (booking) {
-        const camera = cameras.find(c => c.id === bookingData.camera_id);
-
-        setCreatedBooking({
-          ...booking,
-          customer,
-          camera,
-          bookingData
+      try {
+        const booking = await createBooking({
+          ...bookingData,
+          notes: finalNotes,
+          customer_id: customer.id,
+          status: 'pending' as const
         });
 
-        // Show WhatsApp confirmation modal
-        setShowWhatsAppConfirmation(true);
-      } else {
-        toast.error('Failed to create booking');
+        if (booking) {
+          const camera = cameras.find(c => c.id === bookingData.camera_id);
+
+          setCreatedBooking({
+            ...booking,
+            customer,
+            camera,
+            bookingData
+          });
+
+          // Show WhatsApp confirmation modal
+          setShowWhatsAppConfirmation(true);
+        } else {
+          toast.error('Failed to create booking');
+        }
+      } catch (bookingError: any) {
+        // Handle availability errors specifically
+        if (bookingError.message && bookingError.message.includes('Camera not available')) {
+          toast.error(bookingError.message, { duration: 6000 });
+        } else {
+          toast.error('Failed to create booking. Please try again.');
+        }
+        throw bookingError; // Re-throw to be caught by outer catch
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating booking:', error);
-      toast.error('An error occurred while creating the booking');
+      // Only show generic error if we haven't already shown a specific error
+      if (!error.message || !error.message.includes('Camera not available')) {
+        toast.error('An error occurred while creating the booking');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -452,12 +473,11 @@ If you have any questions, feel free to reply to this message.`;
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                     {Object.entries(parseResult.confidence).map(([field, level]: [string, any]) => (
                       <div key={field} className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${
-                          level === 'high' ? 'bg-green-500' :
-                          level === 'medium' ? 'bg-yellow-500' :
-                          level === 'low' ? 'bg-orange-500' :
-                          'bg-slate-300'
-                        }`} />
+                        <div className={`w-2 h-2 rounded-full ${level === 'high' ? 'bg-green-500' :
+                            level === 'medium' ? 'bg-yellow-500' :
+                              level === 'low' ? 'bg-orange-500' :
+                                'bg-slate-300'
+                          }`} />
                         <span className="text-xs text-slate-600 capitalize">{field.replace('_', ' ')}</span>
                       </div>
                     ))}

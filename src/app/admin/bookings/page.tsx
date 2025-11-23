@@ -581,22 +581,42 @@ export default function BookingsPage() {
                   <span className="hidden sm:inline">Mother's R50</span>
                 </button>
               </div>
-              <div className="flex items-center gap-1.5 sm:gap-2">
-                <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as SortOption)}
-                  className="text-xs sm:text-sm border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent flex-1 sm:flex-none"
-                >
-                  <option value="date_newest">Newest First</option>
-                  <option value="date_oldest">Oldest First</option>
-                  <option value="name_asc">Name (A-Z)</option>
-                  <option value="name_desc">Name (Z-A)</option>
-                  <option value="start_newest">Start Date (Latest)</option>
-                  <option value="start_oldest">Start Date (Earliest)</option>
-                  <option value="amount_high">Amount (High-Low)</option>
-                  <option value="amount_low">Amount (Low-High)</option>
-                </select>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Camera Filter */}
+                {uniqueCameras.length > 0 && (
+                  <div className="flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-none min-w-[140px]">
+                    <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+                    <select
+                      value={filters.camera}
+                      onChange={(e) => setFilters(prev => ({ ...prev, camera: e.target.value }))}
+                      className="text-xs sm:text-sm border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent flex-1 bg-white"
+                    >
+                      <option value="">All Cameras</option>
+                      {uniqueCameras.map(camera => (
+                        <option key={camera} value={camera}>{camera}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-1 sm:flex-none min-w-[140px]">
+                  <ArrowUpDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="text-xs sm:text-sm border border-slate-200 rounded-lg px-2 sm:px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent flex-1 bg-white"
+                  >
+                    <option value="date_newest">Newest First</option>
+                    <option value="date_oldest">Oldest First</option>
+                    <option value="name_asc">Name (A-Z)</option>
+                    <option value="name_desc">Name (Z-A)</option>
+                    <option value="start_newest">Start Date (Latest)</option>
+                    <option value="start_oldest">Start Date (Earliest)</option>
+                    <option value="amount_high">Amount (High-Low)</option>
+                    <option value="amount_low">Amount (Low-High)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </CardContent>

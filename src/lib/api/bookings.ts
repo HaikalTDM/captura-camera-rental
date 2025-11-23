@@ -188,8 +188,41 @@ export async function createBooking(bookingData: {
   delivery_fee?: number
   booking_source?: 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical' | 'manual'
   notes?: string | null
+  skipAvailabilityCheck?: boolean // For historical/bulk imports only
 }): Promise<Booking | null> {
   try {
+    // Check camera availability BEFORE creating the booking (unless explicitly skipped)
+    if (!bookingData.skipAvailabilityCheck) {
+      const { data: isAvailable, error: availabilityError } = await supabase
+        .rpc('check_camera_availability', {
+          p_camera_id: bookingData.camera_id,
+          p_start_date: bookingData.start_date,
+          p_end_date: bookingData.end_date,
+          p_exclude_booking_id: null
+        });
+
+      if (availabilityError) {
+        console.error('Error checking camera availability:', availabilityError);
+        throw new Error('Failed to check camera availability');
+      }
+
+      if (!isAvailable) {
+        // Get conflicting bookings for error message
+        const { data: conflicts } = await supabase
+          .from('bookings')
+          .select('id, start_date, end_date, customer:customers(full_name)')
+          .eq('camera_id', bookingData.camera_id)
+          .eq('booking_status', 'confirmed')
+          .or(`start_date.lte.${bookingData.end_date},end_date.gte.${bookingData.start_date}`);
+
+        const conflictDetails = conflicts && conflicts.length > 0
+          ? `Conflicting with booking for ${conflicts[0].customer?.full_name} (${conflicts[0].start_date} to ${conflicts[0].end_date})`
+          : 'Camera is already booked for these dates';
+
+        throw new Error(`Camera not available: ${conflictDetails}`);
+      }
+    }
+
     // Clean the data to convert empty strings to null for date fields
     const cleanedData = {
       ...bookingData,
@@ -198,6 +231,9 @@ export async function createBooking(bookingData: {
       pickup_address: bookingData.pickup_address || null,
       notes: bookingData.notes || null
     };
+
+    // Remove the skipAvailabilityCheck flag before inserting
+    delete (cleanedData as any).skipAvailabilityCheck;
 
     // First, insert the booking without joins
     const { data: bookingRecord, error } = await supabase
@@ -227,7 +263,7 @@ export async function createBooking(bookingData: {
     return booking
   } catch (error) {
     console.error('Error in createBooking:', error)
-    return null
+    throw error // Re-throw the error so the caller can handle it
   }
 }
 
@@ -550,7 +586,7 @@ export async function getBookingStats(): Promise<{
 }
 
 // Bulk create bookings (for CSV import)
-export async function bulkCreateBookings(bookings: any[]): Promise<{
+export async function bulkCreateBookings(bookings: any[], skipAvailabilityCheck = false): Promise<{
   success: number
   failed: number
   errors: string[]
@@ -561,7 +597,10 @@ export async function bulkCreateBookings(bookings: any[]): Promise<{
 
   for (const booking of bookings) {
     try {
-      const result = await createBooking(booking)
+      const result = await createBooking({
+        ...booking,
+        skipAvailabilityCheck // Pass the flag to skip availability check for historical imports
+      })
       if (result) {
         success++
       } else {
