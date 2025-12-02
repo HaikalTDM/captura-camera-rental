@@ -343,7 +343,7 @@ export async function sendCustomerThankYouEmail(data: EmailData): Promise<boolea
             
             <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <p style="margin: 0; color: #075985; font-weight: bold; font-size: 16px;">
-                🕘 <strong>Pickup Time:</strong> After 9:30 PM on your pickup date
+                🕘 <strong>Pickup Time:</strong> After 10:00 PM on your pickup date
               </p>
             </div>
             
@@ -445,7 +445,7 @@ export async function sendCustomerPickupReminder(data: EmailData): Promise<boole
             <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <h3 style="color: #075985; margin-top: 0; font-size: 18px;">🕘 Pickup Time</h3>
               <p style="margin: 0; color: #075985; font-weight: bold; font-size: 18px;">
-                Equipment ready for pickup <strong>after 9:30 PM</strong>
+                Equipment ready for pickup <strong>after 10:00 PM</strong>
               </p>
               <p style="margin: 10px 0 0 0; color: #0c4a6e; font-size: 14px;">
                 Please coordinate pickup time via WhatsApp or call
@@ -468,7 +468,7 @@ export async function sendCustomerPickupReminder(data: EmailData): Promise<boole
             
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <p style="margin: 0; color: #856404; font-weight: bold;">
-                ⏰ <strong>Pickup after 9:30 PM.</strong> Please contact us at +60 17-746 4121 to confirm your exact pickup time.
+                ⏰ <strong>Pickup after 10:00 PM.</strong> Please contact us at +60 17-746 4121 to confirm your exact pickup time.
               </p>
             </div>
             
@@ -509,7 +509,7 @@ export async function sendCustomerReturnReminder(data: EmailData): Promise<boole
     const mailOptions = {
       from: `Captura Camera Rental <${EMAIL_CONFIG.from}>`,
       to: data.email,
-      subject: `🔙 Return Reminder: Camera Due Today by 10 PM - ${data.cameraName}`,
+      subject: `🔙 Return Reminder: Camera Due Today by 8 PM - ${data.cameraName}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 40px 30px; text-align: center;">
@@ -529,7 +529,7 @@ export async function sendCustomerReturnReminder(data: EmailData): Promise<boole
             <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <h3 style="color: #991b1b; margin-top: 0; font-size: 20px;">⏰ Return Due Today</h3>
               <p style="color: #7f1d1d; font-size: 18px; font-weight: bold; margin: 10px 0;">
-                Please return by: <span style="font-size: 24px;">10:00 PM Tonight</span>
+                Please return by: <span style="font-size: 24px;">8:00 PM Tonight</span>
               </p>
             </div>
             
@@ -584,7 +584,7 @@ export async function sendCustomerReturnReminder(data: EmailData): Promise<boole
             
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
               <p style="margin: 0; color: #856404; font-weight: bold;">
-                ⚠️ <strong>Late Return:</strong> Additional charges apply for late returns. Please return by 10 PM to avoid extra fees.
+                ⚠️ <strong>Late Return:</strong> Additional charges apply for late returns. Please return by 8 PM to avoid extra fees.
               </p>
             </div>
             

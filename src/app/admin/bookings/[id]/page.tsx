@@ -309,12 +309,12 @@ export default function BookingDetailsPage() {
       // Return a generic message if some data is missing
       const customerName = booking?.customer?.full_name || 'Customer';
       const cameraName = booking?.camera_name || 'rented equipment';
-      
+
       return `Hi ${customerName}! 📷
 
 This is a friendly reminder about your ${cameraName} rental return.
 
-Please ensure the equipment is returned by 10:00 PM tonight to avoid any late fees.
+Please ensure the equipment is returned by 8:00 PM tonight to avoid any late fees.
 
 Thank you for choosing Captura! 😊`;
     }
@@ -323,20 +323,20 @@ Thank you for choosing Captura! 😊`;
     const returnDate = new Date(booking.end_date);
     const today = new Date();
     const cameraName = booking.camera_name;
-    
+
     // Format dates
     const returnDateStr = returnDate.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
     });
-    
+
     // Calculate if it's return day, overdue, or future
     const timeDiff = returnDate.getTime() - today.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-    
+
     let message = '';
-    
+
     if (daysDiff === 0) {
       // Today is return day
       message = `Hi ${customerName}! 📷
@@ -348,7 +348,7 @@ Please ensure the camera is returned by tonight to avoid any late fees.
 Return details:
 🎥 Camera: ${cameraName}
 📅 Return Date: ${returnDateStr} (Today)
-⏰ Return before: 10:00 PM
+⏰ Return before: 8:00 PM
 
 Thank you for choosing Captura! 😊`;
     } else if (daysDiff < 0) {
@@ -374,13 +374,13 @@ Just a friendly reminder about your upcoming camera return:
 
 🎥 Camera: ${cameraName}
 📅 Return Date: ${returnDateStr} (${daysDiff} day${daysDiff > 1 ? 's' : ''} from now)
-⏰ Return before: 10:00 PM
+⏰ Return before: 8:00 PM
 
 Please ensure the camera is returned on time to avoid any late fees.
 
 Thank you for choosing Captura! 😊`;
     }
-    
+
     return message;
   };
 
@@ -393,12 +393,12 @@ Thank you for choosing Captura! 😊`;
     const message = generateReturnReminderMessage();
     console.log('Generated message:', message);
     console.log('Message length:', message.length);
-    
+
     const phoneNumber = formatPhoneWithCountryCode(booking.customer.phone);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-    
+
     console.log('WhatsApp URL:', whatsappUrl);
-    
+
     window.open(whatsappUrl, '_blank');
   };
 
@@ -616,11 +616,10 @@ Thank you for choosing Captura! 😊`;
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Deposit Paid</span>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
-                    booking.deposit_paid
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_paid
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-red-100 text-red-700'
-                  }`}>
+                    }`}>
                     {booking.deposit_paid ? (
                       <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
                     ) : (
@@ -636,11 +635,10 @@ Thank you for choosing Captura! 😊`;
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Final Payment Paid</span>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
-                    booking.final_payment_paid
+                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.final_payment_paid
                       ? 'bg-emerald-100 text-emerald-700'
                       : 'bg-red-100 text-red-700'
-                  }`}>
+                    }`}>
                     {booking.final_payment_paid ? (
                       <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
                     ) : (
@@ -651,11 +649,10 @@ Thank you for choosing Captura! 😊`;
                 <div className="border-t border-slate-200 pt-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Deposit Refunded</span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
-                      booking.deposit_refunded
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_refunded
                         ? 'bg-emerald-100 text-emerald-700'
                         : 'bg-amber-100 text-amber-700'
-                    }`}>
+                      }`}>
                       {booking.deposit_refunded ? (
                         <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
                       ) : (
@@ -667,8 +664,8 @@ Thank you for choosing Captura! 😊`;
                 <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-4 mt-4">
                   <p className="text-xs text-slate-600 leading-relaxed">
                     <span className="font-bold text-slate-900 block mb-2">Payment Structure:</span>
-                    • Deposit: RM100 (refundable)<br/>
-                    • Rental: RM{booking.final_payment_amount}<br/>
+                    • Deposit: RM100 (refundable)<br />
+                    • Rental: RM{booking.final_payment_amount}<br />
                     • <span className="font-semibold">Total Due: RM{100 + booking.final_payment_amount}</span>
                   </p>
                 </div>
@@ -861,11 +858,10 @@ Thank you for choosing Captura! 😊`;
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-600">Pickup Status</span>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
-                        booking.equipment_picked_up
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_picked_up
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-amber-100 text-amber-700'
-                      }`}>
+                        }`}>
                         {booking.equipment_picked_up ? (
                           <><CheckCircle2 className="w-3.5 h-3.5" /> Picked Up</>
                         ) : (
@@ -892,12 +888,11 @@ Thank you for choosing Captura! 😊`;
                     {booking.equipment_condition_pickup && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-600">Condition</span>
-                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                          booking.equipment_condition_pickup === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                          booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
-                          booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_pickup === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
+                            booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
+                              booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
+                                'bg-red-100 text-red-700'
+                          }`}>
                           {booking.equipment_condition_pickup.charAt(0).toUpperCase() + booking.equipment_condition_pickup.slice(1)}
                         </span>
                       </div>
@@ -915,11 +910,10 @@ Thank you for choosing Captura! 😊`;
                     <button
                       onClick={() => handlePickupStatusUpdate(!booking.equipment_picked_up, '', 'excellent')}
                       disabled={isUpdatingPickup}
-                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${
-                        booking.equipment_picked_up
+                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_picked_up
                           ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
                           : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
-                      } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
+                        } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingPickup ? (
                         <>
@@ -941,11 +935,10 @@ Thank you for choosing Captura! 😊`;
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-600">Return Status</span>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${
-                        booking.equipment_returned
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_returned
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-amber-100 text-amber-700'
-                      }`}>
+                        }`}>
                         {booking.equipment_returned ? (
                           <><CheckCircle2 className="w-3.5 h-3.5" /> Returned</>
                         ) : (
@@ -972,12 +965,11 @@ Thank you for choosing Captura! 😊`;
                     {booking.equipment_condition_return && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-600">Condition</span>
-                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                          booking.equipment_condition_return === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                          booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
-                          booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
-                          'bg-red-100 text-red-700'
-                        }`}>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_return === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
+                            booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
+                              booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
+                                'bg-red-100 text-red-700'
+                          }`}>
                           {booking.equipment_condition_return.charAt(0).toUpperCase() + booking.equipment_condition_return.slice(1)}
                         </span>
                       </div>
@@ -995,11 +987,10 @@ Thank you for choosing Captura! 😊`;
                     <button
                       onClick={() => handleReturnStatusUpdate(!booking.equipment_returned, '', 'excellent')}
                       disabled={isUpdatingReturn || !booking.equipment_picked_up}
-                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${
-                        booking.equipment_returned
+                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_returned
                           ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
                           : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
-                      } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
+                        } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingReturn ? (
                         <>

@@ -125,20 +125,20 @@ const functions = [
 // Function implementations
 async function checkCameraAvailability(params: any) {
   const { camera_name, start_date, end_date } = params;
-  
+
   // Get camera info
   let query = supabaseAdmin.from('cameras').select('*');
-  
+
   if (camera_name) {
     query = query.ilike('name', `%${camera_name}%`);
   }
-  
+
   const { data: cameras } = await query;
-  
+
   if (!cameras || cameras.length === 0) {
     return { available: false, message: 'Camera not found' };
   }
-  
+
   // Check for conflicting bookings
   const results = [];
   for (const camera of cameras) {
@@ -149,7 +149,7 @@ async function checkCameraAvailability(params: any) {
       .in('booking_status', ['pending', 'confirmed'])
       .lte('start_date', end_date)
       .gte('end_date', start_date);
-    
+
     results.push({
       camera: camera.name,
       available: !bookings || bookings.length === 0,
@@ -158,29 +158,29 @@ async function checkCameraAvailability(params: any) {
       weekly_rate: camera.weekly_rate
     });
   }
-  
+
   return results;
 }
 
 async function getBookingDetails(params: any) {
   const { booking_id } = params;
-  
+
   const { data: booking } = await supabaseAdmin
     .from('bookings')
     .select('*')
     .eq('id', booking_id)
     .single();
-  
+
   if (!booking) {
     return { error: 'Booking not found' };
   }
-  
+
   // Fetch related data
   const [{ data: customer }, { data: camera }] = await Promise.all([
     supabaseAdmin.from('customers').select('*').eq('id', booking.customer_id).single(),
     supabaseAdmin.from('cameras').select('*').eq('id', booking.camera_id).single()
   ]);
-  
+
   return {
     booking_id: booking.id,
     status: booking.booking_status,
@@ -202,35 +202,35 @@ async function getBookingDetails(params: any) {
 
 async function getRecentBookings(params: any) {
   const { status, limit = 30 } = params;
-  
+
   let query = supabaseAdmin
     .from('bookings')
     .select('id, booking_status, start_date, end_date, pickup_date, total_amount, customer_id, camera_id, created_at')
     .order('start_date', { ascending: false })
     .limit(limit);
-  
+
   if (status) {
     query = query.eq('booking_status', status);
   }
-  
+
   const { data: bookings } = await query;
-  
+
   if (!bookings || bookings.length === 0) {
     return { message: 'No bookings found' };
   }
-  
+
   // Batch fetch customers and cameras
   const customerIds = Array.from(new Set(bookings.map(b => b.customer_id)));
   const cameraIds = Array.from(new Set(bookings.map(b => b.camera_id)));
-  
+
   const [{ data: customers }, { data: cameras }] = await Promise.all([
     supabaseAdmin.from('customers').select('*').in('id', customerIds),
     supabaseAdmin.from('cameras').select('*').in('id', cameraIds)
   ]);
-  
+
   const customerMap = new Map(customers?.map(c => [c.id, c]));
   const cameraMap = new Map(cameras?.map(c => [c.id, c]));
-  
+
   return bookings.map(b => ({
     id: b.id.substring(0, 8),
     customer: customerMap.get(b.customer_id)?.full_name || 'N/A',
@@ -245,13 +245,13 @@ async function getRecentBookings(params: any) {
 
 async function getCustomerInfo(params: any) {
   const { search_term } = params;
-  
+
   const { data: customers } = await supabaseAdmin
     .from('customers')
     .select('*')
     .or(`full_name.ilike.%${search_term}%,email.ilike.%${search_term}%,phone.ilike.%${search_term}%`)
     .limit(5);
-  
+
   return customers?.map(c => ({
     name: c.full_name || c.name,
     email: c.email,
@@ -262,11 +262,11 @@ async function getCustomerInfo(params: any) {
 
 async function getUpcomingPickups(params: any) {
   const { days_ahead = 7 } = params;
-  
+
   const today = new Date();
   const futureDate = new Date();
   futureDate.setDate(today.getDate() + days_ahead);
-  
+
   const { data: bookings } = await supabaseAdmin
     .from('bookings')
     .select('*')
@@ -275,23 +275,23 @@ async function getUpcomingPickups(params: any) {
     .gte('pickup_date', today.toISOString().split('T')[0])
     .lte('pickup_date', futureDate.toISOString().split('T')[0])
     .order('pickup_date', { ascending: true });
-  
+
   if (!bookings || bookings.length === 0) {
     return { message: 'No upcoming pickups in the next ' + days_ahead + ' days' };
   }
-  
+
   // Batch fetch customers and cameras
   const customerIds = Array.from(new Set(bookings.map(b => b.customer_id)));
   const cameraIds = Array.from(new Set(bookings.map(b => b.camera_id)));
-  
+
   const [{ data: customers }, { data: cameras }] = await Promise.all([
     supabaseAdmin.from('customers').select('*').in('id', customerIds),
     supabaseAdmin.from('cameras').select('*').in('id', cameraIds)
   ]);
-  
+
   const customerMap = new Map(customers?.map(c => [c.id, c]));
   const cameraMap = new Map(cameras?.map(c => [c.id, c]));
-  
+
   return bookings.map(b => ({
     pickup_date: b.pickup_date,
     customer: customerMap.get(b.customer_id)?.full_name || 'N/A',
@@ -303,11 +303,11 @@ async function getUpcomingPickups(params: any) {
 
 async function getUpcomingReturns(params: any) {
   const { days_ahead = 7 } = params;
-  
+
   const today = new Date();
   const futureDate = new Date();
   futureDate.setDate(today.getDate() + days_ahead);
-  
+
   const { data: bookings } = await supabaseAdmin
     .from('bookings')
     .select('*')
@@ -317,23 +317,23 @@ async function getUpcomingReturns(params: any) {
     .gte('end_date', today.toISOString().split('T')[0])
     .lte('end_date', futureDate.toISOString().split('T')[0])
     .order('end_date', { ascending: true });
-  
+
   if (!bookings || bookings.length === 0) {
     return { message: 'No upcoming returns in the next ' + days_ahead + ' days' };
   }
-  
+
   // Batch fetch customers and cameras
   const customerIds = Array.from(new Set(bookings.map(b => b.customer_id)));
   const cameraIds = Array.from(new Set(bookings.map(b => b.camera_id)));
-  
+
   const [{ data: customers }, { data: cameras }] = await Promise.all([
     supabaseAdmin.from('customers').select('*').in('id', customerIds),
     supabaseAdmin.from('cameras').select('*').in('id', cameraIds)
   ]);
-  
+
   const customerMap = new Map(customers?.map(c => [c.id, c]));
   const cameraMap = new Map(cameras?.map(c => [c.id, c]));
-  
+
   return bookings.map(b => ({
     return_date: b.end_date,
     customer: customerMap.get(b.customer_id)?.full_name || 'N/A',
@@ -347,7 +347,7 @@ async function getAllCameras() {
     .from('cameras')
     .select('*')
     .order('name', { ascending: true });
-  
+
   return cameras?.map(c => ({
     name: c.name,
     daily_rate: `RM${c.daily_rate}`,
@@ -381,7 +381,7 @@ async function executeFunction(name: string, args: any) {
 export async function POST(request: NextRequest) {
   try {
     const { messages } = await request.json();
-    
+
     if (!process.env.DEEPSEEK_API_KEY) {
       console.error('❌ DEEPSEEK_API_KEY is not set');
       return NextResponse.json(
@@ -389,36 +389,36 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-    
+
     console.log('✅ DeepSeek API key found, processing request...');
-    
+
     // Fetch actual cameras from database
     const { data: cameras } = await supabaseAdmin
       .from('cameras')
       .select('name, daily_rate, weekly_rate, monthly_rate, discount_threshold, status')
       .eq('status', 'available')
       .order('name', { ascending: true });
-    
+
     const cameraList = cameras && cameras.length > 0
       ? cameras.map(c => {
-          const threshold = c.discount_threshold || 3;
-          const discountRate = c.weekly_rate ? Math.round(c.weekly_rate / 7) : c.daily_rate;
-          return `- ${c.name} (Daily: RM${c.daily_rate}, ${threshold}+ days: RM${discountRate}/day)`;
-        }).join('\n')
+        const threshold = c.discount_threshold || 3;
+        const discountRate = c.weekly_rate ? Math.round(c.weekly_rate / 7) : c.daily_rate;
+        return `- ${c.name} (Daily: RM${c.daily_rate}, ${threshold}+ days: RM${discountRate}/day)`;
+      }).join('\n')
       : '- No cameras currently available';
-    
+
     // Fetch recent booking stats
     const { data: recentBookings } = await supabaseAdmin
       .from('bookings')
       .select('booking_status')
       .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-    
+
     const bookingStats = recentBookings ? {
       total: recentBookings.length,
       pending: recentBookings.filter(b => b.booking_status === 'pending').length,
       confirmed: recentBookings.filter(b => b.booking_status === 'confirmed').length
     } : { total: 0, pending: 0, confirmed: 0 };
-    
+
     // Add system message with context
     const systemMessage = {
       role: 'system',
@@ -472,8 +472,8 @@ IMPORTANT:
 - Tomorrow's date: ${new Date(Date.now() + 86400000).toISOString().split('T')[0]}
 
 BUSINESS RULES:
-- Pickup time: After 9:30 PM (day before rental starts)
-- Return time: By 10:00 PM on rental end date
+- Pickup time: After 10:00 PM (day before rental starts)
+- Return time: By 8:00 PM on rental end date
 - Standard rate: RM50/day
 - Discount rate: RM45/day for 3+ days rental
 
@@ -490,9 +490,9 @@ FUNCTION CALLING FORMAT:
 You MUST use the function_call feature. When you need data, immediately call the appropriate function.
 DO NOT respond with text first - call the function IMMEDIATELY and let me handle showing the user the results.`
     };
-    
+
     const allMessages = [systemMessage, ...messages];
-    
+
     // Call DeepSeek API
     const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
@@ -508,11 +508,11 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
         max_tokens: 2000
       })
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ DeepSeek API error:', response.status, errorText);
-      
+
       // Parse error if possible
       try {
         const errorJson = JSON.parse(errorText);
@@ -522,19 +522,19 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
         throw new Error(`DeepSeek API error (${response.status}): ${errorText}`);
       }
     }
-    
+
     const data = await response.json();
     console.log('✅ Received response from DeepSeek');
-    
+
     if (!data.choices || data.choices.length === 0) {
       console.error('❌ No choices in response:', JSON.stringify(data, null, 2));
       throw new Error('DeepSeek returned empty response');
     }
-    
+
     const assistantMessage = data.choices[0].message;
     let functionName = null;
     let functionArgs = null;
-    
+
     // Check if AI wants to call a function (new tools format)
     if (assistantMessage.tool_calls && assistantMessage.tool_calls.length > 0) {
       const toolCall = assistantMessage.tool_calls[0];
@@ -555,7 +555,7 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
       if (invokeMatch) {
         functionName = invokeMatch[1];
         functionArgs = {};
-        
+
         // Extract parameters
         const paramMatches = [...assistantMessage.content.matchAll(/<parameter name="([^"]+)">([^<]+)<\/parameter>/g)];
         for (const match of paramMatches) {
@@ -570,19 +570,19 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
         }
       }
     }
-    
+
     // If we have a function to call, execute it
     if (functionName && functionArgs) {
       console.log(`🔧 AI called function: ${functionName}`);
       console.log(`📝 With arguments:`, functionArgs);
-      
+
       // Execute the function
       const functionResult = await executeFunction(functionName, functionArgs);
       console.log(`✅ Function result:`, JSON.stringify(functionResult).substring(0, 200) + '...');
-      
+
       // Format the function result into a readable response
       let formattedResult = '';
-      
+
       if (Array.isArray(functionResult)) {
         if (functionResult.length === 0) {
           formattedResult = 'No results found.';
@@ -594,7 +594,7 @@ DO NOT respond with text first - call the function IMMEDIATELY and let me handle
       } else {
         formattedResult = String(functionResult);
       }
-      
+
       // Send function result back to AI with simplified context
       const secondResponse = await fetch('https://api.deepseek.com/v1/chat/completions', {
         method: 'POST',
@@ -700,7 +700,7 @@ PERFECT EXAMPLE FOR AVAILABILITY:
 
 • No conflicting bookings
 • Ready for rental
-• Pickup after 9:30 PM (Oct 19)
+• Pickup after 10:00 PM (Oct 19)
 
 💡 Daily rate: RM50 | 3+ days: RM45/day
 
@@ -725,47 +725,47 @@ REMEMBER:
           max_tokens: 1500
         })
       });
-      
+
       if (!secondResponse.ok) {
         const errorText = await secondResponse.text();
         console.error('❌ DeepSeek second call error:', secondResponse.status, errorText);
         throw new Error(`DeepSeek second call failed: ${errorText}`);
       }
-      
+
       const secondData = await secondResponse.json();
       console.log('📦 Second response:', JSON.stringify(secondData, null, 2));
-      
+
       if (!secondData.choices || secondData.choices.length === 0) {
         console.error('❌ No choices in second response');
         throw new Error('DeepSeek returned empty response after function call');
       }
-      
+
       const finalMessage = secondData.choices[0].message?.content || 'Function executed successfully.';
       console.log(`💬 Final response after function call:`, finalMessage.substring(0, 100) + '...');
-      
+
       return NextResponse.json({
         message: finalMessage,
         function_called: functionName
       });
     }
-    
+
     // Return direct response if no function call
     console.log('⚠️ No function was called - AI responded directly');
     console.log(`💬 Direct response:`, assistantMessage.content?.substring(0, 100) + '...');
-    
+
     return NextResponse.json({
       message: assistantMessage.content || 'Sorry, I could not process that request.'
     });
-    
+
   } catch (error) {
     console.error('❌ AI Assistant error:', error);
     console.error('❌ Error stack:', error instanceof Error ? error.stack : 'No stack trace');
-    
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    
+
     // Return more detailed error
     return NextResponse.json(
-      { 
+      {
         error: 'Failed to process request',
         details: errorMessage,
         timestamp: new Date().toISOString()

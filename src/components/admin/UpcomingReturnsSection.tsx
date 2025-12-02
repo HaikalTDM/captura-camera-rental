@@ -41,10 +41,10 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
     setIsLoading(true);
     try {
       const allBookings = await getAllBookings();
-      
+
       // Filter for active rentals that need to be returned
-      const activeRentals = allBookings.filter(booking => 
-        booking.equipment_picked_up && 
+      const activeRentals = allBookings.filter(booking =>
+        booking.equipment_picked_up &&
         !booking.equipment_returned &&
         (booking.booking_status === 'confirmed' || booking.booking_status === 'approved')
       );
@@ -56,7 +56,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
       const returnsWithCalculations = activeRentals.map(booking => {
         const returnDate = new Date(booking.end_date);
         returnDate.setHours(0, 0, 0, 0);
-        
+
         const timeDiff = returnDate.getTime() - today.getTime();
         const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
@@ -81,7 +81,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
       });
 
       // Filter for today's returns and upcoming returns (within next 7 days) + overdue
-      const relevantReturns = returnsWithCalculations.filter(returnItem => 
+      const relevantReturns = returnsWithCalculations.filter(returnItem =>
         returnItem.days_until_return <= 7 || returnItem.is_overdue
       );
 
@@ -105,11 +105,11 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
   };
 
   const generateWhatsAppMessage = (returnItem: ReturnSchedule) => {
-    const dayText = returnItem.is_overdue 
+    const dayText = returnItem.is_overdue
       ? `OVERDUE by ${Math.abs(returnItem.days_until_return)} day${Math.abs(returnItem.days_until_return) !== 1 ? 's' : ''}`
-      : returnItem.days_until_return === 0 
-      ? 'TODAY'
-      : `in ${returnItem.days_until_return} day${returnItem.days_until_return !== 1 ? 's' : ''}`;
+      : returnItem.days_until_return === 0
+        ? 'TODAY'
+        : `in ${returnItem.days_until_return} day${returnItem.days_until_return !== 1 ? 's' : ''}`;
 
     return encodeURIComponent(
       `Hi ${returnItem.customer_name}! 📷\n\n` +
@@ -117,8 +117,8 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
       `📋 Return Details:\n` +
       `• Camera: ${returnItem.camera_name}\n` +
       `• Return Date: ${new Date(returnItem.return_date).toLocaleDateString()} (${dayText})\n` +
-      `• Return Time: Before 10:00 PM\n\n` +
-      (returnItem.is_overdue 
+      `• Return Time: Before 8:00 PM\n\n` +
+      (returnItem.is_overdue
         ? `⚠️ Your equipment is overdue for return. Please return it as soon as possible to avoid additional late fees.\n\n`
         : `Please ensure the camera is returned by the due date to avoid any late fees.\n\n`
       ) +
@@ -205,13 +205,13 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
           Equipment due for return today and within the next week
         </p>
       </div>
-      
+
       <div className="p-6">
         {returns.length > 0 ? (
           <div className="space-y-4">
             {returns.map((returnItem) => {
               const urgency = getReturnUrgencyText(returnItem);
-              
+
               return (
                 <div key={returnItem.id} className={`rounded-lg border p-4 ${getReturnStatusColor(returnItem)}`}>
                   <div className="flex items-start justify-between">
@@ -222,12 +222,12 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
                           {urgency.icon} {urgency.text}
                         </span>
                       </div>
-                      
+
                       <p className="text-sm text-gray-600 mb-2">
                         📷 <span className="font-medium">{returnItem.camera_name}</span>
                         {returnItem.camera_model && <span className="text-gray-500"> ({returnItem.camera_model})</span>}
                       </p>
-                      
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm mb-3">
                         <p className="text-gray-600">
                           📅 <strong>Return:</strong> {new Date(returnItem.return_date).toLocaleDateString()}
@@ -236,7 +236,7 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
                           🎬 <strong>Rental:</strong> {new Date(returnItem.start_date).toLocaleDateString()} - {new Date(returnItem.end_date).toLocaleDateString()}
                         </p>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2 text-xs text-gray-500">
                         {returnItem.customer_phone && (
                           <span>📞 {returnItem.customer_phone}</span>
@@ -246,14 +246,14 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
                         )}
                         <span>💰 RM{returnItem.total_amount}</span>
                       </div>
-                      
+
                       {returnItem.notes && (
                         <p className="text-xs text-gray-600 mt-2 bg-white p-2 rounded">
                           📝 {returnItem.notes}
                         </p>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-col gap-2 ml-4">
                       <Link
                         href={`/admin/bookings/${returnItem.id}`}
@@ -261,17 +261,16 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
                       >
                         View Details
                       </Link>
-                      
+
                       {returnItem.customer_phone && (
                         <a
                           href={`https://wa.me/${formatPhoneForWhatsApp(returnItem.customer_phone)}?text=${generateWhatsAppMessage(returnItem)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className={`text-white px-3 py-1 rounded text-sm text-center whitespace-nowrap ${
-                            returnItem.is_overdue 
-                              ? 'bg-red-500 hover:bg-red-600' 
+                          className={`text-white px-3 py-1 rounded text-sm text-center whitespace-nowrap ${returnItem.is_overdue
+                              ? 'bg-red-500 hover:bg-red-600'
                               : 'bg-orange-500 hover:bg-orange-600'
-                          }`}
+                            }`}
                         >
                           Return Reminder
                         </a>
@@ -292,11 +291,11 @@ export default function UpcomingReturnsSection({ onReturnUpdate }: UpcomingRetur
           </div>
         )}
       </div>
-      
+
       {returns.length > 0 && (
         <div className="bg-gray-50 px-6 py-3 border-t border-gray-100">
           <p className="text-xs text-gray-500 text-center">
-            💡 <strong>Return Policy:</strong> Equipment must be returned by 10:00 PM on the due date
+            💡 <strong>Return Policy:</strong> Equipment must be returned by 8:00 PM on the due date
           </p>
         </div>
       )}

@@ -354,8 +354,8 @@ ${bookingData.delivery_fee > 0 ? `• Delivery Fee: RM${bookingData.delivery_fee
 ${bookingData.pickup_method === 'delivery' && bookingData.pickup_address ? `📍 Delivery Address: ${bookingData.pickup_address}` : ''}
 
 ${bookingData.notes ? `📝 *Notes:* ${bookingData.notes}\n` : ''}
-⏰ *Pickup Time:* After 9:30 PM (day before rental starts)
-🔙 *Return Time:* By 10:00 PM on return date
+⏰ *Pickup Time:* After 10:00 PM (day before rental starts)
+🔙 *Return Time:* By 8:00 PM on return date
 ${socialMediaDiscount ? `
 ━━━━━━━━━━━━━━━━━━━━━━
 
