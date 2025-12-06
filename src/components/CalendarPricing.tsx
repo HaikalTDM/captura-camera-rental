@@ -57,7 +57,7 @@ export default function CalendarPricing({
     } catch (e) {
       // Ignore DOM errors
     }
-    
+
     return () => {
       try {
         document.body.style.overflow = 'unset';
@@ -88,28 +88,28 @@ export default function CalendarPricing({
 
   if (!pricing || !startDate || !endDate) {
     return (
-      <div className={`bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 ${className}`}>
+      <div className={`bg-zinc-900/50 rounded-2xl p-6 border border-white/5 ${className}`}>
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-12 h-12 mx-auto mb-4 bg-zinc-800 rounded-full flex items-center justify-center border border-white/10">
+            <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h4 className="font-bold text-gray-900 mb-2">Select Your Dates</h4>
-          <p className="text-sm text-gray-800 mb-4">
+          <h4 className="font-bold text-white mb-2">Select Your Dates</h4>
+          <p className="text-sm text-zinc-500 mb-6">
             Choose your rental period to see pricing
           </p>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-3 text-sm bg-zinc-900 rounded-xl p-4 border border-white/5">
             <div className="flex justify-between items-center">
-              <span className="text-gray-800">Daily Rate:</span>
-              <span className="font-semibold text-gray-900">{formatCurrency(camera.dailyRate)}</span>
+              <span className="text-zinc-400">Daily Rate</span>
+              <span className="font-bold text-white">{formatCurrency(camera.dailyRate)}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-800">{(camera.discountThreshold || 3)}+ Days Rate:</span>
-              <span className="font-semibold text-green-600">{formatCurrency(camera.discountRate)}</span>
+              <span className="text-zinc-400">{(camera.discountThreshold || 3)}+ Days Rate</span>
+              <span className="font-bold text-emerald-400 border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 rounded text-xs">{formatCurrency(camera.discountRate)}</span>
             </div>
-            <div className="text-xs text-gray-700 mt-3 p-2 bg-blue-50 rounded">
-              💡 Book for {(camera.discountThreshold || 3)}+ days and save {formatCurrency(camera.dailyRate - camera.discountRate)} per day!
+            <div className="text-xs text-zinc-500 mt-3 pt-3 border-t border-white/5 text-center">
+              Book for {(camera.discountThreshold || 3)}+ days and save {formatCurrency(camera.dailyRate - camera.discountRate)} per day
             </div>
           </div>
         </div>
@@ -118,83 +118,75 @@ export default function CalendarPricing({
   }
 
   return (
-    <div className={`bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 ${className}`}>
+    <div className={`bg-zinc-900 rounded-2xl p-5 border border-white/5 ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="font-bold text-gray-900 flex items-center">
-          <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16a2 2 0 002 2z" />
-          </svg>
+      <div className="flex items-center justify-between mb-5">
+        <h4 className="font-bold text-white flex items-center text-lg tracking-tight">
           Rental Summary
         </h4>
         {pricing.isDiscounted && (
-          <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
-            💰 SAVINGS!
+          <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded">
+            Savings Applied
           </span>
         )}
       </div>
 
       {/* Rental Details */}
-      <div className="space-y-3 mb-4">
-        <div className="flex justify-between items-center">
-          <span className="text-gray-800 font-medium">Camera:</span>
-          <span className="font-bold text-gray-900">{camera.name}</span>
+      <div className="space-y-4 mb-6">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Camera</span>
+          <span className="font-bold text-white">{camera.name}</span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-800 font-medium">Duration:</span>
-          <span className="font-bold text-gray-900">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Duration</span>
+          <span className="font-bold text-white">
             {pricing.totalDays} day{pricing.totalDays > 1 ? 's' : ''}
           </span>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-800 font-medium">Daily Rate:</span>
-          <div className="text-right">
-            <span className="font-bold text-gray-900">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Daily Rate</span>
+          <div className="text-right flex items-center gap-2">
+            {pricing.isDiscounted && (
+              <span className="text-xs line-through text-zinc-600 font-medium">
+                {formatCurrency(camera.dailyRate)}
+              </span>
+            )}
+            <span className={`font-bold ${pricing.isDiscounted ? 'text-emerald-400' : 'text-white'}`}>
               {formatCurrency(pricing.dailyRate)}
             </span>
-            {pricing.isDiscounted && (
-              <div className="text-xs text-green-600 font-medium">
-                (Bulk discount applied)
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="flex justify-between items-center">
-          <span className="text-gray-800 font-medium">Dates:</span>
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-zinc-400">Dates</span>
           <div className="text-right">
-            <div className="font-medium text-gray-900 text-sm">
+            <div className="font-bold text-white">
               {startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
-            <div className="text-xs text-gray-800">
+            <div className="text-[10px] text-zinc-600 font-bold uppercase mt-0.5">
               {startDate.getFullYear()}
             </div>
           </div>
         </div>
 
         {pricing.isDiscounted && pricing.savings > 0 && (
-          <div className="flex justify-between items-center text-green-600 bg-green-50 p-2 rounded">
-            <span className="font-medium">You Save:</span>
-            <span className="font-bold">-{formatCurrency(pricing.savings)}</span>
+          <div className="flex justify-between items-center text-emerald-400 bg-emerald-500/5 border border-emerald-500/10 p-3 rounded-xl text-sm">
+            <span className="font-medium">You Save</span>
+            <span className="font-black">-{formatCurrency(pricing.savings)}</span>
           </div>
         )}
       </div>
 
       {/* Total Cost */}
-      <div className="border-t border-blue-200 pt-4 mb-4">
+      <div className="border-t border-white/5 pt-5 mb-5">
         <div className="flex justify-between items-center">
-          <span className="text-lg font-bold text-gray-900">Total Cost:</span>
+          <span className="text-sm font-medium text-zinc-400">Total Cost</span>
           <div className="text-right">
-            <span className="text-2xl font-bold text-blue-600">
+            <span className="text-3xl font-black text-white tracking-tight">
               {formatCurrency(pricing.totalCost)}
             </span>
-            {pricing.isDiscounted && (
-              <div className="text-xs text-green-600 font-medium">
-                🎉 {formatCurrency(pricing.savings)} saved!
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -203,18 +195,18 @@ export default function CalendarPricing({
       {onBookNow && (
         <button
           onClick={() => setShowTermsModal(true)}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          className="w-full bg-white hover:bg-zinc-200 text-black font-black text-lg py-4 rounded-xl transition-all duration-200 shadow-[0_0_20px_rgba(255,255,255,0.1)] active:scale-[0.98]"
         >
-          📋 Book {camera.name}
+          Book {camera.name}
         </button>
       )}
 
       {/* Additional Info */}
       {pricing.isDiscounted && (
-        <div className="mt-3 text-center">
-          <div className="text-xs text-green-700 bg-green-100 p-2 rounded">
-            💡 Great choice! You're saving {formatCurrency(camera.dailyRate - camera.discountRate)} per day with our bulk discount.
-          </div>
+        <div className="mt-4 text-center">
+          <p className="text-[10px] text-zinc-500 font-medium">
+            Great choice! You're saving {formatCurrency(camera.dailyRate - camera.discountRate)} per day.
+          </p>
         </div>
       )}
 
@@ -230,7 +222,7 @@ export default function CalendarPricing({
 
       {/* Booking Form Modal */}
       {showBookingForm && startDate && endDate && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <div className="w-full max-w-xs sm:max-w-sm">
             <BookingForm
               camera={camera}
@@ -249,7 +241,7 @@ export default function CalendarPricing({
                 });
                 setShowBookingSuccess(true);
                 if (onBookNow) {
-                  onBookNow(camera, startDate, endDate, totalCost, customer, totalDays, dailyRate);
+                  onBookNow(customer); // Pass customer details as expected by the type, parent will handle full hook if needed
                 }
               }}
               onCancel={() => setShowBookingForm(false)}
@@ -261,7 +253,7 @@ export default function CalendarPricing({
 
       {/* Booking Success Modal */}
       {showBookingSuccess && bookingSuccessData && createPortal(
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-[9999] backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[9999]">
           <div className="w-full max-w-sm sm:max-w-md">
             <BookingSuccess
               confirmationNumber={bookingSuccessData.confirmationNumber}

@@ -60,11 +60,11 @@ export default function GatewayHome() {
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
         <div className="max-w-6xl mx-auto w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-            
+
             {/* Camera Rental Service */}
             <Link href="/rental" className="group">
               <div className="relative bg-gradient-to-br from-gray-900 via-black to-gray-900 rounded-3xl p-8 sm:p-12 overflow-hidden h-80 sm:h-96 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] hover:shadow-2xl touch-manipulation active:scale-[0.98]">
-                
+
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-10">
                   <div className="absolute top-4 left-4 w-16 h-16 border-2 border-white rounded-full"></div>
@@ -79,14 +79,14 @@ export default function GatewayHome() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     </svg>
                   </div>
-                  
+
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 font-serif">
                     Camera Rental
-            </h2>
+                  </h2>
                   <p className="text-base sm:text-lg text-gray-300 mb-6 sm:mb-8">
                     Professional equipment for photographers and content creators
-            </p>
-          </div>
+                  </p>
+                </div>
 
                 {/* CTA */}
                 <div className="relative z-10">
@@ -94,7 +94,7 @@ export default function GatewayHome() {
                     <span className="text-base sm:text-lg mr-3">Explore Equipment</span>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function GatewayHome() {
             {/* Photography Service */}
             <Link href="/photography" className="group">
               <div className="relative bg-white border-2 border-gray-200 rounded-3xl p-8 sm:p-12 overflow-hidden h-80 sm:h-96 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] hover:shadow-2xl hover:border-[#d4af37] touch-manipulation active:scale-[0.98]">
-                
+
                 {/* Background Pattern */}
                 <div className="absolute inset-0 opacity-5">
                   <div className="absolute top-4 right-4 w-16 h-16 border-2 border-[#d4af37] rounded-full"></div>
@@ -116,9 +116,9 @@ export default function GatewayHome() {
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black/5 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/10 transition-all duration-300">
                     <svg className="w-8 h-8 sm:w-10 sm:h-10 text-black group-hover:text-[#d4af37] transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </div>
-                  
+                    </svg>
+                  </div>
+
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-3 sm:mb-4 font-serif">
                     Photography Services
                   </h2>
@@ -133,8 +133,8 @@ export default function GatewayHome() {
                     <span className="text-base sm:text-lg mr-3">View Portfolio</span>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </div>
+                    </svg>
+                  </div>
                 </div>
               </div>
             </Link>
@@ -167,7 +167,7 @@ export default function GatewayHome() {
               <span>Kuala Lumpur, Malaysia</span>
             </div>
           </div>
-          
+
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-gray-500 text-sm">
               © 2024 CAPTURA. All rights reserved.

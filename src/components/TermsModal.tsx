@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -13,7 +14,7 @@ const termsContent = {
     title: "Terms & Conditions",
     agreementText: "I have read and agree to the Terms & Conditions.",
     content: `
-      <div class="tnc-section">
+      <div class="tnc-header">
         <h3>Captura Camera Rental Terms & Conditions</h3>
       </div>
 
@@ -89,7 +90,7 @@ const termsContent = {
     title: "Terma & Syarat",
     agreementText: "Saya telah membaca dan bersetuju dengan Terma & Syarat.",
     content: `
-      <div class="tnc-section">
+      <div class="tnc-header">
         <h3>Terma & Syarat Sewa Kamera Captura</h3>
       </div>
 
@@ -166,16 +167,19 @@ const termsContent = {
 export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalProps) {
   const [currentLang, setCurrentLang] = useState<'en' | 'ms'>('en');
   const [isAgreed, setIsAgreed] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
     try {
       if (isOpen) {
         document.body.style.overflow = 'hidden';
-        document.body.style.paddingRight = '0px';
       } else {
         document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
       }
     } catch (e) {
       // Ignore DOM errors
@@ -184,14 +188,13 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
     return () => {
       try {
         document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
       } catch (e) {
         // Ignore cleanup errors
       }
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
   const currentContent = termsContent[currentLang];
 
@@ -205,9 +208,9 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
     }
   };
 
-  return (
-    <div 
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto"
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[9999] overflow-y-auto"
       onClick={(e) => {
         // Close modal if clicking on backdrop
         if (e.target === e.currentTarget) {
@@ -215,42 +218,40 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
         }
       }}
     >
-      <div 
-        className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col my-8"
+      <div
+        className="bg-zinc-950 rounded-2xl border border-white/10 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col my-8 shadow-2xl relative animate-fadeInUp"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-200 bg-gray-50">
-          <h2 className="text-2xl font-bold text-gray-900">{currentContent.title}</h2>
+        <div className="flex justify-between items-center p-6 border-b border-white/5 bg-zinc-950/95 sticky top-0 z-10 backdrop-blur">
+          <h2 className="text-2xl font-black text-white tracking-tight">{currentContent.title}</h2>
           <div className="flex items-center space-x-4">
             {/* Language Toggle */}
-            <div className="flex bg-white rounded-lg border border-gray-300 overflow-hidden">
+            <div className="flex bg-zinc-800 rounded-lg border border-white/5 p-1">
               <button
                 onClick={() => handleLanguageChange('en')}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  currentLang === 'en'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-800 hover:bg-gray-100'
-                }`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${currentLang === 'en'
+                  ? 'bg-white text-black shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
+                  }`}
               >
                 🇬🇧 EN
               </button>
               <button
                 onClick={() => handleLanguageChange('ms')}
-                className={`px-3 py-2 text-sm font-medium transition-colors ${
-                  currentLang === 'ms'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-800 hover:bg-gray-100'
-                }`}
+                className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${currentLang === 'ms'
+                  ? 'bg-white text-black shadow-sm'
+                  : 'text-zinc-400 hover:text-white'
+                  }`}
               >
                 🇲🇾 MS
               </button>
             </div>
-            
+
             {/* Close Button */}
             <button
               onClick={onCancel}
-              className="text-gray-600 hover:text-gray-800 transition-colors"
+              className="text-zinc-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -260,38 +261,38 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <div 
-            className="prose prose-sm max-w-none"
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900/50 bg-zinc-950">
+          <div
+            className="prose prose-invert max-w-none"
             dangerouslySetInnerHTML={{ __html: currentContent.content }}
             style={{
-              fontSize: '14px',
-              lineHeight: '1.6'
+              fontSize: '15px',
+              lineHeight: '1.75'
             }}
           />
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50">
+        <div className="border-t border-white/5 p-6 bg-zinc-950/95 backdrop-blur z-10">
           {/* Agreement Checkbox */}
-          <div className="flex items-start space-x-3 mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <input
-              type="checkbox"
-              id="termsCheckbox"
-              checked={isAgreed}
-              onChange={(e) => setIsAgreed(e.target.checked)}
-              className="mt-1 h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-500 border-2 border-gray-400 rounded cursor-pointer accent-blue-600 flex-shrink-0"
-              style={{ minWidth: '20px', minHeight: '20px' }}
-            />
-            <label htmlFor="termsCheckbox" className="text-sm text-gray-900 font-medium cursor-pointer select-none">
+          <div className="flex items-start space-x-3 mb-4 p-4 bg-zinc-900 rounded-xl border border-white/10 hover:border-white/20 transition-colors group cursor-pointer" onClick={() => setIsAgreed(!isAgreed)}>
+            <div className={`mt-1 h-5 w-5 rounded border flex items-center justify-center transition-all ${isAgreed ? 'bg-white border-white' : 'border-zinc-600 group-hover:border-zinc-400'}`}>
+              {isAgreed && (
+                <svg className="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </div>
+            <label className="text-sm text-zinc-300 font-medium cursor-pointer select-none group-hover:text-white transition-colors flex-1">
               {currentContent.agreementText}
             </label>
           </div>
-          
+
           {!isAgreed && (
-            <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                ⚠️ Please check the agreement checkbox above to continue with your booking.
+            <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 animate-pulse">
+              <span className="text-lg">⚠️</span>
+              <p className="text-xs font-bold text-red-400 uppercase tracking-wide">
+                Agreement Required to Proceed
               </p>
             </div>
           )}
@@ -300,53 +301,81 @@ export default function TermsModal({ isOpen, onAccept, onCancel }: TermsModalPro
           <div className="flex justify-end space-x-3">
             <button
               onClick={onCancel}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-800 font-medium hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 border border-white/10 rounded-xl text-zinc-400 font-bold hover:text-white hover:bg-white/5 transition-all text-sm"
             >
               Cancel
             </button>
             <button
               onClick={handleAccept}
               disabled={!isAgreed}
-              className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                isAgreed
-                  ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-              }`}
+              className={`px-8 py-3 rounded-xl font-black text-sm transition-all duration-200 flex items-center gap-2 ${isAgreed
+                ? 'bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.2)] transform hover:-translate-y-0.5'
+                : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5'
+                }`}
             >
-              {isAgreed ? 'Continue to Booking' : 'Check Agreement First'}
+              {isAgreed ? (
+                <>
+                  <span>Continue Booking</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </>
+              ) : 'Agree to Continue'}
             </button>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .prose h3 {
-          color: #1f2937;
-          font-weight: 600;
-          margin-top: 1.5rem;
-          margin-bottom: 0.5rem;
-          font-size: 1.1rem;
+        /* Consistent Dark Theme Typography - Using :global to target innerHTML */
+        .prose :global(h3) {
+          color: #ffffff !important;
+          font-weight: 800 !important;
+          margin-top: 2.5rem !important;
+          margin-bottom: 1rem !important;
+          font-size: 1.25rem !important;
+          letter-spacing: -0.01em !important;
         }
         
-        .prose p {
-          color: #374151;
-          margin-bottom: 0.75rem;
-          line-height: 1.6;
+        .prose :global(p) {
+          color: #e4e4e7 !important; /* zinc-200 - Very bright gray */
+          margin-bottom: 1rem !important;
+          line-height: 1.75 !important;
+        }
+
+        .prose :global(strong) {
+          color: #ffffff !important;
         }
         
-        .tnc-section {
-          margin-bottom: 1.5rem;
+        :global(.tnc-section) {
+          margin-bottom: 2rem;
         }
         
-        .tnc-section:first-child h3 {
-          margin-top: 0;
-          color: #1e40af;
-          font-size: 1.25rem;
+        /* Banner Header Style */
+        :global(.tnc-section:first-child h3), :global(.tnc-header h3) {
+          margin-top: 0 !important;
+          color: #ffffff !important;
+          font-size: 1.75rem !important;
           text-align: center;
-          padding-bottom: 1rem;
-          border-bottom: 2px solid #e5e7eb;
+          padding-bottom: 2rem;
+          border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+          margin-bottom: 2.5rem !important;
+          text-transform: uppercase;
+          letter-spacing: 0.05em !important;
+        }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
       `}</style>
-    </div>
+    </div>,
+    document.body
   );
 }

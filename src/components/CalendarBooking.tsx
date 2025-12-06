@@ -7,11 +7,11 @@ import CalendarPricing from './CalendarPricing';
 
 interface CalendarBookingProps {
   camera: Camera;
-  onBookNow?: (camera: Camera, startDate: Date, endDate: Date, totalCost: number, customerDetails: CustomerDetails, totalDays: number, dailyRate: number) => void;
+  onBookingComplete?: (startDate: Date, endDate: Date, totalCost: number, customerDetails: CustomerDetails, totalDays: number, dailyRate: number) => void;
   className?: string;
 }
 
-export default function CalendarBooking({ camera, onBookNow, className = "" }: CalendarBookingProps) {
+export default function CalendarBooking({ camera, onBookingComplete, className = "" }: CalendarBookingProps) {
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [totalCost, setTotalCost] = useState(0);
@@ -27,8 +27,8 @@ export default function CalendarBooking({ camera, onBookNow, className = "" }: C
   };
 
   const handleBookNow = (customerDetails: CustomerDetails) => {
-    if (startDate && endDate && onBookNow) {
-      onBookNow(camera, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate);
+    if (startDate && endDate && onBookingComplete) {
+      onBookingComplete(startDate, endDate, totalCost, customerDetails, totalDays, dailyRate);
     }
   };
 
@@ -40,7 +40,7 @@ export default function CalendarBooking({ camera, onBookNow, className = "" }: C
         onDateRangeSelect={handleDateRangeSelect}
         className="w-full"
       />
-      
+
       {/* Pricing Component */}
       <CalendarPricing
         camera={camera}

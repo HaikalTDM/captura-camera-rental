@@ -49,7 +49,7 @@ export default function CamerasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pt-16">
+    <div className="min-h-screen bg-zinc-950 pt-16 text-white pb-20">
       {/* Availability Calendar */}
       <section className="py-6 px-6">
         <div className="max-w-4xl mx-auto">
@@ -59,7 +59,7 @@ export default function CamerasPage() {
 
       {/* Camera Catalog */}
       <section id="camera-catalog" className="py-8">
-        <CameraCatalog onBookCamera={handleCameraBookingComplete} />
+        <CameraCatalog onBookCamera={handleCameraBookingComplete} variant="dark" />
       </section>
 
       {/* Rental Summary Modal */}

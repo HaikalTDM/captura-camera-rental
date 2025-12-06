@@ -79,25 +79,21 @@ export default function BookingForm({
     if (!customerDetails.name.trim()) return 'Full name is required';
     if (!customerDetails.email.trim()) return 'Email is required';
     if (!customerDetails.phone.trim()) return 'Phone number is required';
-    
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(customerDetails.email)) return 'Invalid email format';
-    
+
     if (!isValidMalaysianPhone(customerDetails.phone)) return 'Invalid Malaysian phone number format';
-    
+
     if (pickupMethod === 'delivery' && !pickupAddress.trim()) {
       return 'Delivery address is required';
     }
-    
+
     return null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log('BookingForm: Starting submission...');
-    console.log('Camera:', camera);
-    console.log('Dates:', { startDate, endDate });
 
     const validationError = validateForm();
     if (validationError) {
@@ -109,16 +105,10 @@ export default function BookingForm({
     setError(null);
 
     try {
-      console.log('BookingForm: Camera object received:', camera);
-      console.log('BookingForm: Camera name:', camera.name);
-      console.log('BookingForm: Camera ID:', camera.id);
-
       // Ensure camera name is properly set and not empty
       const cameraName = camera.name && camera.name.trim() !== ''
         ? camera.name.trim()
         : `Camera ${camera.id}`; // Fallback using camera ID
-
-      console.log('BookingForm: Final camera name used:', cameraName);
 
       // Prepare notes with discount info if applicable
       let finalNotes = specialRequests;
@@ -152,8 +142,6 @@ export default function BookingForm({
         booking_source: 'website'
       };
 
-      console.log('BookingForm: Submitting booking data:', bookingData);
-
       const response = await fetch('/api/bookings/submit', {
         method: 'POST',
         headers: {
@@ -162,9 +150,7 @@ export default function BookingForm({
         body: JSON.stringify(bookingData),
       });
 
-      console.log('BookingForm: API response status:', response.status);
       const result = await response.json();
-      console.log('BookingForm: API response data:', result);
 
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Failed to submit booking');
@@ -180,104 +166,118 @@ export default function BookingForm({
   };
 
   return (
-    <div className="w-full max-w-xs sm:max-w-sm mx-auto bg-white rounded-lg shadow-xl p-3 sm:p-4 max-h-[85vh] overflow-y-auto">
-      <div className="mb-3">
-        <h2 className="text-base font-bold text-gray-900 mb-1">Complete Your Booking</h2>
-        <p className="text-gray-600 text-xs">
-          Please provide your details to confirm your {camera.name} rental
+    <div className="w-full max-w-sm mx-auto bg-zinc-950 rounded-2xl border border-white/10 shadow-2xl p-6 max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-zinc-950">
+      <div className="mb-6 border-b border-white/10 pb-4">
+        <h2 className="text-xl font-black text-white mb-2 tracking-tight">Complete Your Booking</h2>
+        <p className="text-zinc-400 text-xs">
+          Please provide your details to confirm your <span className="text-white font-bold">{camera.name}</span> rental
         </p>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-2 mb-3">
-          <p className="text-red-800 text-xs">{error}</p>
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4 flex items-center gap-2">
+          <span className="text-red-500">⚠️</span>
+          <p className="text-red-400 text-xs font-bold">{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* Customer Details */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Customer Details</h3>
-          <div className="space-y-2">
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Customer Details</h3>
+          <div className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-zinc-300 mb-1.5 ml-1">
                 Full Name *
               </label>
               <input
                 type="text"
                 value={customerDetails.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
+                placeholder="Enter your full name"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-zinc-300 mb-1.5 ml-1">
                 Email Address *
               </label>
               <input
                 type="email"
                 value={customerDetails.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
+                placeholder="name@example.com"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+              <label className="block text-xs font-bold text-zinc-300 mb-1.5 ml-1">
                 Phone Number *
               </label>
               <input
                 type="tel"
                 value={customerDetails.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="+60177464121"
+                className="w-full px-4 py-3 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all"
+                placeholder="+60123456789"
                 required
               />
             </div>
-
           </div>
         </div>
 
         {/* Pickup Method */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 mb-2">Pickup Method</h3>
-          <div className="space-y-2">
-            <label className="flex items-center p-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+        <div className="space-y-4">
+          <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Pickup Method</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <label className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${pickupMethod === 'pickup'
+                ? 'bg-white text-black border-white shadow-lg'
+                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
+              }`}>
               <input
                 type="radio"
                 value="pickup"
                 checked={pickupMethod === 'pickup'}
                 onChange={(e) => setPickupMethod(e.target.value as 'pickup' | 'delivery')}
-                className="mr-3 h-5 w-5 text-blue-600 border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                style={{ minWidth: '20px', minHeight: '20px' }}
+                className="sr-only"
               />
-              <span className="text-sm text-gray-900 font-medium">Self Pickup</span>
+              <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-xs font-bold">Self Pickup</span>
             </label>
-            <label className="flex items-center p-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+
+            <label className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${pickupMethod === 'delivery'
+                ? 'bg-white text-black border-white shadow-lg'
+                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
+              }`}>
               <input
                 type="radio"
                 value="delivery"
                 checked={pickupMethod === 'delivery'}
                 onChange={(e) => setPickupMethod(e.target.value as 'pickup' | 'delivery')}
-                className="mr-3 h-5 w-5 text-blue-600 border-2 border-gray-400 focus:ring-2 focus:ring-blue-500 cursor-pointer accent-blue-600"
-                style={{ minWidth: '20px', minHeight: '20px' }}
+                className="sr-only"
               />
-              <span className="text-sm text-gray-900 font-medium">Lalamove Delivery</span>
+              <svg className="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs font-bold">Lalamove</span>
             </label>
           </div>
 
           {pickupMethod === 'delivery' && (
-            <div className="mt-2">
-              <label className="block text-xs font-medium text-gray-700 mb-1">
+            <div className="animate-fadeIn">
+              <label className="block text-xs font-bold text-zinc-300 mb-1.5 ml-1">
                 Delivery Address *
               </label>
               <textarea
                 value={pickupAddress}
                 onChange={(e) => setPickupAddress(e.target.value)}
-                className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                rows={2}
+                className="w-full px-4 py-3 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all resize-none"
+                rows={3}
                 placeholder="Enter your full delivery address"
                 required
               />
@@ -287,11 +287,11 @@ export default function BookingForm({
 
         {/* Social Media Discount - Canon R50 Only */}
         {isCanonR50 && (
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
+          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4 relative overflow-hidden">
+            <div className="flex items-center justify-between mb-2 relative z-10">
               <div>
-                <h3 className="text-sm font-bold text-gray-900">🎉 Get RM5 OFF per day!</h3>
-                <p className="text-xs text-gray-600 mt-0.5">
+                <h3 className="text-sm font-black text-white">🎉 Get RM5 OFF per day!</h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
                   Follow/Share our Instagram or Facebook
                 </p>
               </div>
@@ -302,16 +302,16 @@ export default function BookingForm({
                   onChange={(e) => setSocialMediaDiscount(e.target.checked)}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
               </label>
             </div>
             {socialMediaDiscount && (
-              <div className="mt-2 p-2 bg-white rounded border border-purple-200 animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-xs text-purple-700 font-medium">
-                  ✅ Discount Applied: -RM{discountAmount} total
+              <div className="mt-3 p-3 bg-zinc-950/50 rounded-lg border border-purple-500/20 animate-in fade-in slide-in-from-top-1 duration-200">
+                <p className="text-xs text-purple-400 font-bold flex items-center gap-1.5">
+                  <span>✅</span> Discount Applied: -RM{discountAmount}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
-                  Please show proof of follow/share when picking up
+                <p className="text-[10px] text-zinc-500 mt-1 ml-5">
+                  Please show proof when picking up
                 </p>
               </div>
             )}
@@ -320,86 +320,83 @@ export default function BookingForm({
 
         {/* Special Requests */}
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">
+          <label className="block text-xs font-bold text-zinc-300 mb-1.5 ml-1">
             Special Requests
           </label>
           <textarea
             value={specialRequests}
             onChange={(e) => setSpecialRequests(e.target.value)}
-            className="w-full px-2 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className="w-full px-4 py-3 text-sm bg-zinc-900 border border-white/10 rounded-xl text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all resize-none"
             rows={2}
-            placeholder="Any special requirements or notes..."
+            placeholder="Any special requirements..."
           />
         </div>
 
         {/* Payment Info */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-          <h4 className="font-semibold text-yellow-800 mb-2 text-xs">Payment Information</h4>
-          <div className="text-xs text-yellow-700 space-y-1">
+        <div className="bg-zinc-900 rounded-xl p-4 border border-white/5 space-y-3">
+          <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-2">Payment Summary</h4>
+
+          <div className="space-y-2 text-xs">
             {isCanonR50 && socialMediaDiscount && (
               <>
-                <div className="flex justify-between text-gray-500">
-                  <span className="line-through">Original Rate:</span>
+                <div className="flex justify-between text-zinc-500">
+                  <span className="line-through">Original Rate</span>
                   <span className="line-through">RM{dailyRate}/day</span>
                 </div>
-                <div className="flex justify-between text-purple-700 font-semibold">
-                  <span>Discounted Rate:</span>
-                  <span>RM{discountedDailyRate}/day 🎉</span>
+                <div className="flex justify-between text-purple-400 font-bold">
+                  <span>Discounted Rate</span>
+                  <span>RM{discountedDailyRate}/day</span>
                 </div>
-                <div className="flex justify-between text-green-700 font-semibold">
-                  <span>You Save:</span>
+                <div className="flex justify-between text-green-400 font-bold">
+                  <span>Savings</span>
                   <span>-RM{discountAmount}</span>
                 </div>
-                <div className="border-t border-yellow-300 my-1"></div>
+                <div className="border-t border-white/5 my-2"></div>
               </>
             )}
-            <div className="flex justify-between">
-              <span>Deposit (Refundable):</span>
-              <span className="font-semibold">RM{depositAmount}</span>
+
+            <div className="flex justify-between text-zinc-400">
+              <span>Deposit (Refundable)</span>
+              <span className="font-medium text-white">RM{depositAmount}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Rental Amount:</span>
-              <span className="font-semibold">RM{finalPaymentAmount}</span>
+            <div className="flex justify-between text-zinc-400">
+              <span>Rental Amount</span>
+              <span className="font-medium text-white">RM{finalPaymentAmount}</span>
             </div>
+
             {pickupMethod === 'delivery' && (
-              <div className="flex justify-between text-xs">
-                <span>Delivery Fee:</span>
-                <span className="text-orange-600">Pay to Lalamove directly</span>
+              <div className="flex justify-between text-xs items-center py-1">
+                <span className="text-zinc-500">Delivery Fee</span>
+                <span className="text-orange-400 font-bold text-[10px] uppercase bg-orange-400/10 px-2 py-0.5 rounded">Paid to Lalamove</span>
               </div>
             )}
-            <div className="flex justify-between border-t border-yellow-300 pt-1">
-              <span className="font-semibold">Total Due:</span>
-              <span className="font-bold text-base">RM{depositAmount + finalPaymentAmount}</span>
+
+            <div className="flex justify-between border-t border-white/10 pt-3 mt-2">
+              <span className="font-bold text-white">Total Due Now</span>
+              <span className="font-black text-xl text-white">RM{depositAmount + finalPaymentAmount}</span>
             </div>
-            {isCanonR50 && socialMediaDiscount && (
-              <p className="text-xs text-green-700 font-semibold mt-1 bg-green-50 border border-green-200 rounded p-1">
-                💰 You saved RM{discountAmount} with social media discount!
-              </p>
-            )}
-            <p className="text-xs text-yellow-600 mt-1">
-              The RM{depositAmount} deposit is fully refundable when equipment is returned in good condition.
+          </div>
+
+          <div className="bg-zinc-800/50 rounded-lg p-2.5 mt-3 border border-white/5">
+            <p className="text-[10px] text-zinc-400 leading-relaxed">
+              <span className="text-white font-bold">Note:</span> The RM{depositAmount} deposit is fully refundable when equipment is returned in good condition.
             </p>
-            {pickupMethod === 'delivery' && (
-              <p className="text-xs text-orange-600 mt-1">
-                * Delivery fee (RM10-RM20 based on distance) will be paid separately to the Lalamove driver upon delivery.
-              </p>
-            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-3">
+        <div className="flex gap-3 pt-2">
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors font-medium"
+            className="flex-1 px-4 py-3 text-sm font-bold text-zinc-400 border border-white/10 rounded-xl hover:bg-white/5 hover:text-white transition-all"
             disabled={isSubmitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="flex-1 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="flex-1 px-4 py-3 text-sm font-black bg-white text-black rounded-xl hover:bg-zinc-200 transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_25px_rgba(255,255,255,0.3)] transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Processing...' : 'Confirm Booking'}

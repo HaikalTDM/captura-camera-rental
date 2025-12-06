@@ -12,6 +12,7 @@ export interface Camera {
     [key: string]: string;
   };
   tidyCalPath?: string; // TidyCal booking path
+  display_order?: number;
 }
 
 export interface CustomerDetails {

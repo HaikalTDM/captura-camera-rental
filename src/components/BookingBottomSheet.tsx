@@ -42,7 +42,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
   useEffect(() => {
     if (isOpen) {
       setIsClosing(false); // Reset closing state when opening
-      
+
       // Save and lock scroll - works on both desktop and mobile
       const scrollY = window.scrollY;
       scrollPositionRef.current = scrollY;
@@ -59,7 +59,7 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
       document.body.style.width = '';
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
-      
+
       // Double requestAnimationFrame for reliable scroll restoration
       requestAnimationFrame(() => {
         if (isMountedRef.current) {
@@ -91,41 +91,39 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 z-[200] flex items-end ${
-          isClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
-        }`}
+        className={`fixed inset-0 z-[200] flex items-end ${isClosing ? 'animate-backdropFadeOut' : 'animate-backdropFadeIn'
+          }`}
         onClick={handleClose}
         style={{ touchAction: 'none' }}
       >
         <div className="absolute inset-0 bg-black/60 backdrop-blur-md" style={{ touchAction: 'none' }}></div>
-        
+
         {/* Bottom Sheet */}
-        <div 
-          className={`relative w-full bg-white rounded-t-3xl shadow-2xl h-[95vh] overflow-y-auto border-t-4 border-blue-500 ${
-            isClosing ? 'animate-modalSlideDown' : 'animate-modalSlideUp'
-          }`}
+        <div
+          className={`relative w-full bg-zinc-950 rounded-t-3xl shadow-2xl h-[95vh] overflow-y-auto border-t border-white/10 ${isClosing ? 'animate-modalSlideDown' : 'animate-modalSlideUp'
+            }`}
           onClick={(e) => e.stopPropagation()}
           style={{ touchAction: 'auto' }}
         >
           {/* Handle Bar */}
-          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-white z-10">
-            <div className="w-10 h-1 rounded-full bg-slate-300"></div>
+          <div className="flex justify-center pt-3 pb-2 sticky top-0 bg-zinc-950 z-10">
+            <div className="w-10 h-1 rounded-full bg-zinc-800"></div>
           </div>
 
           {/* Header */}
-          <div className="sticky top-6 bg-white/95 backdrop-blur-lg px-6 py-4 border-b border-slate-200 z-10">
+          <div className="sticky top-6 bg-zinc-950/80 backdrop-blur-xl px-6 py-4 border-b border-white/5 z-10">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-xl font-black text-black">Book {camera.name}</h3>
-                <p className="text-sm text-slate-600 font-semibold mt-0.5">
+                <h3 className="text-xl font-black text-white">Book {camera.name}</h3>
+                <p className="text-sm text-zinc-400 font-medium mt-0.5">
                   RM{camera.dailyRate}/day • Professional Equipment
                 </p>
               </div>
               <button
                 onClick={handleClose}
-                className="w-10 h-10 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center transition-all active:scale-95"
+                className="w-10 h-10 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-full flex items-center justify-center transition-all active:scale-95"
               >
-                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>

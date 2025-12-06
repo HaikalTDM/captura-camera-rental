@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { fetchEventbriteEvents } from '@/lib/api/externalEvents';
 
 interface Event {
@@ -34,7 +35,7 @@ export default function EventsPage() {
     // Comprehensive Malaysian events calendar for 2025-2026
     const curatedEvents: Event[] = [
       // ========== 2025 EVENTS ==========
-      
+
       // January 2025
       {
         id: 'new-year-2025',
@@ -613,25 +614,25 @@ export default function EventsPage() {
     setIsLoadingExternal(true);
     try {
       const externalEvents = await fetchEventbriteEvents('Kuala Lumpur');
-      
+
       // Convert external events to our format
       const formattedExternalEvents: Event[] = externalEvents.map(ext => {
         // Parse date
         const eventDate = new Date(ext.date);
         const monthDay = eventDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
+
         // Determine category based on event name
         let category: Event['category'] = 'concert';
         const nameLower = ext.name.toLowerCase();
         if (nameLower.includes('concert') || nameLower.includes('music')) category = 'concert';
         else if (nameLower.includes('sport') || nameLower.includes('game')) category = 'sports';
         else if (nameLower.includes('festival') || nameLower.includes('fest')) category = 'festival';
-        
+
         // Determine recommended camera
-        const recommendedCamera = category === 'sports' || category === 'festival' 
-          ? 'DJI Action 5 Pro' 
+        const recommendedCamera = category === 'sports' || category === 'festival'
+          ? 'DJI Action 5 Pro'
           : 'DJI Osmo Pocket 3';
-        
+
         return {
           id: `ext-${ext.id}`,
           title: ext.name,
@@ -641,9 +642,9 @@ export default function EventsPage() {
           description: `Live event in ${ext.venue || 'Kuala Lumpur'} - Perfect for capturing the experience`,
           recommendedCamera,
           icon: category === 'concert' ? '🎸' : category === 'sports' ? '⚽' : '🎉',
-          color: category === 'concert' ? 'from-purple-500 to-pink-600' : 
-                 category === 'sports' ? 'from-orange-500 to-red-600' : 
-                 'from-blue-500 to-indigo-600',
+          color: category === 'concert' ? 'from-purple-500 to-pink-600' :
+            category === 'sports' ? 'from-orange-500 to-red-600' :
+              'from-blue-500 to-indigo-600',
           venue: ext.venue,
           isExternal: true
         };
@@ -666,7 +667,7 @@ export default function EventsPage() {
             // No year prefix, assume 2025
             return new Date(`${dateStr}, 2025`);
           };
-          
+
           const dateA = parseEventDate(a.date);
           const dateB = parseEventDate(b.date);
           return dateA.getTime() - dateB.getTime();
@@ -705,57 +706,59 @@ export default function EventsPage() {
   // Filter out past events and apply category filter
   const today = new Date();
   today.setHours(0, 0, 0, 0); // Reset to start of day
-  
+
   const upcomingEvents = events.filter(event => {
     const eventDate = parseEventDate(event.date);
     return eventDate >= today; // Only show today and future events
   });
 
-  const filteredEvents = selectedCategory === 'all' 
-    ? upcomingEvents 
+  const filteredEvents = selectedCategory === 'all'
+    ? upcomingEvents
     : upcomingEvents.filter(e => e.category === selectedCategory);
 
   const getDemandBadge = (demand: string) => {
     switch (demand) {
       case 'peak':
-        return { text: 'Peak Demand', color: 'bg-red-500', textColor: 'text-white' };
+        return { text: 'Peak Demand', color: 'bg-red-500/10 border-red-500/20', textColor: 'text-red-400' };
       case 'high':
-        return { text: 'High Demand', color: 'bg-orange-500', textColor: 'text-white' };
+        return { text: 'High Demand', color: 'bg-orange-500/10 border-orange-500/20', textColor: 'text-orange-400' };
       case 'medium':
-        return { text: 'Moderate', color: 'bg-blue-500', textColor: 'text-white' };
+        return { text: 'Moderate', color: 'bg-blue-500/10 border-blue-500/20', textColor: 'text-blue-400' };
       default:
-        return { text: 'Available', color: 'bg-green-500', textColor: 'text-white' };
+        return { text: 'Available', color: 'bg-emerald-500/10 border-emerald-500/20', textColor: 'text-emerald-400' };
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-zinc-950 text-zinc-200">
       {/* Header */}
-      <div className="bg-black text-white pt-16 pb-8 px-6">
-        <div className="max-w-lg mx-auto">
-          <h1 className="text-2xl font-black mb-2">Upcoming Events</h1>
-          <p className="text-sm text-slate-300 font-semibold">
-            Plan ahead • Book early for peak seasons
+      <div className="bg-zinc-950 pt-20 pb-8 px-6 border-b border-white/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[length:32px_32px] pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="max-w-lg mx-auto relative z-10">
+          <h1 className="text-4xl font-black mb-3 text-white tracking-tight">Upcoming Events</h1>
+          <p className="text-base text-zinc-400 font-medium leading-relaxed">
+            Plan your content ahead. <span className="text-white">Book early</span> for peak seasons.
           </p>
         </div>
       </div>
 
       {/* Category Filter */}
-      <section className="py-6 px-6 bg-white sticky top-0 z-40 shadow-sm">
+      <section className="py-4 px-6 sticky top-0 z-40 bg-zinc-950/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-lg mx-auto">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2 -mx-6 px-6">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-6 px-6 pb-2 sm:pb-0 sm:mx-0 sm:px-0">
             {categories.map((category, index) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`flex-shrink-0 px-4 py-2 rounded-full font-bold text-sm transition-all duration-300 animate-fadeIn ${
-                  selectedCategory === category.id
-                    ? 'bg-black text-white scale-105 shadow-lg'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95'
-                }`}
+                className={`flex-shrink-0 px-4 py-2.5 rounded-full font-bold text-xs uppercase tracking-wide transition-all duration-300 ${selectedCategory === category.id
+                  ? 'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)] scale-105'
+                  : 'bg-zinc-900 text-zinc-500 border border-white/5 hover:border-white/20 hover:text-zinc-300'
+                  }`}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <span className="mr-1.5">{category.icon}</span>
+                <span className="mr-2 text-sm">{category.icon}</span>
                 {category.label}
               </button>
             ))}
@@ -764,25 +767,24 @@ export default function EventsPage() {
       </section>
 
       {/* Events List */}
-      <section className="py-6 px-6">
-        <div className="max-w-lg mx-auto space-y-4">
+      <section className="py-8 px-6 pb-32">
+        <div className="max-w-lg mx-auto space-y-6">
           {/* Event Counter */}
           {filteredEvents.length > 0 && (
-            <div className="bg-white rounded-xl p-4 shadow-md border border-slate-200 mb-6">
-              <div className="text-center">
-                <div className="text-3xl font-black text-black">{filteredEvents.length}</div>
-                <div className="text-sm font-bold text-slate-600">Upcoming Events</div>
-              </div>
+            <div className="flex items-center justify-between px-2 mb-4">
+              <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                Showing {filteredEvents.length} Events
+              </span>
             </div>
           )}
 
           {filteredEvents.length === 0 ? (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-20 bg-zinc-900/50 rounded-3xl border border-white/5 border-dashed">
+              <div className="w-20 h-20 bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-4xl">📅</span>
               </div>
-              <h3 className="text-lg font-black text-black mb-2">No Events Found</h3>
-              <p className="text-sm text-slate-600 font-semibold">
+              <h3 className="text-xl font-black text-white mb-2">No Events Found</h3>
+              <p className="text-zinc-500 font-medium">
                 Try selecting a different category
               </p>
             </div>
@@ -796,18 +798,18 @@ export default function EventsPage() {
                 const prevYear = prevEvent ? parseEventDate(prevEvent.date).getFullYear() : null;
                 const showYearSeparator = index === 0 || (prevYear && currentYear !== prevYear);
                 const demandBadge = getDemandBadge(event.demand);
-                
+
                 return (
                   <div key={event.id}>
                     {/* Year Separator */}
                     {showYearSeparator && (
-                      <div className="my-8 relative">
+                      <div className="my-10 relative flex items-center justify-center">
                         <div className="absolute inset-0 flex items-center">
-                          <div className="w-full border-t-2 border-slate-300"></div>
+                          <div className="w-full border-t border-white/10"></div>
                         </div>
-                        <div className="relative flex justify-center">
-                          <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-full font-black text-lg shadow-lg">
-                            🎉 {currentYear} Events
+                        <div className="relative bg-zinc-950 px-6">
+                          <span className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 shadow-xl">
+                            {currentYear}
                           </span>
                         </div>
                       </div>
@@ -815,31 +817,30 @@ export default function EventsPage() {
 
                     {/* Event Card */}
                     <div
-                      className="bg-white rounded-2xl shadow-lg border-2 border-slate-200 overflow-hidden hover:scale-[1.02] transition-all duration-300 animate-fadeInUp"
+                      className="group bg-zinc-900 rounded-3xl border border-white/5 overflow-hidden hover:border-white/20 transition-all duration-300 animate-fadeInUp relative"
                       style={{ animationDelay: `${index * 100}ms` }}
                     >
+                      {/* Gradient Ambient Background */}
+                      <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${event.color} opacity-10 blur-3xl rounded-full translate-x-1/2 -translate-y-1/2 group-hover:opacity-20 transition-opacity duration-500`}></div>
                       {/* Event Header with Gradient */}
-                      <div className={`bg-gradient-to-br ${event.color} p-6 text-white relative overflow-hidden`}>
-                        {/* Decorative pattern */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16"></div>
-                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full -ml-12 -mb-12"></div>
-                        
+                      <div className="relative p-6 pb-0">
+
                         <div className="relative">
                           <div className="flex items-start justify-between mb-3">
                             <div className="flex items-center gap-3">
-                              <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
+                              <div className="w-16 h-16 bg-zinc-800/80 backdrop-blur-sm rounded-2xl border border-white/5 flex items-center justify-center text-3xl shadow-lg ring-1 ring-white/5">
                                 {event.icon}
                               </div>
                               <div>
-                                <h3 className="text-xl font-black mb-1">{event.title}</h3>
+                                <h3 className="text-xl font-black text-white mb-2 leading-tight">{event.title}</h3>
                                 <div className="flex items-center gap-2">
-                                  <div className="flex items-center gap-1.5 text-sm font-bold bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-800/50 border border-white/5 text-xs font-bold text-zinc-300">
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     {event.date}
                                     {event.endDate && ` - ${event.endDate}`}
-                                  </div>
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -848,72 +849,72 @@ export default function EventsPage() {
                       </div>
 
                       {/* Event Details */}
-                      <div className="p-6">
+                      <div className="p-6 pt-4 relative z-10">
                         {/* Badges */}
                         <div className="flex items-center gap-2 mb-4 flex-wrap">
-                          <span className={`${demandBadge.color} ${demandBadge.textColor} px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide`}>
+                          <span className={`${demandBadge.color} border ${demandBadge.textColor} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider`}>
                             {demandBadge.text}
                           </span>
                           {event.demand === 'peak' && (
-                            <span className="text-xs text-slate-600 font-bold">🔥 Book early!</span>
+                            <span className="flex items-center gap-1 text-[10px] text-orange-400 font-bold bg-orange-500/10 px-2 py-1 rounded-full border border-orange-500/20">
+                              <span>🔥</span> Book 2 weeks ahead
+                            </span>
                           )}
                           {event.isExternal && (
-                            <span className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wide flex items-center gap-1">
-                              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
-                              </svg>
+                            <span className="bg-blue-500/10 border border-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5">
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                              </span>
                               Live Event
                             </span>
                           )}
                         </div>
 
                         {/* Description */}
-                        <p className="text-sm text-slate-600 font-semibold mb-4 leading-relaxed">
+                        <p className="text-sm text-zinc-400 font-medium mb-6 leading-relaxed border-l-2 border-white/5 pl-4">
                           {event.description}
                         </p>
 
                         {/* Venue (for external events) */}
                         {event.venue && (
-                          <div className="flex items-center gap-2 mb-4 text-sm text-slate-600 font-semibold">
-                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
+                          <div className="flex items-center gap-2 mb-6 text-sm text-zinc-400 font-medium bg-zinc-950/50 p-3 rounded-lg border border-white/5">
+                            <span className="text-zinc-500">📍</span>
                             {event.venue}
                           </div>
                         )}
 
                         {/* Recommended Camera */}
-                        <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                        <div className="bg-zinc-950/50 rounded-xl p-4 mb-6 border border-white/5">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center flex-shrink-0">
-                              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                              <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                               </svg>
                             </div>
                             <div className="flex-1">
-                              <div className="text-xs text-slate-500 font-bold mb-0.5">Recommended</div>
-                              <div className="text-sm font-black text-black">{event.recommendedCamera}</div>
+                              <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-0.5">Recommended Gear</div>
+                              <div className="text-sm font-bold text-white">{event.recommendedCamera}</div>
                             </div>
                           </div>
                         </div>
 
                         {/* Action Buttons */}
                         <div className="grid grid-cols-2 gap-3">
-                          <button
+                          <Button
                             onClick={() => router.push('/rental/cameras')}
-                            className="bg-black text-white font-black py-3 px-4 rounded-xl hover:scale-105 transition-all duration-300 active:scale-95 shadow-lg"
+                            className="bg-white text-black font-black h-auto py-4 rounded-xl hover:bg-zinc-200 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_25px_rgba(255,255,255,0.2)] active:scale-[0.98] text-sm"
                           >
                             Book Now
-                          </button>
+                          </Button>
                           <a
                             href="https://wa.me/60177464121"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-green-500 text-white font-black py-3 px-4 rounded-xl hover:scale-105 transition-all duration-300 active:scale-95 shadow-lg flex items-center justify-center gap-2"
+                            className="bg-zinc-800 text-white font-bold py-3.5 px-4 rounded-xl hover:bg-zinc-700 transition-all duration-300 border border-white/5 hover:border-white/10 text-sm flex items-center justify-center gap-2"
                           >
-                            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
                             </svg>
                             Ask
                           </a>
@@ -926,37 +927,40 @@ export default function EventsPage() {
             </>
           )}
         </div>
-      </section>
+      </section >
 
       {/* Loading External Events */}
-      {isLoadingExternal && (
-        <section className="py-4 px-6">
-          <div className="max-w-lg mx-auto">
-            <div className="bg-white rounded-2xl shadow-lg border-2 border-blue-200 p-6 flex items-center gap-4">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-200 border-t-blue-600 flex-shrink-0"></div>
-              <div className="flex-1">
-                <div className="text-sm font-black text-black mb-1">Loading Live Events...</div>
-                <div className="text-xs text-slate-600 font-semibold">Fetching concerts and events from Eventbrite</div>
+      {
+        isLoadingExternal && (
+          <section className="py-4 px-6 pb-8">
+            <div className="max-w-lg mx-auto">
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-6 flex items-center gap-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-2 border-zinc-700 border-t-white flex-shrink-0"></div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-white mb-0.5">Finding nearby events...</div>
+                  <div className="text-xs text-zinc-500">Checking Eventbrite for concerts & shows</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-      )}
+          </section>
+        )
+      }
 
       {/* Info Banner */}
-      <section className="py-8 px-6">
+      <section className="py-8 px-6 pb-20">
         <div className="max-w-lg mx-auto">
-          <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-6 text-white">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-blue-500/5 group-hover:bg-blue-500/10 transition-colors duration-500"></div>
+            <div className="flex items-start gap-4 relative z-10">
+              <div className="w-12 h-12 bg-white/5 backdrop-blur-sm rounded-xl border border-white/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-black mb-2">Pro Tip</h3>
-                <p className="text-sm text-white/90 font-semibold leading-relaxed">
-                  We show both curated Malaysian events and live concerts/events from Eventbrite. Book 2-3 weeks ahead for peak seasons!
+                <h3 className="text-base font-bold text-white mb-2">Pro Tip</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  We verify both curated Malaysian holidays and live Eventbrite listings. <span className="text-white">Peak season</span> bookings fill up 2-3 weeks in advance.
                 </p>
               </div>
             </div>
@@ -967,22 +971,12 @@ export default function EventsPage() {
       {/* Animations */}
       <style jsx global>{`
         @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn {
           animation: fadeIn 0.5s ease-out forwards;
@@ -1000,7 +994,7 @@ export default function EventsPage() {
           scrollbar-width: none;
         }
       `}</style>
-    </div>
+    </div >
   );
 }
 
