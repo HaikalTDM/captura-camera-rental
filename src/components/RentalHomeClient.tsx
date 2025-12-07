@@ -2,7 +2,6 @@
 
 import { useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import type { GalleryImage } from '@/lib/api/gallery';
 import Image from 'next/image';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import PickupDeliverySection from '@/components/PickupDeliverySection';
@@ -20,9 +19,19 @@ interface ClientCamera {
     specifications: Record<string, unknown>;
 }
 
+// Lightweight gallery image type - only essential fields
+interface LightweightGalleryImage {
+    id: string;
+    customer_name: string;
+    camera_used: string;
+    location: string;
+    image_url: string;
+    alt_text: string;
+}
+
 interface RentalHomeClientProps {
     cameras: ClientCamera[];
-    galleryImages: GalleryImage[];
+    galleryImages: LightweightGalleryImage[];
 }
 
 export default function RentalHomeClient({ cameras, galleryImages }: RentalHomeClientProps) {

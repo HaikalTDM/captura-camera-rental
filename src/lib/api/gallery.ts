@@ -54,6 +54,28 @@ export async function getActiveGalleryImages(): Promise<GalleryImage[]> {
   }
 }
 
+// Lightweight version for homepage - only essential fields to reduce page size
+export async function getGalleryImagesLightweight(): Promise<Pick<GalleryImage, 'id' | 'customer_name' | 'camera_used' | 'location' | 'image_url' | 'alt_text'>[]> {
+  try {
+    const { data, error } = await supabase
+      .from('gallery_images')
+      .select('id, customer_name, camera_used, location, image_url, alt_text')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(10) // Only fetch what we need
+
+    if (error) {
+      console.error('Error fetching lightweight gallery images:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getGalleryImagesLightweight:', error)
+    return []
+  }
+}
+
 // Add new gallery image
 export async function addGalleryImage(imageData: {
   customer_name: string

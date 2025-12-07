@@ -1,6 +1,10 @@
-import { getActiveGalleryImages } from '@/lib/api/gallery';
+import { getGalleryImagesLightweight } from '@/lib/api/gallery';
 import { getAllCameras } from '@/lib/api/bookings';
 import RentalHomeClient from '@/components/RentalHomeClient';
+
+// Force dynamic rendering - don't pre-render at build time
+// This avoids the ISR oversized page error
+export const dynamic = 'force-dynamic';
 
 // Helper to get static images based on camera name
 // TODO: In the future, store image URLs directly in the database
@@ -24,14 +28,11 @@ function getStaticImages(cameraName: string) {
 }
 
 export default async function RentalHome() {
-  // Fetch data on the server - no loading spinners needed!
-  const [galleryImagesRaw, dbCameras] = await Promise.all([
-    getActiveGalleryImages(),
+  // Fetch data on the server
+  const [galleryImages, dbCameras] = await Promise.all([
+    getGalleryImagesLightweight(), // Use lightweight version
     getAllCameras()
   ]);
-
-  // Process gallery images
-  const galleryImages = galleryImagesRaw.slice(0, 10);
 
   // Process cameras: filter available, sort, and transform
   const availableCameras = dbCameras.filter(cam => cam.is_available);
