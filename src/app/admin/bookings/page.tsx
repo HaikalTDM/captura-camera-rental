@@ -25,6 +25,7 @@ import {
   ArrowUpDown,
   Heart
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useAdminData } from '@/contexts/AdminDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -396,6 +397,103 @@ export default function BookingsPage() {
       transition: {
         staggerChildren: 0.05
       }
+    }
+  };
+
+  const handleToggleStatus = async (e: React.MouseEvent, booking: Booking, field: 'deposit_paid' | 'final_payment_paid' | 'equipment_picked_up' | 'equipment_returned') => {
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Determine new value
+    const newValue = !booking[field];
+
+    // Show loading toast
+    const toastId = toast.loading('Updating status...');
+
+    try {
+      // Special "Tick All" logic for Return
+      if (field === 'equipment_returned' && newValue === true) {
+        const timestamp = new Date().toISOString();
+        const updates = [
+          fetch(`/api/bookings/${booking.id}/return-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ equipment_returned: true, equipment_return_notes: null, equipment_condition_return: null })
+          })
+        ];
+
+        if (!booking.equipment_picked_up) {
+          updates.push(fetch(`/api/bookings/${booking.id}/pickup-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ equipment_picked_up: true, equipment_pickup_notes: null, equipment_condition_pickup: null })
+          }));
+        }
+
+        if (!booking.final_payment_paid) {
+          updates.push(fetch(`/api/bookings/${booking.id}/final-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ final_payment_paid: true, final_payment_paid_date: timestamp })
+          }));
+        }
+
+        if (!booking.deposit_paid) {
+          updates.push(fetch(`/api/bookings/${booking.id}/deposit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deposit_paid: true, deposit_paid_date: timestamp })
+          }));
+        }
+
+        await Promise.all(updates);
+        toast.success('All items checked & return completed', { id: toastId });
+        mutateBookings();
+        return;
+      }
+
+      // Standard single field toggle
+      let endpoint = '';
+      let body = {};
+      const timestamp = newValue ? new Date().toISOString() : null;
+
+      switch (field) {
+        case 'deposit_paid':
+          endpoint = `/api/bookings/${booking.id}/deposit`;
+          body = { deposit_paid: newValue, deposit_paid_date: timestamp };
+          break;
+        case 'final_payment_paid':
+          endpoint = `/api/bookings/${booking.id}/final-payment`;
+          body = { final_payment_paid: newValue, final_payment_paid_date: timestamp };
+          break;
+        case 'equipment_picked_up':
+          endpoint = `/api/bookings/${booking.id}/pickup-status`;
+          body = { equipment_picked_up: newValue, equipment_pickup_notes: null, equipment_condition_pickup: null };
+          break;
+        case 'equipment_returned':
+          endpoint = `/api/bookings/${booking.id}/return-status`;
+          body = { equipment_returned: newValue, equipment_return_notes: null, equipment_condition_return: null };
+          break;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`${field.replace(/_/g, ' ').replace('paid', '').trim()} updated`, { id: toastId });
+        mutateBookings();
+      } else {
+        toast.error(data.error || 'Failed to update', { id: toastId });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Error updating status', { id: toastId });
     }
   };
 
@@ -876,13 +974,32 @@ export default function BookingsPage() {
                     </div>
 
                     <div className="flex gap-1.5 flex-wrap">
-                      <Badge variant={booking.deposit_paid ? 'success' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                      <Badge
+                        variant={booking.deposit_paid ? 'success' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => handleToggleStatus(e, booking, 'deposit_paid')}
+                      >
                         {booking.deposit_paid ? '✓' : '○'} Deposit
                       </Badge>
-                      <Badge variant={booking.equipment_picked_up ? 'info' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                      <Badge
+                        variant={booking.final_payment_paid ? 'success' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => handleToggleStatus(e, booking, 'final_payment_paid')}
+                      >
+                        {booking.final_payment_paid ? '✓' : '○'} Final Pmt
+                      </Badge>
+                      <Badge
+                        variant={booking.equipment_picked_up ? 'info' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => handleToggleStatus(e, booking, 'equipment_picked_up')}
+                      >
                         {booking.equipment_picked_up ? '✓' : '○'} Pickup
                       </Badge>
-                      <Badge variant={booking.equipment_returned ? 'success' : 'secondary'} className="text-[10px] px-1.5 py-0.5">
+                      <Badge
+                        variant={booking.equipment_returned ? 'success' : 'secondary'}
+                        className="text-[10px] px-1.5 py-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+                        onClick={(e) => handleToggleStatus(e, booking, 'equipment_returned')}
+                      >
                         {booking.equipment_returned ? '✓' : '○'} Return
                       </Badge>
                     </div>
@@ -973,22 +1090,32 @@ export default function BookingsPage() {
                         <TableCell>
                           <div className="space-y-2">
                             {getStatusBadge(booking.booking_status || 'pending_approval')}
-                            <div className="flex gap-1.5">
+                            <div className="flex gap-1.5 flex-wrap">
                               <Badge
                                 variant={booking.deposit_paid ? 'success' : 'secondary'}
-                                className="text-xs"
+                                className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={(e) => handleToggleStatus(e, booking, 'deposit_paid')}
                               >
                                 {booking.deposit_paid ? '✓' : '○'} Deposit
                               </Badge>
                               <Badge
+                                variant={booking.final_payment_paid ? 'success' : 'secondary'}
+                                className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={(e) => handleToggleStatus(e, booking, 'final_payment_paid')}
+                              >
+                                {booking.final_payment_paid ? '✓' : '○'} Final Pmt
+                              </Badge>
+                              <Badge
                                 variant={booking.equipment_picked_up ? 'info' : 'secondary'}
-                                className="text-xs"
+                                className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={(e) => handleToggleStatus(e, booking, 'equipment_picked_up')}
                               >
                                 {booking.equipment_picked_up ? '✓' : '○'} Pickup
                               </Badge>
                               <Badge
                                 variant={booking.equipment_returned ? 'success' : 'secondary'}
-                                className="text-xs"
+                                className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={(e) => handleToggleStatus(e, booking, 'equipment_returned')}
                               >
                                 {booking.equipment_returned ? '✓' : '○'} Return
                               </Badge>
