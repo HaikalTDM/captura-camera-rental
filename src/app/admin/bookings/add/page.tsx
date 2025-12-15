@@ -61,6 +61,10 @@ export default function AddBookingPage() {
   const [socialMediaDiscount, setSocialMediaDiscount] = useState(false);
   const [discountPerDay, setDiscountPerDay] = useState(5); // RM5 per day default
 
+  // Custom price override state
+  const [customPriceEnabled, setCustomPriceEnabled] = useState(false);
+  const [customDailyRate, setCustomDailyRate] = useState(0);
+
   useEffect(() => {
     loadCameras();
   }, []);
@@ -91,17 +95,23 @@ export default function AddBookingPage() {
       if (camera && days > 0) {
         let dailyRate = camera.daily_rate;
 
-        // Dynamic pricing for Osmo Pocket 3 and Action 5 Pro
-        const isPromoCamera = camera.name.toLowerCase().includes('osmo pocket 3') ||
-          camera.name.toLowerCase().includes('action 5 pro');
+        // If custom price is enabled, use the custom rate directly
+        if (customPriceEnabled && customDailyRate > 0) {
+          dailyRate = customDailyRate;
+        } else {
+          // Otherwise, apply automatic pricing logic
+          // Dynamic pricing for Osmo Pocket 3 and Action 5 Pro
+          const isPromoCamera = camera.name.toLowerCase().includes('osmo pocket 3') ||
+            camera.name.toLowerCase().includes('action 5 pro');
 
-        if (isPromoCamera && days >= 3) {
-          dailyRate = 45;
-        }
+          if (isPromoCamera && days >= 3) {
+            dailyRate = 45;
+          }
 
-        // Apply social media discount if enabled
-        if (socialMediaDiscount) {
-          dailyRate = dailyRate - discountPerDay;
+          // Apply social media discount if enabled
+          if (socialMediaDiscount) {
+            dailyRate = dailyRate - discountPerDay;
+          }
         }
 
         const totalAmount = dailyRate * days; // Delivery fee handled separately
@@ -118,7 +128,7 @@ export default function AddBookingPage() {
         }));
       }
     }
-  }, [bookingData.start_date, bookingData.end_date, bookingData.camera_id, bookingData.delivery_fee, bookingData.deposit_paid, cameras, socialMediaDiscount, discountPerDay]);
+  }, [bookingData.start_date, bookingData.end_date, bookingData.camera_id, bookingData.delivery_fee, bookingData.deposit_paid, cameras, socialMediaDiscount, discountPerDay, customPriceEnabled, customDailyRate]);
 
   // AI Text Parser Handler
   const handleParseText = async () => {
@@ -260,7 +270,14 @@ export default function AddBookingPage() {
       const selectedCamera = cameras.find(c => c.id === bookingData.camera_id);
       let finalNotes = bookingData.notes;
 
-      if (socialMediaDiscount && selectedCamera) {
+      // Add custom pricing note if enabled
+      if (customPriceEnabled && selectedCamera) {
+        const originalRate = selectedCamera.daily_rate;
+        const discountTotal = (originalRate - bookingData.daily_rate) * bookingData.total_days;
+        const customPriceNote = `\n\n💰 CUSTOM PRICING APPLIED (Personal Discount):\n- Original Rate: RM${originalRate}/day\n- Custom Rate: RM${bookingData.daily_rate}/day\n- Discount: RM${(originalRate - bookingData.daily_rate)}/day × ${bookingData.total_days} days = RM${discountTotal.toFixed(2)}\n- Reason: Personal discount for valued customer`;
+        finalNotes = (finalNotes || '') + customPriceNote;
+      } else if (socialMediaDiscount && selectedCamera) {
+        // Only add social media discount note if custom pricing is not enabled
         const originalRate = selectedCamera.daily_rate;
         const discountTotal = discountPerDay * bookingData.total_days;
         const discountNote = `\n\n💰 SOCIAL MEDIA DISCOUNT APPLIED:\n- Original Rate: RM${originalRate}/day\n- Discounted Rate: RM${bookingData.daily_rate}/day\n- Discount: RM${discountPerDay}/day × ${bookingData.total_days} days = RM${discountTotal}\n- Customer shared/reposted/followed our account`;
@@ -688,12 +705,83 @@ If you have any questions, feel free to reply to this message.`;
             )}
           </div>
 
+          {/* Custom Price Override - Available for all cameras */}
+          {bookingData.camera_id && (
+            <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border-2 border-orange-200 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                    ✏️ Custom Price Override
+                  </h2>
+                  <p className="text-sm text-slate-600 mt-1">Apply personal discount by manually setting the daily rate</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={customPriceEnabled}
+                    onChange={(e) => {
+                      const enabled = e.target.checked;
+                      setCustomPriceEnabled(enabled);
+                      if (enabled) {
+                        // Initialize with current calculated rate
+                        const selectedCamera = cameras.find(c => c.id === bookingData.camera_id);
+                        if (selectedCamera) {
+                          setCustomDailyRate(bookingData.daily_rate || selectedCamera.daily_rate);
+                        }
+                      }
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-orange-600"></div>
+                </label>
+              </div>
+
+              {customPriceEnabled && (
+                <div className="mt-4 space-y-4">
+                  <div className="p-4 bg-white rounded-xl border-2 border-orange-200 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Custom Daily Rate (RM)</label>
+                    <input
+                      type="number"
+                      step="1"
+                      min="1"
+                      value={customDailyRate}
+                      onChange={(e) => setCustomDailyRate(parseFloat(e.target.value) || 0)}
+                      className="w-full px-4 py-3 border-2 border-orange-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent text-slate-900 transition-all bg-white text-lg font-bold"
+                      placeholder="40"
+                    />
+                    <div className="mt-3 flex items-center justify-between text-sm">
+                      <div>
+                        <p className="text-slate-500">Original Rate:</p>
+                        <p className="font-bold text-slate-700">RM{cameras.find(c => c.id === bookingData.camera_id)?.daily_rate || 0}/day</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-slate-500">Total Discount:</p>
+                        <p className="font-bold text-green-600">
+                          -RM{((cameras.find(c => c.id === bookingData.camera_id)?.daily_rate || 0) - customDailyRate) * bookingData.total_days > 0
+                            ? (((cameras.find(c => c.id === bookingData.camera_id)?.daily_rate || 0) - customDailyRate) * bookingData.total_days).toFixed(2)
+                            : '0.00'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-orange-100 border border-orange-300 rounded-lg p-3">
+                    <p className="text-xs text-orange-800 flex items-center gap-2">
+                      <span>💡</span>
+                      <span>Custom pricing will override automatic discounts and promotional rates. This will be documented in the booking notes.</span>
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Social Media Discount - Only for Canon R50 */}
           {(() => {
             const selectedCamera = cameras.find(c => c.id === bookingData.camera_id);
             const isCanonR50 = selectedCamera?.name.toLowerCase().includes('canon') && selectedCamera?.name.toLowerCase().includes('r50');
 
-            if (!isCanonR50) return null;
+            // Don't show social media discount if custom pricing is enabled
+            if (!isCanonR50 || customPriceEnabled) return null;
 
             return (
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-6 border-2 border-purple-200 animate-in fade-in slide-in-from-top-2 duration-300">
