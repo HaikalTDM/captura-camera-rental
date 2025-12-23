@@ -320,10 +320,10 @@ export default function MobileAddBookingPage() {
                 </div>
                 <div>
                   <h3 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                    AI Smart Filler
+                    Smart Paste
                   </h3>
                   <p className={`text-xs ${isDarkMode ? 'text-purple-300' : 'text-purple-700'}`}>
-                    Paste customer message
+                    Auto-fill from message
                   </p>
                 </div>
               </div>
@@ -339,24 +339,22 @@ export default function MobileAddBookingPage() {
               value={aiInputText}
               onChange={(e) => setAiInputText(e.target.value)}
               placeholder="Paste customer WhatsApp message here...&#10;&#10;Example:&#10;Hi, I want to rent Canon EOS R5 from Nov 15 to Nov 20. My name is John Doe, phone 0123456789, email john@example.com"
-              className={`w-full px-4 py-3 rounded-2xl border-2 ${
-                isDarkMode
+              className={`w-full px-4 py-3 rounded-2xl border-2 ${isDarkMode
                   ? 'bg-slate-900 border-purple-700 text-white placeholder-slate-500'
                   : 'bg-white border-purple-200 text-slate-900 placeholder-slate-400'
-              } focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm`}
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm`}
               rows={6}
             />
 
             <button
               onClick={handleParseText}
               disabled={isParsing || !aiInputText.trim()}
-              className={`w-full mt-3 px-6 py-3 rounded-2xl font-bold text-white transition-all flex items-center justify-center gap-2 ${
-                isParsing || !aiInputText.trim()
+              className={`w-full mt-3 px-6 py-3 rounded-2xl font-bold text-white transition-all flex items-center justify-center gap-2 ${isParsing || !aiInputText.trim()
                   ? 'bg-slate-400 cursor-not-allowed'
                   : isDarkMode
-                  ? 'bg-purple-600 hover:bg-purple-700 active:scale-95'
-                  : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
-              }`}
+                    ? 'bg-purple-600 hover:bg-purple-700 active:scale-95'
+                    : 'bg-purple-600 hover:bg-purple-700 active:scale-95'
+                }`}
             >
               {isParsing ? (
                 <>
@@ -387,14 +385,13 @@ export default function MobileAddBookingPage() {
         {!showAIParser && (
           <button
             onClick={() => setShowAIParser(true)}
-            className={`w-full px-4 py-3 rounded-2xl border-2 border-dashed ${
-              isDarkMode
+            className={`w-full px-4 py-3 rounded-2xl border-2 border-dashed ${isDarkMode
                 ? 'border-purple-700 bg-purple-900/20 text-purple-300 hover:bg-purple-900/40'
                 : 'border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100'
-            } transition-colors flex items-center justify-center gap-2 font-bold`}
+              } transition-colors flex items-center justify-center gap-2 font-bold`}
           >
             <Sparkles className="w-5 h-5" />
-            <span>Show AI Smart Filler</span>
+            <span>Show Smart Paste</span>
           </button>
         )}
 
@@ -415,11 +412,10 @@ export default function MobileAddBookingPage() {
                   type="text"
                   value={customerDetails.full_name}
                   onChange={(e) => setCustomerDetails(prev => ({ ...prev, full_name: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   required
                 />
               </div>
@@ -432,11 +428,10 @@ export default function MobileAddBookingPage() {
                   type="email"
                   value={customerDetails.email}
                   onChange={(e) => setCustomerDetails(prev => ({ ...prev, email: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   required
                 />
               </div>
@@ -449,11 +444,10 @@ export default function MobileAddBookingPage() {
                   type="tel"
                   value={customerDetails.phone}
                   onChange={(e) => setCustomerDetails(prev => ({ ...prev, phone: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   required
                 />
               </div>
@@ -467,11 +461,10 @@ export default function MobileAddBookingPage() {
                   value={customerDetails.whatsapp}
                   onChange={(e) => setCustomerDetails(prev => ({ ...prev, whatsapp: e.target.value }))}
                   placeholder="Leave empty to use phone number"
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500'
                       : 'bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                 />
               </div>
 
@@ -482,11 +475,10 @@ export default function MobileAddBookingPage() {
                 <textarea
                   value={customerDetails.address}
                   onChange={(e) => setCustomerDetails(prev => ({ ...prev, address: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   rows={3}
                 />
               </div>
@@ -507,11 +499,10 @@ export default function MobileAddBookingPage() {
                 <select
                   value={bookingData.camera_id}
                   onChange={(e) => setBookingData(prev => ({ ...prev, camera_id: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   required
                 >
                   <option value="">Select a camera</option>
@@ -532,11 +523,10 @@ export default function MobileAddBookingPage() {
                     type="date"
                     value={bookingData.start_date}
                     onChange={(e) => setBookingData(prev => ({ ...prev, start_date: e.target.value }))}
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      isDarkMode
+                    className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                         ? 'bg-slate-800 border-slate-700 text-white'
                         : 'bg-slate-50 border-slate-200 text-slate-900'
-                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                      } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                     required
                   />
                 </div>
@@ -549,22 +539,20 @@ export default function MobileAddBookingPage() {
                     type="date"
                     value={bookingData.end_date}
                     onChange={(e) => setBookingData(prev => ({ ...prev, end_date: e.target.value }))}
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      isDarkMode
+                    className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                         ? 'bg-slate-800 border-slate-700 text-white'
                         : 'bg-slate-50 border-slate-200 text-slate-900'
-                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                      } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                     required
                   />
                 </div>
               </div>
 
               {/* Social Media Discount */}
-              <div className={`p-4 rounded-xl border-2 ${
-                socialMediaDiscount
+              <div className={`p-4 rounded-xl border-2 ${socialMediaDiscount
                   ? isDarkMode ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'
                   : isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-slate-50 border-slate-200'
-              }`}>
+                }`}>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
@@ -593,11 +581,10 @@ export default function MobileAddBookingPage() {
                       onChange={(e) => setDiscountPerDay(Number(e.target.value))}
                       min="0"
                       step="1"
-                      className={`w-full px-4 py-3 rounded-xl border ${
-                        isDarkMode
+                      className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                           ? 'bg-slate-800 border-slate-700 text-white'
                           : 'bg-white border-slate-200 text-slate-900'
-                      } focus:outline-none focus:ring-2 focus:ring-green-500`}
+                        } focus:outline-none focus:ring-2 focus:ring-green-500`}
                     />
                   </div>
                 )}
@@ -612,30 +599,28 @@ export default function MobileAddBookingPage() {
                   <button
                     type="button"
                     onClick={() => setBookingData(prev => ({ ...prev, pickup_method: 'pickup' }))}
-                    className={`px-4 py-3 rounded-xl border-2 font-bold transition-all ${
-                      bookingData.pickup_method === 'pickup'
+                    className={`px-4 py-3 rounded-xl border-2 font-bold transition-all ${bookingData.pickup_method === 'pickup'
                         ? isDarkMode
                           ? 'bg-purple-900 border-purple-600 text-white'
                           : 'bg-purple-100 border-purple-500 text-purple-900'
                         : isDarkMode
-                        ? 'bg-slate-800 border-slate-700 text-slate-400'
-                        : 'bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
+                          ? 'bg-slate-800 border-slate-700 text-slate-400'
+                          : 'bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
                   >
                     Self Pickup
                   </button>
                   <button
                     type="button"
                     onClick={() => setBookingData(prev => ({ ...prev, pickup_method: 'delivery' }))}
-                    className={`px-4 py-3 rounded-xl border-2 font-bold transition-all ${
-                      bookingData.pickup_method === 'delivery'
+                    className={`px-4 py-3 rounded-xl border-2 font-bold transition-all ${bookingData.pickup_method === 'delivery'
                         ? isDarkMode
                           ? 'bg-purple-900 border-purple-600 text-white'
                           : 'bg-purple-100 border-purple-500 text-purple-900'
                         : isDarkMode
-                        ? 'bg-slate-800 border-slate-700 text-slate-400'
-                        : 'bg-slate-50 border-slate-200 text-slate-600'
-                    }`}
+                          ? 'bg-slate-800 border-slate-700 text-slate-400'
+                          : 'bg-slate-50 border-slate-200 text-slate-600'
+                      }`}
                   >
                     Delivery
                   </button>
@@ -650,11 +635,10 @@ export default function MobileAddBookingPage() {
                   <textarea
                     value={bookingData.pickup_address}
                     onChange={(e) => setBookingData(prev => ({ ...prev, pickup_address: e.target.value }))}
-                    className={`w-full px-4 py-3 rounded-xl border ${
-                      isDarkMode
+                    className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                         ? 'bg-slate-800 border-slate-700 text-white'
                         : 'bg-slate-50 border-slate-200 text-slate-900'
-                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                      } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                     rows={3}
                   />
                 </div>
@@ -667,11 +651,10 @@ export default function MobileAddBookingPage() {
                 <textarea
                   value={bookingData.notes}
                   onChange={(e) => setBookingData(prev => ({ ...prev, notes: e.target.value }))}
-                  className={`w-full px-4 py-3 rounded-xl border ${
-                    isDarkMode
+                  className={`w-full px-4 py-3 rounded-xl border ${isDarkMode
                       ? 'bg-slate-800 border-slate-700 text-white'
                       : 'bg-slate-50 border-slate-200 text-slate-900'
-                  } focus:outline-none focus:ring-2 focus:ring-purple-500`}
+                    } focus:outline-none focus:ring-2 focus:ring-purple-500`}
                   rows={3}
                 />
               </div>
@@ -731,11 +714,10 @@ export default function MobileAddBookingPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full px-6 py-4 rounded-2xl font-bold text-white text-lg transition-all flex items-center justify-center gap-2 ${
-              isLoading
+            className={`w-full px-6 py-4 rounded-2xl font-bold text-white text-lg transition-all flex items-center justify-center gap-2 ${isLoading
                 ? 'bg-slate-400 cursor-not-allowed'
                 : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 active:scale-95'
-            }`}
+              }`}
           >
             {isLoading ? (
               <>

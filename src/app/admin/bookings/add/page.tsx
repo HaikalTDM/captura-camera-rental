@@ -416,8 +416,8 @@ If you have any questions, feel free to reply to this message.`;
     <div className="p-6">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Quick Booking with AI</h1>
-          <p className="text-slate-600 mt-2">Paste customer message and let AI fill the form automatically</p>
+          <h1 className="text-3xl font-bold text-slate-900">Quick Booking</h1>
+          <p className="text-slate-600 mt-2">Paste customer message to auto-fill the form</p>
         </div>
         <button
           onClick={() => router.push('/admin/bookings')}
@@ -437,8 +437,8 @@ If you have any questions, feel free to reply to this message.`;
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">AI-Powered Form Filler</h2>
-                  <p className="text-sm text-slate-600">Paste customer message and extract booking details automatically</p>
+                  <h2 className="text-xl font-bold text-slate-900">Smart Paste</h2>
+                  <p className="text-sm text-slate-600">Paste customer message to extract booking details</p>
                 </div>
               </div>
               <button
@@ -525,7 +525,7 @@ If you have any questions, feel free to reply to this message.`;
             className="w-full bg-purple-50 hover:bg-purple-100 border-2 border-dashed border-purple-300 rounded-xl p-4 text-purple-700 font-semibold flex items-center justify-center gap-2 transition-colors"
           >
             <Sparkles className="w-5 h-5" />
-            Show AI Form Filler
+            Show Smart Paste
           </button>
         )}
 
