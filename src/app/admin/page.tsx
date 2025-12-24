@@ -23,15 +23,20 @@ import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
 import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileDashboard from '@/components/admin/MobileDashboard';
+import CameraRevenueBreakdown from '@/components/admin/CameraRevenueBreakdown';
 
 export default function AdminDashboard() {
   const { bookings, cameras, stats, mutate } = useAdminData();
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
 
   // Debug navigation - log on every render
   console.log('Dashboard render:', {
     bookingsCount: bookings.length,
     camerasCount: cameras.length,
-    hasStats: !!stats
+    hasStats: !!stats,
+    isMobile
   });
 
   // Memoize expensive computations
@@ -165,6 +170,20 @@ export default function AdminDashboard() {
     show: { opacity: 1, y: 0 }
   };
 
+  // 📱 MOBILE: Return Priority Dashboard layout
+  if (isMobile) {
+    return (
+      <div className="p-4">
+        <MobileDashboard
+          bookings={bookings}
+          cameras={cameras}
+          onMutate={mutate}
+        />
+      </div>
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original layout
   return (
     <div className="space-y-4 sm:space-y-6 max-w-full overflow-x-hidden">
       {/* Header */}
@@ -388,6 +407,20 @@ export default function AdminDashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Camera Revenue Breakdown */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="mb-8"
+      >
+        <CameraRevenueBreakdown
+          bookings={bookings}
+          cameras={cameras}
+          variant="desktop"
+        />
+      </motion.div>
 
       {/* Today's Activities */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 max-w-full">

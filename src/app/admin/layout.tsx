@@ -26,8 +26,7 @@ import {
   LogOut,
   Menu,
   X,
-  Heart,
-  ChevronDown,
+
   ChevronRight,
   List,
   AlertCircle
@@ -41,7 +40,7 @@ export default function AdminLayout({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMotherExpanded, setIsMotherExpanded] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
 
@@ -60,13 +59,6 @@ export default function AdminLayout({
     }
     setIsLoading(false);
   }, [pathname, router, isMobileRoute]);
-
-  // Auto-expand Mother section if on a Mother route
-  useEffect(() => {
-    if (pathname?.startsWith('/admin/mother')) {
-      setIsMotherExpanded(true);
-    }
-  }, [pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
@@ -110,17 +102,6 @@ export default function AdminLayout({
     { name: 'Reports', href: '/admin/reports', icon: BarChart3 },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
-
-  const motherNavigation = {
-    name: 'Mother',
-    href: '/admin/mother',
-    icon: Heart,
-    subItems: [
-      { name: 'Dashboard', href: '/admin/mother', icon: LayoutDashboard },
-      { name: 'Bookings', href: '/admin/mother/bookings', icon: List },
-      { name: 'Approvals', href: '/admin/mother/approvals', icon: AlertCircle },
-    ]
-  };
 
   return (
     <AdminPWAWrapper>
@@ -185,57 +166,6 @@ export default function AdminLayout({
                       </Link>
                     );
                   })}
-
-                  {/* Mother Section with Sub-items */}
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => setIsMotherExpanded(!isMotherExpanded)}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${pathname?.startsWith('/admin/mother')
-                        ? 'bg-pink-500 text-white shadow-md'
-                        : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Heart className="w-5 h-5 flex-shrink-0" />
-                        <span className="font-medium text-sm">Mother</span>
-                      </div>
-                      {isMotherExpanded ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
-
-                    <AnimatePresence>
-                      {isMotherExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden pl-4 space-y-1"
-                        >
-                          {motherNavigation.subItems.map((subItem) => {
-                            const isActive = pathname === subItem.href;
-                            const SubIcon = subItem.icon;
-                            return (
-                              <Link
-                                key={subItem.name}
-                                href={subItem.href}
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${isActive
-                                  ? 'bg-pink-100 text-pink-700 font-medium'
-                                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                  }`}
-                              >
-                                <SubIcon className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{subItem.name}</span>
-                              </Link>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
                 </nav>
 
                 {/* Logout Button */}
@@ -307,58 +237,6 @@ export default function AdminLayout({
                       </Link>
                     );
                   })}
-
-                  {/* Mother Section with Sub-items */}
-                  <div className="space-y-1">
-                    <button
-                      onClick={() => setIsMotherExpanded(!isMotherExpanded)}
-                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${pathname?.startsWith('/admin/mother')
-                        ? 'bg-pink-500 text-white shadow-md'
-                        : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Heart className="w-5 h-5 flex-shrink-0" />
-                        <span className="font-medium text-sm">Mother</span>
-                      </div>
-                      {isMotherExpanded ? (
-                        <ChevronDown className="w-4 h-4" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4" />
-                      )}
-                    </button>
-
-                    <AnimatePresence>
-                      {isMotherExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden pl-4 space-y-1"
-                        >
-                          {motherNavigation.subItems.map((subItem) => {
-                            const isActive = pathname === subItem.href;
-                            const SubIcon = subItem.icon;
-                            return (
-                              <Link
-                                key={subItem.name}
-                                href={subItem.href}
-                                onClick={() => setIsSidebarOpen(false)}
-                                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 ${isActive
-                                  ? 'bg-pink-100 text-pink-700 font-medium'
-                                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                                  }`}
-                              >
-                                <SubIcon className="w-4 h-4 flex-shrink-0" />
-                                <span className="text-sm">{subItem.name}</span>
-                              </Link>
-                            );
-                          })}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
                 </nav>
 
                 {/* Logout Button */}

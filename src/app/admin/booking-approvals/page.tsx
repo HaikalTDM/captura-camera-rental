@@ -5,6 +5,10 @@ import { supabase } from '@/lib/supabase';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileApprovals from '@/components/admin/MobileApprovals';
+import ConfirmationModal from '@/components/ui/ConfirmationModal';
+import { customToast } from '@/components/ui/toast-config';
 import {
   Clock,
   CheckCircle,
@@ -26,6 +30,13 @@ export default function BookingApprovalsPage() {
   const [cameras, setCameras] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingBooking, setProcessingBooking] = useState<string | null>(null);
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
+
+  // Custom confirmation modal state
+  const [showApproveModal, setShowApproveModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     loadPendingBookings();
@@ -38,7 +49,7 @@ export default function BookingApprovalsPage() {
         .from('cameras')
         .select('id, name, brand, model')
         .order('name');
-      
+
       if (error) {
         console.error('Error loading cameras:', error);
       } else {
@@ -106,14 +117,14 @@ export default function BookingApprovalsPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Booking approved successfully!');
+        customToast.success('Booking Approved!', 'The customer has been notified.');
         loadPendingBookings(); // Refresh the list
       } else {
-        alert(`Error: ${result.error}`);
+        customToast.error('Error', result.error);
       }
     } catch (error) {
       console.error('Error approving booking:', error);
-      alert('Failed to approve booking');
+      customToast.error('Failed to approve booking', 'Please try again.');
     } finally {
       setProcessingBooking(null);
     }
@@ -136,30 +147,45 @@ export default function BookingApprovalsPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Booking rejected successfully!');
+        customToast.warning('Booking Rejected', 'The customer has been notified.');
         loadPendingBookings(); // Refresh the list
       } else {
-        alert(`Error: ${result.error}`);
+        customToast.error('Error', result.error);
       }
     } catch (error) {
       console.error('Error rejecting booking:', error);
-      alert('Failed to reject booking');
+      customToast.error('Failed to reject booking', 'Please try again.');
     } finally {
       setProcessingBooking(null);
     }
   };
 
   const quickApprove = (bookingId: string) => {
-    if (confirm('Are you sure you want to approve this booking?')) {
-      handleApproveBooking(bookingId, 'Quick approval from admin dashboard');
+    setSelectedBookingId(bookingId);
+    setShowApproveModal(true);
+  };
+
+  const handleConfirmApprove = () => {
+    if (selectedBookingId) {
+      handleApproveBooking(selectedBookingId, 'Quick approval from admin dashboard');
     }
+    setShowApproveModal(false);
+    setSelectedBookingId(null);
   };
 
   const quickReject = (bookingId: string) => {
-    const reason = prompt('Please enter rejection reason:');
-    if (reason) {
-      handleRejectBooking(bookingId, reason, 'Quick rejection from admin dashboard');
+    setSelectedBookingId(bookingId);
+    setRejectReason('');
+    setShowRejectModal(true);
+  };
+
+  const handleConfirmReject = () => {
+    if (selectedBookingId && rejectReason.trim()) {
+      handleRejectBooking(selectedBookingId, rejectReason, 'Quick rejection from admin dashboard');
     }
+    setShowRejectModal(false);
+    setSelectedBookingId(null);
+    setRejectReason('');
   };
 
   if (isLoading) {
@@ -173,6 +199,23 @@ export default function BookingApprovalsPage() {
     );
   }
 
+  // 📱 MOBILE: Return compact approvals layout
+  if (isMobile) {
+    return (
+      <MobileApprovals
+        pendingBookings={pendingBookings}
+        cameras={cameras}
+        isLoading={isLoading}
+        processingBooking={processingBooking}
+        onRefresh={loadPendingBookings}
+        onApprove={quickApprove}
+        onReject={quickReject}
+        getCameraInfo={getCameraInfo}
+      />
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original layout
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -407,6 +450,77 @@ export default function BookingApprovalsPage() {
           )}
         </div>
       </div>
+
+      {/* Custom Approve Modal */}
+      <ConfirmationModal
+        isOpen={showApproveModal}
+        onClose={() => {
+          setShowApproveModal(false);
+          setSelectedBookingId(null);
+        }}
+        onConfirm={handleConfirmApprove}
+        title="Approve Booking"
+        message="Are you sure you want to approve this booking? The customer will be notified."
+        confirmText="Approve"
+        cancelText="Cancel"
+        type="success"
+        isLoading={processingBooking === selectedBookingId}
+      />
+
+      {/* Custom Reject Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowRejectModal(false)}>
+          <div
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6 pb-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <XCircle className="w-6 h-6 text-red-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-bold text-slate-900">Reject Booking</h3>
+                  <p className="text-sm text-slate-600 mt-1">Please provide a reason for rejection.</p>
+                </div>
+              </div>
+
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter rejection reason..."
+                className="w-full mt-4 px-3 py-2 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none"
+                rows={3}
+                autoFocus
+              />
+            </div>
+
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setSelectedBookingId(null);
+                  setRejectReason('');
+                }}
+                className="flex-1 px-4 py-3 border-2 border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl font-semibold transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={!rejectReason.trim() || processingBooking === selectedBookingId}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {processingBooking === selectedBookingId ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  'Reject'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

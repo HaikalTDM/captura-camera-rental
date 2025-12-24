@@ -39,6 +39,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { Booking } from '@/lib/supabase';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileBookings from '@/components/admin/MobileBookings';
 
 type FilterState = {
   search: string;
@@ -70,6 +72,7 @@ type SortOption =
 export default function BookingsPage() {
   const router = useRouter();
   const { bookings, isLoading, mutateBookings } = useAdminData();
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [quickFilter, setQuickFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
@@ -502,6 +505,19 @@ export default function BookingsPage() {
     show: { opacity: 1, y: 0 }
   };
 
+  // 📱 MOBILE: Return compact mobile layout
+  if (isMobile) {
+    return (
+      <div className="p-4">
+        <MobileBookings
+          bookings={bookings}
+          onMutate={mutateBookings}
+        />
+      </div>
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original layout
   return (
     <div className="space-y-3 sm:space-y-4 px-3 sm:px-0">
       {/* Header */}

@@ -24,12 +24,12 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
   const [isAdminRoute, setIsAdminRoute] = useState(false);
 
   useEffect(() => {
-    // ONLY work on mobile admin routes
-    const isMobileAdminRoute = pathname?.startsWith('/admin/mobile');
-    setIsAdminRoute(isMobileAdminRoute || false);
+    // ONLY work on admin routes (excluding login)
+    const isAdminRouteCheck = pathname?.startsWith('/admin') && pathname !== '/admin/login';
+    setIsAdminRoute(isAdminRouteCheck || false);
 
-    // Only initialize PWA on mobile admin routes
-    if (!isMobileAdminRoute) {
+    // Only initialize PWA on admin routes
+    if (!isAdminRouteCheck) {
       return;
     }
 
@@ -40,7 +40,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
       const registrations = await navigator.serviceWorker.getRegistrations();
       console.log(`🧹 Found ${registrations.length} service workers, validating scopes...`);
 
-      const expectedScope = new URL('/admin/mobile/', location.origin).href;
+      const expectedScope = new URL('/admin/', location.origin).href;
 
       for (const registration of registrations) {
         const scriptUrl = registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL || '';
@@ -67,7 +67,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
     const addAdminMetaTags = () => {
       // Remove ALL existing manifest links (including auto-loaded /manifest.json)
       document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
-      
+
       // Remove ALL existing theme-color meta tags
       document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.remove());
 
@@ -111,7 +111,7 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
         // Wait a bit to ensure old workers are gone
         setTimeout(() => {
           navigator.serviceWorker
-            .register('/admin-sw.js', { scope: '/admin/mobile/' })
+            .register('/admin-sw.js', { scope: '/admin/' })
             .then((registration) => {
               // Force update if there's a waiting worker
               if (registration.waiting) {
@@ -165,13 +165,13 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
     try {
       await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      
+
       if (outcome === 'accepted') {
         console.log('✅ Admin PWA: User accepted the install prompt');
       } else {
         console.log('❌ Admin PWA: User dismissed the install prompt');
       }
-      
+
       setDeferredPrompt(null);
       setShowInstallPrompt(false);
     } catch (error) {
@@ -188,16 +188,16 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
   };
 
   // Don't show install prompt if not admin route, already installed, or dismissed
-  const shouldShowInstallPrompt = isAdminRoute && 
-    showInstallPrompt && 
-    !isInstalled && 
+  const shouldShowInstallPrompt = isAdminRoute &&
+    showInstallPrompt &&
+    !isInstalled &&
     deferredPrompt &&
     (typeof window === 'undefined' || !sessionStorage.getItem('admin-pwa-install-dismissed'));
 
   return (
     <>
       {children}
-      
+
       {/* Admin PWA Install Prompt - Mobile Optimized */}
       {shouldShowInstallPrompt && (
         <div className="fixed bottom-4 left-4 right-4 sm:bottom-4 sm:right-4 sm:left-auto z-50 sm:max-w-sm">

@@ -8,14 +8,16 @@ import {
   getAllCameras
 } from '@/lib/api/bookings';
 import type { Camera } from '@/lib/supabase';
-import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown, X } from 'lucide-react';
+import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown, X, ArrowLeft } from 'lucide-react';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 export default function AddBookingPage() {
   const router = useRouter();
   const [cameras, setCameras] = useState<Camera[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
 
   // AI Parser State
   const [showAIParser, setShowAIParser] = useState(true);
@@ -413,21 +415,45 @@ If you have any questions, feel free to reply to this message.`;
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Quick Booking</h1>
-          <p className="text-slate-600 mt-2">Paste customer message to auto-fill the form</p>
+    <div className={isMobile ? "p-4 pb-24" : "p-6"}>
+      {/* Responsive Header */}
+      {isMobile ? (
+        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-4 rounded-2xl shadow-lg mb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-white">Quick Booking</h1>
+                <p className="text-xs text-slate-400">Paste to auto-fill</p>
+              </div>
+            </div>
+            <button
+              onClick={() => router.push('/admin/bookings')}
+              className="flex items-center gap-1.5 bg-white/10 text-white px-3 py-2 rounded-xl text-sm font-medium active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => router.push('/admin/bookings')}
-          className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
-        >
-          Back to Bookings
-        </button>
-      </div>
+      ) : (
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">Quick Booking</h1>
+            <p className="text-slate-600 mt-2">Paste customer message to auto-fill the form</p>
+          </div>
+          <button
+            onClick={() => router.push('/admin/bookings')}
+            className="bg-slate-600 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-medium transition-colors"
+          >
+            Back to Bookings
+          </button>
+        </div>
+      )}
 
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className={isMobile ? "space-y-4" : "max-w-5xl mx-auto space-y-6"}>
         {/* AI Text Parser Section */}
         {showAIParser && (
           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl shadow-lg border-2 border-purple-200 p-6">
@@ -824,36 +850,43 @@ If you have any questions, feel free to reply to this message.`;
           })()}
 
           {/* Payment Summary */}
-          <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border-2 border-slate-200">
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Payment Summary</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl p-4 border border-slate-200">
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Total Days</label>
-                <div className="text-2xl font-bold text-slate-900">{bookingData.total_days}</div>
+          <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-4 md:p-6 border-2 border-slate-200">
+            <h2 className="text-lg md:text-xl font-bold text-slate-900 mb-4">Payment Summary</h2>
+
+            {/* Mobile: 2x2 Grid with equal sizing */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Total Days */}
+              <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200 text-center">
+                <label className="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Days</label>
+                <div className="text-xl md:text-2xl font-bold text-slate-900">{bookingData.total_days}</div>
               </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200">
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Daily Rate</label>
-                <div className="text-2xl font-bold text-slate-900">
-                  {socialMediaDiscount && (
-                    <div className="text-sm text-slate-400 line-through">
-                      RM{(cameras.find(c => c.id === bookingData.camera_id)?.daily_rate || 0).toFixed(2)}
-                    </div>
-                  )}
-                  RM{bookingData.daily_rate.toFixed(2)}
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-4 border border-slate-200">
-                <label className="block text-xs font-semibold text-slate-500 mb-1">Total Amount</label>
-                <div className="text-2xl font-bold text-blue-600">RM{bookingData.total_amount.toFixed(2)}</div>
+
+              {/* Daily Rate */}
+              <div className="bg-white rounded-xl p-3 md:p-4 border border-slate-200 text-center">
+                <label className="block text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Daily Rate</label>
                 {socialMediaDiscount && (
-                  <div className="text-xs text-green-600 font-semibold mt-1">
-                    Saved RM{(discountPerDay * bookingData.total_days).toFixed(2)}!
+                  <div className="text-xs text-slate-400 line-through">
+                    RM{(cameras.find(c => c.id === bookingData.camera_id)?.daily_rate || 0).toFixed(0)}
+                  </div>
+                )}
+                <div className="text-xl md:text-2xl font-bold text-slate-900">RM{bookingData.daily_rate.toFixed(0)}</div>
+              </div>
+
+              {/* Total Amount */}
+              <div className="bg-blue-50 rounded-xl p-3 md:p-4 border border-blue-200 text-center">
+                <label className="block text-[10px] md:text-xs font-semibold text-blue-600 uppercase tracking-wide mb-1">Total</label>
+                <div className="text-xl md:text-2xl font-bold text-blue-600">RM{bookingData.total_amount.toFixed(0)}</div>
+                {socialMediaDiscount && (
+                  <div className="text-[10px] text-green-600 font-semibold mt-0.5">
+                    -RM{(discountPerDay * bookingData.total_days).toFixed(0)}
                   </div>
                 )}
               </div>
-              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                <label className="block text-xs font-semibold text-green-700 mb-1">Deposit</label>
-                <div className="text-2xl font-bold text-green-600">RM100.00</div>
+
+              {/* Deposit */}
+              <div className="bg-green-50 rounded-xl p-3 md:p-4 border border-green-200 text-center">
+                <label className="block text-[10px] md:text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">Deposit</label>
+                <div className="text-xl md:text-2xl font-bold text-green-600">RM100</div>
               </div>
             </div>
           </div>
@@ -960,17 +993,17 @@ If you have any questions, feel free to reply to this message.`;
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={handleSendWhatsApp}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-4 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-3 sm:py-4 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base"
                 >
-                  <Send className="w-5 h-5" />
-                  Send WhatsApp Confirmation
+                  <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Send WhatsApp
                 </button>
                 <button
                   onClick={handleSkipWhatsApp}
-                  className="px-6 py-4 border-2 border-slate-300 hover:border-slate-400 text-slate-700 rounded-xl font-semibold transition-colors"
+                  className="flex-1 sm:flex-none px-4 py-3 sm:py-4 border-2 border-slate-300 hover:border-slate-400 text-slate-700 rounded-xl font-semibold transition-colors text-sm sm:text-base"
                 >
                   Skip & Go to Bookings
                 </button>

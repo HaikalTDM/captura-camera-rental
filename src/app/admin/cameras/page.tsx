@@ -5,6 +5,8 @@ import { useAdminData } from '@/contexts/AdminDataContext';
 import type { Camera } from '@/lib/supabase';
 import Link from 'next/link';
 import { CamerasGridSkeleton } from '@/components/admin/SkeletonLoaders';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileCameras from '@/components/admin/MobileCameras';
 import {
   Camera as CameraIcon,
   CheckCircle,
@@ -95,6 +97,7 @@ CameraCard.displayName = 'CameraCard';
 export default function CamerasPage() {
   const { cameras, bookings, isLoading, mutateCameras } = useAdminData();
   const [showAddForm, setShowAddForm] = useState(false);
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
 
   // Memoize camera rental info lookup
   const getCameraRentalInfo = useMemo(() => {
@@ -109,7 +112,7 @@ export default function CamerasPage() {
   // Memoize camera metrics calculations
   const cameraMetrics = useMemo(() => {
     const metricsMap = new Map();
-    
+
     cameras.forEach(camera => {
       const cameraBookings = bookings.filter(b => b.camera_id === camera.id);
       const paidBookings = cameraBookings.filter(b => b.deposit_paid && b.final_payment_paid);
@@ -161,6 +164,20 @@ export default function CamerasPage() {
   //   return <CamerasGridSkeleton />;
   // }
 
+  // 📱 MOBILE: Return compact cameras layout
+  if (isMobile) {
+    return (
+      <MobileCameras
+        cameras={cameras}
+        bookings={bookings}
+        statusCounts={statusCounts}
+        cameraMetrics={cameraMetrics}
+        getCameraRentalInfo={getCameraRentalInfo}
+      />
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original layout
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-7xl mx-auto p-8 space-y-8">

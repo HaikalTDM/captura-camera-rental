@@ -1,25 +1,15 @@
 {
-  "id": "/admin/mobile/",
-  "name": "CAPTURA Mobile Admin",
-  "short_name": "Admin Mobile",
-  "description": "Mobile-first admin dashboard for CAPTURA camera rental management. Manage bookings, customers, and equipment with offline capabilities.",
-  "start_url": "/admin/mobile?pwa=true",
+  "id": "/admin/",
+  "name": "CAPTURA Admin",
+  "short_name": "Admin",
+  "description": "Admin dashboard for CAPTURA camera rental management.",
+  "start_url": "/admin?pwa=true",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait",
-  "scope": "/admin/mobile/",
+  "scope": "/admin/",
   "lang": "en",
-  "categories": [
-    "business",
-    "productivity",
-    "utilities"
-  ],
-  "display_override": [
-    "window-controls-overlay",
-    "standalone",
-    "minimal-ui"
-  ],
   "icons": [
     {
       "src": "/icons/captura-icon-72x72.png",
@@ -74,8 +64,8 @@
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "View admin dashboard overview",
-      "url": "/admin/mobile",
+      "description": "View admin dashboard",
+      "url": "/admin",
       "icons": [
         {
           "src": "/icons/shortcut-dashboard.png",
@@ -86,35 +76,11 @@
     {
       "name": "Bookings",
       "short_name": "Bookings",
-      "description": "View and manage camera rental bookings",
-      "url": "/admin/mobile/bookings",
+      "description": "Manage bookings",
+      "url": "/admin/bookings",
       "icons": [
         {
           "src": "/icons/shortcut-bookings.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Customers",
-      "short_name": "Customers",
-      "description": "Manage customer database",
-      "url": "/admin/mobile/customers",
-      "icons": [
-        {
-          "src": "/icons/shortcut-customers.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Cameras",
-      "short_name": "Cameras",
-      "description": "Manage camera inventory",
-      "url": "/admin/mobile/cameras",
-      "icons": [
-        {
-          "src": "/icons/shortcut-camera.png",
           "sizes": "96x96"
         }
       ]
@@ -122,4 +88,3 @@
   ],
   "prefer_related_applications": false
 }
-

@@ -6,6 +6,8 @@ import { getAllBookings } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import TikTokCalendarExport from '@/components/TikTokCalendarExport';
 import { useBookings, useAdminData } from '@/contexts/AdminDataContext';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileCalendar from '@/components/admin/MobileCalendar';
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
@@ -37,6 +39,7 @@ export default function CalendarPage() {
   const [isMounted, setIsMounted] = useState(false);
   const { bookings = [], isLoading = false, error = null } = useBookings() || {};
   const { cameras = [] } = useAdminData();
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedView, setSelectedView] = useState<'month' | 'week'>('month');
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -297,6 +300,19 @@ export default function CalendarPage() {
     );
   }
 
+  // 📱 MOBILE: Return agenda-based calendar layout
+  if (isMobile) {
+    return (
+      <MobileCalendar
+        bookings={bookings}
+        cameras={cameras}
+        currentDate={currentDate}
+        onDateChange={setCurrentDate}
+      />
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original grid calendar layout
   return (
     <div className="space-y-6">
       {/* Header */}

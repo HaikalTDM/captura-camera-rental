@@ -8,21 +8,17 @@ const ADMIN_API_CACHE_NAME = `captura-mobile-admin-api-${CACHE_VERSION}`;
 
 // Admin-specific files to cache immediately
 const ADMIN_STATIC_ASSETS = [
-  '/admin/mobile',
-  '/admin/mobile/',
-  '/admin/mobile/analytics',
-  '/admin/mobile/bookings',
-  '/admin/mobile/cameras',
-  '/admin/mobile/customers',
-  '/admin/mobile/settings',
-  '/admin/mobile/profile',
-  '/admin/mobile/notification-settings',
-  '/admin/mobile/system-settings',
-  '/admin/mobile/help',
-  '/admin/mobile/terms',
+  '/admin',
+  '/admin/',
+  '/admin/bookings',
+  '/admin/calendar',
+  '/admin/settings',
   '/mobile-admin.webmanifest',
-  '/icons/admin-icon-192x192.png',
-  '/icons/admin-icon-512x512.png',
+  '/icons/captura-icon-72x72.png',
+  '/icons/captura-icon-96x96.png',
+  '/icons/captura-icon-128x128.png',
+  '/icons/captura-icon-144x144.png',
+  '/icons/captura-icon-152x152.png',
   '/icons/captura-icon-192x192.png',
   '/icons/captura-icon-512x512.png',
 ];
@@ -48,7 +44,7 @@ self.addEventListener('install', (event) => {
   console.log('🔧 Mobile Admin Service Worker: Installing NEW VERSION...');
   // Force immediate activation
   self.skipWaiting();
-  
+
   event.waitUntil(
     caches.open(ADMIN_STATIC_CACHE_NAME)
       .then((cache) => {
@@ -68,7 +64,7 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('🚀 Mobile Admin Service Worker: Activating...');
-  
+
   // Take control of all clients immediately
   event.waitUntil(
     clients.claim().then(() => {
@@ -82,15 +78,15 @@ self.addEventListener('activate', (event) => {
             // Delete ALL old CAPTURA caches (including old admin and main site)
             // Only keep the new mobile-admin caches
             if (cacheName.startsWith('captura-') &&
-                !cacheName.startsWith('captura-mobile-admin-')) {
+              !cacheName.startsWith('captura-mobile-admin-')) {
               console.log('🗑️ Mobile Admin Service Worker: Deleting old cache', cacheName);
               return caches.delete(cacheName);
             }
             // Also delete if it's a current cache but not the latest version
             if (cacheName.startsWith('captura-mobile-admin-') &&
-                cacheName !== ADMIN_STATIC_CACHE_NAME &&
-                cacheName !== ADMIN_DYNAMIC_CACHE_NAME &&
-                cacheName !== ADMIN_API_CACHE_NAME) {
+              cacheName !== ADMIN_STATIC_CACHE_NAME &&
+              cacheName !== ADMIN_DYNAMIC_CACHE_NAME &&
+              cacheName !== ADMIN_API_CACHE_NAME) {
               console.log('🗑️ Mobile Admin Service Worker: Deleting old mobile admin cache', cacheName);
               return caches.delete(cacheName);
             }
@@ -108,23 +104,23 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  
+
   // Only handle admin routes
   if (!url.pathname.startsWith('/admin')) {
     return;
   }
-  
+
   // Skip non-GET requests
   if (request.method !== 'GET') {
     return;
   }
-  
+
   // Handle API requests differently
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(handleApiRequest(request));
     return;
   }
-  
+
   // Handle admin page requests
   event.respondWith(handleAdminPageRequest(request));
 });
@@ -153,7 +149,7 @@ async function handleAdminPageRequest(request) {
     return networkResponse;
   } catch (error) {
     console.log('🌐 Admin Service Worker: Network request failed', request.url, error);
-    
+
     // Return offline page for admin routes
     return new Response(
       `<!DOCTYPE html>
@@ -177,7 +173,7 @@ async function handleAdminPageRequest(request) {
         </div>
       </body>
       </html>`,
-      { 
+      {
         headers: { 'Content-Type': 'text/html' },
         status: 200
       }
@@ -188,29 +184,29 @@ async function handleAdminPageRequest(request) {
 // Handle API requests with caching strategy
 async function handleApiRequest(request) {
   const url = new URL(request.url);
-  
+
   try {
     // Try network first for fresh data
     const networkResponse = await fetch(request);
-    
+
     if (networkResponse && networkResponse.status === 200) {
       // Cache successful API responses
       const cache = await caches.open(ADMIN_API_CACHE_NAME);
       cache.put(request, networkResponse.clone());
       console.log('💾 Admin Service Worker: Cached API response', request.url);
     }
-    
+
     return networkResponse;
   } catch (error) {
     console.log('🌐 Admin Service Worker: API request failed, trying cache', request.url);
-    
+
     // Fallback to cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
       console.log('📦 Admin Service Worker: Serving API from cache', request.url);
       return cachedResponse;
     }
-    
+
     // Return offline API response
     return new Response(
       JSON.stringify({
@@ -229,7 +225,7 @@ async function handleApiRequest(request) {
 // Background sync for admin actions
 self.addEventListener('sync', (event) => {
   console.log('🔄 Admin Service Worker: Background sync triggered', event.tag);
-  
+
   if (event.tag === 'admin-booking-sync') {
     event.waitUntil(syncAdminBookings());
   } else if (event.tag === 'admin-customer-sync') {
@@ -240,7 +236,7 @@ self.addEventListener('sync', (event) => {
 // Push notification handler for admin
 self.addEventListener('push', (event) => {
   console.log('📱 Admin Service Worker: Push notification received');
-  
+
   const data = event.data ? event.data.json() : {};
   const options = {
     body: data.body || 'New admin notification from CAPTURA',
@@ -265,7 +261,7 @@ self.addEventListener('push', (event) => {
       }
     ]
   };
-  
+
   event.waitUntil(
     self.registration.showNotification('CAPTURA Admin', options)
   );
@@ -274,9 +270,9 @@ self.addEventListener('push', (event) => {
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
   console.log('🔔 Admin Service Worker: Notification clicked', event.action);
-  
+
   event.notification.close();
-  
+
   if (event.action === 'view') {
     const url = event.notification.data.url || '/admin';
     event.waitUntil(

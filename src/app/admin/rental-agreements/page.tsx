@@ -6,6 +6,8 @@ import type { Booking, Customer, Camera } from '@/lib/supabase';
 import RentalAgreementTemplate from '@/components/RentalAgreementTemplate';
 import { exportToPDF, generatePDFFilename, printAgreement } from '@/utils/pdfExport';
 import { format } from 'date-fns';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileRentalAgreements from '@/components/admin/MobileRentalAgreements';
 
 interface BookingWithDetails extends Booking {
   customer: Customer;
@@ -20,6 +22,7 @@ export default function RentalAgreementsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const agreementRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
 
   useEffect(() => {
     fetchBookings();
@@ -28,7 +31,7 @@ export default function RentalAgreementsPage() {
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch bookings with customer and camera details
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
@@ -90,7 +93,7 @@ export default function RentalAgreementsPage() {
   };
 
   const filteredBookings = bookings.filter((booking) => {
-    const matchesSearch = 
+    const matchesSearch =
       booking.customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.customer.phone.includes(searchTerm) ||
@@ -136,6 +139,29 @@ export default function RentalAgreementsPage() {
     );
   }
 
+  // 📱 MOBILE: Return compact agreements layout
+  if (isMobile) {
+    return (
+      <MobileRentalAgreements
+        bookings={bookings}
+        selectedBooking={selectedBooking}
+        loading={loading}
+        exporting={exporting}
+        searchTerm={searchTerm}
+        statusFilter={statusFilter}
+        onSearchChange={setSearchTerm}
+        onStatusFilterChange={setStatusFilter}
+        onSelectBooking={setSelectedBooking}
+        onClearSelection={() => setSelectedBooking(null)}
+        onExportPDF={handleExportPDF}
+        onPrint={handlePrint}
+        agreementRef={agreementRef as React.RefObject<HTMLDivElement>}
+        AgreementTemplate={RentalAgreementTemplate}
+      />
+    );
+  }
+
+  // 🖥️ DESKTOP: Return original layout
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
