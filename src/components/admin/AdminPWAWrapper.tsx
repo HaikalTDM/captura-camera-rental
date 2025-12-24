@@ -63,48 +63,12 @@ export default function AdminPWAWrapper({ children }: AdminPWAWrapperProps) {
       }
     };
 
-    // Add admin PWA meta tags dynamically
-    const addAdminMetaTags = () => {
-      // Remove ALL existing manifest links (including auto-loaded /manifest.json)
-      document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
 
-      // Remove ALL existing theme-color meta tags
-      document.querySelectorAll('meta[name="theme-color"]').forEach(el => el.remove());
-
-      // Add COMPLETELY NEW manifest file as FIRST element in head (highest priority)
-      const manifestLink = document.createElement('link');
-      manifestLink.rel = 'manifest';
-      manifestLink.href = `/mobile-admin.webmanifest?v=${Date.now()}`;
-      manifestLink.crossOrigin = 'anonymous';
-      document.head.insertBefore(manifestLink, document.head.firstChild);
-
-      // Add BLACK theme color for mobile admin
-      const themeColorMeta = document.createElement('meta');
-      themeColorMeta.name = 'theme-color';
-      themeColorMeta.content = '#000000';
-      document.head.appendChild(themeColorMeta);
-
-      // Add admin app meta tags
-      const appCapableMeta = document.createElement('meta');
-      appCapableMeta.name = 'apple-mobile-web-app-capable';
-      appCapableMeta.content = 'yes';
-      document.head.appendChild(appCapableMeta);
-
-      const appTitleMeta = document.createElement('meta');
-      appTitleMeta.name = 'apple-mobile-web-app-title';
-      appTitleMeta.content = 'CAPTURA Admin';
-      document.head.appendChild(appTitleMeta);
-
-      const appStatusBarMeta = document.createElement('meta');
-      appStatusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
-      appStatusBarMeta.content = 'black-translucent';
-      document.head.appendChild(appStatusBarMeta);
-    };
 
     // Execute the cleanup and setup
     const setupPWA = async () => {
       await unregisterOldWorkers();
-      addAdminMetaTags();
+
 
       // Register NEW service worker for mobile admin only
       if ('serviceWorker' in navigator) {
