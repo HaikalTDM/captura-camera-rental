@@ -153,16 +153,7 @@ export default function MobileSettings() {
             </svg>
           )
         },
-        {
-          label: 'Mother Dashboard',
-          sublabel: 'Canon R50 rental management',
-          href: '/admin/mobile/mother',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          )
-        },
+
       ]
     },
     {
@@ -312,26 +303,26 @@ export default function MobileSettings() {
                   <>
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div className={`w-10 h-10 ${item.isDestructive
-                          ? 'bg-red-500/10 border-red-500/20 group-hover:bg-red-500/15 group-hover:border-red-500/30'
-                          : isDarkMode ? 'bg-slate-800 border-slate-700 group-hover:bg-slate-700 group-hover:border-slate-600' : 'bg-slate-100 border-slate-200 group-hover:bg-slate-200 group-hover:border-slate-300'
+                        ? 'bg-red-500/10 border-red-500/20 group-hover:bg-red-500/15 group-hover:border-red-500/30'
+                        : isDarkMode ? 'bg-slate-800 border-slate-700 group-hover:bg-slate-700 group-hover:border-slate-600' : 'bg-slate-100 border-slate-200 group-hover:bg-slate-200 group-hover:border-slate-300'
                         } border rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300`}>
                         <div className={`transition-all duration-300 ${item.isDestructive
-                            ? 'text-red-500 group-hover:text-red-600'
-                            : isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
+                          ? 'text-red-500 group-hover:text-red-600'
+                          : isDarkMode ? 'text-slate-400 group-hover:text-slate-300' : 'text-slate-600 group-hover:text-slate-700'
                           }`}>
                           {item.icon}
                         </div>
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <p className={`font-semibold text-sm ${item.isDestructive
-                            ? 'text-red-500'
-                            : isDarkMode ? 'text-white' : 'text-slate-900'
+                          ? 'text-red-500'
+                          : isDarkMode ? 'text-white' : 'text-slate-900'
                           }`}>
                           {item.label}
                         </p>
                         <p className={`text-xs mt-0.5 font-medium truncate ${item.isDestructive
-                            ? 'text-red-400/70'
-                            : isDarkMode ? 'text-slate-500' : 'text-slate-500'
+                          ? 'text-red-400/70'
+                          : isDarkMode ? 'text-slate-500' : 'text-slate-500'
                           }`}>
                           {item.sublabel}
                         </p>
@@ -341,8 +332,8 @@ export default function MobileSettings() {
                     {item.isToggle ? (
                       <div
                         className={`relative w-12 h-7 rounded-full transition-all duration-300 ease-out flex-shrink-0 ${item.value
-                            ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/40'
-                            : isDarkMode ? 'bg-slate-700' : 'bg-slate-300'
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/40'
+                          : isDarkMode ? 'bg-slate-700' : 'bg-slate-300'
                           }`}
                         style={{
                           transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
@@ -360,8 +351,8 @@ export default function MobileSettings() {
                     ) : (
                       <svg
                         className={`w-5 h-5 flex-shrink-0 transition-all duration-300 group-hover:translate-x-1 ${item.isDestructive
-                            ? 'text-red-500/50 group-hover:text-red-500/70'
-                            : isDarkMode ? 'text-slate-600 group-hover:text-slate-500' : 'text-slate-400 group-hover:text-slate-500'
+                          ? 'text-red-500/50 group-hover:text-red-500/70'
+                          : isDarkMode ? 'text-slate-600 group-hover:text-slate-500' : 'text-slate-400 group-hover:text-slate-500'
                           }`}
                         fill="none"
                         stroke="currentColor"

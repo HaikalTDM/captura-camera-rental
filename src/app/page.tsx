@@ -1,37 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
 
 export default function GatewayHome() {
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-32 h-32 mx-auto mb-8 animate-pulse">
-            <Image
-              src="/images/captura_logo_big.png"
-              alt="Captura Logo"
-              fill
-              className="object-contain"
-            />
-          </div>
-          <div className="text-2xl font-bold text-black animate-pulse">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  // Loading state removed for immediate render
 
   return (
     <div className="min-h-screen bg-white">

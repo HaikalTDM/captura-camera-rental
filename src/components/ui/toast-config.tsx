@@ -85,6 +85,7 @@ export function ToastProvider() {
  */
 export const customToast = {
   success: (message: string, description?: string) => {
+    toast.dismiss();
     return toast.custom((t) => (
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -124,6 +125,7 @@ export const customToast = {
   },
 
   error: (message: string, description?: string) => {
+    toast.dismiss();
     return toast.custom((t) => (
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -163,6 +165,7 @@ export const customToast = {
   },
 
   warning: (message: string, description?: string) => {
+    toast.dismiss();
     return toast.custom((t) => (
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -202,6 +205,7 @@ export const customToast = {
   },
 
   info: (message: string, description?: string) => {
+    toast.dismiss();
     return toast.custom((t) => (
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -241,6 +245,7 @@ export const customToast = {
   },
 
   loading: (message: string) => {
+    toast.dismiss();
     return toast.custom((t) => (
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.95 }}

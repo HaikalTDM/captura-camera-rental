@@ -54,20 +54,8 @@ export default function BookingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Social media discount state (Canon R50 only)
-  const [socialMediaDiscount, setSocialMediaDiscount] = useState(false);
-  const discountPerDay = 5; // Fixed RM5 per day for Canon R50
-
-  // Check if camera is Canon R50
-  const isCanonR50 = camera.name.toLowerCase().includes('canon') && camera.name.toLowerCase().includes('r50');
-
-  // Calculate pricing with discount
-  const discountAmount = isCanonR50 && socialMediaDiscount ? discountPerDay * totalDays : 0;
-  const discountedTotalCost = totalCost - discountAmount;
-  const discountedDailyRate = isCanonR50 && socialMediaDiscount ? dailyRate - discountPerDay : dailyRate;
-
   const depositAmount = 100; // Fixed RM100 deposit
-  const finalPaymentAmount = discountedTotalCost; // Full rental amount (separate from deposit)
+  const finalPaymentAmount = totalCost; // Full rental amount (separate from deposit)
   // No fixed delivery fee - customers pay Lalamove/delivery service directly
 
   const handleInputChange = (field: keyof CustomerDetails, value: string) => {
@@ -110,12 +98,6 @@ export default function BookingForm({
         ? camera.name.trim()
         : `Camera ${camera.id}`; // Fallback using camera ID
 
-      // Prepare notes with discount info if applicable
-      let finalNotes = specialRequests;
-      if (isCanonR50 && socialMediaDiscount) {
-        const discountNote = `\n\n💰 SOCIAL MEDIA DISCOUNT APPLIED:\n- Original Rate: RM${dailyRate}/day\n- Discounted Rate: RM${discountedDailyRate}/day\n- Discount: RM${discountPerDay}/day × ${totalDays} days = RM${discountAmount}\n- Customer shared/reposted/followed our account`;
-        finalNotes = (finalNotes || '') + discountNote;
-      }
 
       const bookingData: WebsiteBookingData = {
         camera_id: camera.id,
@@ -123,8 +105,8 @@ export default function BookingForm({
         start_date: formatDateForAPI(startDate),
         end_date: formatDateForAPI(endDate),
         total_days: totalDays,
-        daily_rate: discountedDailyRate,
-        total_amount: discountedTotalCost, // Rental amount only (delivery fee handled separately)
+        daily_rate: dailyRate,
+        total_amount: totalCost, // Rental amount only (delivery fee handled separately)
         deposit_amount: depositAmount, // Fixed RM100 deposit
         final_payment_amount: finalPaymentAmount, // Same as total_amount (rental only)
         customer_name: customerDetails.name.trim(),
@@ -138,7 +120,7 @@ export default function BookingForm({
         pickup_method: pickupMethod,
         pickup_address: pickupMethod === 'delivery' ? pickupAddress.trim() : undefined,
         delivery_fee: 0, // Customer pays Lalamove/delivery service directly
-        special_requests: finalNotes.trim() || undefined,
+        special_requests: specialRequests.trim() || undefined,
         booking_source: 'website'
       };
 
@@ -233,8 +215,8 @@ export default function BookingForm({
           <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Pickup Method</h3>
           <div className="grid grid-cols-2 gap-3">
             <label className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${pickupMethod === 'pickup'
-                ? 'bg-white text-black border-white shadow-lg'
-                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
+              ? 'bg-white text-black border-white shadow-lg'
+              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
               }`}>
               <input
                 type="radio"
@@ -251,8 +233,8 @@ export default function BookingForm({
             </label>
 
             <label className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${pickupMethod === 'delivery'
-                ? 'bg-white text-black border-white shadow-lg'
-                : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
+              ? 'bg-white text-black border-white shadow-lg'
+              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800'
               }`}>
               <input
                 type="radio"
@@ -285,38 +267,7 @@ export default function BookingForm({
           )}
         </div>
 
-        {/* Social Media Discount - Canon R50 Only */}
-        {isCanonR50 && (
-          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-xl p-4 relative overflow-hidden">
-            <div className="flex items-center justify-between mb-2 relative z-10">
-              <div>
-                <h3 className="text-sm font-black text-white">🎉 Get RM5 OFF per day!</h3>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Follow/Share our Instagram or Facebook
-                </p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={socialMediaDiscount}
-                  onChange={(e) => setSocialMediaDiscount(e.target.checked)}
-                  className="sr-only peer"
-                />
-                <div className="w-11 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-              </label>
-            </div>
-            {socialMediaDiscount && (
-              <div className="mt-3 p-3 bg-zinc-950/50 rounded-lg border border-purple-500/20 animate-in fade-in slide-in-from-top-1 duration-200">
-                <p className="text-xs text-purple-400 font-bold flex items-center gap-1.5">
-                  <span>✅</span> Discount Applied: -RM{discountAmount}
-                </p>
-                <p className="text-[10px] text-zinc-500 mt-1 ml-5">
-                  Please show proof when picking up
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+
 
         {/* Special Requests */}
         <div>
@@ -337,23 +288,7 @@ export default function BookingForm({
           <h4 className="font-bold text-white text-xs uppercase tracking-wider mb-2">Payment Summary</h4>
 
           <div className="space-y-2 text-xs">
-            {isCanonR50 && socialMediaDiscount && (
-              <>
-                <div className="flex justify-between text-zinc-500">
-                  <span className="line-through">Original Rate</span>
-                  <span className="line-through">RM{dailyRate}/day</span>
-                </div>
-                <div className="flex justify-between text-purple-400 font-bold">
-                  <span>Discounted Rate</span>
-                  <span>RM{discountedDailyRate}/day</span>
-                </div>
-                <div className="flex justify-between text-green-400 font-bold">
-                  <span>Savings</span>
-                  <span>-RM{discountAmount}</span>
-                </div>
-                <div className="border-t border-white/5 my-2"></div>
-              </>
-            )}
+
 
             <div className="flex justify-between text-zinc-400">
               <span>Deposit (Refundable)</span>

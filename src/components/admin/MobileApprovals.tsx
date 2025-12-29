@@ -170,7 +170,7 @@ export default function MobileApprovals({
                                                     className="w-full p-4 text-left"
                                                 >
                                                     <div className="flex items-start justify-between">
-                                                        <div className="flex items-center gap-3">
+                                                        <div className="flex items-center gap-3 flex-1 min-w-0 mr-3">
                                                             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center flex-shrink-0">
                                                                 <span className="text-white font-bold">
                                                                     {booking.customer?.full_name?.charAt(0).toUpperCase()}

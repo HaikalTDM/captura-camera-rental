@@ -240,9 +240,6 @@ export default function CalendarPricing({
                   bookingData
                 });
                 setShowBookingSuccess(true);
-                if (onBookNow) {
-                  onBookNow(customer); // Pass customer details as expected by the type, parent will handle full hook if needed
-                }
               }}
               onCancel={() => setShowBookingForm(false)}
             />
@@ -261,12 +258,16 @@ export default function CalendarPricing({
               customer={bookingSuccessData.customer}
               bookingData={bookingSuccessData.bookingData}
               onNewBooking={() => {
+                const customer = bookingSuccessData.customer; // Capture for callback
                 setShowBookingSuccess(false);
                 setBookingSuccessData(null);
+                if (onBookNow) onBookNow(customer);
               }}
               onClose={() => {
+                const customer = bookingSuccessData.customer; // Capture for callback
                 setShowBookingSuccess(false);
                 setBookingSuccessData(null);
+                if (onBookNow) onBookNow(customer);
               }}
             />
           </div>

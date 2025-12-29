@@ -710,6 +710,30 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+      {/* Debug Section */}
+      <div className="bg-slate-100 p-4 rounded-xl opacity-50 hover:opacity-100 transition-opacity">
+        <details>
+          <summary className="cursor-pointer font-bold text-xs text-slate-500">Debug: Booking Data (Click to expand)</summary>
+          <div className="mt-2 space-y-2 text-xs font-mono max-h-60 overflow-y-auto">
+            {events
+              .filter(e => e.camera.includes('Action 5 Pro'))
+              .map(e => (
+                <div key={e.id} className="border-b border-slate-300 pb-1">
+                  <p>ID: {e.id}</p>
+                  <p>Camera: {e.camera}</p>
+                  <p>Dates: {e.startDate.toISOString()} to {e.endDate.toISOString()}</p>
+                  <p>Status: {e.status}</p>
+                  <p>Color: {e.color}</p>
+                </div>
+              ))}
+            {events.filter(e => e.camera.includes('Action 5 Pro')).length === 0 && (
+              <p>No Action 5 Pro events found in 'confirmed'/'completed' status.</p>
+            )}
+            <hr className="border-slate-400 my-2" />
+            <p>Total Events Loaded: {events.length}</p>
+          </div>
+        </details>
+      </div>
     </div>
   );
 }

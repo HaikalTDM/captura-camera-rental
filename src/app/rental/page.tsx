@@ -2,9 +2,8 @@ import { getGalleryImagesLightweight } from '@/lib/api/gallery';
 import { getAllCameras } from '@/lib/api/bookings';
 import RentalHomeClient from '@/components/RentalHomeClient';
 
-// Force dynamic rendering - don't pre-render at build time
-// This avoids the ISR oversized page error
-export const dynamic = 'force-dynamic';
+// Enable ISR caching - revalidate every 60 seconds
+export const revalidate = 60;
 
 // Helper to get static images based on camera name
 // TODO: In the future, store image URLs directly in the database

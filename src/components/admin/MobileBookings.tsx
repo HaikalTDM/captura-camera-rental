@@ -55,9 +55,9 @@ export default function MobileBookings({ bookings, onMutate }: MobileBookingsPro
     // 🎯 Pagination: show only 10 items initially
     const [displayLimit, setDisplayLimit] = useState(10);
 
-    // Filter out Mother's bookings
+    // Use all bookings, including Mother's
     const adminBookings = useMemo(() => {
-        return bookings.filter(b => b.camera?.name !== 'Canon R50 - Mother');
+        return bookings;
     }, [bookings]);
 
     // Stats with new "upcoming" count

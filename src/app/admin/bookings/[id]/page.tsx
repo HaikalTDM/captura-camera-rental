@@ -41,8 +41,10 @@ export default function BookingDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
+  const [showCompleteAllConfirm, setShowCompleteAllConfirm] = useState(false); // New state for Complete All modal
   const [isUpdatingPickup, setIsUpdatingPickup] = useState(false);
   const [isUpdatingReturn, setIsUpdatingReturn] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     loadBookingData();
@@ -61,6 +63,91 @@ export default function BookingDetailsPage() {
       console.error('Error loading booking data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCompleteAll = async () => {
+    if (!booking || isUpdating) return;
+
+    setIsUpdating(true);
+    setShowCompleteAllConfirm(false);
+
+    try {
+      const toastId = toast.loading('Processing full completion...');
+      const timestamp = new Date().toISOString();
+      const promises = [];
+
+      // 1. Mark Deposit as Paid
+      if (!booking.deposit_paid) {
+        promises.push(
+          fetch(`/api/bookings/${booking.id}/deposit`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              deposit_paid: true,
+              deposit_paid_date: timestamp
+            }),
+          })
+        );
+      }
+
+      // 2. Mark Final Payment as Paid
+      if (!booking.final_payment_paid) {
+        promises.push(
+          fetch(`/api/bookings/${booking.id}/final-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              final_payment_paid: true,
+              final_payment_paid_date: timestamp
+            }),
+          })
+        );
+      }
+
+      // 3. Mark Equipment as Picked Up
+      if (!booking.equipment_picked_up) {
+        promises.push(
+          fetch(`/api/bookings/${booking.id}/pickup-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              equipment_picked_up: true,
+              equipment_pickup_notes: 'Auto-completed via Complete All',
+              equipment_condition_pickup: 'excellent'
+            }),
+          })
+        );
+      }
+
+      // 4. Mark Equipment as Returned (and complete booking)
+      if (!booking.equipment_returned) {
+        promises.push(
+          fetch(`/api/bookings/${booking.id}/return-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              equipment_returned: true,
+              equipment_return_notes: 'Auto-completed via Complete All',
+              equipment_condition_return: 'excellent',
+              booking_status: 'completed'
+            }),
+          })
+        );
+      }
+
+      await Promise.all(promises);
+
+      // Refresh booking data
+      await loadBookingData();
+      toast.dismiss(toastId);
+      toast.success('✨ Booking fully completed!');
+
+    } catch (error) {
+      console.error('Error completing all:', error);
+      toast.error('Error processing completion');
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -300,15 +387,15 @@ export default function BookingDetailsPage() {
     console.log('Booking data:', {
       customerName: booking?.customer?.full_name,
       endDate: booking?.end_date,
-      cameraName: booking?.camera_name,
+      cameraName: booking?.camera?.name,
       fullBooking: booking
     });
 
-    if (!booking?.customer?.full_name || !booking?.end_date || !booking?.camera_name) {
+    if (!booking?.customer?.full_name || !booking?.end_date || !booking?.camera?.name) {
       console.log('Missing required data for return reminder message');
       // Return a generic message if some data is missing
       const customerName = booking?.customer?.full_name || 'Customer';
-      const cameraName = booking?.camera_name || 'rented equipment';
+      const cameraName = booking?.camera?.name || 'rented equipment';
 
       return `Hi ${customerName}! 📷
 
@@ -322,7 +409,7 @@ Thank you for choosing Captura! 😊`;
     const customerName = booking.customer.full_name;
     const returnDate = new Date(booking.end_date);
     const today = new Date();
-    const cameraName = booking.camera_name;
+    const cameraName = booking.camera?.name;
 
     // Format dates
     const returnDateStr = returnDate.toLocaleDateString('en-GB', {
@@ -527,7 +614,7 @@ Thank you for choosing Captura! 😊`;
               <div className="space-y-6">
                 <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
                   <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Camera</label>
-                  <p className="text-xl font-bold text-slate-900">{booking.camera_name}</p>
+                  <p className="text-xl font-bold text-slate-900">{booking.camera?.name}</p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-1">
@@ -617,8 +704,8 @@ Thank you for choosing Captura! 😊`;
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Deposit Paid</span>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_paid
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-red-100 text-red-700'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-red-100 text-red-700'
                     }`}>
                     {booking.deposit_paid ? (
                       <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
@@ -636,8 +723,8 @@ Thank you for choosing Captura! 😊`;
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Final Payment Paid</span>
                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.final_payment_paid
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-red-100 text-red-700'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-red-100 text-red-700'
                     }`}>
                     {booking.final_payment_paid ? (
                       <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
@@ -650,8 +737,8 @@ Thank you for choosing Captura! 😊`;
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-slate-600">Deposit Refunded</span>
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_refunded
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-700'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : 'bg-amber-100 text-amber-700'
                       }`}>
                       {booking.deposit_refunded ? (
                         <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
@@ -859,8 +946,8 @@ Thank you for choosing Captura! 😊`;
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-600">Pickup Status</span>
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_picked_up
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-amber-100 text-amber-700'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
                         }`}>
                         {booking.equipment_picked_up ? (
                           <><CheckCircle2 className="w-3.5 h-3.5" /> Picked Up</>
@@ -889,9 +976,9 @@ Thank you for choosing Captura! 😊`;
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-600">Condition</span>
                         <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_pickup === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                            booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
-                              booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
-                                'bg-red-100 text-red-700'
+                          booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
+                            booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
                           }`}>
                           {booking.equipment_condition_pickup.charAt(0).toUpperCase() + booking.equipment_condition_pickup.slice(1)}
                         </span>
@@ -911,8 +998,8 @@ Thank you for choosing Captura! 😊`;
                       onClick={() => handlePickupStatusUpdate(!booking.equipment_picked_up, '', 'excellent')}
                       disabled={isUpdatingPickup}
                       className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_picked_up
-                          ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
-                          : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
+                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
                         } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingPickup ? (
@@ -936,8 +1023,8 @@ Thank you for choosing Captura! 😊`;
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-600">Return Status</span>
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_returned
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-amber-100 text-amber-700'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-amber-100 text-amber-700'
                         }`}>
                         {booking.equipment_returned ? (
                           <><CheckCircle2 className="w-3.5 h-3.5" /> Returned</>
@@ -966,9 +1053,9 @@ Thank you for choosing Captura! 😊`;
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-slate-600">Condition</span>
                         <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_return === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                            booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
-                              booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
-                                'bg-red-100 text-red-700'
+                          booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
+                            booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
+                              'bg-red-100 text-red-700'
                           }`}>
                           {booking.equipment_condition_return.charAt(0).toUpperCase() + booking.equipment_condition_return.slice(1)}
                         </span>
@@ -988,8 +1075,8 @@ Thank you for choosing Captura! 😊`;
                       onClick={() => handleReturnStatusUpdate(!booking.equipment_returned, '', 'excellent')}
                       disabled={isUpdatingReturn || !booking.equipment_picked_up}
                       className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_returned
-                          ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
-                          : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
+                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
+                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
                         } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
                     >
                       {isUpdatingReturn ? (
@@ -1025,6 +1112,16 @@ Thank you for choosing Captura! 😊`;
                 <h3 className="text-lg font-bold text-slate-900">Quick Actions</h3>
               </div>
               <div className="space-y-3">
+                {booking.booking_status !== 'completed' && (
+                  <button
+                    onClick={() => setShowCompleteAllConfirm(true)}
+                    disabled={isUpdating}
+                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md mb-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Complete All
+                  </button>
+                )}
                 {booking.customer?.phone && (
                   <a
                     href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
@@ -1066,6 +1163,55 @@ Thank you for choosing Captura! 😊`;
           </div>
         </div>
       </div>
+
+      {/* Complete All Confirmation Modal */}
+      {showCompleteAllConfirm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowCompleteAllConfirm(false)}
+        >
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+          <div
+            className="relative bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-t-4 border-emerald-500 animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">
+                Complete Everything?
+              </h3>
+              <p className="text-sm text-slate-600 font-medium">
+                This will mark deposit & final payment as Paid, and equipment as Picked Up & Returned.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowCompleteAllConfirm(false)}
+                className="flex-1 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-900 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCompleteAll}
+                disabled={isUpdating}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Confirm'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
