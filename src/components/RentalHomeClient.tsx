@@ -1,10 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import PickupDeliverySection from '@/components/PickupDeliverySection';
+import { getGalleryImagesLightweight } from '@/lib/api/gallery';
 
 // Define a client-side Camera type that matches what we receive from props
 interface ClientCamera {
@@ -34,9 +35,26 @@ interface RentalHomeClientProps {
     galleryImages: LightweightGalleryImage[];
 }
 
-export default function RentalHomeClient({ cameras, galleryImages }: RentalHomeClientProps) {
+export default function RentalHomeClient({ cameras, galleryImages: initialGalleryImages }: RentalHomeClientProps) {
     const router = useRouter();
     const containerRef = useRef<HTMLDivElement>(null);
+    const [galleryImages, setGalleryImages] = useState<LightweightGalleryImage[]>(initialGalleryImages);
+
+    // Fetch gallery images on client side if not provided or empty
+    useEffect(() => {
+        if (galleryImages.length === 0) {
+            const fetchImages = async () => {
+                try {
+                    const images = await getGalleryImagesLightweight();
+                    setGalleryImages(images);
+                } catch (error) {
+                    console.error('Failed to fetch gallery images:', error);
+                }
+            };
+            fetchImages();
+        }
+    }, [galleryImages.length]);
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ["start start", "end end"]

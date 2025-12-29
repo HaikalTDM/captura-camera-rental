@@ -1,4 +1,4 @@
-import { getGalleryImagesLightweight } from '@/lib/api/gallery';
+// import { getGalleryImagesLightweight } from '@/lib/api/gallery';
 import { getAllCameras } from '@/lib/api/bookings';
 import RentalHomeClient from '@/components/RentalHomeClient';
 
@@ -27,11 +27,8 @@ function getStaticImages(cameraName: string) {
 }
 
 export default async function RentalHome() {
-  // Fetch data on the server
-  const [galleryImages, dbCameras] = await Promise.all([
-    getGalleryImagesLightweight(), // Use lightweight version
-    getAllCameras()
-  ]);
+  // Fetch data on the server - ONLY cameras, not gallery images (too large for ISR)
+  const dbCameras = await getAllCameras();
 
   // Process cameras: filter available, sort, and transform
   const availableCameras = dbCameras.filter(cam => cam.is_available);
@@ -57,5 +54,6 @@ export default async function RentalHome() {
   });
 
   // Pass pre-fetched data to Client Component
-  return <RentalHomeClient cameras={cameras} galleryImages={galleryImages} />;
+  // Pass empty array for galleryImages to trigger client-side fetch
+  return <RentalHomeClient cameras={cameras} galleryImages={[]} />;
 }
