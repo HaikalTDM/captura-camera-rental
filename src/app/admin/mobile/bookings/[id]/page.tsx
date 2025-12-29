@@ -1047,7 +1047,7 @@ export default function MobileBookingDetail() {
           </h3>
 
           <div className="space-y-3">
-            <a href={`tel:${booking.customer?.phone || booking.customer?.phone_number}`} className={`flex items-center gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-slate-800/50 hover:bg-slate-800 border border-slate-700' : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'} transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md`}>
+            <a href={`tel:${booking.customer?.phone}`} className={`flex items-center gap-4 p-4 rounded-2xl ${isDarkMode ? 'bg-slate-800/50 hover:bg-slate-800 border border-slate-700' : 'bg-slate-50 hover:bg-slate-100 border border-slate-200'} transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md`}>
               <div className="w-13 h-13 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -1055,7 +1055,7 @@ export default function MobileBookingDetail() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Phone</p>
-                <p className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{booking.customer?.phone || booking.customer?.phone_number}</p>
+                <p className={`text-base font-bold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{booking.customer?.phone}</p>
               </div>
               <svg className="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -1161,255 +1161,255 @@ export default function MobileBookingDetail() {
             })}
           </p>
         </div>
-      </div>
 
-      {/* Modals remain the same but with updated colors... */ }
-    {/* I'll continue with the modals in the next part to keep the file complete */ }
 
-    {/* Pickup Modal */ }
-    {
-      showPickupModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
-          onClick={() => setShowPickupModal(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-          <div
-            className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-blue-500`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto flex-1 p-6">
-              <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                {booking.equipment_picked_up ? 'Undo Equipment Pickup?' : 'Equipment Pickup'}
-              </h3>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
-                {booking.equipment_picked_up ? 'This will mark the equipment as not picked up.' : 'Record the equipment condition and any notes.'}
-              </p>
+        {/* Modals remain the same but with updated colors... */}
+        {/* I'll continue with the modals in the next part to keep the file complete */}
 
-              {!booking.equipment_picked_up && (
-                <div className="space-y-4">
-                  <div>
-                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                      Equipment Condition
-                    </label>
-                    <select
-                      value={pickupCondition}
-                      onChange={(e) => setPickupCondition(e.target.value)}
-                      className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+        {/* Pickup Modal */}
+        {
+          showPickupModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
+              onClick={() => setShowPickupModal(false)}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+              <div
+                className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-blue-500`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto flex-1 p-6">
+                  <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {booking.equipment_picked_up ? 'Undo Equipment Pickup?' : 'Equipment Pickup'}
+                  </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
+                    {booking.equipment_picked_up ? 'This will mark the equipment as not picked up.' : 'Record the equipment condition and any notes.'}
+                  </p>
+
+                  {!booking.equipment_picked_up && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                          Equipment Condition
+                        </label>
+                        <select
+                          value={pickupCondition}
+                          onChange={(e) => setPickupCondition(e.target.value)}
+                          className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+                        >
+                          <option value="excellent">✨ Excellent</option>
+                          <option value="good">👍 Good</option>
+                          <option value="fair">⚠️ Fair</option>
+                          <option value="poor">❌ Poor</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                          Notes (Optional)
+                        </label>
+                        <textarea
+                          value={pickupNotes}
+                          onChange={(e) => setPickupNotes(e.target.value)}
+                          placeholder="e.g., All accessories included, minor scratch on lens cap..."
+                          className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sticky Buttons */}
+                <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowPickupModal(false)}
+                      className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
                     >
-                      <option value="excellent">✨ Excellent</option>
-                      <option value="good">👍 Good</option>
-                      <option value="fair">⚠️ Fair</option>
-                      <option value="poor">❌ Poor</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                      Notes (Optional)
-                    </label>
-                    <textarea
-                      value={pickupNotes}
-                      onChange={(e) => setPickupNotes(e.target.value)}
-                      placeholder="e.g., All accessories included, minor scratch on lens cap..."
-                      className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
-                    />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handlePickupUpdate}
+                      disabled={isUpdating}
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-blue-500/30"
+                    >
+                      {isUpdating ? 'Updating...' : booking.equipment_picked_up ? 'Undo' : 'Confirm'}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Sticky Buttons */}
-            <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowPickupModal(false)}
-                  className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handlePickupUpdate}
-                  disabled={isUpdating}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-blue-500/30"
-                >
-                  {isUpdating ? 'Updating...' : booking.equipment_picked_up ? 'Undo' : 'Confirm'}
-                </button>
               </div>
             </div>
-          </div>
-        </div>
-      )
-    }
+          )
+        }
 
-    {/* Return Modal */ }
-    {
-      showReturnModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
-          onClick={() => setShowReturnModal(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-          <div
-            className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-purple-500`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto flex-1 p-6">
-              <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                {booking.equipment_returned ? 'Undo Equipment Return?' : 'Equipment Return'}
-              </h3>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
-                {booking.equipment_returned ? 'This will mark the equipment as not returned.' : 'Record the equipment condition and any notes.'}
-              </p>
+        {/* Return Modal */}
+        {
+          showReturnModal && (
+            <div
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pb-8 animate-backdropFadeIn"
+              onClick={() => setShowReturnModal(false)}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+              <div
+                className={`relative w-full sm:max-w-lg max-h-[73vh] flex flex-col ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-t-3xl sm:rounded-3xl shadow-2xl animate-modalSlideUp border-t-4 border-purple-500`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto flex-1 p-6">
+                  <h3 className={`text-xl font-bold mb-1 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    {booking.equipment_returned ? 'Undo Equipment Return?' : 'Equipment Return'}
+                  </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} mb-6 font-medium`}>
+                    {booking.equipment_returned ? 'This will mark the equipment as not returned.' : 'Record the equipment condition and any notes.'}
+                  </p>
 
-              {!booking.equipment_returned && (
-                <div className="space-y-4">
-                  <div>
-                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                      Equipment Condition
-                    </label>
-                    <select
-                      value={returnCondition}
-                      onChange={(e) => setReturnCondition(e.target.value)}
-                      className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+                  {!booking.equipment_returned && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                          Equipment Condition
+                        </label>
+                        <select
+                          value={returnCondition}
+                          onChange={(e) => setReturnCondition(e.target.value)}
+                          className={`w-full p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white border-slate-700' : 'bg-slate-50 text-slate-900 border-slate-200'} border-2 outline-none text-base font-semibold shadow-sm`}
+                        >
+                          <option value="excellent">✨ Excellent</option>
+                          <option value="good">👍 Good</option>
+                          <option value="fair">⚠️ Fair</option>
+                          <option value="poor">❌ Poor</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
+                          Notes (Optional)
+                        </label>
+                        <textarea
+                          value={returnNotes}
+                          onChange={(e) => setReturnNotes(e.target.value)}
+                          placeholder="e.g., All accessories returned, battery fully charged..."
+                          className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sticky Buttons */}
+                <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowReturnModal(false)}
+                      className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
                     >
-                      <option value="excellent">✨ Excellent</option>
-                      <option value="good">👍 Good</option>
-                      <option value="fair">⚠️ Fair</option>
-                      <option value="poor">❌ Poor</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className={`text-sm font-bold mb-2 block ${isDarkMode ? 'text-white' : 'text-slate-900'} uppercase tracking-wide`}>
-                      Notes (Optional)
-                    </label>
-                    <textarea
-                      value={returnNotes}
-                      onChange={(e) => setReturnNotes(e.target.value)}
-                      placeholder="e.g., All accessories returned, battery fully charged..."
-                      className={`w-full h-28 p-4 rounded-xl ${isDarkMode ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-900 placeholder-slate-400 border-slate-200'} border-2 outline-none resize-none text-sm font-medium shadow-sm`}
-                    />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleReturnUpdate}
+                      disabled={isUpdating}
+                      className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-purple-500/30"
+                    >
+                      {isUpdating ? 'Updating...' : booking.equipment_returned ? 'Undo' : 'Confirm'}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Sticky Buttons */}
-            <div className={`flex-shrink-0 px-4 pt-4 pb-[50px] border-t ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowReturnModal(false)}
-                  className={`flex-1 py-3 rounded-xl font-bold text-base ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'} transition-all duration-200 active:scale-95 shadow-lg`}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleReturnUpdate}
-                  disabled={isUpdating}
-                  className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 text-white py-3 rounded-xl font-bold text-base transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-purple-500/30"
-                >
-                  {isUpdating ? 'Updating...' : booking.equipment_returned ? 'Undo' : 'Confirm'}
-                </button>
               </div>
             </div>
-          </div>
-        </div>
-      )
-    }
+          )
+        }
 
-    {/* Delete Confirmation Modal */ }
-    {
-      showDeleteConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdropFadeIn"
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-          <div
-            className={`relative ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modalSlideUp border-t-4 border-red-500`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        {/* Delete Confirmation Modal */}
+        {
+          showDeleteConfirm && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdropFadeIn"
+              onClick={() => setShowDeleteConfirm(false)}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+              <div
+                className={`relative ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modalSlideUp border-t-4 border-red-500`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    Delete This Booking?
+                  </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium`}>
+                    This action cannot be undone. All booking data will be permanently deleted.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDeleteBooking}
+                    disabled={isUpdating}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-red-500/30"
+                  >
+                    {isUpdating ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
-              <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                Delete This Booking?
-              </h3>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium`}>
-                This action cannot be undone. All booking data will be permanently deleted.
-              </p>
             </div>
+          )
+        }
+        {/* Complete All Confirmation Modal */}
+        {
+          showCompleteAllConfirm && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdropFadeIn"
+              onClick={() => setShowCompleteAllConfirm(false)}
+            >
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+              <div
+                className={`relative ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modalSlideUp border-t-4 border-emerald-500`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="text-center mb-6">
+                  <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                    Complete Everything?
+                  </h3>
+                  <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium`}>
+                    This will mark deposit & final payment as Paid, and equipment as Picked Up & Returned.
+                  </p>
+                </div>
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteBooking}
-                disabled={isUpdating}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-red-500/30"
-              >
-                {isUpdating ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )
-    }
-    {/* Complete All Confirmation Modal */ }
-    {
-      showCompleteAllConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-backdropFadeIn"
-          onClick={() => setShowCompleteAllConfirm(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
-          <div
-            className={`relative ${isDarkMode ? 'bg-slate-900' : 'bg-white'} rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modalSlideUp border-t-4 border-emerald-500`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-6">
-              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowCompleteAllConfirm(false)}
+                    className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCompleteAll}
+                    disabled={isUpdating}
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-emerald-500/30"
+                  >
+                    {isUpdating ? 'Processing...' : 'Confirm'}
+                  </button>
+                </div>
               </div>
-              <h3 className={`text-xl font-bold mb-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                Complete Everything?
-              </h3>
-              <p className={`text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-600'} font-medium`}>
-                This will mark deposit & final payment as Paid, and equipment as Picked Up & Returned.
-              </p>
             </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowCompleteAllConfirm(false)}
-                className={`flex-1 py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 shadow-lg ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-slate-100 text-slate-900 hover:bg-slate-200'}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCompleteAll}
-                disabled={isUpdating}
-                className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white py-3.5 rounded-xl font-bold transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-xl shadow-emerald-500/30"
-              >
-                {isUpdating ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )
-    }
-    </div >
-  );
-}
+          )
+        }
+      </div >
+    );
+  }
