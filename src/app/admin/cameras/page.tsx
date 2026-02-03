@@ -134,13 +134,34 @@ export default function CamerasPage() {
     return metricsMap;
   }, [cameras, bookings]);
 
-  // Memoize status counts
-  const statusCounts = useMemo(() => ({
-    available: cameras.filter(c => c.status === 'available').length,
-    rented: cameras.filter(c => c.status === 'rented').length,
-    maintenance: cameras.filter(c => c.status === 'maintenance').length,
-    reserved: cameras.filter(c => c.status === 'reserved').length,
-  }), [cameras]);
+  // Memoize status counts based on actual booking state
+  const statusCounts = useMemo(() => {
+    const rentedCameras = new Set(
+      bookings
+        .filter(b =>
+          b.equipment_picked_up &&
+          !b.equipment_returned &&
+          (b.booking_status === 'confirmed' || b.status === 'active')
+        )
+        .map(b => b.camera_id)
+    );
+
+    const availableCameras = cameras.filter(c =>
+      !rentedCameras.has(c.id) &&
+      c.is_available &&
+      c.available_quantity > 0
+    );
+
+    const allRentedCameras = cameras.filter(c => rentedCameras.has(c.id));
+    const maintenanceCameras = cameras.filter(c => !c.is_available && !rentedCameras.has(c.id));
+
+    return {
+      available: availableCameras.length,
+      rented: allRentedCameras.length,
+      maintenance: maintenanceCameras.length,
+      reserved: 0, // Reserved status not currently used
+    };
+  }, [cameras, bookings]);
 
   const getStatusColor = (isAvailable: boolean, availableQuantity: number) => {
     if (!isAvailable) {

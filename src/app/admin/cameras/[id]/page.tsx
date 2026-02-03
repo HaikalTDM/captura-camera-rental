@@ -75,12 +75,13 @@ export default function CameraDetailsPage() {
     setCamera(prev => prev ? { ...prev, condition: newCondition } : null);
   };
 
-  const getStatusColor = (status: Camera['status']) => {
+  const getStatusColor = (status: Booking['booking_status']) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800 border-green-200';
-      case 'rented': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'maintenance': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'reserved': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
+      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'pending_approval': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+      case 'rejected': return 'bg-gray-100 text-gray-800 border-gray-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -94,9 +95,13 @@ export default function CameraDetailsPage() {
     }
   };
 
-  const totalRevenue = completedBookings.reduce((sum, booking) => sum + booking.totalAmount, 0);
-  const averageRentalDays = completedBookings.length > 0 
-    ? Math.round(completedBookings.reduce((sum, booking) => sum + booking.totalDays, 0) / completedBookings.length)
+  // Calculate total revenue from completed, fully paid bookings
+  const totalRevenue = completedBookings
+    .filter(b => b.deposit_paid && b.final_payment_paid)
+    .reduce((sum, booking) => sum + (booking.final_payment_amount || booking.total_amount), 0);
+
+  const averageRentalDays = completedBookings.length > 0
+    ? Math.round(completedBookings.reduce((sum, booking) => sum + booking.total_days, 0) / completedBookings.length)
     : 0;
 
   return (
@@ -104,7 +109,7 @@ export default function CameraDetailsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link 
+          <Link
             href="/admin/cameras"
             className="text-gray-600 hover:text-gray-900 text-2xl"
           >
@@ -122,9 +127,8 @@ export default function CameraDetailsPage() {
           >
             Edit Camera
           </Link>
-          <span className={`px-4 py-2 rounded-lg text-sm font-medium ${
-            camera.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
+          <span className={`px-4 py-2 rounded-lg text-sm font-medium ${camera.is_available ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            }`}>
             {camera.is_available ? 'AVAILABLE' : 'UNAVAILABLE'}
           </span>
           {camera.condition && (
@@ -184,21 +188,21 @@ export default function CameraDetailsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-blue-700">Customer</label>
-                  <p className="text-lg font-semibold text-blue-900">{activeBooking.customerName}</p>
-                  <p className="text-sm text-blue-600">{activeBooking.customerPhone}</p>
+                  <p className="text-lg font-semibold text-blue-900">{activeBooking.customer?.full_name || 'N/A'}</p>
+                  <p className="text-sm text-blue-600">{activeBooking.customer?.phone || 'N/A'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Return Date</label>
-                  <p className="text-lg text-blue-900">{activeBooking.endDate}</p>
-                  <p className="text-sm text-blue-600">{activeBooking.returnTime}</p>
+                  <p className="text-lg text-blue-900">{new Date(activeBooking.end_date).toLocaleDateString()}</p>
+                  <p className="text-sm text-blue-600">by 8:00 PM</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Rental Period</label>
-                  <p className="text-lg text-blue-900">{activeBooking.totalDays} days</p>
+                  <p className="text-lg text-blue-900">{activeBooking.total_days} days</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-blue-700">Total Amount</label>
-                  <p className="text-lg font-semibold text-green-600">RM{activeBooking.totalAmount}</p>
+                  <p className="text-lg font-semibold text-green-600">RM{activeBooking.total_amount}</p>
                 </div>
               </div>
               <div className="mt-4 flex gap-3">
@@ -209,7 +213,7 @@ export default function CameraDetailsPage() {
                   View Booking
                 </Link>
                 <a
-                  href={`https://wa.me/${formatPhoneWithCountryCode(activeBooking.customerPhone)}`}
+                  href={`https://wa.me/${formatPhoneWithCountryCode(activeBooking.customer?.phone || '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
@@ -230,25 +234,25 @@ export default function CameraDetailsPage() {
                 {upcomingBookings.map((booking) => (
                   <div key={booking.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{booking.customerName}</h4>
-                      <span className="text-sm text-gray-500">{booking.id}</span>
+                      <h4 className="font-medium text-gray-900">{booking.customer?.full_name || 'N/A'}</h4>
+                      <span className="text-sm text-gray-500">{booking.id.substring(0, 8)}...</span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <p className="text-gray-500">Start Date</p>
-                        <p className="font-medium">{booking.startDate}</p>
+                        <p className="font-medium">{new Date(booking.start_date).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-500">End Date</p>
-                        <p className="font-medium">{booking.endDate}</p>
+                        <p className="font-medium">{new Date(booking.end_date).toLocaleDateString()}</p>
                       </div>
                       <div>
                         <p className="text-gray-500">Duration</p>
-                        <p className="font-medium">{booking.totalDays} days</p>
+                        <p className="font-medium">{booking.total_days} days</p>
                       </div>
                       <div>
                         <p className="text-gray-500">Amount</p>
-                        <p className="font-medium text-green-600">RM{booking.totalAmount}</p>
+                        <p className="font-medium text-green-600">RM{booking.total_amount}</p>
                       </div>
                     </div>
                   </div>
@@ -281,14 +285,14 @@ export default function CameraDetailsPage() {
                           {booking.id}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">{booking.customerName}</td>
+                      <td className="px-4 py-3 text-sm text-gray-900">{booking.customer?.full_name || 'N/A'}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">
-                        {booking.startDate} to {booking.endDate}
+                        {new Date(booking.start_date).toLocaleDateString()} to {new Date(booking.end_date).toLocaleDateString()}
                       </td>
-                      <td className="px-4 py-3 text-sm font-medium text-green-600">RM{booking.totalAmount}</td>
+                      <td className="px-4 py-3 text-sm font-medium text-green-600">RM{booking.total_amount}</td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.status)}`}>
-                          {booking.status}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(booking.booking_status)}`}>
+                          {booking.booking_status}
                         </span>
                       </td>
                     </tr>

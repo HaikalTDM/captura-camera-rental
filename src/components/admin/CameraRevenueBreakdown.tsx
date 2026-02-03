@@ -22,6 +22,7 @@ interface Booking {
     final_payment_amount?: number;
     deposit_paid?: boolean;
     final_payment_paid?: boolean;
+    final_payment_paid_date?: string | null;
     created_at?: string;
     start_date: string;
 }
@@ -55,9 +56,11 @@ export default function CameraRevenueBreakdown({
             // Only count fully paid bookings
             if (!b.deposit_paid || !b.final_payment_paid) return false;
 
-            // Check if booking start date is within the month
-            const bookingDate = new Date(b.start_date);
-            return bookingDate >= monthStart && bookingDate <= monthEnd;
+            // Check if final payment was received within the selected month
+            if (!b.final_payment_paid_date) return false;
+
+            const paymentDate = new Date(b.final_payment_paid_date);
+            return paymentDate >= monthStart && paymentDate <= monthEnd;
         });
 
         // Calculate revenue per camera

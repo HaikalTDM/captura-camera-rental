@@ -96,8 +96,9 @@ export default function AdminDashboard() {
       .filter(b =>
         b.deposit_paid &&
         b.final_payment_paid &&
-        new Date(b.created_at).getMonth() === new Date().getMonth() &&
-        new Date(b.created_at).getFullYear() === new Date().getFullYear()
+        b.final_payment_paid_date &&
+        new Date(b.final_payment_paid_date).getMonth() === new Date().getMonth() &&
+        new Date(b.final_payment_paid_date).getFullYear() === new Date().getFullYear()
       )
       .reduce((sum, b) => {
         const isNewPaymentSystem = b.deposit_amount === 100;

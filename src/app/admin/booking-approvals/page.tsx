@@ -51,12 +51,14 @@ export default function BookingApprovalsPage() {
         .order('name');
 
       if (error) {
-        console.error('Error loading cameras:', error);
+        console.error('Error loading cameras:', error); // eslint-disable-line no-console
+        customToast.error('Error loading cameras', error.message);
       } else {
         setCameras(camerasData || []);
       }
-    } catch (error) {
-      console.error('Error in loadCameras:', error);
+    } catch (error: any) {
+      console.error('Error in loadCameras:', error); // eslint-disable-line no-console
+      customToast.error('Error loading cameras', error?.message || 'Unknown error');
     }
   };
 
@@ -77,13 +79,15 @@ export default function BookingApprovalsPage() {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error loading pending bookings:', error);
+        console.error('Error loading pending bookings:', error); // eslint-disable-line no-console
+        customToast.error('Error loading pending bookings', error.message);
       } else {
-        console.log('Approvals page - Loaded bookings:', bookings?.length || 0);
+        console.log('Approvals page - Loaded bookings:', bookings?.length || 0); // eslint-disable-line no-console
         setPendingBookings(bookings || []);
       }
-    } catch (error) {
-      console.error('Error in loadPendingBookings:', error);
+    } catch (error: any) {
+      console.error('Error in loadPendingBookings:', error); // eslint-disable-line no-console
+      customToast.error('Error loading pending bookings', error?.message || 'Unknown error');
     } finally {
       setIsLoading(false);
     }
