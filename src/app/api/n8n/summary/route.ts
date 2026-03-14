@@ -4,11 +4,11 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 /**
- * ZeroClaw Tool: GET /api/zeroclaw/summary
- * Returns a full operational snapshot of Captura for ZeroClaw to orient itself.
+ * n8n Tool: GET /api/n8n/summary
+ * Returns a full operational snapshot of Captura for n8n to orient itself.
  * Includes: pending bookings, active rentals, today's pickups + returns,
  * available cameras, and overdue payments.
- * ZeroClaw calls this first to build situational awareness.
+ * n8n calls this first to build situational awareness.
  */
 export async function GET() {
   const supabase = getSupabaseAdmin();

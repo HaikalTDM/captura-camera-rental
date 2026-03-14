@@ -4,14 +4,14 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 /**
- * ZeroClaw Tool: GET /api/zeroclaw/bookings
+ * n8n Tool: GET /api/n8n/bookings
  * Query params:
  *   - status: filter by booking_status (e.g. pending_approval, confirmed, completed)
  *   - camera_id: filter by specific camera
  *   - customer_id: filter by specific customer
  *   - date: filter bookings overlapping a specific date (YYYY-MM-DD)
  *   - limit: max results (default 20)
- * ZeroClaw uses this to check conflicts, answer "what's booked this weekend?" queries.
+ * n8n uses this to check conflicts, answer "what's booked this weekend?" queries.
  */
 export async function GET(request: Request) {
   const supabase = getSupabaseAdmin();

@@ -4,7 +4,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 /**
- * ZeroClaw Tool: GET /api/zeroclaw/customers
+ * n8n Tool: GET /api/n8n/customers
  * Query params:
  *   - search: search by name, email, or phone
  *   - id: get a specific customer by UUID

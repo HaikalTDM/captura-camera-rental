@@ -4,9 +4,9 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 /**
- * ZeroClaw Tool: GET /api/zeroclaw/cameras
+ * n8n Tool: GET /api/n8n/cameras
  * Returns all cameras with current availability status.
- * ZeroClaw uses this to answer "Is the Canon R50 available?" questions.
+ * n8n uses this to answer "Is the Canon R50 available?" questions.
  */
 export async function GET() {
   const supabase = getSupabaseAdmin();

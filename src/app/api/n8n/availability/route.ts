@@ -4,13 +4,13 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 export const dynamic = 'force-dynamic';
 
 /**
- * ZeroClaw Tool: GET /api/zeroclaw/availability
+ * n8n Tool: GET /api/n8n/availability
  * Query params:
  *   - camera_id: (required) the camera UUID to check
  *   - start_date: (required) YYYY-MM-DD
  *   - end_date: (required) YYYY-MM-DD
  * Returns: { available: boolean, conflicts: Booking[] }
- * ZeroClaw uses this before confirming any booking to the customer.
+ * n8n uses this before confirming any booking to the customer.
  */
 export async function GET(request: Request) {
   const supabase = getSupabaseAdmin();
