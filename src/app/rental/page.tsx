@@ -22,6 +22,8 @@ function getStaticImages(cameraName: string) {
     return { main: '/images/dji-action-5-pro1.jpg', variant: '/images/osmo_action_5_pro_adventure_combo.jpg' };
   } else if (name.includes('osmo')) {
     return { main: '/images/osmo-pocket-31.jpg', variant: '/images/osmo_pocket_3_creator_combo.jpg' };
+  } else if (name.includes('fujifilm') || name.includes('fuji')) {
+    return { main: '/images/fujifilm_xt30.png', variant: '/images/fujifilm_xt30.png' };
   }
   return { main: '/images/osmo-pocket-31.jpg', variant: '/images/osmo_pocket_3_creator_combo.jpg' };
 }

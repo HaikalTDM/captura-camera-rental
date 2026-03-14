@@ -155,6 +155,12 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
                         >
                             WhatsApp Us
                         </a>
+                        <button
+                            onClick={() => router.push('/rental/hub')}
+                            className="w-full sm:w-auto bg-purple-600/20 border border-purple-500/30 text-purple-300 px-8 py-4 rounded-2xl font-bold text-lg backdrop-blur-md hover:bg-purple-600/30 transition-colors"
+                        >
+                            Creator Hub
+                        </button>
                     </motion.div>
                 </div>
             </motion.section>

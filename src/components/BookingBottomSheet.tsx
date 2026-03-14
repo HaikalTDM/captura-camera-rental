@@ -134,8 +134,8 @@ export default function BookingBottomSheet({ camera, isOpen, onClose, onBookNow 
           <div className="px-6 py-6 pb-24 animate-fadeInUp" style={{ animationDelay: '0.2s' }}>
             <CalendarBooking
               camera={camera}
-              onBookingComplete={(startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) => {
-                onBookNow(camera, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate);
+              onBookingComplete={(cameraWithVariant, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate) => {
+                onBookNow(cameraWithVariant, startDate, endDate, totalCost, customerDetails, totalDays, dailyRate);
                 handleClose();
               }}
             />

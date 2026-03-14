@@ -142,6 +142,11 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
               RM{Math.round(camera.dailyRate * 1.3)}
             </span>
           )}
+          {camera.variants && camera.variants.length > 0 && (
+            <span className={`font-bold ${isDark ? 'text-[10px] text-zinc-500' : 'text-xs text-slate-500'}`}>
+              From
+            </span>
+          )}
           <span className={`font-black ${isDark ? 'text-lg text-white' : 'text-lg sm:text-3xl text-slate-900'}`}>
             RM{camera.dailyRate}
           </span>

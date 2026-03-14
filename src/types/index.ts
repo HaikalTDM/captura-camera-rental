@@ -1,3 +1,10 @@
+export interface CameraVariant {
+  id: string;
+  name: string;
+  dailyRate: number;
+  discountRate: number;
+}
+
 export interface Camera {
   id: string;
   name: string;
@@ -13,6 +20,7 @@ export interface Camera {
   };
   tidyCalPath?: string; // TidyCal booking path
   display_order?: number;
+  variants?: CameraVariant[];
 }
 
 export interface CustomerDetails {

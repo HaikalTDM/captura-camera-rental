@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import UpcomingPickupsSection from '@/components/admin/UpcomingPickupsSection';
 import UpcomingReturnsSection from '@/components/admin/UpcomingReturnsSection';
 import PushNotificationToggle from '@/components/admin/PushNotificationToggle';
+import ScrapeHubButton from '@/components/admin/ScrapeHubButton';
 import { DashboardSkeleton } from '@/components/admin/SkeletonLoaders';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useIsMobile } from '@/hooks/useIsMobile';
@@ -50,7 +51,7 @@ export default function AdminDashboard() {
     const todayPickups = capturaBookings.filter(b => {
       if (b.pickup_date) {
         return b.pickup_date === today &&
-          (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+          b.booking_status === 'confirmed' &&
           !b.equipment_picked_up;
       }
       const startDate = new Date(b.start_date);
@@ -59,7 +60,7 @@ export default function AdminDashboard() {
       const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
 
       return calculatedPickupDate === today &&
-        (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+        b.booking_status === 'confirmed' &&
         !b.equipment_picked_up;
     });
 
@@ -204,7 +205,10 @@ export default function AdminDashboard() {
             })}
           </p>
         </div>
-        <PushNotificationToggle />
+        <div className="flex items-center gap-3">
+          <ScrapeHubButton />
+          <PushNotificationToggle />
+        </div>
       </motion.div>
 
       {/* Stats Grid */}

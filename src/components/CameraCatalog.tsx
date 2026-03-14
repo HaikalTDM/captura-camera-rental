@@ -135,6 +135,13 @@ export default function CameraCatalog({ onBookCamera, variant = 'default' }: Cam
               variant: '/images/osmo_pocket_3_creator_combo.jpg'
             };
           }
+          // Fujifilm
+          else if (name.includes('fujifilm') || name.includes('fuji')) {
+            return {
+              main: '/images/fujifilm_xt30.png',
+              variant: '/images/fujifilm_xt30.png'
+            };
+          }
           // Default fallback
           return {
             main: '/images/osmo-pocket-31.jpg',
@@ -154,7 +161,7 @@ export default function CameraCatalog({ onBookCamera, variant = 'default' }: Cam
         const cameraImages = getStaticImages(dbCamera.name);
         const cameraTags = getTags(dbCamera.name);
 
-        return {
+        const baseCameraInfo: Camera & { tags?: string[] } = {
           id: dbCamera.id,
           name: dbCamera.name,
           description: dbCamera.description || 'Professional camera equipment for your creative projects.',
@@ -175,6 +182,25 @@ export default function CameraCatalog({ onBookCamera, variant = 'default' }: Cam
           tidyCalPath: `haikaltdm46/${dbCamera.id}`,
           tags: cameraTags
         };
+
+        if (dbCamera.name.toLowerCase().includes('fujifilm')) {
+          baseCameraInfo.variants = [
+            {
+              id: 'kit-lens',
+              name: 'Basic Kit Lens',
+              dailyRate: 100,
+              discountRate: 90
+            },
+            {
+              id: '18-50mm',
+              name: '18-50mm Lens',
+              dailyRate: 130,
+              discountRate: 120
+            }
+          ];
+        }
+
+        return baseCameraInfo;
       });
 
       setCameras(convertedCameras);
