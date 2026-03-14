@@ -1,7 +1,7 @@
 # 🦅 ZeroClaw — Captura TOOLS.md
 *Last updated: 2026-03-14*
 *Base URL (local dev): http://localhost:3000*
-*Base URL (production): https://captura.my*
+*Base URL (production): https://www.captura.my*
 
 All routes are public GET endpoints — no authentication headers required.
 They use the Supabase Admin service role internally. Do NOT expose these routes on the public internet without adding a secret key guard.
