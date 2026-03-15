@@ -20,6 +20,15 @@ export async function POST(request: NextRequest) {
       special_requests = ''
     } = data;
 
+    // Check if AI extraction failed (n8n wraps undefined as "[undefined]")
+    if (customer_name === '[undefined]' || customer_phone === '[undefined]' || customer_email === '[undefined]' || 
+        camera_name === '[undefined]' || start_date === '[undefined]' || end_date === '[undefined]') {
+      return NextResponse.json({ 
+        success: false, 
+        error: "AI extraction failed. Please provide complete customer details (name, phone, email, camera, dates) in your message." 
+      }, { status: 400 });
+    }
+
     if (!customer_name || !customer_phone || !camera_name || !start_date || !end_date) {
       return NextResponse.json({ 
         success: false, 
@@ -47,8 +56,19 @@ export async function POST(request: NextRequest) {
     const camera = cameras[0];
 
     // 2. Compute date difference and pricing
-    const start = new Date(start_date);
-    const end = new Date(end_date);
+    function parseDate(dateStr: string): Date {
+      if (dateStr.includes('/')) {
+        // Assume DD/MM/YYYY
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day);
+      } else {
+        // Assume YYYY-MM-DD
+        return new Date(dateStr);
+      }
+    }
+
+    const start = parseDate(start_date);
+    const end = parseDate(end_date);
     
     // Calculate total days (inclusive of drop off day usually, or midnight to midnight)
     // If start is 18/3 and end is 23/3, that's 5 nights. Captura counts by night or day? 
