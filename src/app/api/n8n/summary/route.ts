@@ -21,6 +21,7 @@ export async function GET() {
     { data: todayPickupsData },
     { data: todayReturnsData },
     { data: overduePaymentsData },
+    { data: allBookingsForRevenue },
   ] = await Promise.all([
     supabase
       .from('cameras')
@@ -59,6 +60,10 @@ export async function GET() {
       .eq('final_payment_paid', false)
       .in('booking_status', ['completed'])
       .lt('end_date', today),
+      
+    supabase
+      .from('bookings')
+      .select('total_amount, booking_status')
   ]);
 
   const cameraMap = new Map();
@@ -101,5 +106,10 @@ export async function GET() {
       count: overduePayments?.length || 0,
       bookings: overduePayments,
     },
+    revenue: {
+      completed: allBookingsForRevenue?.filter(b => b.booking_status === 'completed').reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0,
+      pending: allBookingsForRevenue?.filter(b => b.booking_status === 'pending_approval').reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0,
+      active: allBookingsForRevenue?.filter(b => b.booking_status === 'active' || b.booking_status === 'confirmed').reduce((sum, b) => sum + (b.total_amount || 0), 0) || 0,
+    }
   });
 }
