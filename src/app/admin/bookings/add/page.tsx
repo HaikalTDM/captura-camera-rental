@@ -67,6 +67,9 @@ export default function AddBookingPage() {
   const [customPriceEnabled, setCustomPriceEnabled] = useState(false);
   const [customDailyRate, setCustomDailyRate] = useState(0);
 
+  // Fujifilm X-T30 lens option (admin booking only)
+  const [fujifilmLensOption, setFujifilmLensOption] = useState<'body' | '18-50' | ''>('');
+
   useEffect(() => {
     loadCameras();
   }, []);
@@ -95,7 +98,25 @@ export default function AddBookingPage() {
 
       const camera = cameras.find(c => c.id === bookingData.camera_id);
       if (camera && days > 0) {
-        let dailyRate = camera.daily_rate;
+        // Base rate (can be overridden per camera variant)
+        let baseRate = camera.daily_rate;
+
+        // Fujifilm X-T30 II lens option (admin bookings)
+        const isFujifilmXT30 = camera.name.toLowerCase().includes('fujifilm') && camera.name.toLowerCase().includes('x-t30');
+        if (isFujifilmXT30) {
+          // Default to body-only if no lens option selected yet
+          if (!fujifilmLensOption) {
+            setFujifilmLensOption('body');
+          }
+
+          if (fujifilmLensOption === '18-50') {
+            baseRate = 130;
+          } else {
+            baseRate = 100;
+          }
+        }
+
+        let dailyRate = baseRate;
 
         // If custom price is enabled, use the custom rate directly
         if (customPriceEnabled && customDailyRate > 0) {
@@ -130,7 +151,7 @@ export default function AddBookingPage() {
         }));
       }
     }
-  }, [bookingData.start_date, bookingData.end_date, bookingData.camera_id, bookingData.delivery_fee, bookingData.deposit_paid, cameras, socialMediaDiscount, discountPerDay, customPriceEnabled, customDailyRate]);
+  }, [bookingData.start_date, bookingData.end_date, bookingData.camera_id, bookingData.delivery_fee, bookingData.deposit_paid, cameras, socialMediaDiscount, discountPerDay, customPriceEnabled, customDailyRate, fujifilmLensOption]);
 
   // AI Text Parser Handler
   const handleParseText = async () => {
@@ -199,6 +220,9 @@ export default function AddBookingPage() {
           );
           if (matchedCamera) {
             setBookingData(prev => ({ ...prev, camera_id: matchedCamera.id }));
+            if (matchedCamera.name.toLowerCase().includes('x-t30')) {
+              setFujifilmLensOption('body');
+            }
           }
         }
 
@@ -284,6 +308,12 @@ export default function AddBookingPage() {
         const discountTotal = discountPerDay * bookingData.total_days;
         const discountNote = `\n\n💰 SOCIAL MEDIA DISCOUNT APPLIED:\n- Original Rate: RM${originalRate}/day\n- Discounted Rate: RM${bookingData.daily_rate}/day\n- Discount: RM${discountPerDay}/day × ${bookingData.total_days} days = RM${discountTotal}\n- Customer shared/reposted/followed our account`;
         finalNotes = (finalNotes || '') + discountNote;
+      }
+
+      // Add lens option to notes for Fujifilm X-T30 bookings
+      if (selectedCamera && selectedCamera.name.toLowerCase().includes('fujifilm') && selectedCamera.name.toLowerCase().includes('x-t30') && fujifilmLensOption) {
+        const lensLabel = fujifilmLensOption === '18-50' ? '18-50mm Lens Kit' : 'Body only';
+        finalNotes = (finalNotes || '') + `\n\n🎛️ Lens option: ${lensLabel}`;
       }
 
       // Create booking with customer ID
@@ -413,6 +443,10 @@ If you have any questions, feel free to reply to this message.`;
   const handleSkipWhatsApp = () => {
     router.push('/admin/bookings');
   };
+
+  // Derived selections
+  const selectedCamera = cameras.find(c => c.id === bookingData.camera_id);
+  const isFujifilmXT30 = selectedCamera?.name.toLowerCase().includes('fujifilm') && selectedCamera?.name.toLowerCase().includes('x-t30');
 
   return (
     <div className={isMobile ? "p-4 pb-24" : "p-6"}>
@@ -627,7 +661,16 @@ If you have any questions, feel free to reply to this message.`;
                 <div className="relative">
                   <select
                     value={bookingData.camera_id}
-                    onChange={(e) => setBookingData(prev => ({ ...prev, camera_id: e.target.value }))}
+                    onChange={(e) => {
+                      const cameraId = e.target.value;
+                      setBookingData(prev => ({ ...prev, camera_id: cameraId }));
+                      const cam = cameras.find(c => c.id === cameraId);
+                      if (cam && cam.name.toLowerCase().includes('x-t30')) {
+                        setFujifilmLensOption('body');
+                      } else {
+                        setFujifilmLensOption('');
+                      }
+                    }}
                     className="w-full px-4 py-3 pr-10 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 appearance-none cursor-pointer transition-all hover:border-slate-300 bg-white"
                     required
                   >
@@ -641,6 +684,23 @@ If you have any questions, feel free to reply to this message.`;
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
+
+              {isFujifilmXT30 && (
+                <div className="relative">
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Lens Option</label>
+                  <div className="relative">
+                    <select
+                      value={fujifilmLensOption}
+                      onChange={(e) => setFujifilmLensOption(e.target.value as 'body' | '18-50' | '')}
+                      className="w-full px-4 py-3 pr-10 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 appearance-none cursor-pointer transition-all hover:border-slate-300 bg-white"
+                    >
+                      <option value="body">Body only (RM100/day)</option>
+                      <option value="18-50">18-50mm Lens Kit (RM130/day)</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              )}
 
               {/* Booking Source Dropdown */}
               <div className="relative">
