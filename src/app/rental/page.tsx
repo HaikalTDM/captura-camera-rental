@@ -12,7 +12,7 @@ function getStaticImages(cameraName: string) {
 
   if (name.includes('insta360') && name.includes('x5')) {
     return { main: '/images/Insta360-X5.webp', variant: '/images/Insta360-X5-1.webp' };
-  } else if (name.includes('canon') && name.includes('r50')) {
+  } else if ((name.includes('canon') && name.includes('r50')) || name.includes('r50 (ii)')) {
     return { main: '/images/R50.png', variant: '/images/R50-1.png' };
   } else if (name.includes('osmo') && name.includes('pocket')) {
     return { main: '/images/osmo-pocket-31.jpg', variant: '/images/osmo_pocket_3_creator_combo.jpg' };
@@ -42,6 +42,17 @@ export default async function RentalHome() {
 
   const cameras = sortedCameras.map(dbCamera => {
     const cameraImages = getStaticImages(dbCamera.name);
+
+    // Generate features based on camera type
+    const features = [
+      `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
+      `RM${dbCamera.daily_rate}/day rental`,
+      'Professional grade equipment',
+      'Includes basic accessories',
+      'Full insurance coverage',
+      'Technical support included'
+    ];
+
     return {
       id: dbCamera.id,
       name: dbCamera.name,
@@ -50,7 +61,7 @@ export default async function RentalHome() {
       images: [cameraImages.variant],
       dailyRate: dbCamera.daily_rate,
       discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9,
-      features: [] as string[],
+      features,
       specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications as Record<string, unknown> : {},
     };
   });
