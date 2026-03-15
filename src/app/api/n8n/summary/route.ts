@@ -16,11 +16,11 @@ export async function GET() {
 
   const [
     { data: cameras },
-    { data: pendingBookings },
-    { data: activeRentals },
-    { data: todayPickups },
-    { data: todayReturns },
-    { data: overduePayments },
+    { data: pendingBookingsData },
+    { data: activeRentalsData },
+    { data: todayPickupsData },
+    { data: todayReturnsData },
+    { data: overduePaymentsData },
   ] = await Promise.all([
     supabase
       .from('cameras')
@@ -28,38 +28,50 @@ export async function GET() {
 
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, total_amount, booking_status, created_at, customers(full_name, phone), cameras(name)')
+      .select('id, start_date, end_date, total_amount, booking_status, created_at, camera_id, customers(full_name, phone)')
       .eq('booking_status', 'pending_approval')
       .order('created_at', { ascending: false }),
 
     supabase
       .from('bookings')
-      .select('id, start_date, end_date, booking_status, customers(full_name, phone, whatsapp), cameras(name)')
+      .select('id, start_date, end_date, booking_status, camera_id, customers(full_name, phone, whatsapp)')
       .eq('booking_status', 'confirmed')
       .eq('equipment_picked_up', true)
       .eq('equipment_returned', false),
 
     supabase
       .from('bookings')
-      .select('id, start_date, pickup_date, customers(full_name, phone), cameras(name)')
+      .select('id, start_date, pickup_date, camera_id, customers(full_name, phone)')
       .eq('booking_status', 'confirmed')
       .eq('equipment_picked_up', false)
       .eq('pickup_date', today),
 
     supabase
       .from('bookings')
-      .select('id, end_date, customers(full_name, phone, whatsapp), cameras(name)')
+      .select('id, end_date, camera_id, customers(full_name, phone, whatsapp)')
       .eq('equipment_picked_up', true)
       .eq('equipment_returned', false)
       .eq('end_date', today),
 
     supabase
       .from('bookings')
-      .select('id, end_date, final_payment_amount, customers(full_name, phone), cameras(name)')
+      .select('id, end_date, final_payment_amount, camera_id, customers(full_name, phone)')
       .eq('final_payment_paid', false)
       .in('booking_status', ['completed'])
       .lt('end_date', today),
   ]);
+
+  const cameraMap = new Map();
+  cameras?.forEach(c => cameraMap.set(c.id, { name: c.name }));
+
+  const attachCameras = (bookingsList: any[] | null) => 
+    bookingsList?.map(b => ({ ...b, cameras: cameraMap.get(b.camera_id) || null })) || [];
+
+  const pendingBookings = attachCameras(pendingBookingsData);
+  const activeRentals = attachCameras(activeRentalsData);
+  const todayPickups = attachCameras(todayPickupsData);
+  const todayReturns = attachCameras(todayReturnsData);
+  const overduePayments = attachCameras(overduePaymentsData);
 
   return NextResponse.json({
     generated_at: new Date().toISOString(),

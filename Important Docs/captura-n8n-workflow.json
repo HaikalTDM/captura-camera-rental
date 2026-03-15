@@ -1,0 +1,635 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,22 * * *"
+            }
+          ]
+        }
+      },
+      "id": "81581626-1e5e-44f2-8205-c21d97384686",
+      "name": "Daily at 9AM and 10PM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -1168
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/summary",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "9898a8e6-66ec-4ac1-956b-854ec0362841",
+      "name": "Fetch Captura Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        944,
+        -1168
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "7753303255",
+        "text": "=🌅 *Captura Ops Briefing*\n\n📅 Date: {{ $json.today }}\n\n📷 *Cameras:* {{ $json.cameras.available }}/{{ $json.cameras.total }} available\n\n📦 Pickups Today: {{ $json.todays_pickups.count }}\n🔄 Returns Today: {{ $json.todays_returns.count }}\n🚨 Pending Approvals: {{ $json.pending_approvals.count }}\n💸 Overdue Payments: {{ $json.overdue_payments.count }}\n\nHave a great shift, Sir! 📸",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "1d0d5f27-c91e-48e2-bcdb-ea9cc7d0fe6d",
+      "name": "Send Daily Briefing",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        -1168
+      ],
+      "retryOnFail": true,
+      "webhookId": "973cd2a3-616f-47ef-97f7-a9890a062520",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1"
+            }
+          ]
+        }
+      },
+      "id": "254ad047-b9c2-4fe1-adcf-5cd311460e7b",
+      "name": "Every Monday 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -928
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/bookings?status=completed",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "147d3d2f-3e95-42dc-a77d-8e72ebabb286",
+      "name": "Fetch Weekly Bookings",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        944,
+        -928
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "7753303255",
+        "text": "=📊 *Captura Weekly Summary*\n\nHere's your week in review, Sir.\n\nCompleted Bookings: {{ $json.count }}\n\nCheck your admin dashboard for full revenue breakdown. 💰",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "89c14ad8-38d8-475a-86a9-8204c0652dd3",
+      "name": "Send Weekly Summary",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        -928
+      ],
+      "retryOnFail": true,
+      "webhookId": "e7551b03-11b1-4fa8-952a-4c2b468f97b6",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "captura-new-booking",
+        "options": {}
+      },
+      "id": "c1cd7c41-34e3-4297-85f9-fa9b7a9e95c7",
+      "name": "New Booking Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        720,
+        -688
+      ],
+      "webhookId": "captura-new-booking-alert"
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/summary",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "4187cd08-f6d2-411d-ab1e-a80bc7f8295d",
+      "name": "Check Live Inventory",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        944,
+        -688
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "7753303255",
+        "text": "=🚨 *NEW BOOKING RECEIVED!*\n\nSomeone just submitted a booking request.\n\n📷 Cameras Available: {{ $json.cameras.available }}/{{ $json.cameras.total }}\n🚨 Pending Approvals: {{ $json.pending_approvals.count }}\n\nCheck your Captura admin to approve, Sir! 👇\nhttps://www.captura.my/admin",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "b73f8069-9b72-475f-9034-d7ab392cc2e1",
+      "name": "Send New Booking Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        -688
+      ],
+      "retryOnFail": true,
+      "webhookId": "629e8ff9-2baf-4018-a0b7-b7e8c3a91bc0",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "7ab53b83-9ed7-4b70-96e7-6fa2bf4f5cac",
+      "name": "Check Overdue Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/summary",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "id": "ad17ec3c-0e6f-4bf1-bf6a-6a0c339d8133",
+      "name": "Fetch Overdue Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        944,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.overdue_payments.count }}",
+              "operation": "larger"
+            }
+          ]
+        }
+      },
+      "id": "d837ca99-ac5d-483d-aaf5-dde0c26fcda5",
+      "name": "Any Overdue?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        -448
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "7753303255",
+        "text": "=⚠️ *Overdue Payment Alert*\n\nSir, you have {{ $json.overdue_payments.count }} overdue payment(s).\n\nPlease follow up with the customer via your admin dashboard:\nhttps://www.captura.my/admin",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "426b04d4-ada1-43dd-9ac4-4d34d0440257",
+      "name": "Send Overdue Alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1392,
+        -512
+      ],
+      "retryOnFail": true,
+      "webhookId": "ce58a056-0df3-4649-8825-a9d9ac2b863a",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        720,
+        -208
+      ],
+      "id": "651fcc0e-7393-4964-a611-fee43e49d74f",
+      "name": "Telegram Trigger",
+      "webhookId": "bcb556a9-a8c5-4c4c-be5e-de0ba2d5b54c",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "options": {
+          "systemMessage": "You are GLM 4.7 Flash, Haikal's personal business assistant for Captura Camera Rental. Always address him as 'Sir'. You have tools to check camera availability and business summaries. Be concise, extremely helpful, and act like Jarvis from Iron Man — answer first, explain after. If he asks about operations, always use your tools to check the live database before answering. Never say you cannot access data without trying the tools first."
+        }
+      },
+      "id": "5e13b3d3-049d-4e69-b2ee-48006918dfa6",
+      "name": "GLM 4.7 Personal Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.6,
+      "position": [
+        944,
+        -208
+      ]
+    },
+    {
+      "parameters": {
+        "model": "zhipu/glm-4-flash",
+        "options": {
+          "baseURL": "https://openrouter.ai/api/v1"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1,
+      "position": [
+        832,
+        16
+      ],
+      "id": "65ff73d0-e39d-40a1-bd3a-c8c8c4adb487",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "YOUR_OPENROUTER_API_KEY_CREDENTIAL_ID",
+          "name": "OpenRouter API Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id.toString() }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        944,
+        16
+      ],
+      "id": "f12d8c3f-cb36-45d0-8fff-867d363c5e5c",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/summary"
+      },
+      "id": "697262e4-2b37-44d0-8920-5586aaa440f0",
+      "name": "Summary API Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1072,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/availability"
+      },
+      "id": "d05e6893-084b-4dbe-853b-14d2098561f3",
+      "name": "Availability API Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/n8n/bookings"
+      },
+      "id": "2d45632d-e493-4913-9478-6832dd5a5ab1",
+      "name": "Bookings API Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1312,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "ee9f514e-898b-4ee8-ad00-c06c2cc5d75c",
+      "name": "Send Reply to Haikal",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        -208
+      ],
+      "webhookId": "67e88a01-0653-4924-83aa-770f1655cf28",
+      "credentials": {
+        "telegramApi": {
+          "id": "Z1QwviIPaIZpDqH5",
+          "name": "capturabot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */12 * * *"
+            }
+          ]
+        }
+      },
+      "id": "81db8121-3275-40bb-98bc-9ee825da4ba1",
+      "name": "Every 12 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        720,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.captura.my/api/hub/scrape?secret=GATES_CRON_SECRET",
+        "options": {}
+      },
+      "id": "f5549230-4cbe-4cb9-ad38-b71502c89230",
+      "name": "Auto-Scrape PetaPixel SEO News",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        944,
+        208
+      ]
+    }
+  ],
+  "connections": {
+    "Daily at 9AM and 10PM": {
+      "main": [
+        [
+          {
+            "node": "Fetch Captura Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Captura Summary": {
+      "main": [
+        [
+          {
+            "node": "Send Daily Briefing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Monday 9AM": {
+      "main": [
+        [
+          {
+            "node": "Fetch Weekly Bookings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Weekly Bookings": {
+      "main": [
+        [
+          {
+            "node": "Send Weekly Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Booking Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check Live Inventory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Live Inventory": {
+      "main": [
+        [
+          {
+            "node": "Send New Booking Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Overdue Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Fetch Overdue Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Overdue Status": {
+      "main": [
+        [
+          {
+            "node": "Any Overdue?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Overdue?": {
+      "main": [
+        [
+          {
+            "node": "Send Overdue Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GLM 4.7 Personal Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Reply to Haikal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summary API Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Availability API Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bookings API Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every 12 Hours": {
+      "main": [
+        [
+          {
+            "node": "Auto-Scrape PetaPixel SEO News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

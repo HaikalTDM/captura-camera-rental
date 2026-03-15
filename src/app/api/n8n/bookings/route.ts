@@ -43,8 +43,7 @@ export async function GET(request: Request) {
       created_at,
       camera_id,
       customer_id,
-      customers ( id, full_name, name, phone, whatsapp, email ),
-      cameras ( id, name, brand, daily_rate )
+      customers ( id, full_name, name, phone, whatsapp, email )
     `)
     .order('created_at', { ascending: false })
     .limit(limit);
@@ -57,11 +56,21 @@ export async function GET(request: Request) {
     query = query.lte('start_date', date).gte('end_date', date);
   }
 
-  const { data, error } = await query;
+  const { data: bookings, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ bookings: data, count: data?.length });
+  // Fetch all cameras and map them
+  const { data: allCameras } = await supabase.from('cameras').select('id, name, brand, daily_rate');
+  const cameraMap = new Map();
+  allCameras?.forEach(c => cameraMap.set(c.id, c));
+
+  const enrichedBookings = bookings?.map(b => ({
+    ...b,
+    cameras: cameraMap.get(b.camera_id) || { name: 'Unknown Camera', brand: 'Unknown', id: b.camera_id }
+  }));
+
+  return NextResponse.json({ bookings: enrichedBookings, count: enrichedBookings?.length || 0 });
 }
