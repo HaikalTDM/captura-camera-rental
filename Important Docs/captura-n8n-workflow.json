@@ -296,7 +296,7 @@
         "promptType": "define",
         "text": "={{ $('Telegram Trigger').item.json.message.text }}",
         "options": {
-          "systemMessage": "You are GLM 4.7 Flash, Haikal's personal business assistant for Captura Camera Rental. Always address him as 'Sir'. All currency is in RM (Malaysian Ringgit) - DO NOT use the $ sign. You have tools to check camera availability and business summaries (which now includes total revenue). Be concise, extremely helpful, and act like Jarvis from Iron Man — answer first, explain after. If he asks about operations or revenue, always use your tools to check the live database before answering. Never say you cannot access data without trying the tools first."
+          "systemMessage": "You are GLM 4.7 Flash, Haikal's personal business assistant for Captura Camera Rental. Always address him as 'Sir'. All currency is in RM (Malaysian Ringgit) - DO NOT use the $ sign. You have tools to check camera availability, business summaries, and CREATE new bookings. If he provides customer details (Name, Phone, Camera, Dates), use the Create Booking tool to lock it in. Always pass the exact details accurately (format dates as YYYY-MM-DD). Be concise, extremely helpful, and act like Jarvis from Iron Man — answer first, explain after."
         }
       },
       "id": "5e13b3d3-049d-4e69-b2ee-48006918dfa6",
@@ -437,6 +437,23 @@
       "position": [
         944,
         208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.captura.my/api/n8n/bookings/create",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"customer_name\": \"{{ $fromAI('customer_name') }}\",\n  \"customer_phone\": \"{{ $fromAI('customer_phone') }}\",\n  \"customer_email\": \"{{ $fromAI('customer_email') }}\",\n  \"camera_name\": \"{{ $fromAI('camera_name') }}\",\n  \"start_date\": \"{{ $fromAI('start_date', 'YYYY-MM-DD') }}\",\n  \"end_date\": \"{{ $fromAI('end_date', 'YYYY-MM-DD') }}\",\n  \"pickup_method\": \"{{ $fromAI('pickup_method', 'pickup or delivery') }}\",\n  \"special_requests\": \"{{ $fromAI('special_requests') }}\"\n}"
+      },
+      "id": "e6a12b4f-8c01-4991-bdfc-23ccd618037a",
+      "name": "Create Booking API Tool",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        16
       ]
     }
   ],
@@ -623,6 +640,17 @@
           {
             "node": "Auto-Scrape PetaPixel SEO News",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Booking API Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "GLM 4.7 Personal Agent",
+            "type": "ai_tool",
             "index": 0
           }
         ]
