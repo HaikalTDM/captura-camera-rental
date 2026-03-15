@@ -214,10 +214,19 @@ export default function AddBookingPage() {
 
         // Match camera
         if (parsed.camera_name) {
-          const matchedCamera = cameras.find(c =>
-            c.name.toLowerCase().includes(parsed.camera_name.toLowerCase()) ||
-            c.model.toLowerCase().includes(parsed.camera_name.toLowerCase())
-          );
+          let matchedCamera;
+
+          // Special handling for Mother R50 booking
+          if (parsed.is_mother_booking || parsed.camera_name === 'Canon R50 - Mother') {
+            matchedCamera = cameras.find(c => c.name === 'R50 (ii)' || c.name === 'Canon R50 - Mother');
+          } else {
+            // Normal camera matching
+            matchedCamera = cameras.find(c =>
+              c.name.toLowerCase().includes(parsed.camera_name.toLowerCase()) ||
+              c.model.toLowerCase().includes(parsed.camera_name.toLowerCase())
+            );
+          }
+
           if (matchedCamera) {
             setBookingData(prev => ({ ...prev, camera_id: matchedCamera.id }));
             if (matchedCamera.name.toLowerCase().includes('x-t30')) {

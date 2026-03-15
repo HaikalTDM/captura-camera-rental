@@ -70,7 +70,7 @@ export function parseBookingText(text: string, cameras: Camera[]): ParsedBooking
     };
 
     // Check for Mother booking
-    result.is_mother_booking = lowerText.includes('mother') &&
+    result.is_mother_booking = (lowerText.includes('mother') || lowerText.includes('r50 ii') || lowerText.includes('r50 (ii)')) &&
         (lowerText.includes('r50') || lowerText.includes('canon'));
 
     // Extract phone number

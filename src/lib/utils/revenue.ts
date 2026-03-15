@@ -10,14 +10,14 @@ import { Booking, Camera } from '@/lib/supabase';
  */
 export function isMotherBooking(booking: Booking, cameras?: Camera[]): boolean {
   // Check by camera name if camera object is available
-  if (booking.camera?.name === 'Canon R50 - Mother') {
+  if (booking.camera?.name === 'Canon R50 - Mother' || booking.camera?.name === 'R50 (ii)') {
     return true;
   }
 
   // Check by camera_id if cameras array is provided
   if (cameras && booking.camera_id) {
     const camera = cameras.find(c => c.id === booking.camera_id);
-    return camera?.name === 'Canon R50 - Mother';
+    return camera?.name === 'Canon R50 - Mother' || camera?.name === 'R50 (ii)';
   }
 
   return false;
