@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   const cameraId = searchParams.get('camera_id');
   const customerId = searchParams.get('customer_id');
   const date = searchParams.get('date');
-  const limit = parseInt(searchParams.get('limit') || '20');
+  const limit: number = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 100;
 
   let query = supabase
     .from('bookings')
