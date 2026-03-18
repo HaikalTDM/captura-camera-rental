@@ -1,28 +1,29 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { getAllBookings, getAllCameras } from '@/lib/api/bookings';
-import type { Booking, Camera } from '@/lib/supabase';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { getPublicAvailabilityBookings, getPublicCameras } from '@/lib/api/bookings';
+import type { PublicAvailabilityBooking } from '@/lib/api/bookings';
+import type { PublicCamera } from '@/lib/api/bookings';
 
 interface ClientAvailabilityCalendarProps {
-  onCameraSelect?: (camera: Camera) => void;
+  onCameraSelect?: (camera: PublicCamera) => void;
 }
 
 interface CalendarDay {
   date: Date;
   isCurrentMonth: boolean;
   isToday: boolean;
-  availableCameras: Camera[];
+  availableCameras: PublicCamera[];
   bookedCameras: string[];
 }
 
 export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAvailabilityCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [cameras, setCameras] = useState<Camera[]>([]);
+  const [bookings, setBookings] = useState<PublicAvailabilityBooking[]>([]);
+  const [cameras, setCameras] = useState<PublicCamera[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedCamera, setSelectedCamera] = useState<Camera | null>(null);
+  const [selectedCamera, setSelectedCamera] = useState<PublicCamera | null>(null);
 
   useEffect(() => {
     loadData();
@@ -31,8 +32,8 @@ export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAva
   const loadData = async () => {
     try {
       const [bookingsData, camerasData] = await Promise.all([
-        getAllBookings(),
-        getAllCameras()
+        getPublicAvailabilityBookings(),
+        getPublicCameras()
       ]);
       setBookings(bookingsData);
       setCameras(camerasData);
@@ -44,7 +45,7 @@ export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAva
   };
 
   // Check which cameras are available for a specific date
-  const getAvailableCamerasForDate = (date: Date): Camera[] => {
+  const getAvailableCamerasForDate = useCallback((date: Date): PublicCamera[] => {
     const checkDate = new Date(date);
     checkDate.setHours(0, 0, 0, 0);
 
@@ -63,7 +64,7 @@ export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAva
     return cameras.filter(camera =>
       camera.is_available && !bookedCameraIds.includes(camera.id)
     );
-  };
+  }, [bookings, cameras]);
 
   // Generate calendar days
   const calendarDays = useMemo(() => {
@@ -123,7 +124,7 @@ export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAva
     }
 
     return days;
-  }, [currentDate, bookings, cameras]);
+  }, [currentDate, cameras, getAvailableCamerasForDate]);
 
   const navigateMonth = (direction: number) => {
     const newDate = new Date(currentDate);
@@ -135,7 +136,7 @@ export default function ClientAvailabilityCalendar({ onCameraSelect }: ClientAva
     setCurrentDate(new Date());
   };
 
-  const handleCameraSelect = (camera: Camera) => {
+  const handleCameraSelect = (camera: PublicCamera) => {
     setSelectedCamera(camera);
     if (onCameraSelect) {
       onCameraSelect(camera);

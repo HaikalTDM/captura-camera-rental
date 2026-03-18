@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box,
   CheckCircle2,
@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileAccessories from '@/components/admin/MobileAccessories';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 const accessoryTypes = ['battery', 'memory_card', 'tripod', 'case', 'charger', 'filter', 'lens', 'other'];
 
@@ -41,6 +42,7 @@ export default function AccessoriesPage() {
   const [editingAccessory, setEditingAccessory] = useState<Accessory | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
+  const { toasts, success: showSuccess, error: showError, removeToast } = useAnimatedToast();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -58,21 +60,22 @@ export default function AccessoriesPage() {
     image_url: '',
   });
 
-  useEffect(() => {
-    loadAccessories();
-  }, []);
-
-  const loadAccessories = async () => {
+  const loadAccessories = useCallback(async () => {
     setIsLoading(true);
     try {
       const data = await getAllAccessories();
       setAccessories(data);
-    } catch (error) {
-      console.error('Error loading accessories:', error);
+    } catch (loadError) {
+      console.error('Error loading accessories:', loadError);
+      showError('Failed to load accessories', 'Please refresh and try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadAccessories();
+  }, [loadAccessories]);
 
   const resetForm = () => {
     setFormData({
@@ -102,6 +105,7 @@ export default function AccessoriesPage() {
         const updated = await updateAccessory(editingAccessory.id, formData);
         if (updated) {
           setAccessories((prev) => prev.map((accessory) => accessory.id === editingAccessory.id ? updated : accessory));
+          showSuccess('Accessory updated', `${updated.name} is now using the latest details.`);
         }
       } else {
         const created = await createAccessory({
@@ -110,14 +114,15 @@ export default function AccessoriesPage() {
         });
         if (created) {
           setAccessories((prev) => [...prev, created]);
+          showSuccess('Accessory added', `${created.name} is now in the accessory catalog.`);
         }
       }
 
       resetForm();
       loadAccessories();
-    } catch (error) {
-      console.error('Error saving accessory:', error);
-      alert('Error saving accessory. Please try again.');
+    } catch (saveError) {
+      console.error('Error saving accessory:', saveError);
+      showError('Failed to save accessory', 'Please check the fields and try again.');
     }
   };
 
@@ -145,14 +150,20 @@ export default function AccessoriesPage() {
     if (!confirm('Are you sure you want to delete this accessory?')) return;
 
     try {
-      const success = await deleteAccessory(id);
-      if (success) {
+      const deleteSuccess = await deleteAccessory(id);
+      if (deleteSuccess) {
         setAccessories((prev) => prev.filter((accessory) => accessory.id !== id));
+        const deletedName = accessories.find((accessory) => accessory.id === id)?.name || 'Accessory';
+        successToast(deletedName);
       }
-    } catch (error) {
-      console.error('Error deleting accessory:', error);
-      alert('Error deleting accessory. Please try again.');
+    } catch (deleteError) {
+      console.error('Error deleting accessory:', deleteError);
+      showError('Failed to delete accessory', 'Please try again.');
     }
+  };
+
+  const successToast = (name: string) => {
+    showSuccess('Accessory deleted', `${name} was removed from the catalog.`);
   };
 
   const filteredAccessories = accessories.filter((accessory) => {
@@ -215,7 +226,9 @@ export default function AccessoriesPage() {
   }
 
   return (
-    <div className="space-y-6 px-2 pb-8 xl:px-0">
+    <>
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+      <div className="space-y-6 px-2 pb-8 xl:px-0">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -373,7 +386,7 @@ export default function AccessoriesPage() {
                   placeholder="Search accessories..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                  className="admin-dark-input pl-11 pr-4 text-sm"
                 />
               </div>
             </div>
@@ -384,7 +397,7 @@ export default function AccessoriesPage() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                className="admin-dark-select text-sm"
               >
                 <option value="all">All types</option>
                 {accessoryTypes.map((type) => (
@@ -433,7 +446,7 @@ export default function AccessoriesPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="Extra Battery Pack"
                   required
                 />
@@ -444,7 +457,7 @@ export default function AccessoriesPage() {
                 <select
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as Accessory['type'] })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select"
                   required
                 >
                   {accessoryTypes.map((type) => (
@@ -461,7 +474,7 @@ export default function AccessoriesPage() {
                   type="text"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="DJI"
                 />
               </div>
@@ -472,7 +485,7 @@ export default function AccessoriesPage() {
                   type="text"
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="DJI-BATTERY-001"
                 />
               </div>
@@ -485,7 +498,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.daily_rate || ''}
                   onChange={(e) => setFormData({ ...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="10.00"
                   step="0.01"
                   min="0"
@@ -498,7 +511,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.weekly_rate || ''}
                   onChange={(e) => setFormData({ ...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="60.00"
                   step="0.01"
                   min="0"
@@ -511,7 +524,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.monthly_rate || ''}
                   onChange={(e) => setFormData({ ...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="200.00"
                   step="0.01"
                   min="0"
@@ -524,7 +537,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.deposit_amount || ''}
                   onChange={(e) => setFormData({ ...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   placeholder="50.00"
                   step="0.01"
                   min="0"
@@ -539,7 +552,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.total_quantity}
                   onChange={(e) => setFormData({ ...formData, total_quantity: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   min="1"
                 />
               </div>
@@ -550,7 +563,7 @@ export default function AccessoriesPage() {
                   type="number"
                   value={formData.available_quantity}
                   onChange={(e) => setFormData({ ...formData, available_quantity: parseInt(e.target.value) || 1 })}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-input"
                   min="0"
                   max={formData.total_quantity}
                 />
@@ -563,7 +576,7 @@ export default function AccessoriesPage() {
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={3}
-                className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                className="admin-dark-textarea"
                 placeholder="High capacity battery for extended recording..."
               />
             </div>
@@ -574,7 +587,7 @@ export default function AccessoriesPage() {
                 type="url"
                 value={formData.image_url}
                 onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                className="admin-dark-input"
                 placeholder="https://example.com/accessory-image.jpg"
               />
             </div>
@@ -706,6 +719,7 @@ export default function AccessoriesPage() {
           </CardContent>
         </Card>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 }

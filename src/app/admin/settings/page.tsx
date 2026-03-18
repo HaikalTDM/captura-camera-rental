@@ -21,6 +21,7 @@ import {
 import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileSettings from '@/components/admin/MobileSettings';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 type SettingsTab = 'business' | 'booking' | 'notifications' | 'schedule';
 
@@ -50,12 +51,18 @@ export default function SettingsPage() {
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('business');
   const [isSaving, setIsSaving] = useState(false);
+  const { toasts, success, error, removeToast } = useAnimatedToast();
 
   const handleSave = async () => {
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    alert('Settings saved successfully!');
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      success('Settings saved', 'Your admin preferences were updated in this session.');
+    } catch {
+      error('Save failed', 'Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const updateSetting = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) => {
@@ -101,8 +108,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 px-2 pb-8 xl:px-0">
-      <motion.div
+    <>
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+      <div className="space-y-6 px-2 pb-8 xl:px-0">
+        <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_340px]"
@@ -231,7 +240,7 @@ export default function SettingsPage() {
                     type="text"
                     value={settings.businessName}
                     onChange={(e) => updateSetting('businessName', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                     placeholder="Enter business name"
                   />
                 </div>
@@ -245,7 +254,7 @@ export default function SettingsPage() {
                     type="tel"
                     value={settings.businessPhone}
                     onChange={(e) => updateSetting('businessPhone', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                     placeholder="e.g., +60177464121"
                   />
                 </div>
@@ -259,7 +268,7 @@ export default function SettingsPage() {
                     type="email"
                     value={settings.businessEmail}
                     onChange={(e) => updateSetting('businessEmail', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                     placeholder="business@example.com"
                   />
                 </div>
@@ -273,7 +282,7 @@ export default function SettingsPage() {
                     type="tel"
                     value={settings.whatsappNumber}
                     onChange={(e) => updateSetting('whatsappNumber', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                     placeholder="e.g., 60177464121"
                   />
                 </div>
@@ -287,7 +296,7 @@ export default function SettingsPage() {
                     value={settings.businessAddress}
                     onChange={(e) => updateSetting('businessAddress', e.target.value)}
                     rows={3}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-textarea"
                     placeholder="Enter your business address"
                   />
                 </div>
@@ -317,7 +326,7 @@ export default function SettingsPage() {
                     onChange={(e) => updateSetting('defaultDepositPercentage', Number(e.target.value))}
                     min="0"
                     max="100"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input text-lg font-semibold"
                   />
                   <p className="mt-2 text-xs text-stone-500">Percentage of the total amount required as deposit.</p>
                 </div>
@@ -332,7 +341,7 @@ export default function SettingsPage() {
                     value={settings.lateFeePerDay}
                     onChange={(e) => updateSetting('lateFeePerDay', Number(e.target.value))}
                     min="0"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input text-lg font-semibold"
                   />
                   <p className="mt-2 text-xs text-stone-500">Charge for each day equipment is returned late.</p>
                 </div>
@@ -347,7 +356,7 @@ export default function SettingsPage() {
                     value={settings.maxRentalDays}
                     onChange={(e) => updateSetting('maxRentalDays', Number(e.target.value))}
                     min="1"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input text-lg font-semibold"
                   />
                   <p className="mt-2 text-xs text-stone-500">Maximum number of days for a single rental.</p>
                 </div>
@@ -360,7 +369,7 @@ export default function SettingsPage() {
                   <select
                     value={settings.currency}
                     onChange={(e) => updateSetting('currency', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-select text-lg font-semibold"
                   >
                     <option value="RM">RM (Malaysian Ringgit)</option>
                     <option value="USD">USD (US Dollar)</option>
@@ -451,7 +460,7 @@ export default function SettingsPage() {
                       onChange={(e) => updateSetting('reminderDaysBefore', Number(e.target.value))}
                       min="0"
                       max="7"
-                      className="w-24 rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-center text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                      className="admin-dark-input w-24 text-center text-lg font-semibold"
                     />
                     <span className="text-stone-400">days before pickup date</span>
                   </div>
@@ -483,7 +492,7 @@ export default function SettingsPage() {
                     type="time"
                     value={settings.workingHours.start}
                     onChange={(e) => updateWorkingHours('start', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input text-lg font-semibold"
                   />
                 </div>
 
@@ -496,7 +505,7 @@ export default function SettingsPage() {
                     type="time"
                     value={settings.workingHours.end}
                     onChange={(e) => updateWorkingHours('end', e.target.value)}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input text-lg font-semibold"
                   />
                 </div>
               </div>
@@ -537,7 +546,7 @@ export default function SettingsPage() {
                 <select
                   value={settings.timezone}
                   onChange={(e) => updateSetting('timezone', e.target.value)}
-                  className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select text-lg font-semibold"
                 >
                   <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (GMT+8)</option>
                   <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
@@ -549,6 +558,7 @@ export default function SettingsPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   );
 }

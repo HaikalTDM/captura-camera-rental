@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAllCameras } from '@/lib/api/bookings';
-import type { Camera as DBCamera } from '@/lib/supabase';
+import { getPublicCameras } from '@/lib/api/bookings';
+import type { PublicCamera as DBCamera } from '@/lib/api/bookings';
 
 export default function BookPage() {
   const router = useRouter();
@@ -17,22 +17,9 @@ export default function BookPage() {
 
   const loadCameras = async () => {
     try {
-      const data = await getAllCameras();
-      
-      console.log('📚 Book Page - RAW cameras from database:');
-      console.table(data.map(c => ({ 
-        name: c.name, 
-        display_order: c.display_order,
-        is_available: c.is_available 
-      })));
+      const data = await getPublicCameras();
       
       const available = data.filter(c => c.is_available);
-      
-      console.log('📚 Book Page - Available cameras (should be sorted):');
-      console.table(available.map(c => ({ 
-        name: c.name, 
-        display_order: c.display_order 
-      })));
       
       setCameras(available);
       if (available.length > 0) {

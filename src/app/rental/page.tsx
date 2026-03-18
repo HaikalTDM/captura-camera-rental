@@ -1,5 +1,5 @@
 // import { getGalleryImagesLightweight } from '@/lib/api/gallery';
-import { getAllCameras } from '@/lib/api/bookings';
+import { getPublicCameras } from '@/lib/api/bookings';
 import RentalHomeClient from '@/components/RentalHomeClient';
 
 // Enable ISR caching - revalidate every 60 seconds
@@ -30,7 +30,7 @@ function getStaticImages(cameraName: string) {
 
 export default async function RentalHome() {
   // Fetch data on the server - ONLY cameras, not gallery images (too large for ISR)
-  const dbCameras = await getAllCameras();
+  const dbCameras = await getPublicCameras();
 
   // Process cameras: filter available, sort, and transform
   const availableCameras = dbCameras.filter(cam => cam.is_available);

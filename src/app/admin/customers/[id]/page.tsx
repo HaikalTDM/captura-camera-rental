@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCustomerById, getAllBookings } from '@/lib/api/bookings';
+import { getCustomerById, getBookingsByCustomerId } from '@/lib/api/bookings';
 import type { Customer, Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
@@ -25,17 +25,14 @@ export default function CustomerDetailsPage() {
   const loadCustomerData = async () => {
     setIsLoading(true);
     try {
-      const [customerData, allBookings] = await Promise.all([
+      const [customerData, customerBookings] = await Promise.all([
         getCustomerById(customerId),
-        getAllBookings()
+        getBookingsByCustomerId(customerId)
       ]);
 
       if (customerData) {
         setCustomer(customerData);
         setNotes(customerData.notes || '');
-
-        // Filter bookings for this customer
-        const customerBookings = allBookings.filter(b => b.customer_id === customerId);
         setBookings(customerBookings);
       }
     } catch (error) {

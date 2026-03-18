@@ -113,7 +113,12 @@ export default function BookingApprovalsPage() {
         .from('bookings')
         .select(`
           *,
-          customer:customers(*)
+          customer:customers(
+            id,
+            full_name,
+            email,
+            phone
+          )
         `)
         .eq('booking_status', 'pending_approval')
         .order('created_at', { ascending: true });

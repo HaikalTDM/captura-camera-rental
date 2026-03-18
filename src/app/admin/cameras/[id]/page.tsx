@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getCameraById, getAllBookings } from '@/lib/api/bookings';
+import { getCameraById, getBookingsByCameraId } from '@/lib/api/bookings';
 import type { Camera, Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
@@ -23,16 +23,13 @@ export default function CameraDetailsPage() {
   const loadCameraData = async () => {
     setIsLoading(true);
     try {
-      const [cameraData, allBookings] = await Promise.all([
+      const [cameraData, cameraBookings] = await Promise.all([
         getCameraById(cameraId),
-        getAllBookings()
+        getBookingsByCameraId(cameraId)
       ]);
 
       if (cameraData) {
         setCamera(cameraData);
-
-        // Filter bookings for this camera
-        const cameraBookings = allBookings.filter(b => b.camera_id === cameraId);
         setBookings(cameraBookings);
       }
     } catch (error) {

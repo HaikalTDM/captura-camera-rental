@@ -25,6 +25,7 @@ import toast from 'react-hot-toast';
 import { useAdminData } from '@/contexts/AdminDataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { customToast } from '@/components/ui/toast-config';
 import {
   Table,
   TableBody,
@@ -197,25 +198,7 @@ export default function BookingsPage() {
   }, [sortBy]);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        mutateBookings();
-      }
-    };
-
-    const handleFocus = () => {
-      mutateBookings();
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('focus', handleFocus);
-
     mutateBookings();
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('focus', handleFocus);
-    };
   }, [mutateBookings]);
 
   const adminBookings = useMemo(() => {
@@ -397,12 +380,13 @@ export default function BookingsPage() {
 
       if (response.ok) {
         mutateBookings();
+        customToast.success('Booking deleted', 'The booking was removed from the board.');
       } else {
-        alert('Failed to delete booking');
+        customToast.error('Failed to delete booking', 'Please try again.');
       }
     } catch (error) {
       console.error('Error deleting booking:', error);
-      alert('Error deleting booking');
+      customToast.error('Error deleting booking', 'Please try again.');
     } finally {
       setDeletingId(null);
     }
@@ -829,7 +813,7 @@ export default function BookingsPage() {
                           type="date"
                           value={filters.dateRange.start}
                           onChange={(e) => setFilters((prev) => ({ ...prev, dateRange: { ...prev.dateRange, start: e.target.value } }))}
-                          className="h-11 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                          className="admin-dark-input text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -838,7 +822,7 @@ export default function BookingsPage() {
                           type="date"
                           value={filters.dateRange.end}
                           onChange={(e) => setFilters((prev) => ({ ...prev, dateRange: { ...prev.dateRange, end: e.target.value } }))}
-                          className="h-11 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                          className="admin-dark-input text-sm"
                         />
                       </div>
                     </div>
@@ -853,7 +837,7 @@ export default function BookingsPage() {
                           type="date"
                           value={filters.pickupDate.start}
                           onChange={(e) => setFilters((prev) => ({ ...prev, pickupDate: { ...prev.pickupDate, start: e.target.value } }))}
-                          className="h-11 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                          className="admin-dark-input text-sm"
                         />
                       </div>
                       <div className="space-y-2">
@@ -862,7 +846,7 @@ export default function BookingsPage() {
                           type="date"
                           value={filters.pickupDate.end}
                           onChange={(e) => setFilters((prev) => ({ ...prev, pickupDate: { ...prev.pickupDate, end: e.target.value } }))}
-                          className="h-11 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                          className="admin-dark-input text-sm"
                         />
                       </div>
                     </div>
@@ -988,7 +972,7 @@ export default function BookingsPage() {
                   placeholder="Search customer, phone, camera or booking ID..."
                   value={filters.search}
                   onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-                  className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-11 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                  className="admin-dark-input pl-11 pr-11 text-sm"
                 />
                 {filters.search && (
                   <button
@@ -1039,7 +1023,7 @@ export default function BookingsPage() {
                     <select
                       value={filters.camera}
                       onChange={(e) => setFilters((prev) => ({ ...prev, camera: e.target.value }))}
-                      className="h-12 w-full appearance-none rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                      className="admin-dark-select appearance-none pl-11 pr-4 text-sm"
                     >
                       <option value="">All cameras</option>
                       {uniqueCameras.map((camera) => (
@@ -1057,7 +1041,7 @@ export default function BookingsPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as SortOption)}
-                    className="h-12 w-full appearance-none rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-select appearance-none pl-11 pr-4 text-sm"
                   >
                     <option value="date_newest">Newest first</option>
                     <option value="date_oldest">Oldest first</option>

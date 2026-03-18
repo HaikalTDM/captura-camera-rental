@@ -20,6 +20,7 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileRentalAgreements from '@/components/admin/MobileRentalAgreements';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { customToast } from '@/components/ui/toast-config';
 
 interface BookingWithDetails extends Booking {
   customer: Customer;
@@ -73,7 +74,17 @@ export default function RentalAgreementsPage() {
         .from('bookings')
         .select(`
           *,
-          customer:customers(*)
+          customer:customers(
+            id,
+            full_name,
+            email,
+            phone,
+            whatsapp,
+            address,
+            id_number,
+            emergency_contact_name,
+            emergency_contact_phone
+          )
         `)
         .order('created_at', { ascending: false });
 
@@ -117,7 +128,7 @@ export default function RentalAgreementsPage() {
       await exportToPDF(agreementRef.current, { filename });
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Failed to export PDF. Please try again.');
+      customToast.error('Failed to export PDF', 'Please try again.');
     } finally {
       setExporting(false);
     }
@@ -290,7 +301,7 @@ export default function RentalAgreementsPage() {
                     placeholder="Search by name, email, phone, or booking ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input pl-11 pr-4 text-sm"
                   />
                 </div>
               </div>
@@ -301,7 +312,7 @@ export default function RentalAgreementsPage() {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select text-sm"
                 >
                   <option value="all">All statuses</option>
                   <option value="pending_approval">Pending Approval</option>

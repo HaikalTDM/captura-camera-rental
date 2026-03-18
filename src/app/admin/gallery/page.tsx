@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
@@ -26,6 +26,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import MobileGallery from '@/components/admin/MobileGallery';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 export default function GalleryPage() {
   const isMobile = useIsMobile(768);
@@ -37,6 +38,13 @@ export default function GalleryPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 });
+  const {
+    toasts,
+    success: showSuccess,
+    error: showError,
+    warning: showWarning,
+    removeToast,
+  } = useAnimatedToast();
   const [newImage, setNewImage] = useState({
     customer: '',
     camera: '',
@@ -44,11 +52,7 @@ export default function GalleryPage() {
     alt: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [imagesData, statsData] = await Promise.all([
@@ -57,12 +61,17 @@ export default function GalleryPage() {
       ]);
       setImages(imagesData);
       setStats(statsData);
-    } catch (error) {
-      console.error('Error loading gallery data:', error);
+    } catch (loadError) {
+      console.error('Error loading gallery data:', loadError);
+      showError('Failed to load gallery', 'Please refresh and try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -73,12 +82,12 @@ export default function GalleryPage() {
 
   const processFile = (file: File) => {
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      showWarning('Invalid file type', 'Please select an image file.');
       return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+      showWarning('File too large', 'File size must be less than 10MB.');
       return;
     }
 
@@ -117,7 +126,7 @@ export default function GalleryPage() {
 
   const addImage = async () => {
     if (!selectedImage || !newImage.customer || !newImage.camera || !newImage.location) {
-      alert('Please fill in all fields and select an image');
+      showWarning('Missing details', 'Please fill in all fields and select an image.');
       return;
     }
 
@@ -125,7 +134,7 @@ export default function GalleryPage() {
     try {
       const imageUrl = await uploadImage(selectedImage);
       if (!imageUrl) {
-        alert('Failed to upload image. Please try again.');
+        showError('Upload failed', 'Please try again.');
         return;
       }
 
@@ -142,13 +151,13 @@ export default function GalleryPage() {
       if (createdImage) {
         await loadData();
         resetUploadState();
-        alert('Image uploaded successfully!');
+        showSuccess('Image uploaded', `${createdImage.customer_name} is now in the gallery.`);
       } else {
-        alert('Failed to save image data. Please try again.');
+        showError('Failed to save image data', 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error adding image:', error);
-      alert('An error occurred while uploading the image.');
+    } catch (uploadError) {
+      console.error('Error adding image:', uploadError);
+      showError('Upload failed', 'An unexpected error occurred while uploading the image.');
     } finally {
       setIsUploading(false);
     }
@@ -156,33 +165,39 @@ export default function GalleryPage() {
 
   const toggleImageStatus = async (id: string) => {
     try {
-      const success = await toggleStatus(id);
-      if (success) {
+      const toggleSuccess = await toggleStatus(id);
+      if (toggleSuccess) {
         await loadData();
+        successToast('Gallery visibility updated', 'The website display status has been updated.');
       } else {
-        alert('Failed to update image status');
+        showError('Failed to update image status', 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error toggling image status:', error);
-      alert('An error occurred while updating the image');
+    } catch (toggleError) {
+      console.error('Error toggling image status:', toggleError);
+      showError('Update failed', 'An error occurred while updating the image.');
     }
   };
 
   const deleteImage = async (id: string) => {
     if (confirm('Are you sure you want to delete this image?')) {
       try {
-        const success = await deleteGalleryImage(id);
-        if (success) {
+        const deleteSuccess = await deleteGalleryImage(id);
+        if (deleteSuccess) {
+          const deletedName = images.find((image) => image.id === id)?.customer_name || 'Image';
           await loadData();
-          alert('Image deleted successfully');
+          showSuccess('Image deleted', `${deletedName} was removed from the gallery.`);
         } else {
-          alert('Failed to delete image');
+          showError('Failed to delete image', 'Please try again.');
         }
-      } catch (error) {
-        console.error('Error deleting image:', error);
-        alert('An error occurred while deleting the image');
+      } catch (deleteError) {
+        console.error('Error deleting image:', deleteError);
+        showError('Delete failed', 'An error occurred while deleting the image.');
       }
     }
+  };
+
+  const successToast = (message: string, description: string) => {
+    showSuccess(message, description);
   };
 
   const activeImages = useMemo(() => images.filter((image) => image.is_active), [images]);
@@ -263,7 +278,9 @@ export default function GalleryPage() {
   }
 
   return (
-    <div className="space-y-6 px-2 pb-8 xl:px-0">
+    <>
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+      <div className="space-y-6 px-2 pb-8 xl:px-0">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -432,7 +449,7 @@ export default function GalleryPage() {
                     value={newImage.customer}
                     onChange={(e) => setNewImage({ ...newImage, customer: e.target.value })}
                     placeholder="e.g., Sarah"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                   />
                 </div>
 
@@ -441,7 +458,7 @@ export default function GalleryPage() {
                   <select
                     value={newImage.camera}
                     onChange={(e) => setNewImage({ ...newImage, camera: e.target.value })}
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-select"
                   >
                     <option value="">Select camera</option>
                     <option value="Osmo Pocket 3">Osmo Pocket 3</option>
@@ -456,7 +473,7 @@ export default function GalleryPage() {
                     value={newImage.location}
                     onChange={(e) => setNewImage({ ...newImage, location: e.target.value })}
                     placeholder="e.g., Kuala Lumpur"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                   />
                 </div>
 
@@ -467,7 +484,7 @@ export default function GalleryPage() {
                     value={newImage.alt}
                     onChange={(e) => setNewImage({ ...newImage, alt: e.target.value })}
                     placeholder="Auto-generated if empty"
-                    className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                    className="admin-dark-input"
                   />
                 </div>
               </div>
@@ -607,6 +624,7 @@ export default function GalleryPage() {
           </Card>
         </motion.div>
       ))}
-    </div>
+      </div>
+    </>
   );
 }

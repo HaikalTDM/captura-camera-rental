@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getAllBookings, updateBooking, updateCustomer } from '@/lib/api/bookings';
+import { getBookingById, updateBooking, updateCustomer } from '@/lib/api/bookings';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
@@ -60,8 +60,7 @@ export default function EditBookingPage() {
   const loadBookingData = async () => {
     setIsLoading(true);
     try {
-      const bookings = await getAllBookings();
-      const foundBooking = bookings.find(b => b.id === bookingId);
+      const foundBooking = await getBookingById(bookingId);
       if (foundBooking) {
         setBooking(foundBooking);
         setFormData({

@@ -119,11 +119,8 @@ export default function MobileSettings({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-semibold transition-colors ${
-                    activeTab === tab.id
-                      ? 'border border-[#c96b2c] bg-[#2a1f16] text-orange-200'
-                      : 'border border-[#3a3129] bg-[#11100f] text-stone-400'
-                  }`}
+                  data-active={activeTab === tab.id}
+                  className="admin-dark-tab flex items-center justify-center gap-2 px-3 py-3 text-sm font-semibold"
                 >
                   <Icon className="h-4 w-4" />
                   {tab.name}
@@ -142,35 +139,35 @@ export default function MobileSettings({
               value={settings.businessName}
               onChange={(e) => updateSetting('businessName', e.target.value)}
               placeholder="Business name"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input"
             />
             <input
               type="tel"
               value={settings.businessPhone}
               onChange={(e) => updateSetting('businessPhone', e.target.value)}
               placeholder="Business phone"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input"
             />
             <input
               type="email"
               value={settings.businessEmail}
               onChange={(e) => updateSetting('businessEmail', e.target.value)}
               placeholder="Business email"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input"
             />
             <input
               type="tel"
               value={settings.whatsappNumber}
               onChange={(e) => updateSetting('whatsappNumber', e.target.value)}
               placeholder="WhatsApp number"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input"
             />
             <textarea
               rows={3}
               value={settings.businessAddress}
               onChange={(e) => updateSetting('businessAddress', e.target.value)}
               placeholder="Business address"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-textarea"
             />
           </CardContent>
         </Card>
@@ -186,7 +183,7 @@ export default function MobileSettings({
               min="0"
               max="100"
               placeholder="Default deposit %"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input text-lg font-semibold"
             />
             <input
               type="number"
@@ -194,7 +191,7 @@ export default function MobileSettings({
               onChange={(e) => updateSetting('lateFeePerDay', Number(e.target.value))}
               min="0"
               placeholder="Late fee per day"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input text-lg font-semibold"
             />
             <input
               type="number"
@@ -202,12 +199,12 @@ export default function MobileSettings({
               onChange={(e) => updateSetting('maxRentalDays', Number(e.target.value))}
               min="1"
               placeholder="Maximum rental days"
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-input text-lg font-semibold"
             />
             <select
               value={settings.currency}
               onChange={(e) => updateSetting('currency', e.target.value)}
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-select text-lg font-semibold"
             >
               <option value="RM">RM (Malaysian Ringgit)</option>
               <option value="USD">USD (US Dollar)</option>
@@ -276,7 +273,7 @@ export default function MobileSettings({
                 onChange={(e) => updateSetting('reminderDaysBefore', Number(e.target.value))}
                 min="0"
                 max="7"
-                className="w-24 rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-center text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+                className="admin-dark-input w-24 text-center text-lg font-semibold"
               />
             </div>
           </CardContent>
@@ -291,13 +288,13 @@ export default function MobileSettings({
                 type="time"
                 value={settings.workingHours.start}
                 onChange={(e) => updateWorkingHours('start', e.target.value)}
-                className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+                className="admin-dark-input text-lg font-semibold"
               />
               <input
                 type="time"
                 value={settings.workingHours.end}
                 onChange={(e) => updateWorkingHours('end', e.target.value)}
-                className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+                className="admin-dark-input text-lg font-semibold"
               />
             </div>
             <div className="rounded-2xl border border-[#31414f] bg-[#1b232b] p-4">
@@ -325,7 +322,7 @@ export default function MobileSettings({
             <select
               value={settings.timezone}
               onChange={(e) => updateSetting('timezone', e.target.value)}
-              className="w-full rounded-2xl border border-[#322b26] bg-[#11100f] p-3 text-lg font-semibold text-stone-100 outline-none focus:border-[#c96b2c]"
+              className="admin-dark-select text-lg font-semibold"
             >
               <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (GMT+8)</option>
               <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>

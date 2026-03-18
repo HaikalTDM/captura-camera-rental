@@ -6,7 +6,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminPWAWrapper from '../../components/admin/AdminPWAWrapper';
-import AIAssistant from '../../components/admin/AIAssistant';
 import { AdminDataProvider } from '@/contexts/AdminDataContext';
 import { ErrorBoundary } from '@/components/admin/ErrorBoundary';
 import { RefreshButton } from '@/components/admin/RefreshButton';
@@ -427,9 +426,6 @@ export default function AdminLayout({
                 </motion.div>
               </main>
             </div>
-
-            {/* AI Assistant */}
-            <AIAssistant />
           </div>
         </AdminDataProvider>
       </ErrorBoundary>

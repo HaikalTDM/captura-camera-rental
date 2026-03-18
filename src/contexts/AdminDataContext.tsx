@@ -1,8 +1,8 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useCallback } from 'react';
 import useSWR from 'swr';
-import { getAllBookings, getBookingStats, getAllCameras } from '@/lib/api/bookings';
+import { getAllBookings, getAllCameras } from '@/lib/api/bookings';
 import type { Booking, Camera } from '@/lib/supabase';
 
 interface BookingStats {
@@ -66,18 +66,6 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     }
   );
 
-  const { data: stats, error: statsError, mutate: mutateStats, isLoading: isLoadingStats } = useSWR(
-    'admin-stats',
-    getBookingStats,
-    {
-      ...swrConfig,
-      refreshInterval: 0, // Disable auto-refresh to prevent unmount issues
-      onError: (err) => {
-        console.error('Error fetching stats:', err);
-      },
-    }
-  );
-
   // Default stats if not loaded
   const defaultStats: BookingStats = useMemo(() => ({
     total: 0,
@@ -89,15 +77,36 @@ export function AdminDataProvider({ children }: { children: React.ReactNode }) {
     bySource: {}
   }), []);
 
-  const isLoading = isLoadingBookings || isLoadingCameras || isLoadingStats;
-  const error = bookingsError || camerasError || statsError;
+  const stats = useMemo<BookingStats>(() => {
+    if (!bookings.length) {
+      return defaultStats;
+    }
+
+    const bySource: Record<string, number> = {};
+    bookings.forEach((booking) => {
+      const source = booking.booking_source || 'unknown';
+      bySource[source] = (bySource[source] || 0) + 1;
+    });
+
+    return {
+      total: bookings.length,
+      pending: bookings.filter((booking) => booking.booking_status === 'pending_approval').length,
+      confirmed: bookings.filter((booking) => booking.booking_status === 'confirmed').length,
+      active: bookings.filter((booking) => booking.status === 'active').length,
+      completed: bookings.filter((booking) => booking.booking_status === 'completed').length,
+      cancelled: bookings.filter((booking) => booking.booking_status === 'cancelled').length,
+      bySource,
+    };
+  }, [bookings, defaultStats]);
+
+  const isLoading = isLoadingBookings || isLoadingCameras;
+  const error = bookingsError || camerasError;
 
   // Mutate all data
-  const mutate = () => {
+  const mutate = useCallback(() => {
     mutateBookings();
     mutateCameras();
-    mutateStats();
-  };
+  }, [mutateBookings, mutateCameras]);
 
   const value: AdminDataContextType = {
     bookings,

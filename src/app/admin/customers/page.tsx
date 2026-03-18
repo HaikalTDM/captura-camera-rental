@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 type CustomerSort = 'full_name' | 'totalSpent' | 'totalRentals' | 'created_at';
 
@@ -67,6 +68,7 @@ export default function CustomersPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { toasts, success, error, info, removeToast } = useAnimatedToast();
 
   const isLoading = bookingsLoading || customersLoading;
 
@@ -135,7 +137,7 @@ export default function CustomersPage() {
 
   const handleBulkDelete = async () => {
     if (selectedCustomers.length === 0) {
-      alert('Please select customers to delete');
+      info('No customers selected', 'Select one or more customers before deleting.');
       return;
     }
 
@@ -158,24 +160,19 @@ export default function CustomersPage() {
 
       if (data.success) {
         const { summary } = data;
-        let message = 'Bulk delete completed:\n';
-        message += `Deleted: ${summary.deleted}\n`;
-        if (summary.skipped > 0) {
-          message += `Skipped: ${summary.skipped} (customers with active bookings)\n`;
-        }
-        if (summary.failed > 0) {
-          message += `Failed: ${summary.failed}\n`;
-        }
+        const summaryParts = [`Deleted: ${summary.deleted}`];
+        if (summary.skipped > 0) summaryParts.push(`Skipped: ${summary.skipped}`);
+        if (summary.failed > 0) summaryParts.push(`Failed: ${summary.failed}`);
 
-        alert(message);
+        success('Bulk delete completed', summaryParts.join(' • '));
         mutate();
         setSelectedCustomers([]);
       } else {
-        alert(`Failed to delete customers: ${data.error}`);
+        error('Bulk delete failed', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error deleting customers:', error);
-      alert('Failed to delete customers. Please try again.');
+    } catch (deleteError) {
+      console.error('Error deleting customers:', deleteError);
+      error('Bulk delete failed', 'Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -197,14 +194,14 @@ export default function CustomersPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert('Customer deleted successfully');
+        success('Customer deleted', `${customer.full_name} was removed from the database.`);
         mutate();
       } else {
-        alert(`Failed to delete customer: ${data.error}`);
+        error('Delete failed', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error deleting customer:', error);
-      alert('Failed to delete customer. Please try again.');
+    } catch (deleteError) {
+      console.error('Error deleting customer:', deleteError);
+      error('Delete failed', 'Please try again.');
     }
   };
 
@@ -254,7 +251,9 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6 px-2 pb-8 xl:px-0">
+    <>
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+      <div className="space-y-6 px-2 pb-8 xl:px-0">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -417,7 +416,7 @@ export default function CustomersPage() {
                     placeholder="Search by name, phone, or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                    className="admin-dark-input pl-11 pr-4 text-sm"
                   />
                 </div>
               </div>
@@ -429,7 +428,7 @@ export default function CustomersPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as CustomerSort)}
-                  className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select text-sm"
                 >
                   <option value="full_name">Name</option>
                   <option value="totalSpent">Total Spent</option>
@@ -652,6 +651,7 @@ export default function CustomersPage() {
           )}
         </div>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 }

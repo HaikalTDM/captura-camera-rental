@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllCameras } from '@/lib/api/bookings';
-import type { Camera as DBCamera } from '@/lib/supabase';
+import { getPublicCameras } from '@/lib/api/bookings';
 import { Camera, CustomerDetails } from '@/types';
 import CameraCard from './CameraCard';
 import SpecsBottomSheet from './SpecsBottomSheet';
@@ -57,37 +56,15 @@ export default function CameraCatalog({ onBookCamera, variant = 'default' }: Cam
 
   const loadCameras = async () => {
     try {
-      const dbCameras = await getAllCameras();
-
-      console.log('🎬 RAW cameras from database:');
-      console.table(dbCameras.map(c => ({
-        name: c.name,
-        display_order: c.display_order,
-        is_available: c.is_available
-      })));
+      const dbCameras = await getPublicCameras();
 
       const availableCameras = dbCameras.filter(cam => cam.is_available);
-
-      console.log('🔄 Before sort:');
-      console.table(availableCameras.map(c => ({
-        name: c.name,
-        display_order: c.display_order,
-        type: typeof c.display_order
-      })));
 
       const sortedCameras = [...availableCameras].sort((a, b) => {
         const orderA = a.display_order ?? 999;
         const orderB = b.display_order ?? 999;
-        const result = orderA - orderB;
-        console.log(`Sort: "${a.name}" (${orderA}) vs "${b.name}" (${orderB}) = ${result}`);
-        return result;
+        return orderA - orderB;
       });
-
-      console.log('🎯 SORTED cameras (final order):');
-      console.table(sortedCameras.map(c => ({
-        name: c.name,
-        display_order: c.display_order
-      })));
 
       const convertedCameras: Camera[] = sortedCameras.map(dbCamera => {
         const getStaticImages = (cameraName: string) => {

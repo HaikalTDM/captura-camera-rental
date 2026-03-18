@@ -1,6 +1,39 @@
 import { supabase } from '../supabase'
 import type { Booking, Customer, Camera } from '../supabase'
 
+const BOOKING_CUSTOMER_SELECT = `
+  id,
+  full_name,
+  name,
+  email,
+  phone,
+  phone_number,
+  whatsapp,
+  address,
+  id_number,
+  emergency_contact_name,
+  emergency_contact_phone,
+  notes,
+  reliability
+`
+
+export type PublicAvailabilityBooking = Pick<Booking, 'id' | 'camera_id' | 'start_date' | 'end_date' | 'booking_status'>
+export type PublicCamera = Pick<
+  Camera,
+  | 'id'
+  | 'name'
+  | 'description'
+  | 'type'
+  | 'daily_rate'
+  | 'weekly_rate'
+  | 'monthly_rate'
+  | 'discount_threshold'
+  | 'specifications'
+  | 'is_available'
+  | 'available_quantity'
+  | 'display_order'
+>
+
 function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) {
     return value[0] ?? null
@@ -11,12 +44,11 @@ function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
 // Get all bookings with customer details and camera information
 export async function getAllBookings(): Promise<Booking[]> {
   try {
-    console.log('Fetching all bookings...');
     const { data, error } = await supabase
       .from('bookings')
       .select(`
         *,
-        customer:customers(*)
+        customer:customers(${BOOKING_CUSTOMER_SELECT})
       `)
       .order('created_at', { ascending: false })
 
@@ -24,8 +56,6 @@ export async function getAllBookings(): Promise<Booking[]> {
       console.error('Error fetching bookings:', error)
       return []
     }
-
-    console.log('Fetched bookings:', data?.length || 0);
 
     // Since camera_id is a string field, we need to fetch camera info separately
     // Get all unique camera IDs from bookings
@@ -68,12 +98,11 @@ export async function getAllBookings(): Promise<Booking[]> {
 // Get booking by ID
 export async function getBookingById(id: string): Promise<Booking | null> {
   try {
-    console.log('Fetching booking by ID:', id);
     const { data, error } = await supabase
       .from('bookings')
       .select(`
         *,
-        customer:customers(*)
+        customer:customers(${BOOKING_CUSTOMER_SELECT})
       `)
       .eq('id', id)
       .single()
@@ -83,8 +112,6 @@ export async function getBookingById(id: string): Promise<Booking | null> {
       if (error.code === 'PGRST116') return null // Not found
       return null
     }
-
-    console.log('Fetched booking:', data);
 
     // Fetch camera information if camera_id exists
     if (data?.camera_id) {
@@ -124,7 +151,7 @@ export async function getBookingsByDateRange(startDate: string, endDate: string)
       .from('bookings')
       .select(`
         *,
-        customer:customers(*)
+        customer:customers(${BOOKING_CUSTOMER_SELECT})
       `)
       .gte('start_date', startDate)
       .lte('end_date', endDate)
@@ -508,6 +535,153 @@ export async function getCustomerById(id: string): Promise<Customer | null> {
   }
 }
 
+// Get only the fields needed by public rental pages
+export async function getPublicCameras(): Promise<PublicCamera[]> {
+  try {
+    const { data, error } = await supabase
+      .from('cameras')
+      .select(`
+        id,
+        name,
+        description,
+        type,
+        daily_rate,
+        weekly_rate,
+        monthly_rate,
+        discount_threshold,
+        specifications,
+        is_available,
+        available_quantity,
+        display_order
+      `)
+      .order('display_order', { ascending: true, nullsFirst: false })
+
+    if (error) {
+      console.error('Error fetching public cameras:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getPublicCameras:', error)
+    return []
+  }
+}
+
+// Get bookings by customer ID
+export async function getBookingsByCustomerId(customerId: string): Promise<Booking[]> {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        customer:customers(${BOOKING_CUSTOMER_SELECT})
+      `)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching bookings by customer ID:', error)
+      return []
+    }
+
+    const cameraIds = [...new Set(data?.map((booking) => booking.camera_id).filter(Boolean))] as string[]
+
+    if (!cameraIds.length) {
+      return data || []
+    }
+
+    const { data: cameras, error: cameraError } = await supabase
+      .from('cameras')
+      .select('id, name, brand, model')
+      .in('id', cameraIds)
+
+    if (cameraError) {
+      console.error('Error fetching camera info:', cameraError)
+    }
+
+    const cameraMap = new Map()
+    cameras?.forEach((camera) => {
+      cameraMap.set(camera.id, camera)
+    })
+
+    return data?.map((booking) => ({
+      ...booking,
+      camera: cameraMap.get(booking.camera_id) || {
+        id: booking.camera_id,
+        name: `Camera (${booking.camera_id})`,
+        brand: 'Unknown',
+        model: 'Unknown'
+      }
+    })) || []
+  } catch (error) {
+    console.error('Error in getBookingsByCustomerId:', error)
+    return []
+  }
+}
+
+// Get bookings by camera ID
+export async function getBookingsByCameraId(cameraId: string): Promise<Booking[]> {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        customer:customers(${BOOKING_CUSTOMER_SELECT})
+      `)
+      .eq('camera_id', cameraId)
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Error fetching bookings by camera ID:', error)
+      return []
+    }
+
+    const { data: camera, error: cameraError } = await supabase
+      .from('cameras')
+      .select('id, name, brand, model')
+      .eq('id', cameraId)
+      .single()
+
+    if (cameraError) {
+      console.error('Error fetching camera info:', cameraError)
+    }
+
+    return data?.map((booking) => ({
+      ...booking,
+      camera: camera || {
+        id: booking.camera_id,
+        name: `Camera (${booking.camera_id})`,
+        brand: 'Unknown',
+        model: 'Unknown'
+      }
+    })) || []
+  } catch (error) {
+    console.error('Error in getBookingsByCameraId:', error)
+    return []
+  }
+}
+
+// Get only the minimum data needed for public availability checks
+export async function getPublicAvailabilityBookings(): Promise<PublicAvailabilityBooking[]> {
+  try {
+    const { data, error } = await supabase
+      .from('bookings')
+      .select('id, camera_id, start_date, end_date, booking_status')
+      .in('booking_status', ['confirmed', 'approved'])
+
+    if (error) {
+      console.error('Error fetching public availability bookings:', error)
+      return []
+    }
+
+    return data || []
+  } catch (error) {
+    console.error('Error in getPublicAvailabilityBookings:', error)
+    return []
+  }
+}
+
 // Update customer
 export async function updateCustomer(
   id: string, 
@@ -562,7 +736,6 @@ export async function getBookingStats(): Promise<{
   bySource: Record<string, number>
 }> {
   try {
-    console.log('Fetching booking stats...');
     const { data, error } = await supabase
       .from('bookings')
       .select('booking_status, booking_source')
@@ -572,7 +745,6 @@ export async function getBookingStats(): Promise<{
       return { total: 0, pending: 0, confirmed: 0, active: 0, completed: 0, cancelled: 0, bySource: {} }
     }
 
-    console.log('Stats data:', data);
     const total = data.length
     const pending = data.filter(b => b.booking_status === 'pending_approval').length
     const confirmed = data.filter(b => b.booking_status === 'confirmed').length

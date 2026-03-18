@@ -23,6 +23,7 @@ import { motion } from 'framer-motion';
 import { excludeMotherBookings } from '@/lib/utils/revenue';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileReports from '@/components/admin/MobileReports';
+import { customToast } from '@/components/ui/toast-config';
 
 type DateRange = 'week' | 'month' | 'quarter' | 'year';
 type ReportType = 'revenue' | 'bookings' | 'customers' | 'payments';
@@ -68,6 +69,7 @@ export default function ReportsPage() {
       setCustomers(customersData);
     } catch (error) {
       console.error('Error loading reports data:', error);
+      customToast.error('Failed to load reports', 'Please refresh and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -276,7 +278,7 @@ export default function ReportsPage() {
                 <select
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value as DateRange)}
-                  className="h-11 rounded-2xl border border-[#3a3129] bg-[#191613] px-4 text-sm font-medium text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select text-sm font-medium"
                 >
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
@@ -286,7 +288,7 @@ export default function ReportsPage() {
                 <select
                   value={reportType}
                   onChange={(e) => setReportType(e.target.value as ReportType)}
-                  className="h-11 rounded-2xl border border-[#3a3129] bg-[#191613] px-4 text-sm font-medium text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                  className="admin-dark-select text-sm font-medium"
                 >
                   <option value="revenue">Revenue</option>
                   <option value="bookings">Bookings</option>

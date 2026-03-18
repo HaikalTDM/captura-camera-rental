@@ -1,5 +1,92 @@
 /* Admin Mobile Optimization Utilities */
 
+/* Keep dark admin form fields readable when mobile/browser autofill kicks in */
+input,
+textarea,
+select {
+  color-scheme: dark;
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #f5f5f4 !important;
+  caret-color: #f5f5f4;
+  box-shadow: 0 0 0 1000px #11100f inset !important;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+.admin-dark-input,
+.admin-dark-select,
+.admin-dark-textarea {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid #322b26;
+  background: #11100f;
+  color: #f5f5f4;
+  outline: none;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.admin-dark-input::placeholder,
+.admin-dark-textarea::placeholder {
+  color: #78716c;
+}
+
+.admin-dark-input,
+.admin-dark-select {
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-dark-textarea {
+  padding: 0.75rem 1rem;
+}
+
+.admin-dark-input:focus,
+.admin-dark-select:focus,
+.admin-dark-textarea:focus {
+  border-color: #c96b2c;
+  box-shadow: 0 0 0 3px rgba(201, 107, 44, 0.16);
+}
+
+.admin-dark-panel {
+  border: 1px solid #2b2520;
+  border-radius: 1rem;
+  background: #13110f;
+}
+
+.admin-dark-tab {
+  border: 1px solid #3a3129;
+  border-radius: 1rem;
+  background: #11100f;
+  color: #a8a29e;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.admin-dark-tab:hover {
+  border-color: #56473c;
+  color: #f5f5f4;
+}
+
+.admin-dark-tab[data-active='true'] {
+  border-color: #c96b2c;
+  background: #2a1f16;
+  color: #fdba74;
+}
+
 /* Hide scrollbar but keep functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
