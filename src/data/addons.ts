@@ -20,6 +20,7 @@ export interface AddOnCategory {
   description: string;
   sortOrder: number;
   isActive: boolean;
+  icon: string;
 }
 
 // Admin-editable categories
@@ -29,28 +30,32 @@ export const addOnCategories: AddOnCategory[] = [
     name: 'Time Extensions',
     description: 'Additional coverage hours and extended services',
     sortOrder: 1,
-    isActive: true
+    isActive: true,
+    icon: '⏱️'
   },
   {
     id: 'delivery',
     name: 'Delivery & Processing',
     description: 'Fast delivery and processing options',
     sortOrder: 2,
-    isActive: true
+    isActive: true,
+    icon: '🚚'
   },
   {
     id: 'extras',
     name: 'Physical Products',
     description: 'Prints, albums, and tangible items',
     sortOrder: 3,
-    isActive: true
+    isActive: true,
+    icon: '📦'
   },
   {
     id: 'premium',
     name: 'Premium Services',
     description: 'Special and premium photography services',
     sortOrder: 4,
-    isActive: true
+    isActive: true,
+    icon: '✨'
   }
 ];
 

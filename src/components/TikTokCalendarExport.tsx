@@ -31,7 +31,6 @@ interface TikTokCalendarExportProps {
 export default function TikTokCalendarExport({ 
   currentDate, 
   calendarDays, 
-  events, 
   onExportComplete 
 }: TikTokCalendarExportProps) {
   const [isExporting, setIsExporting] = useState(false);
@@ -62,7 +61,7 @@ export default function TikTokCalendarExport({
       await new Promise(resolve => setTimeout(resolve, 100));
 
       // Configure html2canvas for high quality with better browser compatibility
-      const canvas = await html2canvas(exportElement, {
+      const canvasOptions = {
         width: 1080,
         height: 1920,
         scale: 2, // High DPI for crisp text
@@ -73,18 +72,18 @@ export default function TikTokCalendarExport({
         removeContainer: true,
         imageTimeout: 15000,
         foreignObjectRendering: false, // Disable foreign object rendering for better compatibility
-        onclone: (clonedDoc) => {
+        onclone: (clonedDoc: Document) => {
           try {
             // Ensure fonts are loaded in cloned document
             const clonedElement = clonedDoc.getElementById('tiktok-calendar-export');
             if (clonedElement) {
               clonedElement.style.fontFamily = 'Inter, system-ui, -apple-system, sans-serif';
               // Force all text to be black for better contrast
-              const textElements = clonedElement.querySelectorAll('*');
-              textElements.forEach((el: any) => {
+              const textElements = clonedElement.querySelectorAll<HTMLElement>('*');
+              textElements.forEach((el) => {
                 if (el.style) {
-                  el.style.webkitFontSmoothing = 'antialiased';
-                  el.style.mozOsxFontSmoothing = 'grayscale';
+                  el.style.setProperty('-webkit-font-smoothing', 'antialiased');
+                  el.style.setProperty('-moz-osx-font-smoothing', 'grayscale');
                 }
               });
             }
@@ -92,7 +91,8 @@ export default function TikTokCalendarExport({
             console.warn('Font loading warning:', error);
           }
         }
-      });
+      } as unknown as Parameters<typeof html2canvas>[1];
+      const canvas = await html2canvas(exportElement, canvasOptions);
 
       // Create download link
       const link = document.createElement('a');
@@ -195,11 +195,11 @@ export default function TikTokCalendarExport({
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+        className="inline-flex items-center rounded-xl border border-[#4a3727] bg-[#221912] px-4 py-2 font-semibold text-orange-300 shadow-[0_12px_28px_rgba(0,0,0,0.22)] transition-all duration-200 hover:border-[#c96b2c] hover:bg-[#2a1d15] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isExporting ? (
           <>
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+            <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-orange-300/30 border-t-orange-300"></div>
             Exporting...
           </>
         ) : (

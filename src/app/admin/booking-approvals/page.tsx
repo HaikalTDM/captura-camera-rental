@@ -1,47 +1,76 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import {
+  AlertCircle,
+  BookOpen,
+  Calendar,
+  Camera,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Eye,
+  MessageCircle,
+  Phone,
+  RefreshCw,
+  Settings,
+  XCircle,
+} from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Booking } from '@/lib/supabase';
-import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileApprovals from '@/components/admin/MobileApprovals';
-import ConfirmationModal from '@/components/ui/ConfirmationModal';
 import { customToast } from '@/components/ui/toast-config';
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  MessageCircle,
-  Calendar,
-  Camera,
-  DollarSign,
-  Phone,
-  RefreshCw,
-  BookOpen,
-  Settings,
-  AlertCircle
-} from 'lucide-react';
+
+type CameraOption = {
+  id: string;
+  name: string;
+  brand?: string | null;
+  model?: string | null;
+};
+
+function formatDateRange(startDate: string, endDate: string) {
+  return `${new Date(startDate).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })} - ${new Date(endDate).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })}`;
+}
+
+function formatSubmittedDate(createdAt?: string | null) {
+  if (!createdAt) return 'Unknown';
+
+  return new Date(createdAt).toLocaleString('en-MY', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export default function BookingApprovalsPage() {
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
-  const [cameras, setCameras] = useState<any[]>([]);
+  const [cameras, setCameras] = useState<CameraOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingBooking, setProcessingBooking] = useState<string | null>(null);
-  const isMobile = useIsMobile(768); // Detect mobile viewport < 768px
-
-  // Custom confirmation modal state
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const isMobile = useIsMobile(768);
 
   useEffect(() => {
     loadPendingBookings();
     loadCameras();
   }, []);
+
+  const queueInsights = useMemo(() => {
+    const oldestPending = pendingBookings[0];
+    const highValueCount = pendingBookings.filter((booking) => booking.total_amount >= 300).length;
+
+    return {
+      oldestPending,
+      highValueCount,
+    };
+  }, [pendingBookings]);
 
   const loadCameras = async () => {
     try {
@@ -51,23 +80,34 @@ export default function BookingApprovalsPage() {
         .order('name');
 
       if (error) {
-        console.error('Error loading cameras:', error); // eslint-disable-line no-console
         customToast.error('Error loading cameras', error.message);
-      } else {
-        setCameras(camerasData || []);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error in loadCameras:', error); // eslint-disable-line no-console
-      customToast.error('Error loading cameras', error?.message || 'Unknown error');
+
+      setCameras((camerasData as CameraOption[]) || []);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      customToast.error('Error loading cameras', message);
     }
   };
 
   const getCameraInfo = (cameraId: string) => {
-    return cameras.find(camera => camera.id === cameraId) || { name: 'Unknown Camera', brand: '', model: '' };
+    const camera = cameras.find((item) => item.id === cameraId);
+
+    if (!camera) {
+      return { name: 'Unknown Camera', brand: '', model: '' };
+    }
+
+    return {
+      name: camera.name,
+      brand: camera.brand || '',
+      model: camera.model || '',
+    };
   };
 
   const loadPendingBookings = async () => {
     setIsLoading(true);
+
     try {
       const { data: bookings, error } = await supabase
         .from('bookings')
@@ -79,15 +119,14 @@ export default function BookingApprovalsPage() {
         .order('created_at', { ascending: true });
 
       if (error) {
-        console.error('Error loading pending bookings:', error); // eslint-disable-line no-console
         customToast.error('Error loading pending bookings', error.message);
-      } else {
-        console.log('Approvals page - Loaded bookings:', bookings?.length || 0); // eslint-disable-line no-console
-        setPendingBookings(bookings || []);
+        return;
       }
-    } catch (error: any) {
-      console.error('Error in loadPendingBookings:', error); // eslint-disable-line no-console
-      customToast.error('Error loading pending bookings', error?.message || 'Unknown error');
+
+      setPendingBookings(bookings || []);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      customToast.error('Error loading pending bookings', message);
     } finally {
       setIsLoading(false);
     }
@@ -95,6 +134,7 @@ export default function BookingApprovalsPage() {
 
   const handleApproveBooking = async (bookingId: string, notes?: string): Promise<boolean> => {
     setProcessingBooking(bookingId);
+
     try {
       const response = await fetch(`/api/bookings/${bookingId}/approve`, {
         method: 'POST',
@@ -108,14 +148,13 @@ export default function BookingApprovalsPage() {
 
       if (result.success) {
         customToast.success('Booking Approved!', 'The customer has been notified.');
-        loadPendingBookings(); // Refresh the list
+        loadPendingBookings();
         return true;
-      } else {
-        customToast.error('Error', result.error);
-        return false;
       }
-    } catch (error) {
-      console.error('Error approving booking:', error);
+
+      customToast.error('Error', result.error);
+      return false;
+    } catch {
       customToast.error('Failed to approve booking', 'Please try again.');
       return false;
     } finally {
@@ -125,6 +164,7 @@ export default function BookingApprovalsPage() {
 
   const handleRejectBooking = async (bookingId: string, reason: string, notes?: string): Promise<boolean> => {
     setProcessingBooking(bookingId);
+
     try {
       const response = await fetch(`/api/bookings/${bookingId}/reject`, {
         method: 'POST',
@@ -133,7 +173,7 @@ export default function BookingApprovalsPage() {
         },
         body: JSON.stringify({
           rejection_reason: reason,
-          admin_notes: notes
+          admin_notes: notes,
         }),
       });
 
@@ -141,14 +181,13 @@ export default function BookingApprovalsPage() {
 
       if (result.success) {
         customToast.warning('Booking Rejected', 'The customer has been notified.');
-        loadPendingBookings(); // Refresh the list
+        loadPendingBookings();
         return true;
-      } else {
-        customToast.error('Error', result.error);
-        return false;
       }
-    } catch (error) {
-      console.error('Error rejecting booking:', error);
+
+      customToast.error('Error', result.error);
+      return false;
+    } catch {
       customToast.error('Failed to reject booking', 'Please try again.');
       return false;
     } finally {
@@ -161,362 +200,431 @@ export default function BookingApprovalsPage() {
     setShowApproveModal(true);
   };
 
-  const handleConfirmApprove = async () => {
-    if (selectedBookingId) {
-      const success = await handleApproveBooking(selectedBookingId, 'Quick approval from admin dashboard');
-      if (success) {
-        setShowApproveModal(false);
-        setSelectedBookingId(null);
-      }
-    } else {
-      setShowApproveModal(false);
-    }
-  };
-
   const quickReject = (bookingId: string) => {
     setSelectedBookingId(bookingId);
     setRejectReason('');
     setShowRejectModal(true);
   };
 
+  const closeApproveModal = () => {
+    setShowApproveModal(false);
+    setSelectedBookingId(null);
+  };
+
+  const closeRejectModal = () => {
+    setShowRejectModal(false);
+    setSelectedBookingId(null);
+    setRejectReason('');
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!selectedBookingId) {
+      closeApproveModal();
+      return;
+    }
+
+    const success = await handleApproveBooking(selectedBookingId, 'Quick approval from approvals board');
+    if (success) {
+      closeApproveModal();
+    }
+  };
+
   const handleConfirmReject = async () => {
-    if (selectedBookingId && rejectReason.trim()) {
-      const success = await handleRejectBooking(selectedBookingId, rejectReason, 'Quick rejection from admin dashboard');
-      if (success) {
-        setShowRejectModal(false);
-        setSelectedBookingId(null);
-        setRejectReason('');
-      }
-    } else {
-      setShowRejectModal(false);
+    if (!selectedBookingId || !rejectReason.trim()) {
+      return;
+    }
+
+    const success = await handleRejectBooking(selectedBookingId, rejectReason.trim(), 'Quick rejection from approvals board');
+    if (success) {
+      closeRejectModal();
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex h-64 items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-slate-900"></div>
-          <p className="text-sm text-slate-600 font-medium">Loading approvals...</p>
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#2b2621] border-t-orange-500" />
+          <p className="text-sm font-medium text-stone-400">Loading approvals...</p>
         </div>
       </div>
     );
   }
 
+  if (isMobile) {
+    return (
+      <MobileApprovals
+        pendingBookings={pendingBookings}
+        cameras={cameras}
+        isLoading={isLoading}
+        processingBooking={processingBooking}
+        onRefresh={loadPendingBookings}
+        onApprove={quickApprove}
+        onReject={quickReject}
+        getCameraInfo={getCameraInfo}
+      />
+    );
+  }
+
   return (
-    <div className={isMobile ? "" : "space-y-6"}>
-      {isMobile ? (
-        // 📱 MOBILE: Return compact approvals layout
-        <MobileApprovals
-          pendingBookings={pendingBookings}
-          cameras={cameras}
-          isLoading={isLoading}
-          processingBooking={processingBooking}
-          onRefresh={loadPendingBookings}
-          onApprove={quickApprove}
-          onReject={quickReject}
-          getCameraInfo={getCameraInfo}
-        />
-      ) : (
-        // 🖥️ DESKTOP: Return original layout
-        <>
-          {/* Header */}
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl p-8 shadow-xl border border-slate-700">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <Clock className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-white mb-1">Booking Approvals</h1>
-                  <p className="text-slate-300 text-sm">Review and approve pending camera rental bookings</p>
-                </div>
+    <div className="space-y-6">
+      <div className="rounded-[32px] border border-[#2d2823] bg-[radial-gradient(circle_at_top_left,_rgba(201,107,44,0.16),_transparent_35%),linear-gradient(135deg,#191614_0%,#141210_60%,#1b1714_100%)] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#3a332c] bg-[#1a1714] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-300">
+              <Clock className="h-3.5 w-3.5" />
+              Approval Queue
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#3a2d22] bg-[#221912] shadow-lg">
+                <Clock className="h-7 w-7 text-orange-300" />
               </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-6 py-4 border border-white/20">
-                <p className="text-slate-300 text-xs font-medium mb-1">Pending Approvals</p>
-                <p className="text-4xl font-bold text-white">{pendingBookings.length}</p>
+              <div>
+                <h1 className="text-3xl font-bold text-stone-50">Booking Approvals</h1>
+                <p className="mt-1 text-sm text-stone-400">Review requests, scan the essentials, and make the call quickly.</p>
               </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Settings className="w-4 h-4 text-blue-600" />
-              </div>
-              <h2 className="text-lg font-bold text-slate-900">Quick Actions</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-[#312b25] bg-[#1b1815] px-5 py-4">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-stone-500">Pending Now</p>
+              <p className="mt-2 text-4xl font-bold text-stone-50">{pendingBookings.length}</p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/admin/bookings"
-                className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-              >
-                <BookOpen className="w-4 h-4" />
-                View All Bookings
-              </Link>
-              <button
-                onClick={loadPendingBookings}
-                className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 border border-slate-200"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Refresh List
-              </button>
-              <Link
-                href="/admin/setup-pickup-scheduling"
-                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-              >
-                <Calendar className="w-4 h-4" />
-                Setup Pickup Scheduling
-              </Link>
+            <div className="rounded-2xl border border-[#312b25] bg-[#1b1815] px-5 py-4">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-stone-500">High Value</p>
+              <p className="mt-2 text-4xl font-bold text-orange-300">{queueInsights.highValueCount}</p>
             </div>
           </div>
+        </div>
+      </div>
 
-          {/* Pending Bookings */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 p-6 border-b border-amber-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center shadow-sm">
-                  <Clock className="w-5 h-5 text-white" />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <div className="mb-5 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#231f1b]">
+              <Settings className="h-4 w-4 text-orange-300" />
+            </div>
+            <h2 className="text-lg font-bold text-stone-50">Quick Actions</h2>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/admin/bookings"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#f3efe8] px-5 py-2.5 text-sm font-semibold text-[#11100f] transition-all duration-200 hover:bg-white active:scale-95"
+            >
+              <BookOpen className="h-4 w-4" />
+              View All Bookings
+            </Link>
+            <button
+              onClick={loadPendingBookings}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#332d27] bg-[#1d1916] px-5 py-2.5 text-sm font-semibold text-stone-300 transition-all duration-200 hover:border-[#4a4036] hover:bg-[#24201c] active:scale-95"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh List
+            </button>
+            <Link
+              href="/admin/setup-pickup-scheduling"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#4a3727] bg-[#221912] px-5 py-2.5 text-sm font-semibold text-orange-300 transition-all duration-200 hover:border-[#c96b2c] hover:bg-[#2a1d15] active:scale-95"
+            >
+              <Calendar className="h-4 w-4" />
+              Setup Pickup Scheduling
+            </Link>
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <div className="mb-2 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#231f1b]">
+              <AlertCircle className="h-4 w-4 text-orange-300" />
+            </div>
+            <h2 className="text-lg font-bold text-stone-50">Queue Snapshot</h2>
+          </div>
+          <div className="space-y-3 text-sm text-stone-400">
+            <p>{pendingBookings.length} booking{pendingBookings.length !== 1 ? 's' : ''} currently waiting for a decision.</p>
+            <p>
+              {queueInsights.oldestPending
+                ? `Oldest request was submitted ${formatSubmittedDate(queueInsights.oldestPending.created_at)}.`
+                : 'No pending requests in the queue.'}
+            </p>
+            <p>Use approve for clean confirmations and reject only when you want to notify the customer with a reason.</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] overflow-hidden shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div className="border-b border-[#26211d] bg-[#191715] p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#231f1b]">
+              <Clock className="h-5 w-5 text-orange-300" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-stone-50">Pending Approvals ({pendingBookings.length})</h3>
+              <p className="mt-0.5 text-sm text-stone-400">
+                These bookings are waiting for approval before the customer can move forward.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          {pendingBookings.length > 0 ? (
+            <div className="space-y-4">
+              {pendingBookings.map((booking) => {
+                const cameraInfo = getCameraInfo(booking.camera_id);
+                const isProcessing = processingBooking === booking.id;
+
+                return (
+                  <div
+                    key={booking.id}
+                    className="rounded-[24px] border border-[#2b2621] bg-[#1b1815] p-6 transition-all duration-200 hover:border-[#4a4036]"
+                  >
+                    <div className="mb-5 flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#342d27] bg-[#0f0e0d]">
+                          <span className="text-lg font-bold text-stone-100">
+                            {booking.customer?.full_name?.charAt(0).toUpperCase() || '?'}
+                          </span>
+                        </div>
+                        <div>
+                          <h4 className="text-lg font-bold text-stone-100">{booking.customer?.full_name || 'Unknown Customer'}</h4>
+                          <span className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-[#4a3727] bg-[#221912] px-3 py-1 text-xs font-semibold text-orange-300">
+                            <Clock className="h-3 w-3" />
+                            Pending Approval
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-[#342d27] bg-[#171513] px-4 py-3 text-right">
+                        <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Amount</p>
+                        <p className="mt-1 text-xl font-bold text-orange-300">RM{booking.total_amount}</p>
+                      </div>
+                    </div>
+
+                    <div className="mb-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <div className="flex items-start gap-3 rounded-xl border border-[#2f2a25] bg-[#171513] p-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#231f1b]">
+                          <Camera className="h-5 w-5 text-orange-300" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 text-xs font-medium text-stone-500">Camera</p>
+                          <p className="truncate font-semibold text-stone-100">{cameraInfo.name}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 rounded-xl border border-[#2f2a25] bg-[#171513] p-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#231f1b]">
+                          <Calendar className="h-5 w-5 text-stone-300" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 text-xs font-medium text-stone-500">Rental Period</p>
+                          <p className="text-sm font-semibold text-stone-100">{formatDateRange(booking.start_date, booking.end_date)}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 rounded-xl border border-[#2f2a25] bg-[#171513] p-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#231f1b]">
+                          <Phone className="h-5 w-5 text-stone-300" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 text-xs font-medium text-stone-500">Contact</p>
+                          <p className="font-semibold text-stone-100">{booking.customer?.phone || 'No phone number'}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3 rounded-xl border border-[#2f2a25] bg-[#171513] p-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[#231f1b]">
+                          <DollarSign className="h-5 w-5 text-orange-300" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="mb-1 text-xs font-medium text-stone-500">Booking Source</p>
+                          <p className="font-semibold text-stone-100">{booking.booking_source || 'Manual'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {booking.notes && (
+                      <div className="mb-5 rounded-xl border border-[#3a3129] bg-[#181513] p-4">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-orange-300" />
+                          <div className="flex-1">
+                            <p className="mb-1 text-xs font-semibold text-stone-300">Customer Notes</p>
+                            <p className="text-sm text-stone-400">{booking.notes}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mb-5 flex flex-wrap gap-x-4 gap-y-1 border-b border-[#2f2a25] pb-5 text-xs text-stone-500">
+                      <span>ID: {booking.id.slice(0, 8).toUpperCase()}</span>
+                      <span>•</span>
+                      <span>Submitted: {formatSubmittedDate(booking.created_at)}</span>
+                      <span>•</span>
+                      <span>Total Days: {booking.total_days}</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={() => quickApprove(booking.id)}
+                        disabled={isProcessing}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[#f3efe8] px-5 py-2.5 text-sm font-semibold text-[#11100f] transition-all duration-200 hover:bg-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#11100f]/20 border-t-[#11100f]" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4" />
+                            Approve
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => quickReject(booking.id)}
+                        disabled={isProcessing}
+                        className="inline-flex items-center gap-2 rounded-xl border border-[#5a2c29] bg-[#2a1614] px-5 py-2.5 text-sm font-semibold text-red-200 transition-all duration-200 hover:bg-[#331918] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-200/30 border-t-red-200" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="h-4 w-4" />
+                            Reject
+                          </>
+                        )}
+                      </button>
+
+                      <Link
+                        href={`/admin/bookings/${booking.id}`}
+                        className="inline-flex items-center gap-2 rounded-xl border border-[#332d27] bg-[#1d1916] px-5 py-2.5 text-sm font-semibold text-stone-300 transition-all duration-200 hover:border-[#4a4036] hover:bg-[#24201c] active:scale-95"
+                      >
+                        <Eye className="h-4 w-4" />
+                        View Details
+                      </Link>
+
+                      {booking.customer?.phone && (
+                        <a
+                          href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-xl border border-[#332d27] bg-[#1d1916] px-5 py-2.5 text-sm font-semibold text-stone-300 transition-all duration-200 hover:border-[#4a4036] hover:bg-[#24201c] active:scale-95"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          WhatsApp
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="py-16 text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#1d1814] shadow-sm">
+                <CheckCircle className="h-10 w-10 text-orange-300" />
+              </div>
+              <p className="mb-1 text-lg font-bold text-stone-100">No pending approvals</p>
+              <p className="text-sm text-stone-500">Everything is processed and the queue is clear.</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {showApproveModal && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+          onClick={closeApproveModal}
+        >
+          <div
+            className="w-full max-w-sm overflow-hidden rounded-[28px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="p-6 pb-4">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#3a332c] bg-[#221912]">
+                  <CheckCircle className="h-6 w-6 text-orange-300" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">
-                    Pending Approvals ({pendingBookings.length})
-                  </h3>
-                  <p className="text-sm text-slate-600 mt-0.5">
-                    These bookings are waiting for admin approval before customers can proceed with pickup
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-stone-100">Approve Booking</h3>
+                  <p className="mt-1 text-sm text-stone-400">
+                    Confirm this booking and notify the customer that the request has been approved.
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-6">
-              {pendingBookings.length > 0 ? (
-                <div className="space-y-4">
-                  {pendingBookings.map((booking) => (
-                    <div key={booking.id} className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl border border-slate-200 p-6 hover:shadow-md transition-all duration-200">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center">
-                            <span className="text-white text-lg font-bold">
-                              {booking.customer?.full_name?.charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div>
-                            <h4 className="text-lg font-bold text-slate-900">{booking.customer?.full_name}</h4>
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 mt-1">
-                              <Clock className="w-3 h-3" />
-                              Pending Approval
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Info Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-                        <div className="flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-200">
-                          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Camera className="w-5 h-5 text-purple-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-500 mb-1">Camera</p>
-                            <p className="font-semibold text-slate-900 truncate">{getCameraInfo(booking.camera_id).name}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-200">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Calendar className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-500 mb-1">Rental Period</p>
-                            <p className="font-semibold text-slate-900 text-sm">
-                              {new Date(booking.start_date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })} - {new Date(booking.end_date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-200">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <DollarSign className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-500 mb-1">Total Amount</p>
-                            <p className="font-bold text-green-600 text-lg">RM{booking.total_amount}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 bg-white rounded-xl p-4 border border-slate-200">
-                          <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Phone className="w-5 h-5 text-orange-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-500 mb-1">Contact</p>
-                            <p className="font-semibold text-slate-900">{booking.customer?.phone}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Customer Notes */}
-                      {booking.notes && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                            <div className="flex-1">
-                              <p className="text-xs font-semibold text-blue-900 mb-1">Customer Notes</p>
-                              <p className="text-sm text-blue-800">{booking.notes}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Metadata */}
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 mb-5 pb-5 border-b border-slate-200">
-                        <span>ID: {booking.id.slice(0, 8).toUpperCase()}</span>
-                        <span>•</span>
-                        <span>Submitted: {new Date(booking.created_at).toLocaleString('en-MY', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
-                        <span>•</span>
-                        <span>Source: {booking.booking_source}</span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-3">
-                        <button
-                          onClick={() => quickApprove(booking.id)}
-                          disabled={processingBooking === booking.id}
-                          className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-                        >
-                          {processingBooking === booking.id ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle className="w-4 h-4" />
-                              Approve
-                            </>
-                          )}
-                        </button>
-
-                        <button
-                          onClick={() => quickReject(booking.id)}
-                          disabled={processingBooking === booking.id}
-                          className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-                        >
-                          {processingBooking === booking.id ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                              Processing...
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-4 h-4" />
-                              Reject
-                            </>
-                          )}
-                        </button>
-
-                        <Link
-                          href={`/admin/bookings/${booking.id}`}
-                          className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Details
-                        </Link>
-
-                        {booking.customer?.phone && (
-                          <a
-                            href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-sm"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                            WhatsApp
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <div className="w-20 h-20 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <CheckCircle className="w-10 h-10 text-green-600" />
-                  </div>
-                  <p className="text-slate-900 font-bold text-lg mb-1">No pending approvals!</p>
-                  <p className="text-sm text-slate-500">All bookings have been processed. Great job! 🎉</p>
-                </div>
-              )}
+            <div className="flex gap-3 px-6 pb-6">
+              <button
+                onClick={closeApproveModal}
+                className="flex-1 rounded-xl border border-[#332d27] bg-[#1d1916] px-4 py-3 font-semibold text-stone-300 transition-colors hover:bg-[#24201c]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmApprove}
+                disabled={processingBooking === selectedBookingId}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#f3efe8] px-4 py-3 font-semibold text-[#11100f] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {processingBooking === selectedBookingId ? (
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#11100f]/20 border-t-[#11100f]" />
+                ) : (
+                  'Approve'
+                )}
+              </button>
             </div>
           </div>
-        </>
+        </div>
       )}
 
-      {/* Custom Approve Modal */}
-      <ConfirmationModal
-        isOpen={showApproveModal}
-        onClose={() => {
-          setShowApproveModal(false);
-          setSelectedBookingId(null);
-        }}
-        onConfirm={handleConfirmApprove}
-        title="Approve Booking"
-        message="Are you sure you want to approve this booking? The customer will be notified."
-        confirmText="Approve"
-        cancelText="Cancel"
-        type="success"
-        isLoading={processingBooking === selectedBookingId}
-      />
-
-      {/* Custom Reject Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4" onClick={() => setShowRejectModal(false)}>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
+          onClick={closeRejectModal}
+        >
           <div
-            className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm overflow-hidden rounded-[28px] border border-[#3a2421] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="p-6 pb-4">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <XCircle className="w-6 h-6 text-red-600" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#5a2c29] bg-[#2a1614]">
+                  <XCircle className="h-6 w-6 text-red-300" />
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-slate-900">Reject Booking</h3>
-                  <p className="text-sm text-slate-600 mt-1">Please provide a reason for rejection.</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-stone-100">Reject Booking</h3>
+                  <p className="mt-1 text-sm text-stone-400">Give the customer a clear reason for the rejection.</p>
                 </div>
               </div>
 
               <textarea
                 value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
+                onChange={(event) => setRejectReason(event.target.value)}
                 placeholder="Enter rejection reason..."
-                className="w-full mt-4 px-3 py-2 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm resize-none"
+                className="mt-4 w-full resize-none rounded-xl border border-[#332d27] bg-[#1d1916] px-3 py-3 text-sm text-stone-100 placeholder:text-stone-500 focus:border-[#c96b2c] focus:outline-none focus:ring-2 focus:ring-orange-500/25"
                 rows={3}
                 autoFocus
               />
             </div>
 
-            <div className="px-6 pb-6 flex gap-3">
+            <div className="flex gap-3 px-6 pb-6">
               <button
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setSelectedBookingId(null);
-                  setRejectReason('');
-                }}
-                className="flex-1 px-4 py-3 border-2 border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl font-semibold transition-colors"
+                onClick={closeRejectModal}
+                className="flex-1 rounded-xl border border-[#332d27] bg-[#1d1916] px-4 py-3 font-semibold text-stone-300 transition-colors hover:bg-[#24201c]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmReject}
                 disabled={!rejectReason.trim() || processingBooking === selectedBookingId}
-                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-[#5a2c29] bg-[#2a1614] px-4 py-3 font-semibold text-red-200 transition-colors hover:bg-[#331918] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {processingBooking === selectedBookingId ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-200/30 border-t-red-200" />
                 ) : (
                   'Reject'
                 )}

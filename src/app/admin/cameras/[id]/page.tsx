@@ -71,6 +71,11 @@ export default function CameraDetailsPage() {
     setCamera(prev => prev ? { ...prev, is_available: isAvailable } : null);
   };
 
+  const updateCameraStatus = (newStatus: Camera['status']) => {
+    setCamera(prev => prev ? { ...prev, status: newStatus } : null);
+    updateCameraAvailability(newStatus === 'available');
+  };
+
   const updateCameraCondition = (newCondition: Camera['condition']) => {
     setCamera(prev => prev ? { ...prev, condition: newCondition } : null);
   };

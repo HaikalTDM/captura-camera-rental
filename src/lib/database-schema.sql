@@ -104,6 +104,22 @@ CREATE TABLE payment_records (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Invoice drafts table
+CREATE TABLE invoices (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE UNIQUE,
+    invoice_number VARCHAR(100) UNIQUE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('draft', 'exported')) DEFAULT 'draft',
+    issue_date DATE NOT NULL,
+    notes TEXT,
+    customer_snapshot JSONB NOT NULL,
+    business_snapshot JSONB NOT NULL,
+    booking_snapshot JSONB NOT NULL,
+    exported_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Maintenance records table
 CREATE TABLE maintenance_records (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -125,6 +141,7 @@ CREATE INDEX idx_bookings_status ON bookings(status);
 CREATE INDEX idx_bookings_dates ON bookings(start_date, end_date);
 CREATE INDEX idx_gallery_images_active ON gallery_images(is_active);
 CREATE INDEX idx_payment_records_booking_id ON payment_records(booking_id);
+CREATE INDEX idx_invoices_booking_id ON invoices(booking_id);
 CREATE INDEX idx_maintenance_records_camera_id ON maintenance_records(camera_id);
 
 -- Create updated_at trigger function
@@ -143,6 +160,7 @@ CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW
 CREATE TRIGGER update_gallery_images_updated_at BEFORE UPDATE ON gallery_images FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_business_settings_updated_at BEFORE UPDATE ON business_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_payment_records_updated_at BEFORE UPDATE ON payment_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_invoices_updated_at BEFORE UPDATE ON invoices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_maintenance_records_updated_at BEFORE UPDATE ON maintenance_records FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Note: No sample data inserted - use admin panel to add cameras, customers, and bookings

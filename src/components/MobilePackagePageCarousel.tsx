@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import type { WhatsAppMessage } from '@/utils/whatsapp';
 
 interface Package {
   id: string;
@@ -47,8 +48,7 @@ export default function MobilePackagePageCarousel({
   const [isPaused, setIsPaused] = useState(false);
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
   const [showAddOns, setShowAddOns] = useState(false);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const autoSlideRef = useRef<NodeJS.Timeout>();
+  const autoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset carousel to first slide when type or packages change
   useEffect(() => {
@@ -138,7 +138,7 @@ export default function MobilePackagePageCarousel({
   const formatPrice = (price: number) => `RM${price.toFixed(0)}`;
 
   // WhatsApp message with package and add-ons
-  const getWhatsAppMessage = () => {
+  const getWhatsAppMessage = (): WhatsAppMessage => {
     const currentPackage = getCurrentPackage();
     const selectedAddOnDetails = selectedAddOns.map(id => {
       const addOn = addOns.find(a => a.id === id);
@@ -158,7 +158,14 @@ export default function MobilePackagePageCarousel({
     message += `💰 Total: ${formatPrice(total)}\n\n`;
     message += `Please let me know about availability and next steps for booking!`;
     
-    return encodeURIComponent(message);
+    return {
+      type: 'custom',
+      context: message,
+      packageName: currentPackage.name,
+      packagePrice: currentPackage.price,
+      addOns: selectedAddOnDetails,
+      totalPrice: total
+    };
   };
 
   // Handle package selection/deselection

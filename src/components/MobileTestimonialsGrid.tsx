@@ -26,7 +26,7 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
   const [mounted, setMounted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const autoSlideRef = useRef<NodeJS.Timeout>();
+  const autoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mobile: 2x2 = 4 testimonials per grid
   const testimonialsPerGrid = 4;

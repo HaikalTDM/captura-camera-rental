@@ -344,7 +344,7 @@ export default function RentalAgreementTemplate({
           </div>
           <div style={styles.detailRow}>
             <span style={styles.detailLabel}>Pickup Method:</span>
-            <span style={styles.detailValue} style={{textTransform: 'capitalize'}}>{booking.pickup_method}</span>
+            <span style={{ ...styles.detailValue, textTransform: 'capitalize' }}>{booking.pickup_method}</span>
           </div>
         </div>
       </div>

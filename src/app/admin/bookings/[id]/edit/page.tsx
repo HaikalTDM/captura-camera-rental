@@ -32,7 +32,7 @@ export default function EditBookingPage() {
     total_amount: 0,
     deposit_amount: 0,
     final_payment_amount: 0,
-    pickup_method: 'pickup',
+    pickup_method: 'pickup' as Booking['pickup_method'],
     delivery_fee: 0,
     notes: '',
     admin_notes: ''

@@ -7,6 +7,7 @@ import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
+import InvoiceBookingActions from '@/components/InvoiceBookingActions';
 import {
   ArrowLeft,
   Edit3,
@@ -533,6 +534,7 @@ Thank you for choosing Captura! 😊`;
             <span className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 ${getStatusColor(booking.booking_status || 'pending')}`}>
               {(booking.booking_status || 'pending').toUpperCase()}
             </span>
+            <InvoiceBookingActions bookingId={booking.id} />
             <Link
               href={`/admin/bookings/${booking.id}/edit`}
               className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"

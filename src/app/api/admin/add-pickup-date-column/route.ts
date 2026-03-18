@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+  return value ?? null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🚀 Adding pickup_date column and updating bookings...');
@@ -111,13 +118,18 @@ export async function POST(request: NextRequest) {
         bookingsUpdated: updatedCount,
         todaysPickupsCount: todaysPickups?.length || 0,
         sampleData: sampleData || [],
-        todaysPickups: todaysPickups?.map(p => ({
-          id: p.id,
-          customer: p.customer?.full_name,
-          camera: p.camera?.name,
-          pickupDate: p.pickup_date,
-          startDate: p.start_date
-        })) || []
+        todaysPickups: todaysPickups?.map(p => {
+          const customer = unwrapRelation(p.customer);
+          const camera = unwrapRelation(p.camera);
+
+          return {
+            id: p.id,
+            customer: customer?.full_name,
+            camera: camera?.name,
+            pickupDate: p.pickup_date,
+            startDate: p.start_date
+          };
+        }) || []
       }
     });
 

@@ -26,10 +26,6 @@ import {
   LogOut,
   Menu,
   X,
-
-  ChevronRight,
-  List,
-  AlertCircle
 } from 'lucide-react';
 
 export default function AdminLayout({
@@ -73,8 +69,8 @@ export default function AdminLayout({
   // Show loading while checking auth
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-[#0f0e0d] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
   }
@@ -107,7 +103,7 @@ export default function AdminLayout({
     <AdminPWAWrapper>
       <ErrorBoundary>
         <AdminDataProvider>
-          <div className="h-screen bg-slate-100 flex overflow-hidden">
+          <div className="h-screen bg-[#0d0c0b] flex overflow-hidden text-stone-100">
             {/* Mobile sidebar overlay */}
             <AnimatePresence>
               {isSidebarOpen && (
@@ -124,13 +120,13 @@ export default function AdminLayout({
 
             {/* Sidebar */}
             <div className="hidden lg:flex lg:flex-shrink-0 lg:relative">
-              <div className="flex flex-col h-[calc(100vh-2rem)] w-[280px] bg-slate-50 m-4 rounded-3xl shadow-lg overflow-hidden">
+              <div className="flex flex-col h-[calc(100vh-2rem)] w-[280px] bg-[#161412] m-4 rounded-3xl border border-[#2c2723] shadow-[0_24px_60px_rgba(0,0,0,0.32)] overflow-hidden">
                 {/* Logo */}
-                <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-200">
+                <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-[#26211d]">
                   <div className="flex items-center gap-3">
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center"
+                      className="w-10 h-10 bg-[#0f0e0d] border border-[#322b25] rounded-xl flex items-center justify-center"
                     >
                       <Image
                         src="/images/captura_icon.png"
@@ -141,8 +137,8 @@ export default function AdminLayout({
                       />
                     </motion.div>
                     <div>
-                      <h1 className="text-lg font-bold text-slate-900 tracking-tight">CAPTURA</h1>
-                      <p className="text-xs text-slate-500">Admin Panel</p>
+                      <h1 className="text-lg font-bold text-stone-100 tracking-tight">CAPTURA</h1>
+                      <p className="text-xs text-stone-500">Admin Panel</p>
                     </div>
                   </div>
                 </div>
@@ -157,8 +153,8 @@ export default function AdminLayout({
                         key={item.name}
                         href={item.href}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                          ? 'bg-slate-900 text-white shadow-md'
-                          : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                          ? 'bg-[#f3efe8] text-[#11100f] shadow-[0_10px_25px_rgba(0,0,0,0.22)]'
+                          : 'text-stone-400 hover:bg-[#211d19] hover:text-stone-100'
                           }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -169,10 +165,10 @@ export default function AdminLayout({
                 </nav>
 
                 {/* Logout Button */}
-                <div className="p-4 border-t border-slate-200">
+                <div className="p-4 border-t border-[#26211d]">
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#211614] hover:text-red-300 rounded-xl transition-all duration-200"
                   >
                     <LogOut className="w-5 h-5" />
                     <span className="font-medium text-sm">Logout</span>
@@ -188,13 +184,13 @@ export default function AdminLayout({
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed inset-y-0 left-0 z-50 w-[280px] lg:hidden"
             >
-              <div className="flex flex-col h-full w-full bg-slate-50 shadow-lg">
+              <div className="flex flex-col h-full w-full bg-[#161412] border-r border-[#2c2723] shadow-[0_24px_60px_rgba(0,0,0,0.35)]">
                 {/* Logo */}
-                <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-slate-200">
+                <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-[#26211d]">
                   <div className="flex items-center gap-3">
                     <motion.div
                       whileHover={{ scale: 1.05 }}
-                      className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center"
+                      className="w-10 h-10 bg-[#0f0e0d] border border-[#322b25] rounded-xl flex items-center justify-center"
                     >
                       <Image
                         src="/images/captura_icon.png"
@@ -205,13 +201,13 @@ export default function AdminLayout({
                       />
                     </motion.div>
                     <div>
-                      <h1 className="text-lg font-bold text-slate-900 tracking-tight">CAPTURA</h1>
-                      <p className="text-xs text-slate-500">Admin Panel</p>
+                      <h1 className="text-lg font-bold text-stone-100 tracking-tight">CAPTURA</h1>
+                      <p className="text-xs text-stone-500">Admin Panel</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsSidebarOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors"
+                    className="text-stone-500 hover:text-stone-100 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#211d19] transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -228,8 +224,8 @@ export default function AdminLayout({
                         href={item.href}
                         onClick={() => setIsSidebarOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                          ? 'bg-slate-900 text-white shadow-md'
-                          : 'text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                          ? 'bg-[#f3efe8] text-[#11100f] shadow-[0_10px_25px_rgba(0,0,0,0.22)]'
+                          : 'text-stone-400 hover:bg-[#211d19] hover:text-stone-100'
                           }`}
                       >
                         <Icon className="w-5 h-5 flex-shrink-0" />
@@ -240,10 +236,10 @@ export default function AdminLayout({
                 </nav>
 
                 {/* Logout Button */}
-                <div className="p-4 border-t border-slate-200">
+                <div className="p-4 border-t border-[#26211d]">
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-4 py-3 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all duration-200"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#211614] hover:text-red-300 rounded-xl transition-all duration-200"
                   >
                     <LogOut className="w-5 h-5" />
                     <span className="font-medium text-sm">Logout</span>
@@ -258,7 +254,7 @@ export default function AdminLayout({
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="bg-white m-4 mb-0 rounded-2xl shadow-sm z-30 w-auto flex-shrink-0"
+                className="bg-[#161412] border border-[#2c2723] m-4 mb-0 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.24)] z-30 w-auto flex-shrink-0"
               >
                 <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 max-w-full">
                   <div className="flex items-center gap-2 sm:gap-4">
@@ -266,7 +262,7 @@ export default function AdminLayout({
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setIsSidebarOpen(true)}
-                      className="lg:hidden text-slate-600 hover:text-slate-900 p-1.5 sm:p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                      className="lg:hidden text-stone-400 hover:text-stone-100 p-1.5 sm:p-2 rounded-lg hover:bg-[#211d19] transition-colors"
                     >
                       <Menu className="w-5 h-5" />
                     </motion.button>
@@ -275,13 +271,13 @@ export default function AdminLayout({
                       <input
                         type="text"
                         placeholder="Search"
-                        className="w-80 px-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-300 focus:border-transparent transition-all placeholder:text-slate-400"
+                        className="w-80 px-4 py-2 text-sm bg-[#1e1a17] border border-[#2f2a25] text-stone-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-[#c96b2c] transition-all placeholder:text-stone-500"
                       />
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-4">
-                    <span className="text-[10px] sm:text-xs text-slate-500 hidden md:block font-medium">
+                    <span className="text-[10px] sm:text-xs text-stone-500 hidden md:block font-medium">
                       {new Date().toLocaleDateString('en-MY', {
                         weekday: 'short',
                         month: 'short',
@@ -294,7 +290,7 @@ export default function AdminLayout({
               </motion.div>
 
               {/* Page content */}
-              <main className="flex-1 p-3 sm:p-4 md:p-6 bg-slate-100 overflow-y-auto overflow-x-hidden w-full max-w-full">
+              <main className="flex-1 p-3 sm:p-4 md:p-6 bg-[#0d0c0b] overflow-y-auto overflow-x-hidden w-full max-w-full">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

@@ -62,12 +62,19 @@ export interface Camera {
   condition?: 'excellent' | 'good' | 'fair' | 'needs_repair'
   last_maintenance?: string
   next_maintenance?: string
-  purchase_date?: string
+  purchase_date?: string | null
   purchase_price?: number
   serial_number?: string
-  warranty_expiry?: string
+  warranty_expiry?: string | null
   location?: string
   notes?: string
+  status?: 'available' | 'rented' | 'maintenance' | 'inactive'
+  image?: string
+  images?: string[]
+  dailyRate?: number
+  discountRate?: number
+  discountThreshold?: number
+  features?: string[]
   created_at: string
   updated_at: string
   camera_accessories?: CameraAccessory[]
@@ -118,13 +125,20 @@ export interface BookingAccessory {
 export interface Customer {
   id: string
   full_name: string
+  name?: string
   email: string
   phone: string
+  phone_number?: string
   whatsapp: string
   address: string
   id_number: string
   emergency_contact_name: string
   emergency_contact_phone: string
+  notes?: string
+  reliability?: 'excellent' | 'good' | 'fair' | 'poor'
+  totalSpent?: number
+  totalRentals?: number
+  lastRental?: string | null
   created_at: string
   updated_at: string
 }
@@ -144,8 +158,8 @@ export interface Booking {
   final_payment_amount: number
   final_payment_paid: boolean
   final_payment_paid_date: string | null
-  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled'
-  booking_status: 'pending_approval' | 'confirmed' | 'rejected' | 'cancelled' | 'completed'
+  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'picked_up'
+  booking_status: 'pending_approval' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'completed'
   pickup_method: 'pickup' | 'delivery'
   pickup_address: string | null
   delivery_fee: number
@@ -175,6 +189,17 @@ export interface Booking {
   equipment_condition_return: 'excellent' | 'good' | 'fair' | 'damaged' | null
   created_at: string
   updated_at: string
+  paymentStatus?: 'paid' | 'partial' | 'pending' | 'overdue'
+  camera_name?: string
+  cameraName?: string
+  startDate?: string
+  endDate?: string
+  totalDays?: number
+  totalAmount?: number
+  balanceDue?: number
+  depositPaid?: boolean
+  createdAt?: string
+  addons?: string[]
   // Relations
   customer?: Customer
   camera?: Camera
@@ -199,6 +224,54 @@ export interface BusinessSettings {
   setting_key: string
   setting_value: string
   description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface InvoiceBusinessSnapshot {
+  business_name: string
+  business_email: string
+  business_phone: string
+  business_address: string
+  logo_url: string
+}
+
+export interface InvoiceCustomerSnapshot {
+  full_name: string
+  email: string
+  phone: string
+  address: string
+  id_number: string
+}
+
+export interface InvoiceBookingSnapshot {
+  booking_id: string
+  camera_name: string
+  rental_start_date: string
+  rental_end_date: string
+  total_days: number
+  pickup_method: 'pickup' | 'delivery'
+  pickup_address: string
+  rental_subtotal: number
+  delivery_fee: number
+  deposit_amount: number
+  deposit_paid_amount: number
+  total_amount: number
+  balance_due: number
+  notes: string
+}
+
+export interface Invoice {
+  id: string
+  booking_id: string
+  invoice_number: string
+  status: 'draft' | 'exported'
+  issue_date: string
+  notes: string | null
+  customer_snapshot: InvoiceCustomerSnapshot
+  business_snapshot: InvoiceBusinessSnapshot
+  booking_snapshot: InvoiceBookingSnapshot
+  exported_at: string | null
   created_at: string
   updated_at: string
 }

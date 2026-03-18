@@ -9,8 +9,50 @@ import {
 } from '@/lib/api/bookings';
 import type { Camera } from '@/lib/supabase';
 import { Sparkles, Loader2, ChevronLeft, Send, X } from 'lucide-react';
-import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
+
+type BookingFormData = {
+  camera_id: string;
+  start_date: string;
+  end_date: string;
+  total_days: number;
+  daily_rate: number;
+  total_amount: number;
+  deposit_amount: number;
+  deposit_paid: boolean;
+  deposit_paid_date: string | null;
+  final_payment_amount: number;
+  final_payment_paid: boolean;
+  final_payment_paid_date: string | null;
+  pickup_method: 'pickup' | 'delivery';
+  pickup_address: string;
+  delivery_fee: number;
+  booking_source: 'manual' | 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical';
+  notes: string;
+};
+
+type ParsedBookingData = {
+  customer_name?: string;
+  customer_email?: string;
+  customer_phone?: string;
+  customer_whatsapp?: string;
+  pickup_address?: string;
+  camera_name?: string;
+  start_date?: string;
+  end_date?: string;
+  pickup_method?: 'pickup' | 'delivery';
+  notes?: string;
+};
+
+type ParseBookingTextResponse = {
+  success: boolean;
+  data?: ParsedBookingData;
+  error?: string;
+  details?: string;
+  debug?: {
+    hasApiKey?: boolean;
+  };
+};
 
 export default function MobileAddBookingPage() {
   const router = useRouter();
@@ -22,7 +64,7 @@ export default function MobileAddBookingPage() {
   const [showAIParser, setShowAIParser] = useState(true);
   const [aiInputText, setAiInputText] = useState('');
   const [isParsing, setIsParsing] = useState(false);
-  const [parseResult, setParseResult] = useState<any>(null);
+  const [parseResult, setParseResult] = useState<ParsedBookingData | null>(null);
 
   // Customer details
   const [customerDetails, setCustomerDetails] = useState({
@@ -34,7 +76,7 @@ export default function MobileAddBookingPage() {
   });
 
   // Booking form data
-  const [bookingData, setBookingData] = useState({
+  const [bookingData, setBookingData] = useState<BookingFormData>({
     camera_id: '',
     start_date: '',
     end_date: '',
@@ -47,10 +89,10 @@ export default function MobileAddBookingPage() {
     final_payment_amount: 0,
     final_payment_paid: false,
     final_payment_paid_date: null as string | null,
-    pickup_method: 'pickup' as const,
+    pickup_method: 'pickup',
     pickup_address: '',
     delivery_fee: 0,
-    booking_source: 'manual' as const,
+    booking_source: 'manual',
     notes: ''
   });
 
@@ -126,7 +168,7 @@ export default function MobileAddBookingPage() {
         })
       });
 
-      const result = await response.json();
+      const result: ParseBookingTextResponse = await response.json();
 
       if (!response.ok || !result.success) {
         console.error('API Error Details:', result);
@@ -267,19 +309,22 @@ export default function MobileAddBookingPage() {
         } else {
           toast.error('Failed to create booking');
         }
-      } catch (bookingError: any) {
+      } catch (bookingError: unknown) {
         // Handle availability errors specifically
-        if (bookingError.message && bookingError.message.includes('Camera not available')) {
-          toast.error(bookingError.message, { duration: 6000 });
+        const bookingErrorMessage = bookingError instanceof Error ? bookingError.message : '';
+
+        if (bookingErrorMessage.includes('Camera not available')) {
+          toast.error(bookingErrorMessage, { duration: 6000 });
         } else {
           toast.error('Failed to create booking. Please try again.');
         }
         throw bookingError; // Re-throw to be caught by outer catch
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating booking:', error);
       // Only show generic error if we haven't already shown a specific error
-      if (!error.message || !error.message.includes('Camera not available')) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      if (!errorMessage.includes('Camera not available')) {
         toast.error('Failed to create booking');
       }
     } finally {

@@ -1,5 +1,5 @@
 import { supabase } from '../supabase';
-import { createBooking, createCustomer } from './bookings';
+import { createCustomer } from './bookings';
 import type { Booking, Customer } from '../supabase';
 
 // Interface for website booking submission
@@ -47,6 +47,12 @@ export interface BookingSubmissionResult {
   booking_id?: string;
   confirmation_number?: string;
 }
+
+type WhatsAppBookingSummary = Pick<Booking, 'id'>;
+type WhatsAppCustomerSummary = Pick<Customer, 'email' | 'phone'> & {
+  full_name?: string;
+  name?: string;
+};
 
 // Submit a new booking from the website
 export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Promise<BookingSubmissionResult> {
@@ -348,7 +354,11 @@ export async function sendBookingConfirmationEmail(booking: Booking, customer: C
 }
 
 // Generate WhatsApp message for optional customer contact
-export function generateWhatsAppMessage(booking: any, customer: any, bookingData: WebsiteBookingData): string {
+export function generateWhatsAppMessage(
+  booking: WhatsAppBookingSummary,
+  customer: WhatsAppCustomerSummary,
+  bookingData: WebsiteBookingData
+): string {
   console.log('WhatsApp Message Generation - bookingData:', bookingData);
   console.log('WhatsApp Message Generation - camera_name:', bookingData.camera_name);
 
@@ -389,7 +399,11 @@ Thank you for choosing CAPTURA! 📸`;
 }
 
 // Generate WhatsApp contact URL
-export function generateWhatsAppContactUrl(booking: any, customer: any, bookingData: WebsiteBookingData): string {
+export function generateWhatsAppContactUrl(
+  booking: WhatsAppBookingSummary,
+  customer: WhatsAppCustomerSummary,
+  bookingData: WebsiteBookingData
+): string {
   const message = generateWhatsAppMessage(booking, customer, bookingData);
   const encodedMessage = encodeURIComponent(message);
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60177464121';

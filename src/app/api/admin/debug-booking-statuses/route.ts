@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
 
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+  return value ?? null;
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('🔍 Debugging booking statuses...');
@@ -37,6 +44,9 @@ export async function POST(request: NextRequest) {
     };
 
     const statusAnalysis = bookings?.map(booking => {
+      const customer = unwrapRelation(booking.customer);
+      const camera = unwrapRelation(booking.camera);
+
       // Count status field
       const status = booking.status || 'null';
       statusDistribution.status[status] = (statusDistribution.status[status] || 0) + 1;
@@ -47,8 +57,8 @@ export async function POST(request: NextRequest) {
 
       return {
         id: booking.id.substring(0, 8) + '...',
-        customer: booking.customer?.full_name || 'Unknown',
-        camera: booking.camera?.name || 'Unknown',
+        customer: customer?.full_name || 'Unknown',
+        camera: camera?.name || 'Unknown',
         status: booking.status,
         booking_status: booking.booking_status,
         created_at: booking.created_at,

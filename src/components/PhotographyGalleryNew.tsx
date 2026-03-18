@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { type PhotographyGalleryImage } from '../lib/api/photography-gallery';
 
 interface PhotographyGalleryProps {
@@ -48,7 +47,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
     setLightboxIndex(index);
     try {
       document.body.style.overflow = 'hidden';
-    } catch (e) {
+    } catch {
       // Ignore DOM errors
     }
   };
@@ -57,7 +56,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
     setLightboxIndex(null);
     try {
       document.body.style.overflow = 'unset';
-    } catch (e) {
+    } catch {
       // Ignore DOM errors
     }
   };
@@ -67,7 +66,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
     return () => {
       try {
         document.body.style.overflow = 'unset';
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     };
@@ -208,14 +207,12 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
         <div className="grid grid-cols-2 gap-3 px-2">
           {mobileColumns.map((column, columnIndex) => (
             <div key={columnIndex} className="space-y-3" style={{ animationDelay: `${columnIndex * 100}ms` }}>
-              {column.map((image, imageIndex) => {
+              {column.map((image) => {
                 const globalIndex = filteredImages.findIndex(img => img.id === image.id);
                 
                 // Calculate dynamic height based on image aspect ratio for better mobile experience
-                const aspectRatio = image.aspect_ratio || 1;
-                const isPortrait = aspectRatio < 0.9;
-                const isLandscape = aspectRatio > 1.3;
-                const isSquare = !isPortrait && !isLandscape;
+                const isPortrait = image.aspect_ratio === 'portrait';
+                const isLandscape = image.aspect_ratio === 'landscape';
                 
                 return (
                   <div
@@ -285,7 +282,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
         <div className="grid grid-cols-2 gap-8">
           {tabletColumns.map((column, columnIndex) => (
             <div key={columnIndex} className="space-y-8">
-              {column.map((image, imageIndex) => {
+              {column.map((image) => {
                 const globalIndex = filteredImages.findIndex(img => img.id === image.id);
                 
                 return (
@@ -342,7 +339,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
         <div className="grid grid-cols-3 gap-8">
           {desktopColumns.map((column, columnIndex) => (
             <div key={columnIndex} className="space-y-8">
-              {column.map((image, imageIndex) => {
+              {column.map((image) => {
                 const globalIndex = filteredImages.findIndex(img => img.id === image.id);
                 
                 return (
@@ -399,7 +396,7 @@ export default function PhotographyGalleryNew({ currentFilter = 'all' }: Photogr
         <div className="grid grid-cols-4 gap-8">
           {wideColumns.map((column, columnIndex) => (
             <div key={columnIndex} className="space-y-8">
-              {column.map((image, imageIndex) => {
+              {column.map((image) => {
                 const globalIndex = filteredImages.findIndex(img => img.id === image.id);
                 
                 return (

@@ -23,11 +23,11 @@ export function RefreshButton() {
     <button
       onClick={handleRefresh}
       disabled={isRefreshing}
-      className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl hover:bg-slate-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-sm"
+      className="flex items-center gap-2 px-3 py-2 bg-[#1d1916] border border-[#2f2a25] rounded-xl hover:bg-[#24201c] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-stone-300"
       title="Refresh data"
     >
       <svg
-        className={`w-4 h-4 text-slate-600 ${isRefreshing ? 'animate-spin' : ''}`}
+        className={`w-4 h-4 text-orange-400 ${isRefreshing ? 'animate-spin' : ''}`}
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -39,7 +39,7 @@ export function RefreshButton() {
           d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
         />
       </svg>
-      <span className="text-sm font-medium text-slate-700">
+      <span className="text-sm font-medium text-stone-300">
         {isRefreshing ? 'Refreshing...' : 'Refresh'}
       </span>
     </button>

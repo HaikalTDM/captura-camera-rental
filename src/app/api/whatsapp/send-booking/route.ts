@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Set booking source and status for WhatsApp bookings
-    const whatsappBookingData = {
+    const whatsappBookingData: WebsiteBookingData = {
       ...bookingData,
       booking_source: 'whatsapp',
       customer_email: bookingData.customer_email || `${bookingData.customer_phone}@whatsapp.temp`,

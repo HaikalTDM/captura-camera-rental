@@ -1,11 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  addOnsData, 
-  addOnCategories, 
-  getActiveAddOns, 
-  getActiveCategories,
+import {
+  addOnsData,
+  addOnCategories,
   formatPrice,
   addNewAddOn,
   updateAddOn,
@@ -82,10 +80,6 @@ export default function PhotographyAddOnsPage() {
     if (updated) {
       setAddOns(prev => prev.map(item => item.id === id ? updated : item));
     }
-  };
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find(cat => cat.id === categoryId)?.name || categoryId;
   };
 
   const getIconForCategory = (categoryId: string) => {
@@ -216,7 +210,7 @@ export default function PhotographyAddOnsPage() {
                 <label className="block text-sm font-medium text-black mb-2">Category</label>
                 <select
                   value={editForm.category || ''}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value as AddOn['category'] }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4af37] focus:border-[#d4af37]"
                 >
                   {categories.map(category => (

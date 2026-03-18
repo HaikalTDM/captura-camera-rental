@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { getBookingById } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import InvoiceBookingActions from '@/components/InvoiceBookingActions';
 
 export default function MobileBookingDetail() {
   const router = useRouter();
@@ -711,6 +712,8 @@ export default function MobileBookingDetail() {
           </svg>
         </button>
       )}
+
+      <InvoiceBookingActions bookingId={booking.id} mobile />
 
       {/* Approve/Reject Buttons - For Pending Bookings */}
       {booking.booking_status === 'pending_approval' && (

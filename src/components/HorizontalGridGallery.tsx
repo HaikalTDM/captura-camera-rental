@@ -115,13 +115,13 @@ const Lightbox = ({
   );
 };
 
-export default function HorizontalGridGallery({ images, currentFilter, isLoading = false }: HorizontalGridGalleryProps) {
+export default function HorizontalGridGallery({ images, isLoading = false }: HorizontalGridGalleryProps) {
   const [currentMobileGridIndex, setCurrentMobileGridIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const mobileAutoSlideRef = useRef<NodeJS.Timeout>();
+  const mobileAutoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mobile: 2x2 = 4 images per grid
   const mobileImagesPerGrid = 4;
@@ -160,7 +160,7 @@ export default function HorizontalGridGallery({ images, currentFilter, isLoading
     setLightboxIndex(index);
     try {
       document.body.style.overflow = 'hidden';
-    } catch (e) {
+    } catch {
       // Ignore DOM errors
     }
   };
@@ -169,7 +169,7 @@ export default function HorizontalGridGallery({ images, currentFilter, isLoading
     setLightboxIndex(null);
     try {
       document.body.style.overflow = 'unset';
-    } catch (e) {
+    } catch {
       // Ignore DOM errors
     }
   };
@@ -179,7 +179,7 @@ export default function HorizontalGridGallery({ images, currentFilter, isLoading
     return () => {
       try {
         document.body.style.overflow = 'unset';
-      } catch (e) {
+      } catch {
         // Ignore cleanup errors
       }
     };
@@ -392,7 +392,7 @@ export default function HorizontalGridGallery({ images, currentFilter, isLoading
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {desktopColumns.map((column, columnIndex) => (
             <div key={columnIndex} className="space-y-6">
-              {column.map((image, imageIndex) => {
+              {column.map((image) => {
                 const globalIndex = images.findIndex(img => img.id === image.id);
                 return (
                   <div

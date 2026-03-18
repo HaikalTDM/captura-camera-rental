@@ -299,7 +299,7 @@ export default function MobileBookings() {
   }, [filters]);
 
   const clearAllFilters = () => {
-    const defaultFilters = {
+    const defaultFilters: FilterState = {
       search: '',
       status: [],
       dateRange: { start: '', end: '' },

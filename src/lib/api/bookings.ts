@@ -1,6 +1,13 @@
 import { supabase } from '../supabase'
 import type { Booking, Customer, Camera } from '../supabase'
 
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null
+  }
+  return value ?? null
+}
+
 // Get all bookings with customer details and camera information
 export async function getAllBookings(): Promise<Booking[]> {
   try {
@@ -215,8 +222,9 @@ export async function createBooking(bookingData: {
           .eq('booking_status', 'confirmed')
           .or(`start_date.lte.${bookingData.end_date},end_date.gte.${bookingData.start_date}`);
 
+        const conflictingCustomer = unwrapRelation(conflicts?.[0]?.customer)
         const conflictDetails = conflicts && conflicts.length > 0
-          ? `Conflicting with booking for ${conflicts[0].customer?.full_name} (${conflicts[0].start_date} to ${conflicts[0].end_date})`
+          ? `Conflicting with booking for ${conflictingCustomer?.full_name || 'another customer'} (${conflicts[0].start_date} to ${conflicts[0].end_date})`
           : 'Camera is already booked for these dates';
 
         throw new Error(`Camera not available: ${conflictDetails}`);

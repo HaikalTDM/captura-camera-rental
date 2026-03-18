@@ -7,19 +7,28 @@ import {
     Calendar,
     ChevronLeft,
     ChevronRight,
-    ChevronDown,
-    Camera,
     User,
     Clock,
-    Eye,
     Info,
     X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 interface MobileCalendarProps {
-    bookings: any[];
-    cameras: any[];
+    bookings: Array<{
+        id: string;
+        start_date: string;
+        end_date: string;
+        booking_status?: string;
+        status?: string;
+        total_amount: number;
+        camera?: { name?: string };
+        customer?: { full_name?: string; phone?: string };
+    }>;
+    cameras: Array<{
+        is_available?: boolean;
+        available_quantity?: number;
+    }>;
     currentDate: Date;
     onDateChange: (date: Date) => void;
 }
@@ -38,15 +47,6 @@ const getCameraColor = (cameraName: string) => {
     if (cameraName.includes('Canon R50 - Mother')) return 'bg-pink-500';
     if (cameraName.includes('Canon R50')) return 'bg-indigo-500';
     return 'bg-purple-500';
-};
-
-const getCameraBgColor = (cameraName: string) => {
-    if (cameraName.includes('Action 5 Pro')) return 'bg-blue-50 border-blue-200';
-    if (cameraName.includes('Osmo Pocket 3 (ii)')) return 'bg-teal-50 border-teal-200';
-    if (cameraName.includes('Osmo Pocket 3')) return 'bg-orange-50 border-orange-200';
-    if (cameraName.includes('Canon R50 - Mother')) return 'bg-pink-50 border-pink-200';
-    if (cameraName.includes('Canon R50')) return 'bg-indigo-50 border-indigo-200';
-    return 'bg-purple-50 border-purple-200';
 };
 
 export default function MobileCalendar({ bookings, cameras, currentDate, onDateChange }: MobileCalendarProps) {
@@ -86,7 +86,6 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
         const startDate = new Date(firstDay);
         startDate.setDate(startDate.getDate() - firstDay.getDay());
 
@@ -208,44 +207,44 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
     };
 
     return (
-        <div className="pb-20 p-4">
+        <div className="p-4 pb-24">
             {/* Header with Stats - Pill Style */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-4 rounded-2xl shadow-lg"
+                className="rounded-2xl border border-[#332b25] bg-[radial-gradient(circle_at_top_left,_rgba(201,107,44,0.18),_transparent_45%),linear-gradient(135deg,#1b1714_0%,#171411_60%,#141210_100%)] px-4 py-4 shadow-[0_20px_45px_rgba(0,0,0,0.35)]"
             >
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
-                            <Calendar className="w-5 h-5 text-white" />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#5a4328] bg-[#332316]">
+                            <Calendar className="h-5 w-5 text-orange-300" />
                         </div>
                         <div>
-                            <h1 className="text-lg font-bold text-white">Calendar</h1>
-                            <p className="text-xs text-slate-400">Rental Schedule</p>
+                            <h1 className="text-lg font-bold text-stone-100">Calendar</h1>
+                            <p className="text-xs text-stone-400">Rental Schedule</p>
                         </div>
                     </div>
                     <button
                         onClick={() => setShowLegend(!showLegend)}
-                        className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16]"
                     >
-                        <Info className="w-4 h-4 text-white" />
+                        <Info className="h-4 w-4 text-stone-300" />
                     </button>
                 </div>
 
                 {/* Quick Stats Row */}
                 <div className="flex gap-2">
-                    <div className="flex-1 bg-white/10 rounded-xl px-3 py-2 text-center">
-                        <p className="text-lg font-bold text-white">{stats.activeNow}</p>
-                        <p className="text-[10px] text-slate-400">Active</p>
+                    <div className="flex-1 rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-stone-100">{stats.activeNow}</p>
+                        <p className="text-[10px] text-stone-500">Active</p>
                     </div>
-                    <div className="flex-1 bg-white/10 rounded-xl px-3 py-2 text-center">
-                        <p className="text-lg font-bold text-white">{stats.thisMonth}</p>
-                        <p className="text-[10px] text-slate-400">This Month</p>
+                    <div className="flex-1 rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-stone-100">{stats.thisMonth}</p>
+                        <p className="text-[10px] text-stone-500">This Month</p>
                     </div>
-                    <div className="flex-1 bg-white/10 rounded-xl px-3 py-2 text-center">
-                        <p className="text-lg font-bold text-white">{stats.available}</p>
-                        <p className="text-[10px] text-slate-400">Available</p>
+                    <div className="flex-1 rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-stone-100">{stats.available}</p>
+                        <p className="text-[10px] text-stone-500">Available</p>
                     </div>
                 </div>
 
@@ -258,8 +257,8 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                             exit={{ height: 0, opacity: 0 }}
                             className="overflow-hidden"
                         >
-                            <div className="mt-3 pt-3 border-t border-white/10">
-                                <p className="text-xs text-slate-400 mb-2">Camera Colors</p>
+                            <div className="mt-3 border-t border-[#332b25] pt-3">
+                                <p className="mb-2 text-xs text-stone-500">Camera Colors</p>
                                 <div className="flex flex-wrap gap-2">
                                     {[
                                         { name: 'Action 5 Pro', color: 'bg-blue-500' },
@@ -268,9 +267,9 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                                         { name: 'Canon R50', color: 'bg-indigo-500' },
                                         { name: 'Mother', color: 'bg-pink-500' },
                                     ].map(cam => (
-                                        <div key={cam.name} className="flex items-center gap-1.5 bg-white/10 rounded-lg px-2 py-1">
+                                        <div key={cam.name} className="flex items-center gap-1.5 rounded-lg border border-[#332b25] bg-[#1f1a16] px-2 py-1">
                                             <div className={`w-2 h-2 rounded-full ${cam.color}`} />
-                                            <span className="text-[10px] text-white">{cam.name}</span>
+                                            <span className="text-[10px] text-stone-300">{cam.name}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -281,23 +280,23 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
             </motion.div>
 
             {/* Month Navigation + Mini Calendar */}
-            <div className="mt-4 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="mt-4 overflow-hidden rounded-2xl border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                 {/* Month Nav */}
-                <div className="flex items-center justify-between p-3 border-b border-slate-100">
+                <div className="flex items-center justify-between border-b border-[#26211d] bg-[#1b1714] p-3">
                     <button
                         onClick={() => navigateMonth('prev')}
-                        className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16]"
                     >
-                        <ChevronLeft className="w-4 h-4 text-slate-600" />
+                        <ChevronLeft className="h-4 w-4 text-stone-300" />
                     </button>
-                    <h2 className="font-bold text-slate-900">
+                    <h2 className="font-bold text-stone-100">
                         {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                     </h2>
                     <button
                         onClick={() => navigateMonth('next')}
-                        className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center"
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16]"
                     >
-                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                        <ChevronRight className="h-4 w-4 text-stone-300" />
                     </button>
                 </div>
 
@@ -306,7 +305,7 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                     {/* Day Headers */}
                     <div className="grid grid-cols-7 mb-1">
                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
-                            <div key={i} className="text-center text-[10px] font-semibold text-slate-400 py-1">
+                            <div key={i} className="py-1 text-center text-[10px] font-semibold text-stone-500">
                                 {day}
                             </div>
                         ))}
@@ -318,8 +317,8 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                             <button
                                 key={index}
                                 onClick={() => setSelectedDate(day.date)}
-                                className={`aspect-square rounded-lg flex flex-col items-center justify-center relative transition-colors ${!day.isCurrentMonth ? 'text-slate-300' : 'text-slate-700'
-                                    } ${day.isToday ? 'bg-blue-100 text-blue-600 font-bold' : ''} ${selectedDate && isSameDay(day.date, selectedDate) ? 'ring-2 ring-blue-500' : ''
+                                className={`relative flex aspect-square flex-col items-center justify-center rounded-lg transition-colors ${!day.isCurrentMonth ? 'text-stone-700/40' : 'text-stone-300'
+                                    } ${day.isToday ? 'bg-[#332316] text-orange-200 font-bold' : 'bg-[#141210]'} ${selectedDate && isSameDay(day.date, selectedDate) ? 'ring-2 ring-[#c96b2c]' : ''
                                     }`}
                             >
                                 <span className="text-xs">{day.date.getDate()}</span>
@@ -352,33 +351,33 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: 100, opacity: 0 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white w-full max-w-lg rounded-t-3xl overflow-hidden shadow-xl"
+                            className="w-full max-w-lg overflow-hidden rounded-t-3xl border border-[#332b25] bg-[#171411] shadow-[0_24px_60px_rgba(0,0,0,0.45)]"
                         >
                             {/* Popup Header */}
-                            <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-4">
+                            <div className="border-b border-[#26211d] bg-[#1b1714] p-4">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                                            <Calendar className="w-5 h-5 text-white" />
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#5a4328] bg-[#332316]">
+                                            <Calendar className="h-5 w-5 text-orange-300" />
                                         </div>
                                         <div>
-                                            <h3 className="text-lg font-bold text-white">
+                                            <h3 className="text-lg font-bold text-stone-100">
                                                 {selectedDate.toLocaleDateString('en-MY', {
                                                     weekday: 'long',
                                                     day: 'numeric',
                                                     month: 'long'
                                                 })}
                                             </h3>
-                                            <p className="text-xs text-slate-300">
+                                            <p className="text-xs text-stone-400">
                                                 {selectedDateBookings.length} booking{selectedDateBookings.length !== 1 ? 's' : ''}
                                             </p>
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => setSelectedDate(null)}
-                                        className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center"
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16]"
                                     >
-                                        <X className="w-4 h-4 text-white" />
+                                        <X className="h-4 w-4 text-stone-300" />
                                     </button>
                                 </div>
                             </div>
@@ -387,8 +386,8 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                             <div className="p-4 max-h-[50vh] overflow-y-auto">
                                 {selectedDateBookings.length === 0 ? (
                                     <div className="text-center py-8">
-                                        <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                                        <p className="text-slate-500">No bookings on this date</p>
+                                        <Calendar className="mx-auto mb-3 h-12 w-12 text-stone-600" />
+                                        <p className="text-stone-500">No bookings on this date</p>
                                     </div>
                                 ) : (
                                     <div className="space-y-3">
@@ -397,36 +396,34 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                                             const customerName = booking.customer?.full_name || 'Unknown';
                                             const customerPhone = booking.customer?.phone || '';
                                             const dotColor = getCameraColor(cameraName);
-                                            const bgColor = getCameraBgColor(cameraName);
-
                                             return (
                                                 <Link
                                                     key={booking.id}
                                                     href={`/admin/bookings/${booking.id}`}
                                                     onClick={() => setSelectedDate(null)}
                                                 >
-                                                    <div className={`p-3 rounded-xl border ${bgColor} active:scale-[0.98] transition-transform`}>
+                                                    <div className="rounded-xl border border-[#2c2722] bg-[#1b1714] p-3 transition-transform active:scale-[0.98]">
                                                         <div className="flex items-start gap-3">
                                                             <div className={`w-3 h-3 rounded-full ${dotColor} mt-1.5 flex-shrink-0`} />
                                                             <div className="flex-1 min-w-0">
-                                                                <h4 className="font-semibold text-slate-900 text-sm">
+                                                                <h4 className="text-sm font-semibold text-stone-100">
                                                                     {cameraName}
                                                                 </h4>
-                                                                <div className="flex items-center gap-2 mt-1 text-xs text-slate-600">
-                                                                    <User className="w-3 h-3" />
+                                                                <div className="mt-1 flex items-center gap-2 text-xs text-stone-400">
+                                                                    <User className="h-3 w-3" />
                                                                     <span>{customerName}</span>
                                                                 </div>
                                                                 {customerPhone && (
-                                                                    <p className="text-xs text-slate-500 mt-0.5 ml-5">
+                                                                    <p className="ml-5 mt-0.5 text-xs text-stone-500">
                                                                         {customerPhone}
                                                                     </p>
                                                                 )}
-                                                                <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                                                                    <Calendar className="w-3 h-3" />
+                                                                <div className="mt-1 flex items-center gap-2 text-xs text-stone-500">
+                                                                    <Calendar className="h-3 w-3" />
                                                                     <span>{formatDateRange(booking.start_date, booking.end_date)}</span>
                                                                 </div>
                                                             </div>
-                                                            <span className="text-sm font-semibold text-slate-900">
+                                                            <span className="text-sm font-semibold text-orange-300">
                                                                 RM{booking.total_amount}
                                                             </span>
                                                         </div>
@@ -444,16 +441,16 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
 
             {/* Upcoming Bookings (Agenda View) */}
             <div className="mt-4">
-                <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-500" />
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-stone-100">
+                    <Clock className="h-4 w-4 text-orange-300" />
                     Upcoming Bookings
                 </h3>
 
                 {upcomingBookings.length === 0 ? (
-                    <Card className="border-slate-200">
+                    <Card className="border border-[#2c2722] bg-[#171411]">
                         <CardContent className="p-6 text-center">
-                            <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                            <p className="text-sm text-slate-500">No upcoming bookings this week</p>
+                            <Calendar className="mx-auto mb-2 h-10 w-10 text-stone-600" />
+                            <p className="text-sm text-stone-500">No upcoming bookings this week</p>
                         </CardContent>
                     </Card>
                 ) : (
@@ -462,8 +459,6 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                             const cameraName = booking.camera?.name || 'Camera';
                             const customerName = booking.customer?.full_name || 'Customer';
                             const dotColor = getCameraColor(cameraName);
-                            const bgColor = getCameraBgColor(cameraName);
-
                             return (
                                 <motion.div
                                     key={booking.id}
@@ -472,7 +467,7 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                                     transition={{ delay: index * 0.05 }}
                                 >
                                     <Link href={`/admin/bookings/${booking.id}`}>
-                                        <Card className={`border ${bgColor} active:scale-[0.98] transition-transform`}>
+                                        <Card className="border border-[#2c2722] bg-[#171411] transition-transform active:scale-[0.98]">
                                             <CardContent className="p-3">
                                                 <div className="flex items-start gap-3">
                                                     {/* Color Dot */}
@@ -481,19 +476,19 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                                                     {/* Content */}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center justify-between">
-                                                            <h4 className="font-semibold text-slate-900 text-sm truncate">
+                                                            <h4 className="truncate text-sm font-semibold text-stone-100">
                                                                 {cameraName}
                                                             </h4>
-                                                            <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
+                                                            <span className="ml-2 flex-shrink-0 text-xs text-stone-500">
                                                                 {getRelativeDay(booking.start_date)}
                                                             </span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-600">
-                                                            <User className="w-3 h-3" />
+                                                        <div className="mt-1 flex items-center gap-2 text-xs text-stone-400">
+                                                            <User className="h-3 w-3" />
                                                             <span className="truncate">{customerName}</span>
                                                         </div>
-                                                        <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
-                                                            <Calendar className="w-3 h-3" />
+                                                        <div className="mt-1 flex items-center gap-2 text-xs text-stone-500">
+                                                            <Calendar className="h-3 w-3" />
                                                             <span>{formatDateRange(booking.start_date, booking.end_date)}</span>
                                                         </div>
                                                     </div>
@@ -510,21 +505,21 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
 
             {/* This Month's Bookings */}
             <div className="mt-6">
-                <h3 className="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-slate-500" />
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-stone-100">
+                    <Calendar className="h-4 w-4 text-orange-300" />
                     {monthNames[currentDate.getMonth()]} Bookings ({monthBookings.length})
                 </h3>
 
                 {monthBookings.length === 0 ? (
-                    <Card className="border-slate-200">
+                    <Card className="border border-[#2c2722] bg-[#171411]">
                         <CardContent className="p-6 text-center">
-                            <Calendar className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                            <p className="text-sm text-slate-500">No bookings this month</p>
+                            <Calendar className="mx-auto mb-2 h-10 w-10 text-stone-600" />
+                            <p className="text-sm text-stone-500">No bookings this month</p>
                         </CardContent>
                     </Card>
                 ) : (
                     <div className="space-y-2">
-                        {monthBookings.slice(0, 10).map((booking, index) => {
+                        {monthBookings.slice(0, 10).map((booking) => {
                             const cameraName = booking.camera?.name || 'Camera';
                             const customerName = booking.customer?.full_name || 'Customer';
                             const dotColor = getCameraColor(cameraName);
@@ -532,14 +527,14 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
 
                             return (
                                 <Link key={booking.id} href={`/admin/bookings/${booking.id}`}>
-                                    <div className={`flex items-center gap-3 p-2.5 rounded-xl border border-slate-100 bg-white ${isCompleted ? 'opacity-50' : ''
+                                    <div className={`flex items-center gap-3 rounded-xl border border-[#2c2722] bg-[#171411] p-2.5 ${isCompleted ? 'opacity-50' : ''
                                         }`}>
                                         <div className={`w-2 h-2 rounded-full ${dotColor} flex-shrink-0`} />
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-slate-900 truncate">{cameraName}</p>
-                                            <p className="text-xs text-slate-500 truncate">{customerName}</p>
+                                            <p className="truncate text-sm font-medium text-stone-100">{cameraName}</p>
+                                            <p className="truncate text-xs text-stone-500">{customerName}</p>
                                         </div>
-                                        <span className="text-xs text-slate-400 flex-shrink-0">
+                                        <span className="flex-shrink-0 text-xs text-stone-500">
                                             {formatDateRange(booking.start_date, booking.end_date)}
                                         </span>
                                     </div>
@@ -548,7 +543,7 @@ export default function MobileCalendar({ bookings, cameras, currentDate, onDateC
                         })}
 
                         {monthBookings.length > 10 && (
-                            <p className="text-center text-xs text-slate-500 py-2">
+                            <p className="py-2 text-center text-xs text-stone-500">
                                 +{monthBookings.length - 10} more bookings
                             </p>
                         )}

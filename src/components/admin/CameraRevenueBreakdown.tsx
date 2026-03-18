@@ -3,12 +3,10 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    DollarSign,
     Camera,
     ChevronDown,
     ChevronLeft,
     ChevronRight,
-    TrendingUp,
     BarChart3
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -125,24 +123,24 @@ export default function CameraRevenueBreakdown({
 
     if (variant === 'mobile') {
         return (
-            <Card className="border-slate-200 overflow-hidden">
+            <Card className="overflow-hidden border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                 <button
                     onClick={() => setIsExpanded(!isExpanded)}
-                    className="w-full p-3 flex items-center justify-between bg-gradient-to-r from-emerald-50 to-green-50 border-b border-slate-100"
+                    className="flex w-full items-center justify-between border-b border-[#26211d] bg-[#1b1714] p-3"
                 >
                     <div className="flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-emerald-600" />
-                        <span className="font-semibold text-slate-900 text-sm">Camera Revenue</span>
+                        <BarChart3 className="h-4 w-4 text-orange-300" />
+                        <span className="text-sm font-semibold text-stone-100">Camera Revenue</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-emerald-600">
+                        <span className="text-xs font-bold text-orange-300">
                             RM{revenueData.totalRevenue.toFixed(0)}
                         </span>
                         <motion.div
                             animate={{ rotate: isExpanded ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                            <ChevronDown className="h-5 w-5 text-stone-500" />
                         </motion.div>
                     </div>
                 </button>
@@ -160,17 +158,17 @@ export default function CameraRevenueBreakdown({
                                 <div className="flex items-center justify-between">
                                     <button
                                         onClick={() => navigateMonth('prev')}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors"
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16] transition-colors hover:bg-[#26211d]"
                                     >
-                                        <ChevronLeft className="w-4 h-4 text-slate-600" />
+                                        <ChevronLeft className="h-4 w-4 text-stone-300" />
                                     </button>
-                                    <span className="text-sm font-semibold text-slate-700">{monthName}</span>
+                                    <span className="text-sm font-semibold text-stone-200">{monthName}</span>
                                     <button
                                         onClick={() => navigateMonth('next')}
                                         disabled={isCurrentMonth}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#332b25] bg-[#1f1a16] transition-colors hover:bg-[#26211d] disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <ChevronRight className="w-4 h-4 text-slate-600" />
+                                        <ChevronRight className="h-4 w-4 text-stone-300" />
                                     </button>
                                 </div>
 
@@ -178,18 +176,18 @@ export default function CameraRevenueBreakdown({
                                 <div className="space-y-2">
                                     {revenueData.cameras.map((camera, index) => (
                                         <div key={camera.name} className="relative">
-                                            <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg relative z-10">
+                                            <div className="relative z-10 flex items-center justify-between rounded-lg border border-[#2c2722] bg-[#1b1714] p-2">
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${camera.revenue > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                                    <span className="text-sm font-medium text-slate-900 truncate max-w-[140px]">
+                                                    <div className={`h-2 w-2 rounded-full ${camera.revenue > 0 ? 'bg-orange-300' : 'bg-stone-600'}`} />
+                                                    <span className="max-w-[140px] truncate text-sm font-medium text-stone-100">
                                                         {camera.name}
                                                     </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-slate-500">
+                                                    <span className="text-xs text-stone-500">
                                                         {camera.bookings} booking{camera.bookings !== 1 ? 's' : ''}
                                                     </span>
-                                                    <span className={`text-sm font-bold ${camera.revenue > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                                    <span className={`text-sm font-bold ${camera.revenue > 0 ? 'text-orange-300' : 'text-stone-500'}`}>
                                                         RM{camera.revenue.toFixed(0)}
                                                     </span>
                                                 </div>
@@ -200,7 +198,7 @@ export default function CameraRevenueBreakdown({
                                                     initial={{ width: 0 }}
                                                     animate={{ width: `${(camera.revenue / revenueData.maxRevenue) * 100}%` }}
                                                     transition={{ delay: 0.1 * index, duration: 0.3 }}
-                                                    className="absolute left-0 top-0 h-full bg-emerald-100 rounded-lg"
+                                                    className="absolute left-0 top-0 h-full rounded-lg bg-[#2a1d14]"
                                                     style={{ zIndex: 0 }}
                                                 />
                                             )}
@@ -209,7 +207,7 @@ export default function CameraRevenueBreakdown({
                                 </div>
 
                                 {revenueData.cameras.length === 0 && (
-                                    <p className="text-center text-sm text-slate-500 py-4">
+                                    <p className="py-4 text-center text-sm text-stone-500">
                                         No revenue data for this month
                                     </p>
                                 )}

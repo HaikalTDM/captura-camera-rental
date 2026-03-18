@@ -9,7 +9,7 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function run() {
-  const { data, error } = await supabase.from('cameras').select('id, name');
+  const { data, error } = await supabase.from('cameras').select('id, name, is_available, display_order');
   console.log(data);
 }
 

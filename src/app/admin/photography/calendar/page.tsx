@@ -22,6 +22,13 @@ interface AvailabilitySlot {
   reason?: string;
 }
 
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+  return value ?? null;
+}
+
 export default function CalendarManagement() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -71,18 +78,23 @@ export default function CalendarManagement() {
       }
 
       // Transform bookings to calendar events
-      const bookingEvents: CalendarEvent[] = (bookings || []).map(booking => ({
-        id: `booking-${booking.id}`,
-        title: booking.package?.name || `${booking.event_type} Photography`,
-        date: booking.event_date,
-        time: booking.event_time || '09:00',
-        type: 'booking' as const,
-        status: booking.status as 'confirmed' | 'pending' | 'completed',
-        client: booking.customer?.full_name || 'Unknown Client',
-        location: booking.event_type || '',
-        duration: 4, // Default duration
-        notes: booking.notes || ''
-      }));
+      const bookingEvents: CalendarEvent[] = (bookings || []).map(booking => {
+        const bookingPackage = unwrapRelation(booking.package);
+        const bookingCustomer = unwrapRelation(booking.customer);
+
+        return {
+          id: `booking-${booking.id}`,
+          title: bookingPackage?.name || `${booking.event_type} Photography`,
+          date: booking.event_date,
+          time: booking.event_time || '09:00',
+          type: 'booking' as const,
+          status: booking.status as 'confirmed' | 'pending' | 'completed',
+          client: bookingCustomer?.full_name || 'Unknown Client',
+          location: booking.event_type || '',
+          duration: 4, // Default duration
+          notes: booking.notes || ''
+        };
+      });
 
       // Transform calendar events
       const transformedCalendarEvents: CalendarEvent[] = (calendarEvents || []).map(event => ({

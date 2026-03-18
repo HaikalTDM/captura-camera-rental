@@ -357,7 +357,7 @@ export default function CameraSpecsModal({ camera, isOpen, onClose }: CameraSpec
                   onClose();
                   setTimeout(() => {
                     const cameraCards = document.querySelectorAll('[data-camera-id]');
-                    let targetCard = null;
+                    let targetCard: HTMLElement | null = null;
 
                     cameraCards.forEach(card => {
                       const cardElement = card as HTMLElement;
@@ -367,7 +367,7 @@ export default function CameraSpecsModal({ camera, isOpen, onClose }: CameraSpec
                     });
 
                     if (targetCard) {
-                      const bookingSection = targetCard.querySelector('[data-booking-section]');
+                      const bookingSection = targetCard.querySelector<HTMLElement>('[data-booking-section]');
                       if (bookingSection) {
                         bookingSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
                       } else {

@@ -1,116 +1,138 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import useSWR from 'swr';
+import { motion } from 'framer-motion';
 import { useAdminData } from '@/contexts/AdminDataContext';
 import { getAllCustomers } from '@/lib/api/bookings';
-import useSWR from 'swr';
-import type { Customer, Booking } from '@/lib/supabase';
-import Link from 'next/link';
+import type { Customer } from '@/lib/supabase';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
-import { Users, Star, TrendingUp, UserPlus, Search, ArrowUpDown, Trash2, MessageCircle, Phone, Eye, Mail, Calendar, DollarSign, ShoppingBag } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
+import MobileCustomers, { type CustomerWithMetrics } from '@/components/admin/MobileCustomers';
+import {
+  ArrowUpDown,
+  Calendar,
+  DollarSign,
+  Eye,
+  Mail,
+  MessageCircle,
+  Phone,
+  Search,
+  ShoppingBag,
+  Star,
+  Trash2,
+  TrendingUp,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+type CustomerSort = 'full_name' | 'totalSpent' | 'totalRentals' | 'created_at';
+
+function getReliabilityTone(totalRentals: number) {
+  if (totalRentals >= 5) return 'border-[#30412f] bg-[#1f2b20] text-emerald-200';
+  if (totalRentals >= 2) return 'border-[#31414f] bg-[#1c242c] text-sky-200';
+  if (totalRentals >= 1) return 'border-[#4b3723] bg-[#2b2117] text-orange-200';
+  return 'border-[#3a3129] bg-[#221f1b] text-stone-300';
+}
+
+function getReliabilityLabel(totalRentals: number) {
+  if (totalRentals >= 5) return 'VIP';
+  if (totalRentals >= 2) return 'Good';
+  if (totalRentals >= 1) return 'Fair';
+  return 'New';
+}
 
 export default function CustomersPage() {
+  const isMobile = useIsMobile(768);
   const { bookings, isLoading: bookingsLoading } = useAdminData();
-  const { data: customers = [], isLoading: customersLoading, mutate } = useSWR('admin-customers', getAllCustomers, {
-    revalidateOnFocus: false,
-    refreshInterval: 0, // Disable auto-refresh to prevent unmount issues
-    shouldRetryOnError: false,
-    revalidateIfStale: false,
-    onError: (err) => {
-      console.error('Error fetching customers:', err);
-    },
-  });
-  
+  const { data: customers = [], isLoading: customersLoading, mutate } = useSWR<Customer[]>(
+    'admin-customers',
+    getAllCustomers,
+    {
+      revalidateOnFocus: false,
+      refreshInterval: 0,
+      shouldRetryOnError: false,
+      revalidateIfStale: false,
+      onError: (error) => {
+        console.error('Error fetching customers:', error);
+      },
+    }
+  );
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortBy, setSortBy] = useState<'full_name' | 'totalSpent' | 'totalRentals' | 'created_at'>('full_name');
+  const [sortBy, setSortBy] = useState<CustomerSort>('full_name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isLoading = bookingsLoading || customersLoading;
 
-  // Memoize customer metrics calculations
-  const customersWithMetrics = useMemo(() => customers.map(customer => {
-    const customerBookings = bookings.filter(b => b.customer_id === customer.id);
-    const paidBookings = customerBookings.filter(b => b.deposit_paid && b.final_payment_paid);
-    const totalSpent = paidBookings.reduce((sum, b) => {
-      const isNewPaymentSystem = b.deposit_amount === 100;
-      return sum + (isNewPaymentSystem ? (b.deposit_amount + b.final_payment_amount) : b.total_amount);
-    }, 0);
-    const lastRental = customerBookings.length > 0
-      ? Math.max(...customerBookings.map(b => new Date(b.created_at).getTime()))
-      : null;
+  const customersWithMetrics = useMemo<CustomerWithMetrics[]>(() => {
+    return customers.map((customer) => {
+      const customerBookings = bookings.filter((booking) => booking.customer_id === customer.id);
+      const paidBookings = customerBookings.filter((booking) => booking.deposit_paid && booking.final_payment_paid);
+      const totalSpent = paidBookings.reduce((sum, booking) => {
+        const isNewPaymentSystem = booking.deposit_amount === 100;
+        return sum + (isNewPaymentSystem ? booking.deposit_amount + booking.final_payment_amount : booking.total_amount);
+      }, 0);
+      const lastRental = customerBookings.length > 0
+        ? Math.max(...customerBookings.map((booking) => new Date(booking.created_at).getTime()))
+        : null;
 
-    return {
-      ...customer,
-      totalRentals: customerBookings.length,
-      totalSpent,
-      lastRental: lastRental ? new Date(lastRental).toISOString().split('T')[0] : null
-    };
-  }), [customers, bookings]);
+      return {
+        ...customer,
+        totalRentals: customerBookings.length,
+        totalSpent,
+        lastRental: lastRental ? new Date(lastRental).toISOString().split('T')[0] : null,
+      };
+    });
+  }, [customers, bookings]);
 
-  // Memoize filtered and sorted customers
-  const filteredCustomers = useMemo(() => customersWithMetrics
-    .filter(customer =>
-      customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone.includes(searchTerm) ||
-      customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .sort((a, b) => {
-      let aValue = a[sortBy];
-      let bValue = b[sortBy];
+  const filteredCustomers = useMemo(() => {
+    return customersWithMetrics
+      .filter((customer) =>
+        customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone.includes(searchTerm) ||
+        customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => {
+        let aValue: string | number = a[sortBy] as string | number;
+        let bValue: string | number = b[sortBy] as string | number;
 
-      if (typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = (bValue as string).toLowerCase();
-      }
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = String(bValue).toLowerCase();
+        }
 
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
+        if (sortOrder === 'asc') {
+          return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        }
+
         return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
-    }), [customersWithMetrics, searchTerm, sortBy, sortOrder]);
-
-  // REMOVED: Don't block rendering
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex items-center justify-center h-64">
-  //       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   );
-  // }
-
-  const getReliabilityColor = (totalRentals: number) => {
-    if (totalRentals >= 5) return 'bg-green-100 text-green-700 border-green-200';
-    if (totalRentals >= 2) return 'bg-blue-100 text-blue-700 border-blue-200';
-    if (totalRentals >= 1) return 'bg-amber-100 text-amber-700 border-amber-200';
-    return 'bg-purple-100 text-purple-700 border-purple-200';
-  };
+      });
+  }, [customersWithMetrics, searchTerm, sortBy, sortOrder]);
 
   const getCustomerBookings = (customerId: string) => {
-    return bookings.filter(booking => booking.customer_id === customerId);
+    return bookings.filter((booking) => booking.customer_id === customerId);
   };
 
-  // Handle checkbox selection
   const handleSelectCustomer = (customerId: string) => {
-    setSelectedCustomers(prev =>
-      prev.includes(customerId)
-        ? prev.filter(id => id !== customerId)
-        : [...prev, customerId]
+    setSelectedCustomers((prev) =>
+      prev.includes(customerId) ? prev.filter((id) => id !== customerId) : [...prev, customerId]
     );
   };
 
-  // Handle select all checkbox
   const handleSelectAll = () => {
     if (selectedCustomers.length === filteredCustomers.length) {
       setSelectedCustomers([]);
     } else {
-      setSelectedCustomers(filteredCustomers.map(customer => customer.id));
+      setSelectedCustomers(filteredCustomers.map((customer) => customer.id));
     }
   };
 
-  // Handle bulk delete
   const handleBulkDelete = async () => {
     if (selectedCustomers.length === 0) {
       alert('Please select customers to delete');
@@ -135,24 +157,21 @@ export default function CustomersPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Show detailed results
-        const { summary, results } = data;
-        let message = `Bulk delete completed:\n`;
-        message += `✅ Deleted: ${summary.deleted}\n`;
+        const { summary } = data;
+        let message = 'Bulk delete completed:\n';
+        message += `Deleted: ${summary.deleted}\n`;
         if (summary.skipped > 0) {
-          message += `⚠️ Skipped: ${summary.skipped} (customers with active bookings)\n`;
+          message += `Skipped: ${summary.skipped} (customers with active bookings)\n`;
         }
         if (summary.failed > 0) {
-          message += `❌ Failed: ${summary.failed}\n`;
+          message += `Failed: ${summary.failed}\n`;
         }
 
         alert(message);
-
-        // Reload customers data
         mutate();
         setSelectedCustomers([]);
       } else {
-        alert('Failed to delete customers: ' + data.error);
+        alert(`Failed to delete customers: ${data.error}`);
       }
     } catch (error) {
       console.error('Error deleting customers:', error);
@@ -162,9 +181,8 @@ export default function CustomersPage() {
     }
   };
 
-  // Handle single customer delete
   const handleDeleteSingleCustomer = async (customerId: string) => {
-    const customer = customers.find(c => c.id === customerId);
+    const customer = customers.find((item) => item.id === customerId);
     if (!customer) return;
 
     if (!confirm(`Are you sure you want to delete ${customer.full_name}? This action cannot be undone.`)) {
@@ -182,7 +200,7 @@ export default function CustomersPage() {
         alert('Customer deleted successfully');
         mutate();
       } else {
-        alert('Failed to delete customer: ' + data.error);
+        alert(`Failed to delete customer: ${data.error}`);
       }
     } catch (error) {
       console.error('Error deleting customer:', error);
@@ -190,294 +208,450 @@ export default function CustomersPage() {
     }
   };
 
-  const customerStats = {
-    total: customers.length,
-    excellent: customersWithMetrics.filter(c => c.totalRentals >= 5).length,
-    good: customersWithMetrics.filter(c => c.totalRentals >= 2 && c.totalRentals < 5).length,
-    fair: customersWithMetrics.filter(c => c.totalRentals >= 1 && c.totalRentals < 2).length,
-    new: customersWithMetrics.filter(c => c.totalRentals === 0).length,
-  };
+  const customerStats = useMemo(() => {
+    return {
+      total: customers.length,
+      excellent: customersWithMetrics.filter((customer) => customer.totalRentals >= 5).length,
+      good: customersWithMetrics.filter((customer) => customer.totalRentals >= 2 && customer.totalRentals < 5).length,
+      fair: customersWithMetrics.filter((customer) => customer.totalRentals >= 1 && customer.totalRentals < 2).length,
+      new: customersWithMetrics.filter((customer) => customer.totalRentals === 0).length,
+      totalSpent: customersWithMetrics.reduce((sum, customer) => sum + customer.totalSpent, 0),
+    };
+  }, [customers, customersWithMetrics]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-[#c96b2c]"></div>
+          <p className="mt-4 text-stone-500">Loading customer database...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isMobile) {
+    return (
+      <MobileCustomers
+        customers={customers}
+        filteredCustomers={filteredCustomers}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
+        selectedCustomers={selectedCustomers}
+        handleSelectCustomer={handleSelectCustomer}
+        handleSelectAll={handleSelectAll}
+        handleBulkDelete={handleBulkDelete}
+        handleDeleteSingleCustomer={handleDeleteSingleCustomer}
+        isDeleting={isDeleting}
+        customerStats={customerStats}
+        getCustomerBookings={getCustomerBookings}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto p-3 sm:p-4 md:p-6 lg:p-8 space-y-4 sm:space-y-6 md:space-y-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-slate-900 mb-1 sm:mb-2">Customer Database</h1>
-            <p className="text-slate-600 text-sm sm:text-base md:text-lg">Manage customer relationships and rental history</p>
-          </div>
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-slate-200 px-4 sm:px-6 py-3 sm:py-4">
-            <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide mb-0.5 sm:mb-1">Total Customers</p>
-            <p className="text-2xl sm:text-3xl font-bold text-slate-900">{customers.length}</p>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 md:gap-4">
-          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <p className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wide">Total</p>
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" />
-            </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900">{customerStats.total}</p>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <p className="text-[10px] sm:text-xs font-semibold text-green-600 uppercase tracking-wide">Excellent</p>
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 fill-green-600" />
-            </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-green-600">{customerStats.excellent}</p>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">5+ rentals</p>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <p className="text-[10px] sm:text-xs font-semibold text-blue-600 uppercase tracking-wide">Good</p>
-              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-            </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600">{customerStats.good}</p>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">2-4 rentals</p>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
-            <div className="flex items-center justify-between mb-1 sm:mb-2">
-              <p className="text-[10px] sm:text-xs font-semibold text-amber-600 uppercase tracking-wide">Fair</p>
-              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
-            </div>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-600">{customerStats.fair}</p>
-            <p className="text-[10px] sm:text-xs text-slate-500 mt-0.5 sm:mt-1">1 rental</p>
-          </div>
-          <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 md:p-6">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wide">New</p>
-              <UserPlus className="w-5 h-5 text-purple-600" />
-            </div>
-            <p className="text-3xl font-bold text-purple-600">{customerStats.new}</p>
-            <p className="text-xs text-slate-500 mt-1">No rentals yet</p>
-          </div>
-        </div>
-
-        {/* Search and Sort */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by name, phone, or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 placeholder-slate-400"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
-                className="px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 text-slate-900 bg-white font-medium"
-              >
-                <option value="full_name">Sort by Name</option>
-                <option value="totalSpent">Sort by Total Spent</option>
-                <option value="totalRentals">Sort by Total Rentals</option>
-                <option value="created_at">Sort by Join Date</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 font-medium text-slate-700"
-              >
-                <ArrowUpDown className="w-4 h-4" />
-                {sortOrder === 'asc' ? 'Asc' : 'Desc'}
-              </button>
-            </div>
-          </div>
-
-          {/* Selection Controls */}
-          {filteredCustomers.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-slate-200">
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer group">
-                    <input
-                      type="checkbox"
-                      checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
-                      onChange={handleSelectAll}
-                      className="w-5 h-5 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
-                    />
-                    <span className="text-sm font-semibold text-slate-700 group-hover:text-slate-900">
-                      Select All ({filteredCustomers.length})
-                    </span>
-                  </label>
-                  {selectedCustomers.length > 0 && (
-                    <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm font-semibold">
-                      {selectedCustomers.length} selected
-                    </span>
-                  )}
+    <div className="space-y-6 px-2 pb-8 xl:px-0">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="grid gap-4 xl:grid-cols-[minmax(0,1.8fr)_340px]"
+      >
+        <Card className="rounded-[30px] border border-[#2d2722] bg-[radial-gradient(circle_at_top,_rgba(201,107,44,0.12),_transparent_42%),linear-gradient(180deg,#1c1713_0%,#141210_100%)] shadow-[0_30px_80px_rgba(0,0,0,0.34)]">
+          <CardContent className="p-6 md:p-7">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#43372d] bg-[#1d1814] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-300">
+                <Users className="h-3.5 w-3.5 text-orange-300" />
+                Customer desk
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold tracking-tight text-stone-50">Customer Database</h1>
+                <p className="max-w-2xl text-sm leading-6 text-stone-400">
+                  Review relationship history, spending, and reliability at a glance while keeping customer actions close to the booking workflow.
+                </p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-[#2f2924] bg-[#171411] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-stone-500">Visible customers</p>
+                  <p className="mt-3 text-3xl font-semibold text-stone-50">{filteredCustomers.length}</p>
+                  <p className="mt-2 text-sm text-stone-400">Customers currently shown after search and sort.</p>
                 </div>
-
-                {selectedCustomers.length > 0 && (
-                  <button
-                    onClick={handleBulkDelete}
-                    disabled={isDeleting}
-                    className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-6 py-3 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2"
-                  >
-                    {isDeleting ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        Deleting...
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="w-4 h-4" />
-                        Delete Selected ({selectedCustomers.length})
-                      </>
-                    )}
-                  </button>
-                )}
+                <div className="rounded-2xl border border-[#2f2924] bg-[#171411] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-stone-500">Total spend</p>
+                  <p className="mt-3 text-3xl font-semibold text-stone-50">RM{customerStats.totalSpent.toFixed(0)}</p>
+                  <p className="mt-2 text-sm text-stone-400">Revenue collected from customers with fully paid bookings.</p>
+                </div>
+                <div className="rounded-2xl border border-[#3f3125] bg-[#241b14] p-4">
+                  <p className="text-[11px] uppercase tracking-[0.22em] text-stone-500">Selected</p>
+                  <p className="mt-3 text-3xl font-semibold text-stone-50">{selectedCustomers.length}</p>
+                  <p className="mt-2 text-sm text-stone-400">Customers currently selected for bulk action.</p>
+                </div>
               </div>
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Customers Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredCustomers.length > 0 ? filteredCustomers.map((customer) => {
-            const customerBookings = getCustomerBookings(customer.id);
-            const activeBookings = customerBookings.filter(b => b.status === 'active').length;
-            const overduePayments = customerBookings.filter(b =>
-              !b.final_payment_paid &&
-              new Date(b.end_date) < new Date() &&
-              b.status === 'completed'
-            ).length;
+        <Card className="rounded-[30px] border border-[#2d2722] bg-[#171411] shadow-[0_24px_60px_rgba(0,0,0,0.32)]">
+          <CardHeader className="border-b border-[#26211d] pb-4">
+            <CardTitle className="text-lg text-stone-50">Relationship Notes</CardTitle>
+            <CardDescription className="text-stone-400">
+              A fast read on the customer mix inside the current database.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 p-5">
+            <div className="rounded-2xl border border-[#2c2621] bg-[#1d1a17] p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-stone-500">VIP customers</p>
+              <p className="mt-2 text-2xl font-semibold text-stone-50">{customerStats.excellent}</p>
+              <p className="mt-1 text-sm text-stone-400">Customers with five or more completed rental relationships.</p>
+            </div>
+            <div className="rounded-2xl border border-[#2c2621] bg-[#1d1a17] p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-stone-500">New customers</p>
+              <p className="mt-2 text-2xl font-semibold text-stone-50">{customerStats.new}</p>
+              <p className="mt-1 text-sm text-stone-400">People in the database who have not rented yet.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
 
-            return (
-              <div key={customer.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-all group">
-                {/* Header with Checkbox and Badge */}
-                <div className="flex items-start justify-between mb-6">
-                  <div className="flex items-start gap-3 flex-1">
-                    <label className="flex items-center mt-1 cursor-pointer">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="grid gap-3 md:grid-cols-2 xl:grid-cols-5"
+      >
+        <Card className="rounded-[24px] border border-[#2c2722] bg-[#171411] shadow-[0_20px_45px_rgba(0,0,0,0.24)]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Total</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{customerStats.total}</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#26211d] text-stone-300">
+                <Users className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[24px] border border-[#2c2722] bg-[#171411] shadow-[0_20px_45px_rgba(0,0,0,0.24)]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Excellent</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{customerStats.excellent}</p>
+                <p className="mt-1 text-sm text-stone-400">5+ rentals</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1f2b20] text-emerald-300">
+                <Star className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[24px] border border-[#2c2722] bg-[#171411] shadow-[0_20px_45px_rgba(0,0,0,0.24)]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Good</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{customerStats.good}</p>
+                <p className="mt-1 text-sm text-stone-400">2-4 rentals</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1d2933] text-sky-300">
+                <TrendingUp className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[24px] border border-[#3a2d22] bg-[#1c1511] shadow-[0_20px_45px_rgba(0,0,0,0.24)]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Fair</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{customerStats.fair}</p>
+                <p className="mt-1 text-sm text-stone-400">1 rental</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#302219] text-orange-300">
+                <ShoppingBag className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-[24px] border border-[#2c2722] bg-[#171411] shadow-[0_20px_45px_rgba(0,0,0,0.24)]">
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">New</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{customerStats.new}</p>
+                <p className="mt-1 text-sm text-stone-400">No rentals yet</p>
+              </div>
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#241b14] text-orange-300">
+                <UserPlus className="h-5 w-5" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="space-y-6"
+      >
+        <Card className="rounded-[28px] border border-[#2c2722] bg-[#171411] shadow-[0_24px_55px_rgba(0,0,0,0.28)]">
+          <CardContent className="space-y-5 p-5">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  Search customers
+                </label>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, phone, or email..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] pl-11 pr-4 text-sm text-stone-100 outline-none transition-colors placeholder:text-stone-500 focus:border-[#c96b2c]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  Sort by
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as CustomerSort)}
+                  className="h-12 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none transition-colors focus:border-[#c96b2c]"
+                >
+                  <option value="full_name">Name</option>
+                  <option value="totalSpent">Total Spent</option>
+                  <option value="totalRentals">Total Rentals</option>
+                  <option value="created_at">Join Date</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  Sort order
+                </label>
+                <Button
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  variant="outline"
+                  className="h-12 rounded-2xl border-[#3a3129] bg-[#191613] text-stone-200 hover:bg-[#221d18]"
+                >
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  {sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                </Button>
+              </div>
+            </div>
+
+            {filteredCustomers.length > 0 && (
+              <div className="border-t border-[#26211d] pt-5">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <label className="flex items-center gap-2 text-sm font-medium text-stone-300">
                       <input
                         type="checkbox"
-                        checked={selectedCustomers.includes(customer.id)}
-                        onChange={() => handleSelectCustomer(customer.id)}
-                        className="w-5 h-5 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                        checked={selectedCustomers.length === filteredCustomers.length && filteredCustomers.length > 0}
+                        onChange={handleSelectAll}
+                        className="h-5 w-5 rounded border-[#4b4137] bg-[#11100f] text-[#c96b2c] focus:ring-[#c96b2c]"
                       />
+                      Select all ({filteredCustomers.length})
                     </label>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-slate-900 mb-2">{customer.full_name}</h3>
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Phone className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm font-medium">{customer.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <Mail className="w-4 h-4 text-slate-400" />
-                          <span className="text-sm">{customer.email}</span>
+                    {selectedCustomers.length > 0 && (
+                      <span className="rounded-full border border-[#4b3723] bg-[#2b2117] px-3 py-1.5 text-sm font-semibold text-orange-200">
+                        {selectedCustomers.length} selected
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedCustomers.length > 0 && (
+                    <Button
+                      onClick={handleBulkDelete}
+                      disabled={isDeleting}
+                      variant="outline"
+                      className="h-11 rounded-2xl border-[#4a2d2d] bg-[#1e1515] text-rose-200 hover:border-[#7a3e3e] hover:bg-[#281818] hover:text-rose-100"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-rose-200/40 border-t-rose-100"></div>
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Selected ({selectedCustomers.length})
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+          {filteredCustomers.length > 0 ? (
+            filteredCustomers.map((customer) => {
+              const customerBookings = getCustomerBookings(customer.id);
+              const activeBookings = customerBookings.filter((booking) => booking.status === 'active').length;
+              const overduePayments = customerBookings.filter(
+                (booking) =>
+                  !booking.final_payment_paid &&
+                  new Date(booking.end_date) < new Date() &&
+                  booking.status === 'completed'
+              ).length;
+
+              return (
+                <div
+                  key={customer.id}
+                  className="rounded-[26px] border border-[#2d2722] bg-[#12100f] p-5 shadow-[0_18px_40px_rgba(0,0,0,0.22)]"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      <label className="mt-1 flex cursor-pointer items-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedCustomers.includes(customer.id)}
+                          onChange={() => handleSelectCustomer(customer.id)}
+                          className="h-5 w-5 rounded border-[#4b4137] bg-[#11100f] text-[#c96b2c] focus:ring-[#c96b2c]"
+                        />
+                      </label>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-semibold text-stone-50">{customer.full_name}</h3>
+                        <div className="space-y-1.5">
+                          <div className="flex items-center gap-2 text-sm text-stone-400">
+                            <Phone className="h-4 w-4 text-stone-500" />
+                            <span>{customer.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-stone-400">
+                            <Mail className="h-4 w-4 text-stone-500" />
+                            <span>{customer.email}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${getReliabilityTone(customer.totalRentals)}`}>
+                      {getReliabilityLabel(customer.totalRentals)}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${getReliabilityColor(customer.totalRentals)}`}>
-                    {customer.totalRentals >= 5 ? '⭐ VIP' : customer.totalRentals >= 2 ? '👍 Good' : customer.totalRentals >= 1 ? '🆕 Fair' : '✨ New'}
-                  </span>
-                </div>
 
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <ShoppingBag className="w-4 h-4 text-slate-500" />
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Rentals</p>
+                  <div className="mt-5 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-[#2b2520] bg-[#171411] p-4">
+                      <div className="mb-1 flex items-center gap-2">
+                        <ShoppingBag className="h-4 w-4 text-stone-500" />
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Rentals</p>
+                      </div>
+                      <p className="text-2xl font-semibold text-stone-50">{customer.totalRentals}</p>
                     </div>
-                    <p className="text-2xl font-bold text-slate-900">{customer.totalRentals}</p>
-                  </div>
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
-                    <div className="flex items-center gap-2 mb-1">
-                      <DollarSign className="w-4 h-4 text-green-600" />
-                      <p className="text-xs font-semibold text-green-600 uppercase tracking-wide">Spent</p>
+                    <div className="rounded-2xl border border-[#3a2d22] bg-[#1c1511] p-4">
+                      <div className="mb-1 flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-orange-300" />
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-orange-300">Spent</p>
+                      </div>
+                      <p className="text-2xl font-semibold text-stone-50">RM{customer.totalSpent.toFixed(0)}</p>
                     </div>
-                    <p className="text-2xl font-bold text-green-600">RM{customer.totalSpent.toFixed(0)}</p>
-                  </div>
-                  <div className="col-span-2 bg-slate-50 rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Calendar className="w-4 h-4 text-slate-500" />
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Last Rental</p>
+                    <div className="col-span-2 rounded-2xl border border-[#2b2520] bg-[#171411] p-4">
+                      <div className="mb-1 flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-stone-500" />
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Last rental</p>
+                      </div>
+                      <p className="text-sm font-medium text-stone-100">{customer.lastRental || 'No rentals yet'}</p>
                     </div>
-                    <p className="text-sm font-medium text-slate-900">{customer.lastRental || 'No rentals yet'}</p>
                   </div>
-                </div>
 
-                {/* Status Indicators */}
-                {(activeBookings > 0 || overduePayments > 0) && (
-                  <div className="flex gap-2 mb-4">
-                    {activeBookings > 0 && (
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-200">
-                        {activeBookings} Active
-                      </span>
-                    )}
-                    {overduePayments > 0 && (
-                      <span className="bg-red-100 text-red-700 px-3 py-1.5 rounded-lg text-xs font-semibold border border-red-200">
-                        {overduePayments} Overdue
-                      </span>
-                    )}
+                  {(activeBookings > 0 || overduePayments > 0) && (
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {activeBookings > 0 && (
+                        <span className="rounded-full border border-[#31414f] bg-[#1c242c] px-3 py-1.5 text-xs font-semibold text-sky-200">
+                          {activeBookings} Active
+                        </span>
+                      )}
+                      {overduePayments > 0 && (
+                        <span className="rounded-full border border-[#503130] bg-[#2a1b1a] px-3 py-1.5 text-xs font-semibold text-rose-200">
+                          {overduePayments} Overdue
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {customer.notes && (
+                    <div className="mt-4 rounded-2xl border border-[#4b3723] bg-[#2b2117] p-4">
+                      <p className="text-sm text-orange-100">{customer.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="mt-5 flex gap-3">
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="flex-1 h-11 rounded-2xl border-[#3a3129] bg-[#171411] text-stone-200 hover:bg-[#221d18]"
+                    >
+                      <Link href={`/admin/customers/${customer.id}`}>
+                        <Eye className="mr-2 h-4 w-4" />
+                        View Details
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      className="flex-1 h-11 rounded-2xl bg-[#1f6b45] text-white hover:bg-[#258555]"
+                    >
+                      <a
+                        href={`https://wa.me/${formatPhoneWithCountryCode(customer.phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        WhatsApp
+                      </a>
+                    </Button>
                   </div>
-                )}
 
-                {/* Notes */}
-                {customer.notes && (
-                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-4">
-                    <p className="text-sm text-amber-900 font-medium">{customer.notes}</p>
-                  </div>
-                )}
-
-                {/* Actions - Simplified to 2 buttons */}
-                <div className="flex gap-3">
-                  <Link
-                    href={`/admin/customers/${customer.id}`}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:scale-[1.02] active:scale-95 text-center flex items-center justify-center gap-2"
+                  <Button
+                    onClick={() => handleDeleteSingleCustomer(customer.id)}
+                    variant="outline"
+                    className="mt-3 h-10 w-full rounded-2xl border-[#4a2d2d] bg-[#1e1515] text-rose-200 hover:border-[#7a3e3e] hover:bg-[#281818] hover:text-rose-100"
                   >
-                    <Eye className="w-4 h-4" />
-                    View Details
-                  </Link>
-                  <a
-                    href={`https://wa.me/${formatPhoneWithCountryCode(customer.phone)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl text-sm font-semibold transition-all hover:shadow-lg hover:scale-[1.02] active:scale-95 text-center flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp
-                  </a>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Customer
+                  </Button>
                 </div>
+              );
+            })
+          ) : customers.length === 0 ? (
+            <div className="col-span-full rounded-[30px] border border-[#2c2722] bg-[#171411] p-16 text-center shadow-[0_30px_70px_rgba(0,0,0,0.32)]">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border border-[#312924] bg-[#12100f]">
+                <Users className="h-12 w-12 text-stone-500" />
               </div>
-            );
-          }) : (
-            <div className="col-span-full text-center py-16">
-              <div className="bg-slate-100 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
-                <Users className="w-12 h-12 text-slate-400" />
+              <h3 className="mt-6 text-2xl font-semibold text-stone-50">No Customers Yet</h3>
+              <p className="mt-2 text-stone-400">Start building your customer base by creating your first booking.</p>
+              <Button asChild className="mt-8 h-12 rounded-2xl bg-[#c96b2c] text-black hover:bg-[#d97a39]">
+                <Link href="/admin/bookings/add">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Create First Booking
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="col-span-full rounded-[30px] border border-[#2c2722] bg-[#171411] p-16 text-center shadow-[0_30px_70px_rgba(0,0,0,0.32)]">
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-[#312924] bg-[#12100f]">
+                <Search className="h-10 w-10 text-stone-500" />
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-2">No Customers Yet</h3>
-              <p className="text-slate-600 mb-8 text-lg">Start building your customer base by creating your first booking!</p>
-              <Link
-                href="/admin/bookings/add"
-                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-semibold transition-all hover:shadow-lg hover:scale-105 active:scale-95"
-              >
-                <UserPlus className="w-5 h-5" />
-                Create First Booking
-              </Link>
+              <h3 className="mt-6 text-2xl font-semibold text-stone-50">No customers found</h3>
+              <p className="mt-2 text-stone-400">Try adjusting your search terms or sort settings.</p>
             </div>
           )}
         </div>
-
-        {filteredCustomers.length === 0 && customers.length > 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-16 text-center">
-            <div className="bg-slate-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-              <Search className="w-10 h-10 text-slate-400" />
-            </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No customers found</h3>
-            <p className="text-slate-600">Try adjusting your search terms or filters</p>
-          </div>
-        )}
-      </div>
+      </motion.div>
     </div>
   );
 }

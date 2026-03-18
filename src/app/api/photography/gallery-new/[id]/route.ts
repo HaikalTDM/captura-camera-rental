@@ -4,10 +4,10 @@ import { supabase } from '@/lib/supabase';
 // PUT - Update photography gallery image
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     const { action, data: updateData } = body;
@@ -153,10 +153,10 @@ export async function PUT(
 // DELETE - Delete photography gallery image
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Delete the image
     const { error } = await supabase

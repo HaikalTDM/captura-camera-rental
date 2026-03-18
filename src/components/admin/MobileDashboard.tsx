@@ -38,6 +38,7 @@ interface Booking {
     final_payment_paid?: boolean;
     deposit_amount?: number;
     final_payment_amount?: number;
+    final_payment_paid_date?: string | null;
     total_amount: number;
     created_at?: string;
 }
@@ -52,12 +53,12 @@ interface Camera {
 }
 
 interface MobileDashboardProps {
-    bookings: any[];
-    cameras: any[];
+    bookings: Booking[];
+    cameras: Camera[];
     onMutate?: () => void;
 }
 
-export default function MobileDashboard({ bookings, cameras, onMutate }: MobileDashboardProps) {
+export default function MobileDashboard({ bookings, cameras }: MobileDashboardProps) {
     const [expandedSection, setExpandedSection] = useState<string | null>('actions');
 
     const today = new Date().toISOString().split('T')[0];
@@ -170,7 +171,7 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
     };
 
     return (
-        <div className="pb-24 space-y-4">
+        <div className="space-y-4 pb-28">
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
@@ -178,8 +179,8 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 className="flex items-center justify-between"
             >
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-                    <p className="text-sm text-slate-500">
+                    <h1 className="text-2xl font-bold text-stone-50">Dashboard</h1>
+                    <p className="text-sm text-stone-400">
                         {new Date().toLocaleDateString('en-MY', {
                             weekday: 'long',
                             month: 'short',
@@ -189,9 +190,9 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 </div>
                 <motion.div
                     whileTap={{ scale: 0.95 }}
-                    className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-[#332b25] bg-[#1b1714]"
                 >
-                    <Bell className="w-5 h-5 text-slate-600" />
+                    <Bell className="h-5 w-5 text-stone-300" />
                 </motion.div>
             </motion.div>
 
@@ -201,36 +202,36 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
             >
-                <Card className="bg-gradient-to-br from-indigo-500 to-purple-600 border-0 shadow-lg">
+                <Card className="border border-[#332b25] bg-[radial-gradient(circle_at_top_left,_rgba(201,107,44,0.18),_transparent_45%),linear-gradient(135deg,#1b1714_0%,#171411_60%,#141210_100%)] shadow-[0_20px_45px_rgba(0,0,0,0.35)]">
                     <CardContent className="p-4">
                         <div className="flex items-center gap-2 mb-3">
-                            <Calendar className="w-4 h-4 text-white/80" />
-                            <span className="text-white/80 text-sm font-medium">Today's Overview</span>
+                            <Calendar className="h-4 w-4 text-orange-300" />
+                            <span className="text-sm font-medium text-stone-200">Today's Overview</span>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">
                             <div className="text-center">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-1">
-                                    <Package className="w-5 h-5 text-white" />
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-[#3a3129] bg-[#221d18]">
+                                    <Package className="h-5 w-5 text-orange-300" />
                                 </div>
-                                <p className="text-2xl font-bold text-white">{todayPickups.length}</p>
-                                <p className="text-xs text-white/70">Pickups</p>
+                                <p className="text-2xl font-bold text-stone-50">{todayPickups.length}</p>
+                                <p className="text-xs text-stone-400">Pickups</p>
                             </div>
 
                             <div className="text-center">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-1">
-                                    <PackageOpen className="w-5 h-5 text-white" />
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-[#3a3129] bg-[#221d18]">
+                                    <PackageOpen className="h-5 w-5 text-stone-300" />
                                 </div>
-                                <p className="text-2xl font-bold text-white">{todayReturns.length}</p>
-                                <p className="text-xs text-white/70">Returns</p>
+                                <p className="text-2xl font-bold text-stone-50">{todayReturns.length}</p>
+                                <p className="text-xs text-stone-400">Returns</p>
                             </div>
 
                             <div className="text-center">
-                                <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center mx-auto mb-1">
-                                    <Camera className="w-5 h-5 text-white" />
+                                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl border border-[#3a3129] bg-[#221d18]">
+                                    <Camera className="h-5 w-5 text-stone-300" />
                                 </div>
-                                <p className="text-2xl font-bold text-white">{activeRentals.length}</p>
-                                <p className="text-xs text-white/70">Active</p>
+                                <p className="text-2xl font-bold text-stone-50">{activeRentals.length}</p>
+                                <p className="text-xs text-stone-400">Active</p>
                             </div>
                         </div>
                     </CardContent>
@@ -245,20 +246,20 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                     transition={{ delay: 0.15 }}
                 >
                     <Link href="/admin/booking-approvals">
-                        <Card className="border-orange-200 bg-orange-50 cursor-pointer active:scale-[0.98] transition-transform">
+                        <Card className="cursor-pointer border border-[#4c3421] bg-[#231810] transition-transform active:scale-[0.98]">
                             <CardContent className="p-3 flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                                        <AlertCircle className="w-4 h-4 text-orange-600" />
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#5a4328] bg-[#332316]">
+                                        <AlertCircle className="h-4 w-4 text-orange-300" />
                                     </div>
                                     <div>
-                                        <p className="font-semibold text-slate-900 text-sm">
+                                        <p className="text-sm font-semibold text-stone-100">
                                             {pendingApprovals.length} Pending Approval{pendingApprovals.length !== 1 ? 's' : ''}
                                         </p>
-                                        <p className="text-xs text-slate-600">Tap to review</p>
+                                        <p className="text-xs text-stone-400">Tap to review</p>
                                     </div>
                                 </div>
-                                <ChevronRight className="w-5 h-5 text-orange-400" />
+                                <ChevronRight className="h-5 w-5 text-orange-300" />
                             </CardContent>
                         </Card>
                     </Link>
@@ -271,16 +272,16 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
             >
-                <Card className="border-slate-200 overflow-hidden">
+                <Card className="overflow-hidden border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                     <button
                         onClick={() => toggleSection('actions')}
-                        className="w-full p-3 flex items-center justify-between bg-slate-50 border-b border-slate-100"
+                        className="flex w-full items-center justify-between border-b border-[#26211d] bg-[#1b1714] p-3"
                     >
                         <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-indigo-600" />
-                            <span className="font-semibold text-slate-900 text-sm">Action Needed</span>
+                            <Sparkles className="h-4 w-4 text-orange-300" />
+                            <span className="text-sm font-semibold text-stone-100">Action Needed</span>
                             {todayActions.length > 0 && (
-                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 text-xs">
+                                <Badge className="border-[#5a4328] bg-[#332316] text-[11px] text-orange-200 hover:bg-[#332316]">
                                     {todayActions.length}
                                 </Badge>
                             )}
@@ -289,7 +290,7 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                             animate={{ rotate: expandedSection === 'actions' ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                            <ChevronDown className="h-5 w-5 text-stone-500" />
                         </motion.div>
                     </button>
 
@@ -303,7 +304,7 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                             >
                                 <CardContent className="p-0">
                                     {todayActions.length > 0 ? (
-                                        <div className="divide-y divide-slate-100">
+                                        <div className="divide-y divide-[#26211d]">
                                             {todayActions.map((action, index) => (
                                                 <Link
                                                     key={`${action.type}-${action.booking.id}`}
@@ -313,21 +314,21 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                                                         initial={{ opacity: 0, x: -10 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: index * 0.05 }}
-                                                        className="p-3 flex items-center gap-3 active:bg-slate-50 transition-colors"
+                                                        className="flex items-center gap-3 p-3 transition-colors active:bg-[#1f1a16]"
                                                     >
-                                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${action.type === 'pickup' ? 'bg-green-100' :
-                                                            action.type === 'return' ? 'bg-orange-100' :
-                                                                'bg-purple-100'
+                                                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg border ${action.type === 'pickup' ? 'border-[#5a4328] bg-[#332316]' :
+                                                            action.type === 'return' ? 'border-[#3f352d] bg-[#221d18]' :
+                                                                'border-[#4b3422] bg-[#2a1d14]'
                                                             }`}>
-                                                            {action.type === 'pickup' && <Package className="w-4 h-4 text-green-600" />}
-                                                            {action.type === 'return' && <PackageOpen className="w-4 h-4 text-orange-600" />}
-                                                            {action.type === 'payment' && <DollarSign className="w-4 h-4 text-purple-600" />}
+                                                            {action.type === 'pickup' && <Package className="h-4 w-4 text-orange-300" />}
+                                                            {action.type === 'return' && <PackageOpen className="h-4 w-4 text-stone-300" />}
+                                                            {action.type === 'payment' && <DollarSign className="h-4 w-4 text-orange-300" />}
                                                         </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="font-medium text-slate-900 text-sm truncate">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="truncate text-sm font-medium text-stone-100">
                                                                 {action.booking.customer?.full_name || 'Unknown'}
                                                             </p>
-                                                            <p className="text-xs text-slate-500 truncate">
+                                                            <p className="truncate text-xs text-stone-500">
                                                                 {action.booking.camera?.name} • {
                                                                     action.type === 'pickup' ? 'Pickup @10PM' :
                                                                         action.type === 'return' ? 'Return by 8PM' :
@@ -336,12 +337,10 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                                                             </p>
                                                         </div>
                                                         <Badge
-                                                            variant={
-                                                                action.type === 'pickup' ? 'success' :
-                                                                    action.type === 'return' ? 'warning' :
-                                                                        'secondary'
-                                                            }
-                                                            className="text-xs shrink-0"
+                                                            className={`shrink-0 border text-xs ${action.type === 'pickup' ? 'border-[#5a4328] bg-[#332316] text-orange-200' :
+                                                                action.type === 'return' ? 'border-[#3f352d] bg-[#221d18] text-stone-300' :
+                                                                    'border-[#4b3422] bg-[#2a1d14] text-orange-200'
+                                                                }`}
                                                         >
                                                             {action.type === 'pickup' ? 'Pickup' :
                                                                 action.type === 'return' ? 'Return' : 'Payment'}
@@ -352,8 +351,8 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                                         </div>
                                     ) : (
                                         <div className="p-6 text-center">
-                                            <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                                            <p className="text-sm text-slate-600">All caught up! No actions needed.</p>
+                                            <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-orange-300" />
+                                            <p className="text-sm text-stone-400">All caught up. No actions needed.</p>
                                         </div>
                                     )}
                                 </CardContent>
@@ -369,34 +368,34 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.25 }}
             >
-                <Card className="border-slate-200">
+                <Card className="border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                                    <TrendingUp className="w-4 h-4 text-emerald-600" />
+                                <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#5a4328] bg-[#332316]">
+                                    <TrendingUp className="h-4 w-4 text-orange-300" />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500">This Month</p>
-                                    <p className="text-lg font-bold text-slate-900">RM{monthlyRevenue.toLocaleString()}</p>
+                                    <p className="text-xs text-stone-500">This Month</p>
+                                    <p className="text-lg font-bold text-stone-100">RM{monthlyRevenue.toLocaleString()}</p>
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="text-xs text-slate-500">This Week</p>
-                                <p className="text-sm font-semibold text-emerald-600">+RM{weeklyRevenue.toLocaleString()}</p>
+                                <p className="text-xs text-stone-500">This Week</p>
+                                <p className="text-sm font-semibold text-orange-300">+RM{weeklyRevenue.toLocaleString()}</p>
                             </div>
                         </div>
 
                         {/* Simple progress indicator */}
-                        <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="h-2 w-full rounded-full bg-[#26211d]">
                             <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${Math.min((monthlyRevenue / 5000) * 100, 100)}%` }}
                                 transition={{ delay: 0.5, duration: 0.8 }}
-                                className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full"
+                                className="h-2 rounded-full bg-gradient-to-r from-[#c96b2c] to-[#e08b45]"
                             />
                         </div>
-                        <p className="text-xs text-slate-500 mt-1.5 text-center">
+                        <p className="mt-1.5 text-center text-xs text-stone-500">
                             {Math.round((monthlyRevenue / 5000) * 100)}% of RM5,000 goal
                         </p>
                     </CardContent>
@@ -409,20 +408,20 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
             >
-                <Card className="border-slate-200 overflow-hidden">
+                <Card className="overflow-hidden border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                     <button
                         onClick={() => toggleSection('cameras')}
-                        className="w-full p-3 flex items-center justify-between bg-slate-50 border-b border-slate-100"
+                        className="flex w-full items-center justify-between border-b border-[#26211d] bg-[#1b1714] p-3"
                     >
                         <div className="flex items-center gap-2">
-                            <Camera className="w-4 h-4 text-blue-600" />
-                            <span className="font-semibold text-slate-900 text-sm">Camera Status</span>
+                            <Camera className="h-4 w-4 text-orange-300" />
+                            <span className="text-sm font-semibold text-stone-100">Camera Status</span>
                         </div>
                         <motion.div
                             animate={{ rotate: expandedSection === 'cameras' ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                            <ChevronDown className="h-5 w-5 text-stone-500" />
                         </motion.div>
                     </button>
 
@@ -471,15 +470,15 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                                         return (
                                             <div
                                                 key={camera.id}
-                                                className="flex items-center justify-between p-2 bg-slate-50 rounded-lg"
+                                                className="flex items-center justify-between rounded-lg border border-[#2c2722] bg-[#1b1714] p-2"
                                             >
                                                 <div className="flex items-center gap-2">
-                                                    <div className={`w-2 h-2 rounded-full ${!isRented ? 'bg-green-500' : 'bg-orange-500'}`} />
-                                                    <span className="text-sm font-medium text-slate-900 truncate max-w-[180px]">
+                                                    <div className={`h-2 w-2 rounded-full ${!isRented ? 'bg-orange-300' : 'bg-stone-500'}`} />
+                                                    <span className="max-w-[180px] truncate text-sm font-medium text-stone-100">
                                                         {camera.name}
                                                     </span>
                                                 </div>
-                                                <Badge variant={!isRented ? "success" : "secondary"} className="text-xs">
+                                                <Badge className={`text-xs ${!isRented ? 'border-[#5a4328] bg-[#332316] text-orange-200' : 'border-[#3f352d] bg-[#221d18] text-stone-300'}`}>
                                                     {!isRented ? 'Free' : 'Rented'}
                                                 </Badge>
                                             </div>
@@ -511,20 +510,20 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 }}
             >
-                <Card className="border-slate-200 overflow-hidden">
+                <Card className="overflow-hidden border border-[#2c2722] bg-[#171411] shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
                     <button
                         onClick={() => toggleSection('bookings')}
-                        className="w-full p-3 flex items-center justify-between bg-slate-50 border-b border-slate-100"
+                        className="flex w-full items-center justify-between border-b border-[#26211d] bg-[#1b1714] p-3"
                     >
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-purple-600" />
-                            <span className="font-semibold text-slate-900 text-sm">Recent Bookings</span>
+                            <Clock className="h-4 w-4 text-orange-300" />
+                            <span className="text-sm font-semibold text-stone-100">Recent Bookings</span>
                         </div>
                         <motion.div
                             animate={{ rotate: expandedSection === 'bookings' ? 180 : 0 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <ChevronDown className="w-5 h-5 text-slate-400" />
+                            <ChevronDown className="h-5 w-5 text-stone-500" />
                         </motion.div>
                     </button>
 
@@ -539,35 +538,35 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                                 <CardContent className="p-0">
                                     {recentBookings.length > 0 ? (
                                         <>
-                                            <div className="divide-y divide-slate-100">
+                                            <div className="divide-y divide-[#26211d]">
                                                 {recentBookings.map((booking) => (
                                                     <Link key={booking.id} href={`/admin/bookings/${booking.id}`}>
-                                                        <div className="p-3 flex items-center justify-between active:bg-slate-50 transition-colors">
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="font-medium text-slate-900 text-sm truncate">
+                                                        <div className="flex items-center justify-between p-3 transition-colors active:bg-[#1f1a16]">
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-sm font-medium text-stone-100">
                                                                     {booking.customer?.full_name}
                                                                 </p>
-                                                                <p className="text-xs text-slate-500 truncate">
+                                                                <p className="truncate text-xs text-stone-500">
                                                                     {booking.camera?.name} • {new Date(booking.start_date).toLocaleDateString('en-MY', { month: 'short', day: 'numeric' })}
                                                                 </p>
                                                             </div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="text-sm font-medium text-slate-900">RM{booking.total_amount}</span>
-                                                                <ChevronRight className="w-4 h-4 text-slate-300" />
+                                                                <span className="text-sm font-medium text-stone-100">RM{booking.total_amount}</span>
+                                                                <ChevronRight className="h-4 w-4 text-stone-500" />
                                                             </div>
                                                         </div>
                                                     </Link>
                                                 ))}
                                             </div>
                                             <Link href="/admin/bookings">
-                                                <div className="p-3 text-center border-t border-slate-100 active:bg-slate-50">
-                                                    <span className="text-sm font-medium text-indigo-600">View All Bookings</span>
+                                                <div className="border-t border-[#26211d] p-3 text-center active:bg-[#1f1a16]">
+                                                    <span className="text-sm font-medium text-orange-300">View All Bookings</span>
                                                 </div>
                                             </Link>
                                         </>
                                     ) : (
                                         <div className="p-6 text-center">
-                                            <p className="text-sm text-slate-500">No recent bookings</p>
+                                            <p className="text-sm text-stone-500">No recent bookings</p>
                                         </div>
                                     )}
                                 </CardContent>
@@ -582,24 +581,24 @@ export default function MobileDashboard({ bookings, cameras, onMutate }: MobileD
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                className="fixed bottom-6 left-4 right-4 z-50"
+                className="fixed bottom-5 left-4 right-4 z-50"
             >
-                <div className="bg-white border border-slate-200 rounded-2xl shadow-lg p-2 flex items-center justify-around">
+                <div className="flex items-center justify-around rounded-2xl border border-[#332b25] bg-[#171411]/95 p-2 shadow-[0_18px_40px_rgba(0,0,0,0.38)] backdrop-blur">
                     <Link href="/admin/bookings/add" className="flex-1">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
-                            className="w-full py-3 px-2 rounded-xl bg-indigo-600 text-white font-medium text-sm flex items-center justify-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#c96b2c] px-2 py-3 text-sm font-medium text-stone-950"
                         >
-                            <Package className="w-4 h-4" />
+                            <Package className="h-4 w-4" />
                             New Booking
                         </motion.button>
                     </Link>
                     <Link href="/admin/bookings" className="flex-1 ml-2">
                         <motion.button
                             whileTap={{ scale: 0.95 }}
-                            className="w-full py-3 px-2 rounded-xl bg-slate-100 text-slate-700 font-medium text-sm flex items-center justify-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#332b25] bg-[#1f1a16] px-2 py-3 text-sm font-medium text-stone-200"
                         >
-                            <Clock className="w-4 h-4" />
+                            <Clock className="h-4 w-4" />
                             All Bookings
                         </motion.button>
                     </Link>

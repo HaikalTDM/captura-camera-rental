@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, AlertCircle, Info, X, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -26,7 +26,7 @@ const toastVariants = {
     y: 0,
     scale: 1,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 500,
       damping: 30,
       mass: 1,
@@ -38,10 +38,10 @@ const toastVariants = {
     scale: 0.95,
     transition: {
       duration: 0.2,
-      ease: 'easeInOut',
+      ease: 'easeInOut' as const,
     },
   },
-};
+} satisfies Variants;
 
 const iconVariants = {
   initial: { scale: 0, rotate: -180 },
@@ -49,24 +49,13 @@ const iconVariants = {
     scale: 1,
     rotate: 0,
     transition: {
-      type: 'spring',
+      type: 'spring' as const,
       stiffness: 400,
       damping: 20,
       delay: 0.1,
     },
   },
-};
-
-const progressVariants = {
-  initial: { scaleX: 1 },
-  animate: (duration: number) => ({
-    scaleX: 0,
-    transition: {
-      duration: duration / 1000,
-      ease: 'linear',
-    },
-  }),
-};
+} satisfies Variants;
 
 export function AnimatedToast({
   id,
@@ -163,10 +152,14 @@ export function AnimatedToast({
       {type !== 'loading' && (
         <motion.div
           className={`absolute bottom-0 left-0 h-1 ${getProgressColor()} origin-left`}
-          variants={progressVariants}
-          initial="initial"
-          animate={isHovered ? 'initial' : 'animate'}
-          custom={duration}
+          initial={{ scaleX: 1 }}
+          animate={isHovered ? { scaleX: 1 } : {
+            scaleX: 0,
+            transition: {
+              duration: duration / 1000,
+              ease: 'linear' as const,
+            },
+          }}
         />
       )}
 

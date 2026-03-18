@@ -20,10 +20,8 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const autoSlideRef = useRef<NodeJS.Timeout>();
+  const autoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset carousel to first slide when type or packages change
   useEffect(() => {
@@ -143,7 +141,7 @@ export default function MobilePackageCarousel({ packages, type }: MobilePackageC
             transform: `translateX(-${currentIndex * 100}%)`,
           }}
         >
-          {packages.map((pkg, index) => (
+          {packages.map((pkg) => (
             <div 
               key={pkg.id} 
               className="w-full flex-shrink-0 px-4"

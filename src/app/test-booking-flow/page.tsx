@@ -3,17 +3,27 @@
 import React, { useState } from 'react';
 import BookingForm from '@/components/BookingForm';
 import BookingSuccess from '@/components/BookingSuccess';
+import type { Camera } from '@/types';
 
 export default function TestBookingFlow() {
   const [showForm, setShowForm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [bookingData, setBookingData] = useState<any>(null);
 
-  const mockCamera = {
+  const mockCamera: Camera = {
     id: 'osmo-pocket-3',
     name: 'DJI Osmo Pocket 3',
+    description: 'Compact creator camera for handheld video and travel content.',
+    image: '/images/cameras/osmo-pocket-3.jpg',
+    images: ['/images/cameras/osmo-pocket-3.jpg'],
     dailyRate: 50,
-    discountRate: 45
+    discountRate: 45,
+    features: ['4K video', '3-axis stabilization', 'Pocket-sized design'],
+    specifications: {
+      sensor: '1-inch CMOS',
+      stabilization: '3-axis gimbal',
+      battery: 'Long-life rechargeable'
+    }
   };
 
   const startDate = new Date('2025-09-28');

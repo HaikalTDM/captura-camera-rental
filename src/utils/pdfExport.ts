@@ -7,6 +7,51 @@ export interface PDFExportOptions {
   filename?: string;
 }
 
+function normalizeInlineStyle(styleText: string | null): string {
+  if (!styleText) return '';
+
+  return styleText
+    .split(';')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => !/(oklch|oklab|lab|lch)\(/i.test(part))
+    .join('; ');
+}
+
+function sanitizeExportClone(root: HTMLElement, sourceRoot?: HTMLElement): void {
+  const cloneElements = [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))];
+  const sourceElements = sourceRoot
+    ? [sourceRoot, ...Array.from(sourceRoot.querySelectorAll<HTMLElement>('*'))]
+    : [];
+
+  cloneElements.forEach((node, index) => {
+    node.removeAttribute('class');
+
+    const sourceNode = sourceElements[index];
+    if (sourceNode) {
+      const safeInlineStyle = normalizeInlineStyle(sourceNode.getAttribute('style'));
+      if (safeInlineStyle) {
+        node.setAttribute('style', safeInlineStyle);
+      } else {
+        node.removeAttribute('style');
+      }
+    }
+
+    if (!node.style.color) {
+      node.style.color = '#0f172a';
+    }
+    if (!node.style.fontFamily) {
+      node.style.fontFamily = 'Arial, sans-serif';
+    }
+    if (!node.style.backgroundColor && node === root) {
+      node.style.backgroundColor = '#ffffff';
+    }
+    node.style.setProperty('webkit-font-smoothing', 'antialiased');
+    node.style.setProperty('-moz-osx-font-smoothing', 'grayscale');
+    node.style.setProperty('color-scheme', 'light');
+  });
+}
+
 /**
  * Export HTML element to PDF by converting to image first
  * @param element - HTML element to export
@@ -16,6 +61,8 @@ export async function exportToPDF(
   element: HTMLElement,
   options: PDFExportOptions = {}
 ): Promise<void> {
+  let exportContainer: HTMLDivElement | null = null;
+
   try {
     // Dynamically import libraries
     const html2canvas = (await import('html2canvas')).default;
@@ -23,50 +70,45 @@ export async function exportToPDF(
 
     const filename = options.filename || `rental-agreement-${Date.now()}.pdf`;
 
-    // Show element temporarily for better rendering
-    const originalPosition = element.style.position;
-    const originalLeft = element.style.left;
-    const originalTop = element.style.top;
+    const exportNode = element.cloneNode(true) as HTMLElement;
+    sanitizeExportClone(exportNode, element);
 
-    element.style.position = 'fixed';
-    element.style.left = '0';
-    element.style.top = '0';
+    exportContainer = document.createElement('div');
+    exportContainer.setAttribute('data-pdf-export-container', 'true');
+    exportContainer.style.position = 'fixed';
+    exportContainer.style.left = '-100000px';
+    exportContainer.style.top = '0';
+    exportContainer.style.width = `${Math.max(element.scrollWidth, 900)}px`;
+    exportContainer.style.backgroundColor = '#ffffff';
+    exportContainer.style.padding = '0';
+    exportContainer.style.margin = '0';
+    exportContainer.style.zIndex = '-1';
+    exportContainer.appendChild(exportNode);
+    document.body.appendChild(exportContainer);
 
     // Wait for rendering
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Convert the element to canvas using html2canvas with optimized settings
-    const canvas = await html2canvas(element, {
+    const canvasOptions = {
       scale: 2, // High quality
       useCORS: false, // Disable CORS to avoid issues
       allowTaint: true, // Allow tainted canvas
       logging: false,
       backgroundColor: '#ffffff',
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
+      windowWidth: exportNode.scrollWidth,
+      windowHeight: exportNode.scrollHeight,
       removeContainer: true,
       imageTimeout: 15000,
       foreignObjectRendering: false, // Better compatibility
-      onclone: (clonedDoc) => {
-        // Ensure fonts are loaded in cloned document
-        const clonedElement = clonedDoc.querySelector('[style*="font"]');
-        if (clonedElement) {
-          // Force font smoothing
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach((el: any) => {
-            if (el.style) {
-              el.style.webkitFontSmoothing = 'antialiased';
-              el.style.mozOsxFontSmoothing = 'grayscale';
-            }
-          });
+      onclone: (clonedDoc: Document) => {
+        const clonedRoot = clonedDoc.querySelector('[data-pdf-export-container="true"] > *') as HTMLElement | null;
+        if (clonedRoot) {
+          sanitizeExportClone(clonedRoot, element);
         }
       }
-    });
-
-    // Restore original position
-    element.style.position = originalPosition;
-    element.style.left = originalLeft;
-    element.style.top = originalTop;
+    } as any;
+    const canvas = await html2canvas(exportNode, canvasOptions);
 
     // Convert canvas to image data URL
     const dataUrl = canvas.toDataURL('image/png', 1.0);
@@ -106,12 +148,8 @@ export async function exportToPDF(
         yPosition = margin;
       }
 
-      const heightToAdd = Math.min(remainingHeight, availableHeight);
-
       // Calculate which part of the image to show
       const sourceY = imgHeightMM - remainingHeight;
-      const sourceHeight = heightToAdd;
-
       pdf.addImage(
         dataUrl,
         'PNG',
@@ -130,6 +168,10 @@ export async function exportToPDF(
   } catch (error) {
     console.error('PDF export failed:', error);
     throw new Error('Failed to generate PDF. Please try again.');
+  } finally {
+    if (exportContainer && exportContainer.parentNode) {
+      exportContainer.parentNode.removeChild(exportContainer);
+    }
   }
 }
 
@@ -146,6 +188,18 @@ export function generatePDFFilename(
   const date = new Date().toISOString().split('T')[0];
   
   return `Captura_Rental_Agreement_${sanitizedName}_${identifier}_${date}.pdf`;
+}
+
+export function generateInvoicePDFFilename(
+  customerName: string,
+  invoiceNumber?: string,
+  bookingId?: string
+): string {
+  const sanitizedName = customerName.replace(/[^a-zA-Z0-9]/g, '_');
+  const identifier = invoiceNumber || bookingId || Date.now().toString();
+  const date = new Date().toISOString().split('T')[0];
+
+  return `Captura_Invoice_${sanitizedName}_${identifier}_${date}.pdf`;
 }
 
 /**

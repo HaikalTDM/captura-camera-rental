@@ -6,8 +6,14 @@
  */
 
 import { supabase } from '@/lib/supabase'
-import type { Booking } from '@/lib/supabase'
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter'
+
+function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) {
+    return value[0] ?? null
+  }
+  return value ?? null
+}
 
 // Helper function to get camera info
 const getCameraInfo = async (cameraId: string) => {
@@ -53,6 +59,7 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
       .from('bookings')
       .select(`
         id,
+        camera_id,
         pickup_date,
         start_date,
         end_date,
@@ -72,8 +79,10 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
       const bookingsWithCameraInfo = await Promise.all(
         pickupsWithDate.map(async (booking) => {
           const cameraInfo = await getCameraInfo(booking.camera_id);
+          const customer = unwrapRelation(booking.customer);
           return {
             ...booking,
+            customer,
             camera_name: cameraInfo.name,
             camera_model: cameraInfo.model
           };
@@ -102,6 +111,7 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
       .from('bookings')
       .select(`
         id,
+        camera_id,
         start_date,
         end_date,
         booking_status,
@@ -132,8 +142,10 @@ export async function getTodaysPickups(): Promise<PickupSchedule[]> {
     const bookingsWithCameraInfo = await Promise.all(
       todaysPickups.map(async (booking) => {
         const cameraInfo = await getCameraInfo(booking.camera_id);
+        const customer = unwrapRelation(booking.customer);
         return {
           ...booking,
+          customer,
           camera_name: cameraInfo.name,
           camera_model: cameraInfo.model
         };
@@ -177,6 +189,7 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
       .from('bookings')
       .select(`
         id,
+        camera_id,
         pickup_date,
         start_date,
         end_date,
@@ -195,8 +208,10 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
       const bookingsWithCameraInfo = await Promise.all(
         pickupsWithDate.map(async (booking) => {
           const cameraInfo = await getCameraInfo(booking.camera_id);
+          const customer = unwrapRelation(booking.customer);
           return {
             ...booking,
+            customer,
             camera_name: cameraInfo.name,
             camera_model: cameraInfo.model
           };
@@ -230,6 +245,7 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
       .from('bookings')
       .select(`
         id,
+        camera_id,
         start_date,
         end_date,
         booking_status,
@@ -251,8 +267,10 @@ export async function getPickupsForDate(date: string): Promise<PickupSchedule[]>
     const bookingsWithCameraInfo = await Promise.all(
       (calculatedPickups || []).map(async (booking) => {
         const cameraInfo = await getCameraInfo(booking.camera_id);
+        const customer = unwrapRelation(booking.customer);
         return {
           ...booking,
+          customer,
           camera_name: cameraInfo.name,
           camera_model: cameraInfo.model
         };
@@ -313,7 +331,6 @@ export async function markEquipmentPickedUp(bookingId: string, notes?: string): 
  */
 export async function getPickupStats() {
   try {
-    const today = new Date().toISOString().split('T')[0];
     const todaysPickups = await getTodaysPickups();
     
     // Get overdue pickups (pickup date was yesterday or earlier, not picked up)
@@ -321,7 +338,7 @@ export async function getPickupStats() {
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayString = yesterday.toISOString().split('T')[0];
     
-    const { data: overduePickups, error: overdueError } = await supabase
+    const { data: overduePickups } = await supabase
       .from('bookings')
       .select('id')
       .lte('pickup_date', yesterdayString)
