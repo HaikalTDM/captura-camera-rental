@@ -340,6 +340,54 @@ export default function BookingDetailsPage() {
     }
   };
 
+  const generatePickupReminderMessage = () => {
+    if (!booking?.customer?.full_name || !booking?.camera?.name) {
+      const customerName = booking?.customer?.full_name || 'Customer';
+      const cameraName = booking?.camera?.name || 'rented equipment';
+
+      return `Hi ${customerName}!\n\nThis is a friendly reminder about your ${cameraName} rental pickup.\n\nPlease contact us to confirm your pickup timing.\n\nThank you for choosing Captura!`;
+    }
+
+    const customerName = booking.customer.full_name;
+    const pickupDateValue = booking.pickup_date || booking.start_date;
+    const pickupDateObject = new Date(pickupDateValue);
+    const today = new Date();
+    const cameraName = booking.camera.name;
+
+    const pickupDateStr = pickupDateObject.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    const timeDiff = pickupDateObject.getTime() - today.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    if (daysDiff === 0) {
+      return `Hi ${customerName}!\n\nThis is a friendly reminder that your pickup for the ${cameraName} is scheduled for TODAY (${pickupDateStr}).\n\nPickup details:\nCamera: ${cameraName}\nPickup Date: ${pickupDateStr} (Today)\nPickup after: 10:00 PM\nLocation: Caltex Selayang Pandang\n\nPlease reply here if you need to confirm your pickup timing.\n\nThank you for choosing Captura!`;
+    }
+
+    if (daysDiff < 0) {
+      const overdueDays = Math.abs(daysDiff);
+      return `Hi ${customerName}!\n\nYour pickup for the ${cameraName} was scheduled on ${pickupDateStr} and is now ${overdueDays} day${overdueDays > 1 ? 's' : ''} overdue.\n\nPlease reply as soon as possible so we can confirm whether you still want to proceed with the booking.\n\nPickup details:\nCamera: ${cameraName}\nScheduled Pickup: ${pickupDateStr}\nLocation: Caltex Selayang Pandang\n\nThank you.`;
+    }
+
+    return `Hi ${customerName}!\n\nJust a friendly reminder about your upcoming pickup:\n\nCamera: ${cameraName}\nPickup Date: ${pickupDateStr} (${daysDiff} day${daysDiff > 1 ? 's' : ''} from now)\nPickup after: 10:00 PM\nLocation: Caltex Selayang Pandang\n\nPlease keep your booking ID ready and contact us if you need to coordinate the timing.\n\nThank you for choosing Captura!`;
+  };
+
+  const handlePickupReminder = () => {
+    if (!booking?.customer?.phone) {
+      toast.error('Customer phone number not available');
+      return;
+    }
+
+    const message = generatePickupReminderMessage();
+    const phoneNumber = formatPhoneWithCountryCode(booking.customer.phone);
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
+    window.open(whatsappUrl, '_blank');
+  };
+
   const generateReturnReminderMessage = () => {
     if (!booking?.customer?.full_name || !booking?.end_date || !booking?.camera?.name) {
       const customerName = booking?.customer?.full_name || 'Customer';
@@ -1031,6 +1079,15 @@ export default function BookingDetailsPage() {
                   <MessageCircle className="h-4 w-4" />
                   WhatsApp Customer
                 </a>
+              )}
+              {booking.customer?.phone && (
+                <button
+                  onClick={handlePickupReminder}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#35553b] bg-[#102317] px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-[#14301d]"
+                >
+                  <Bell className="h-4 w-4" />
+                  Pickup Reminder
+                </button>
               )}
               {booking.customer?.phone && (
                 <button

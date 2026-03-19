@@ -322,7 +322,7 @@ function hasOperationalBookingStatus(booking: Booking) {
 }
 
 function isPendingApprovalBooking(booking: Booking) {
-  return booking.booking_status === 'pending_approval' || booking.status === 'pending';
+  return booking.booking_status === 'pending_approval';
 }
 
 function getBookingPickupDate(booking: Booking) {
