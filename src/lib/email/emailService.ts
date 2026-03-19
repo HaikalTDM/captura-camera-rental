@@ -8,7 +8,7 @@ import nodemailer from 'nodemailer';
 // Email configuration
 const EMAIL_CONFIG = {
   from: process.env.EMAIL_FROM || 'captura.my@gmail.com',
-  to: process.env.ADMIN_EMAIL || 'haikaltdm46@gmail.com',
+  to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || process.env.EMAIL_FROM || 'captura.my@gmail.com',
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER || 'captura.my@gmail.com',
@@ -46,6 +46,7 @@ export interface EmailData {
   cameraName: string;
   phone: string;
   email: string;
+  adminEmail?: string;
   daysUntilPickup?: number;
   daysUntilReturn?: number;
   pickupDate?: string;
@@ -625,7 +626,7 @@ export async function sendPickupReminder(data: EmailData): Promise<boolean> {
     const timing = describeTiming(data.daysUntilPickup);
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
-      to: EMAIL_CONFIG.to,
+      to: data.adminEmail || EMAIL_CONFIG.to,
       subject: `Pickup Reminder ${timing.uppercaseLabel} - ${data.customerName} - ${data.cameraName}`,
       html: createAdminPickupEmail(data),
     };
@@ -648,7 +649,7 @@ export async function sendReturnReminder(data: EmailData): Promise<boolean> {
     const timing = describeTiming(data.daysUntilReturn);
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
-      to: EMAIL_CONFIG.to,
+      to: data.adminEmail || EMAIL_CONFIG.to,
       subject: `Return Reminder ${timing.uppercaseLabel} - ${data.customerName} - ${data.cameraName}`,
       html: createAdminReturnEmail(data),
     };
@@ -670,7 +671,7 @@ export async function sendNewBookingNotification(data: EmailData): Promise<boole
   try {
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
-      to: EMAIL_CONFIG.to,
+      to: data.adminEmail || EMAIL_CONFIG.to,
       subject: `New Booking Request - ${data.customerName} - ${data.cameraName}`,
       html: createNewBookingAdminEmail(data),
     };

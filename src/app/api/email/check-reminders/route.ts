@@ -122,6 +122,7 @@ export async function GET() {
             cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
+            adminEmail: settings.businessEmail,
             daysUntilPickup: reminderDaysBefore,
             pickupDate: new Date(booking.pickup_date).toLocaleDateString('en-MY', {
               weekday: 'long',
@@ -208,6 +209,7 @@ export async function GET() {
             cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
+            adminEmail: settings.businessEmail,
             daysUntilReturn: reminderDaysBefore,
             returnDate: new Date(booking.end_date).toLocaleDateString('en-MY', {
               weekday: 'long',

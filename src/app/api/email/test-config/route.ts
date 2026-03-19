@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
+import { getAdminSettings } from '@/lib/business-settings-server';
 import { sendPickupReminder, testEmailConfig } from '@/lib/email/emailService';
 
 async function runEmailTest() {
   console.log('Testing email configuration...');
+  const settings = await getAdminSettings();
 
   const configOk = await testEmailConfig();
 
@@ -22,6 +24,7 @@ async function runEmailTest() {
     cameraName: 'DJI Osmo Pocket 3',
     phone: '+60 17-746 4121',
     email: 'test@example.com',
+    adminEmail: settings.businessEmail,
     daysUntilPickup: 0,
     pickupDate: new Date().toLocaleDateString('en-MY', {
       weekday: 'long',
@@ -43,10 +46,10 @@ async function runEmailTest() {
 
   return NextResponse.json({
     success: true,
-    message: `Test reminder sent successfully. Check ${(process.env.ADMIN_EMAIL || 'your admin inbox')}.`,
+    message: `Test reminder sent successfully. Check ${settings.businessEmail || process.env.ADMIN_EMAIL || 'your admin inbox'}.`,
     config: {
       from: process.env.EMAIL_FROM || 'captura.my@gmail.com',
-      to: process.env.ADMIN_EMAIL || 'haikaltdm46@gmail.com',
+      to: settings.businessEmail || process.env.ADMIN_EMAIL || process.env.EMAIL_USER || process.env.EMAIL_FROM || 'captura.my@gmail.com',
       user: process.env.EMAIL_USER || 'captura.my@gmail.com'
     }
   });
