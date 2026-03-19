@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import type { Booking, BusinessSettings, Invoice } from '@/lib/supabase';
+import type { Booking, Invoice } from '@/lib/supabase';
+import { createBusinessSettingsMap, type BusinessSettingsRow } from '@/lib/business-settings';
 import {
   buildDefaultInvoiceFromBooking,
   getInvoiceBusinessDefaults,
@@ -45,16 +46,13 @@ async function getBusinessOverrides() {
 
   const { data } = await supabase
     .from('business_settings')
-    .select('setting_key, setting_value');
+    .select('*');
 
   if (!data) {
     return defaults;
   }
 
-  const settingsMap = new Map<string, string>();
-  (data as Pick<BusinessSettings, 'setting_key' | 'setting_value'>[]).forEach((setting) => {
-    settingsMap.set(setting.setting_key, setting.setting_value);
-  });
+  const settingsMap = createBusinessSettingsMap(data as BusinessSettingsRow[]);
 
   return {
     business_name: settingsMap.get('business_name') || defaults.business_name,

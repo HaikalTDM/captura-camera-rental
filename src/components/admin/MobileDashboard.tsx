@@ -58,10 +58,27 @@ interface MobileDashboardProps {
     onMutate?: () => void;
 }
 
+function formatLocalDateKey(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function hasOperationalBookingStatus(booking: Booking) {
+    return booking.booking_status === 'confirmed' ||
+        booking.booking_status === 'approved' ||
+        booking.status === 'active';
+}
+
+function isPendingApprovalBooking(booking: Booking) {
+    return booking.booking_status === 'pending_approval' || booking.status === 'pending';
+}
+
 export default function MobileDashboard({ bookings, cameras }: MobileDashboardProps) {
     const [expandedSection, setExpandedSection] = useState<string | null>('actions');
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDateKey(new Date());
 
     // Calculate dashboard data
     const dashboardData = useMemo(() => {
@@ -69,16 +86,16 @@ export default function MobileDashboard({ bookings, cameras }: MobileDashboardPr
         const todayPickups = bookings.filter(b => {
             if (b.pickup_date) {
                 return b.pickup_date === today &&
-                    (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+                    hasOperationalBookingStatus(b) &&
                     !b.equipment_picked_up;
             }
             const startDate = new Date(b.start_date);
             const pickupDate = new Date(startDate);
             pickupDate.setDate(pickupDate.getDate() - 1);
-            const calculatedPickupDate = pickupDate.toISOString().split('T')[0];
+            const calculatedPickupDate = formatLocalDateKey(pickupDate);
 
             return calculatedPickupDate === today &&
-                (b.booking_status === 'confirmed' || b.booking_status === 'approved') &&
+                hasOperationalBookingStatus(b) &&
                 !b.equipment_picked_up;
         });
 
@@ -91,13 +108,13 @@ export default function MobileDashboard({ bookings, cameras }: MobileDashboardPr
 
         // Active rentals
         const activeRentals = bookings.filter(b =>
-            b.booking_status === 'confirmed' &&
+            hasOperationalBookingStatus(b) &&
             b.equipment_picked_up &&
             !b.equipment_returned
         );
 
         // Pending approvals
-        const pendingApprovals = bookings.filter(b => b.booking_status === 'pending_approval');
+        const pendingApprovals = bookings.filter(b => isPendingApprovalBooking(b));
 
         // Pending payments (equipment returned but not paid)
         const pendingPayments = bookings.filter(b =>

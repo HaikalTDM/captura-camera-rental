@@ -306,12 +306,31 @@ function formatDaysLeftLabel(daysLeft: number) {
   return `In ${daysLeft} days`;
 }
 
+function formatLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function hasOperationalBookingStatus(booking: Booking) {
+  return (
+    booking.booking_status === 'confirmed' ||
+    booking.booking_status === 'approved' ||
+    booking.status === 'active'
+  );
+}
+
+function isPendingApprovalBooking(booking: Booking) {
+  return booking.booking_status === 'pending_approval' || booking.status === 'pending';
+}
+
 function getBookingPickupDate(booking: Booking) {
   if (booking.pickup_date) return booking.pickup_date;
 
   const startDate = new Date(booking.start_date);
   startDate.setDate(startDate.getDate() - 1);
-  return startDate.toISOString().split('T')[0];
+  return formatLocalDateKey(startDate);
 }
 
 function getDaysFromToday(dateString: string) {
@@ -444,7 +463,7 @@ function DrilldownModal({
                           <div key={item.id} className="rounded-2xl border border-[#2b2621] bg-[#1c1916] p-4">
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
-                                <p className="truncate font-semibold text-slate-900">{item.customerName}</p>
+                                <p className="truncate font-semibold text-stone-100">{item.customerName}</p>
                                 <p className="mt-1 truncate text-sm text-stone-400">{item.cameraName}</p>
                                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-stone-500">
                                   <span>{item.eventLabel}: {formatShortDate(item.eventDate)}</span>
@@ -706,13 +725,13 @@ export default function AdminDashboard() {
   const [selectedDrilldown, setSelectedDrilldown] = useState<DrilldownType | null>(null);
 
   const dashboardData = useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDateKey(new Date());
     const now = new Date();
 
     const todayPickups = bookings.filter((booking) => {
       if (booking.pickup_date) {
         return booking.pickup_date === today &&
-          booking.booking_status === 'confirmed' &&
+          hasOperationalBookingStatus(booking) &&
           !booking.equipment_picked_up;
       }
 
@@ -720,13 +739,13 @@ export default function AdminDashboard() {
       const pickupDate = new Date(startDate);
       pickupDate.setDate(pickupDate.getDate() - 1);
 
-      return pickupDate.toISOString().split('T')[0] === today &&
-        booking.booking_status === 'confirmed' &&
+      return formatLocalDateKey(pickupDate) === today &&
+        hasOperationalBookingStatus(booking) &&
         !booking.equipment_picked_up;
     });
 
     const activeRentals = bookings.filter((booking) =>
-      booking.booking_status === 'confirmed' &&
+      hasOperationalBookingStatus(booking) &&
       booking.equipment_picked_up &&
       !booking.equipment_returned
     );
@@ -738,7 +757,7 @@ export default function AdminDashboard() {
     );
 
     const recentBookings = bookings.slice(0, 5);
-    const pendingApprovals = bookings.filter((booking) => booking.booking_status === 'pending_approval');
+    const pendingApprovals = bookings.filter((booking) => isPendingApprovalBooking(booking));
 
     const overduePayments = bookings.filter((booking) =>
       !booking.final_payment_paid &&
@@ -795,7 +814,7 @@ export default function AdminDashboard() {
 
     const pickups = bookings
       .filter((booking) =>
-        booking.booking_status === 'confirmed' &&
+        hasOperationalBookingStatus(booking) &&
         !booking.equipment_picked_up
       )
       .map((booking) => buildTimelineItem(booking, getBookingPickupDate(booking), 'Pickup'))
@@ -812,7 +831,7 @@ export default function AdminDashboard() {
       .sort(sortByDate);
 
     const approvals = bookings
-      .filter((booking) => booking.booking_status === 'pending_approval')
+      .filter((booking) => isPendingApprovalBooking(booking))
       .map((booking) => buildTimelineItem(booking, booking.start_date, 'Rental Start'))
       .filter((item) => item.daysLeft >= 0 && item.daysLeft <= 7)
       .sort(sortByDate);
@@ -828,7 +847,7 @@ export default function AdminDashboard() {
     const last7Days = Array.from({ length: 7 }, (_, index) => {
       const date = new Date();
       date.setDate(date.getDate() - (6 - index));
-      return date.toISOString().split('T')[0];
+      return formatLocalDateKey(date);
     });
 
     return last7Days.map((date) => {

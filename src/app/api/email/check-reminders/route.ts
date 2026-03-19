@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { getAdminSettings } from '@/lib/business-settings-server';
 import { 
   sendPickupReminder, 
   sendReturnReminder,
@@ -7,20 +8,56 @@ import {
   sendCustomerReturnReminder
 } from '@/lib/email/emailService';
 
+const formatDateInTimeZone = (date: Date, timeZone: string) => {
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+
+  return formatter.format(date);
+};
+
+const addDaysToDateKey = (dateKey: string, days: number) => {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().split('T')[0];
+};
+
+type ReminderCustomerRow = {
+  id: string;
+  full_name?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+};
+
+type ReminderCameraRow = {
+  id: string;
+  name?: string | null;
+};
+
 /**
  * API Route: Check for pickup and return reminders
  * This should be called daily (e.g., via cron job or Vercel Cron)
  * 
  * GET /api/email/check-reminders
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Ensure server-side configuration exists
     const hasServiceKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const today = new Date().toISOString().split('T')[0];
     const pickupsSent: string[] = [];
     const returnsSent: string[] = [];
     const errors: string[] = [];
+    const settings = await getAdminSettings();
+    const timeZone = settings.timezone || 'Asia/Kuala_Lumpur';
+    const reminderDaysBefore = Math.max(0, Number(settings.reminderDaysBefore || 0));
+    const today = formatDateInTimeZone(new Date(), timeZone);
+    const pickupTargetDate = addDaysToDateKey(today, reminderDaysBefore);
+    const returnTargetDate = addDaysToDateKey(today, reminderDaysBefore);
     
     if (!hasServiceKey) {
       return NextResponse.json({
@@ -29,14 +66,27 @@ export async function GET(request: NextRequest) {
       }, { status: 500 });
     }
 
+    if (!settings.emailNotifications) {
+      return NextResponse.json({
+        success: true,
+        date: today,
+        summary: {
+          pickups: { count: 0, sent: 0, ids: [] },
+          returns: { count: 0, sent: 0, ids: [] },
+          emailNotifications: 'disabled',
+        },
+        message: 'Email reminders are disabled in business settings',
+      });
+    }
+
     // 1. CHECK FOR PICKUP REMINDERS
     // Get bookings where pickup_date is today and equipment not yet picked up
     const { data: pickupsToday, error: pickupError } = await supabaseAdmin
       .from('bookings')
       .select('*')
-      .eq('pickup_date', today)
+      .eq('pickup_date', pickupTargetDate)
       .eq('equipment_picked_up', false)
-      .eq('booking_status', 'confirmed');
+      .in('booking_status', ['confirmed', 'approved']);
 
     if (pickupError) {
       errors.push(`Failed to fetch pickup reminders: ${pickupError.message || 'Unknown error'}`);
@@ -48,14 +98,18 @@ export async function GET(request: NextRequest) {
       const [{ data: pickupCustomers }, { data: pickupCameras }] = await Promise.all([
         uniquePickupCustomerIds.length > 0
           ? supabaseAdmin.from('customers').select('*').in('id', uniquePickupCustomerIds)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as ReminderCustomerRow[] }),
         uniquePickupCameraIds.length > 0
           ? supabaseAdmin.from('cameras').select('*').in('id', uniquePickupCameraIds)
-          : Promise.resolve({ data: [] as any[] })
+          : Promise.resolve({ data: [] as ReminderCameraRow[] })
       ]);
 
-      const pickupCustomerById = new Map<string, any>((pickupCustomers || []).map(c => [c.id, c]));
-      const pickupCameraById = new Map<string, any>((pickupCameras || []).map(c => [c.id, c]));
+      const pickupCustomerById = new Map<string, ReminderCustomerRow>(
+        ((pickupCustomers || []) as ReminderCustomerRow[]).map((customer) => [customer.id, customer])
+      );
+      const pickupCameraById = new Map<string, ReminderCameraRow>(
+        ((pickupCameras || []) as ReminderCameraRow[]).map((camera) => [camera.id, camera])
+      );
 
       for (const booking of pickupsToday) {
         try {
@@ -68,6 +122,7 @@ export async function GET(request: NextRequest) {
             cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
+            daysUntilPickup: reminderDaysBefore,
             pickupDate: new Date(booking.pickup_date).toLocaleDateString('en-MY', {
               weekday: 'long',
               year: 'numeric',
@@ -93,7 +148,7 @@ export async function GET(request: NextRequest) {
                 data: { bookingId: booking.id, type: 'pickup' }
               })
             });
-          } catch (pushError) {
+          } catch {
             // swallow push notification errors
           }
 
@@ -114,10 +169,10 @@ export async function GET(request: NextRequest) {
     const { data: returnsToday, error: returnError } = await supabaseAdmin
       .from('bookings')
       .select('*')
-      .eq('end_date', today)
+      .eq('end_date', returnTargetDate)
       .eq('equipment_picked_up', true)
       .eq('equipment_returned', false)
-      .eq('booking_status', 'confirmed');
+      .in('booking_status', ['confirmed', 'approved']);
 
     if (returnError) {
       errors.push(`Failed to fetch return reminders: ${returnError.message || 'Unknown error'}`);
@@ -129,14 +184,18 @@ export async function GET(request: NextRequest) {
       const [{ data: returnCustomers }, { data: returnCameras }] = await Promise.all([
         uniqueReturnCustomerIds.length > 0
           ? supabaseAdmin.from('customers').select('*').in('id', uniqueReturnCustomerIds)
-          : Promise.resolve({ data: [] as any[] }),
+          : Promise.resolve({ data: [] as ReminderCustomerRow[] }),
         uniqueReturnCameraIds.length > 0
           ? supabaseAdmin.from('cameras').select('*').in('id', uniqueReturnCameraIds)
-          : Promise.resolve({ data: [] as any[] })
+          : Promise.resolve({ data: [] as ReminderCameraRow[] })
       ]);
 
-      const returnCustomerById = new Map<string, any>((returnCustomers || []).map(c => [c.id, c]));
-      const returnCameraById = new Map<string, any>((returnCameras || []).map(c => [c.id, c]));
+      const returnCustomerById = new Map<string, ReminderCustomerRow>(
+        ((returnCustomers || []) as ReminderCustomerRow[]).map((customer) => [customer.id, customer])
+      );
+      const returnCameraById = new Map<string, ReminderCameraRow>(
+        ((returnCameras || []) as ReminderCameraRow[]).map((camera) => [camera.id, camera])
+      );
 
       for (const booking of returnsToday) {
         try {
@@ -149,6 +208,7 @@ export async function GET(request: NextRequest) {
             cameraName: camera?.name || booking.camera_name || 'Camera',
             phone: customer?.phone || 'N/A',
             email: customer?.email || 'N/A',
+            daysUntilReturn: reminderDaysBefore,
             returnDate: new Date(booking.end_date).toLocaleDateString('en-MY', {
               weekday: 'long',
               year: 'numeric',
@@ -174,7 +234,7 @@ export async function GET(request: NextRequest) {
                 data: { bookingId: booking.id, type: 'return' }
               })
             });
-          } catch (pushError) {
+          } catch {
             // swallow push notification errors
           }
 
@@ -198,12 +258,16 @@ export async function GET(request: NextRequest) {
         pickups: {
           count: pickupsToday?.length || 0,
           sent: pickupsSent.length,
-          ids: pickupsSent
+          ids: pickupsSent,
+          leadDays: reminderDaysBefore,
+          targetDate: pickupTargetDate,
         },
         returns: {
           count: returnsToday?.length || 0,
           sent: returnsSent.length,
-          ids: returnsSent
+          ids: returnsSent,
+          leadDays: reminderDaysBefore,
+          targetDate: returnTargetDate,
         },
         errors: errors.length > 0 ? errors : undefined
       },

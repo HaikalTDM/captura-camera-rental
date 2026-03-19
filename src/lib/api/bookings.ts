@@ -1,21 +1,7 @@
 import { supabase } from '../supabase'
 import type { Booking, Customer, Camera } from '../supabase'
 
-const BOOKING_CUSTOMER_SELECT = `
-  id,
-  full_name,
-  name,
-  email,
-  phone,
-  phone_number,
-  whatsapp,
-  address,
-  id_number,
-  emergency_contact_name,
-  emergency_contact_phone,
-  notes,
-  reliability
-`
+const BOOKING_CUSTOMER_SELECT = 'id,full_name,email,phone,whatsapp,address,id_number,emergency_contact_name,emergency_contact_phone'
 
 export type PublicAvailabilityBooking = Pick<Booking, 'id' | 'camera_id' | 'start_date' | 'end_date' | 'booking_status'>
 export type PublicCamera = Pick<
@@ -41,6 +27,27 @@ function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
   return value ?? null
 }
 
+function logQueryError(context: string, error: unknown) {
+  if (error && typeof error === 'object') {
+    const postgrestError = error as {
+      message?: string
+      details?: string
+      hint?: string
+      code?: string
+    }
+
+    console.error(context, {
+      message: postgrestError.message,
+      details: postgrestError.details,
+      hint: postgrestError.hint,
+      code: postgrestError.code,
+    })
+    return
+  }
+
+  console.error(context, error)
+}
+
 // Get all bookings with customer details and camera information
 export async function getAllBookings(): Promise<Booking[]> {
   try {
@@ -53,7 +60,7 @@ export async function getAllBookings(): Promise<Booking[]> {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching bookings:', error)
+      logQueryError('Error fetching bookings:', error)
       return []
     }
 
@@ -108,7 +115,7 @@ export async function getBookingById(id: string): Promise<Booking | null> {
       .single()
 
     if (error) {
-      console.error('Error fetching booking:', error)
+      logQueryError('Error fetching booking:', error)
       if (error.code === 'PGRST116') return null // Not found
       return null
     }
@@ -158,7 +165,7 @@ export async function getBookingsByDateRange(startDate: string, endDate: string)
       .order('start_date', { ascending: true })
 
     if (error) {
-      console.error('Error fetching bookings by date range:', error)
+      logQueryError('Error fetching bookings by date range:', error)
       return []
     }
 
@@ -581,7 +588,7 @@ export async function getBookingsByCustomerId(customerId: string): Promise<Booki
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching bookings by customer ID:', error)
+      logQueryError('Error fetching bookings by customer ID:', error)
       return []
     }
 
@@ -633,7 +640,7 @@ export async function getBookingsByCameraId(cameraId: string): Promise<Booking[]
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching bookings by camera ID:', error)
+      logQueryError('Error fetching bookings by camera ID:', error)
       return []
     }
 

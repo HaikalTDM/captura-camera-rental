@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,42 +22,72 @@ import { motion } from 'framer-motion';
 import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileSettings from '@/components/admin/MobileSettings';
 import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
+import { defaultAdminSettings, type AdminSettingsState } from '@/lib/business-settings';
 
 type SettingsTab = 'business' | 'booking' | 'notifications' | 'schedule';
 
 export default function SettingsPage() {
   const isMobile = useIsMobile(768);
-  const [settings, setSettings] = useState({
-    businessName: 'CAPTURA',
-    businessPhone: '0177464121',
-    businessEmail: 'captura.my@gmail.com',
-    businessAddress: 'Caltex Selayang Pandang, Selangor',
-    whatsappNumber: '0177464121',
-    defaultDepositPercentage: 30,
-    lateFeePerDay: 10,
-    maxRentalDays: 30,
-    autoConfirmBookings: false,
-    emailNotifications: true,
-    smsNotifications: false,
-    reminderDaysBefore: 1,
-    currency: 'RM',
-    timezone: 'Asia/Kuala_Lumpur',
-    workingHours: {
-      start: '09:00',
-      end: '18:00',
-    },
-    workingDays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
-  });
+  const [settings, setSettings] = useState<AdminSettingsState>(defaultAdminSettings);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('business');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSendingTestReminder, setIsSendingTestReminder] = useState(false);
   const { toasts, success, error, removeToast } = useAnimatedToast();
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/admin/settings');
+        const data = await response.json();
+
+        if (active && data.success && data.settings) {
+          setSettings(data.settings);
+        }
+      } catch (loadError) {
+        console.error('Failed to load settings:', loadError);
+        if (active) {
+          error('Settings fallback', 'Using local defaults because stored settings could not be loaded.');
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadSettings();
+
+    return () => {
+      active = false;
+    };
+  }, [error]);
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      success('Settings saved', 'Your admin preferences were updated in this session.');
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ settings }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to save settings');
+      }
+
+      if (data.settings) {
+        setSettings(data.settings);
+      }
+
+      success('Settings saved', 'Automation and business preferences were saved to your database.');
     } catch {
       error('Save failed', 'Please try again.');
     } finally {
@@ -65,7 +95,32 @@ export default function SettingsPage() {
     }
   };
 
-  const updateSetting = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) => {
+  const handleSendTestReminder = async () => {
+    setIsSendingTestReminder(true);
+    try {
+      const response = await fetch('/api/email/test-config', {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to send test reminder');
+      }
+
+      success('Test reminder sent', data.message || 'Check your admin inbox.');
+    } catch (sendError) {
+      console.error('Failed to send test reminder:', sendError);
+      error(
+        'Test reminder failed',
+        sendError instanceof Error ? sendError.message : 'Please check your email environment variables.'
+      );
+    } finally {
+      setIsSendingTestReminder(false);
+    }
+  };
+
+  const updateSetting = <K extends keyof AdminSettingsState>(key: K, value: AdminSettingsState[K]) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -99,10 +154,13 @@ export default function SettingsPage() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         isSaving={isSaving}
+        isSendingTestReminder={isSendingTestReminder}
         handleSave={handleSave}
+        handleSendTestReminder={handleSendTestReminder}
         updateSetting={updateSetting}
         updateWorkingHours={updateWorkingHours}
         toggleWorkingDay={toggleWorkingDay}
+        isLoading={isLoading}
       />
     );
   }
@@ -165,9 +223,9 @@ export default function SettingsPage() {
               <div className="rounded-2xl border border-[#3f3125] bg-[#241b14] p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-stone-500">Timezone</p>
                 <p className="mt-3 text-2xl font-semibold text-stone-50">{settings.timezone}</p>
-                <p className="mt-2 text-sm text-stone-400">System clock used for scheduling, reminders, and booking operations.</p>
-              </div>
+              <p className="mt-2 text-sm text-stone-400">System clock used for scheduling, reminders, and booking operations.</p>
             </div>
+          </div>
           </CardContent>
         </Card>
 
@@ -182,18 +240,24 @@ export default function SettingsPage() {
             <div className="rounded-2xl border border-[#2c2621] bg-[#1d1a17] p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-stone-500">Current mode</p>
               <p className="mt-2 text-sm leading-6 text-stone-300">
-                These settings currently behave like a local admin control surface, so changes affect the active app state here first.
+                These settings are stored in your business settings table and are now used by invoices and reminder automation.
               </p>
             </div>
             <div className="rounded-2xl border border-[#2c2621] bg-[#1d1a17] p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-stone-500">Reminder</p>
               <p className="mt-2 text-sm leading-6 text-stone-300">
-                Save after editing grouped fields so booking rules, notifications, and branding stay in sync across the admin.
+                Save after editing grouped fields so booking rules, notifications, branding, and reminder timing stay in sync.
               </p>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {isLoading && (
+        <Card className="rounded-[24px] border border-[#2c2722] bg-[#171411]">
+          <CardContent className="p-4 text-sm text-stone-400">Loading saved settings...</CardContent>
+        </Card>
+      )}
 
       <Card className="rounded-[28px] border border-[#2c2722] bg-[#171411] shadow-[0_24px_55px_rgba(0,0,0,0.28)]">
         <div className="border-b border-[#26211d] px-5 py-3">
@@ -467,6 +531,24 @@ export default function SettingsPage() {
                   <p className="mt-3 text-xs text-stone-500">
                     Customers will receive a reminder notification before their rental starts.
                   </p>
+                </div>
+
+                <div className="rounded-2xl border border-[#2b2520] bg-[#13110f] p-5">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <h4 className="text-base font-semibold text-stone-100">Send Test Reminder</h4>
+                      <p className="mt-1 text-sm text-stone-400">
+                        Send a sample reminder email to your admin inbox right now to verify the automation setup.
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleSendTestReminder}
+                      disabled={isLoading || isSendingTestReminder}
+                      className="h-11 rounded-2xl border border-[#4c2d14] bg-[#25170d] px-5 text-[#fdba74] hover:bg-[#2d1b0e] disabled:opacity-50"
+                    >
+                      {isSendingTestReminder ? 'Sending...' : 'Send Test Reminder'}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

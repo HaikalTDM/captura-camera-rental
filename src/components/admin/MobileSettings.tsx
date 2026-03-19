@@ -13,38 +13,20 @@ import {
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import type { AdminSettingsState } from '@/lib/business-settings';
 
 type SettingsTab = 'business' | 'booking' | 'notifications' | 'schedule';
 
-type SettingsState = {
-  businessName: string;
-  businessPhone: string;
-  businessEmail: string;
-  businessAddress: string;
-  whatsappNumber: string;
-  defaultDepositPercentage: number;
-  lateFeePerDay: number;
-  maxRentalDays: number;
-  autoConfirmBookings: boolean;
-  emailNotifications: boolean;
-  smsNotifications: boolean;
-  reminderDaysBefore: number;
-  currency: string;
-  timezone: string;
-  workingHours: {
-    start: string;
-    end: string;
-  };
-  workingDays: string[];
-};
-
 interface MobileSettingsProps {
-  settings: SettingsState;
+  settings: AdminSettingsState;
   activeTab: SettingsTab;
   setActiveTab: React.Dispatch<React.SetStateAction<SettingsTab>>;
   isSaving: boolean;
+  isLoading?: boolean;
+  isSendingTestReminder?: boolean;
   handleSave: () => void | Promise<void>;
-  updateSetting: <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => void;
+  handleSendTestReminder: () => void | Promise<void>;
+  updateSetting: <K extends keyof AdminSettingsState>(key: K, value: AdminSettingsState[K]) => void;
   updateWorkingHours: (key: 'start' | 'end', value: string) => void;
   toggleWorkingDay: (day: string) => void;
 }
@@ -54,7 +36,10 @@ export default function MobileSettings({
   activeTab,
   setActiveTab,
   isSaving,
+  isLoading = false,
+  isSendingTestReminder = false,
   handleSave,
+  handleSendTestReminder,
   updateSetting,
   updateWorkingHours,
   toggleWorkingDay,
@@ -86,10 +71,10 @@ export default function MobileSettings({
 
           <Button
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || isLoading}
             className="rounded-xl bg-[#c96b2c] px-3 py-2 text-sm font-semibold text-stone-950 hover:bg-[#d97a39] disabled:opacity-50"
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isLoading ? 'Loading...' : isSaving ? 'Saving...' : 'Save'}
           </Button>
         </div>
 
@@ -275,6 +260,19 @@ export default function MobileSettings({
                 max="7"
                 className="admin-dark-input w-24 text-center text-lg font-semibold"
               />
+            </div>
+            <div className="rounded-2xl border border-[#2b2520] bg-[#13110f] p-4">
+              <h4 className="text-sm font-semibold text-stone-100">Send Test Reminder</h4>
+              <p className="mt-1 text-sm text-stone-400">
+                Send a sample reminder email to your admin inbox now.
+              </p>
+              <Button
+                onClick={handleSendTestReminder}
+                disabled={isLoading || isSendingTestReminder}
+                className="mt-4 w-full rounded-xl border border-[#4c2d14] bg-[#25170d] px-4 py-3 text-sm font-semibold text-[#fdba74] hover:bg-[#2d1b0e] disabled:opacity-50"
+              >
+                {isSendingTestReminder ? 'Sending...' : 'Send Test Reminder'}
+              </Button>
             </div>
           </CardContent>
         </Card>

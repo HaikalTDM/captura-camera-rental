@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { CheckCircle2, XCircle, AlertCircle, Info, X, Loader2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
@@ -254,7 +254,7 @@ export function useAnimatedToast() {
     }>
   >([]);
 
-  const addToast = (
+  const addToast = useCallback((
     type: ToastType,
     message: string,
     description?: string,
@@ -263,31 +263,31 @@ export function useAnimatedToast() {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, message, description, duration }]);
     return id;
-  };
+  }, []);
 
-  const removeToast = (id: string) => {
+  const removeToast = useCallback((id: string) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  };
+  }, []);
 
-  const success = (message: string, description?: string, duration?: number) => {
+  const success = useCallback((message: string, description?: string, duration?: number) => {
     return addToast('success', message, description, duration);
-  };
+  }, [addToast]);
 
-  const error = (message: string, description?: string, duration?: number) => {
+  const error = useCallback((message: string, description?: string, duration?: number) => {
     return addToast('error', message, description, duration);
-  };
+  }, [addToast]);
 
-  const warning = (message: string, description?: string, duration?: number) => {
+  const warning = useCallback((message: string, description?: string, duration?: number) => {
     return addToast('warning', message, description, duration);
-  };
+  }, [addToast]);
 
-  const info = (message: string, description?: string, duration?: number) => {
+  const info = useCallback((message: string, description?: string, duration?: number) => {
     return addToast('info', message, description, duration);
-  };
+  }, [addToast]);
 
-  const loading = (message: string, description?: string) => {
+  const loading = useCallback((message: string, description?: string) => {
     return addToast('loading', message, description);
-  };
+  }, [addToast]);
 
   return {
     toasts,

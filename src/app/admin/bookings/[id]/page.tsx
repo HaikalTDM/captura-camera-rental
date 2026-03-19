@@ -1,35 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getBookingById } from '@/lib/api/bookings';
-import type { Booking } from '@/lib/supabase';
 import Link from 'next/link';
-import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
-import InvoiceBookingActions from '@/components/InvoiceBookingActions';
 import {
+  AlertCircle,
   ArrowLeft,
-  Edit3,
-  Trash2,
-  User,
-  Camera,
-  FileText,
-  DollarSign,
-  Settings,
-  Package,
-  Zap,
-  MessageCircle,
-  Phone,
-  Printer,
   Bell,
   Calendar,
-  MapPin,
-  Clock,
+  Camera,
   CheckCircle2,
-  XCircle,
-  AlertCircle
+  Clock,
+  DollarSign,
+  Edit3,
+  FileText,
+  MapPin,
+  MessageCircle,
+  Package,
+  Phone,
+  Printer,
+  Settings,
+  Trash2,
+  User,
+  Zap,
 } from 'lucide-react';
+import { getBookingById } from '@/lib/api/bookings';
+import type { Booking } from '@/lib/supabase';
+import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
+import InvoiceBookingActions from '@/components/InvoiceBookingActions';
+
+const shellCardClass =
+  'rounded-[28px] border border-[#2c2722] bg-[#171411] shadow-[0_24px_55px_rgba(0,0,0,0.28)]';
+const sectionClass = 'rounded-[20px] border border-[#2b2520] bg-[#14110f]';
+const labelClass = 'text-[11px] uppercase tracking-[0.28em] text-stone-500';
 
 export default function BookingDetailsPage() {
   const params = useParams();
@@ -42,16 +46,12 @@ export default function BookingDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
-  const [showCompleteAllConfirm, setShowCompleteAllConfirm] = useState(false); // New state for Complete All modal
+  const [showCompleteAllConfirm, setShowCompleteAllConfirm] = useState(false);
   const [isUpdatingPickup, setIsUpdatingPickup] = useState(false);
   const [isUpdatingReturn, setIsUpdatingReturn] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  useEffect(() => {
-    loadBookingData();
-  }, [bookingId]);
-
-  const loadBookingData = async () => {
+  const loadBookingData = useCallback(async () => {
     setIsLoading(true);
     try {
       const foundBooking = await getBookingById(bookingId);
@@ -64,7 +64,11 @@ export default function BookingDetailsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [bookingId]);
+
+  useEffect(() => {
+    loadBookingData();
+  }, [loadBookingData]);
 
   const handleCompleteAll = async () => {
     if (!booking || isUpdating) return;
@@ -73,11 +77,10 @@ export default function BookingDetailsPage() {
     setShowCompleteAllConfirm(false);
 
     try {
-      const toastId = toast.loading('Processing full completion...');
+      const toastId = toast.loading('Processing booking completion...');
       const timestamp = new Date().toISOString();
-      const promises = [];
+      const promises: Promise<Response>[] = [];
 
-      // 1. Mark Deposit as Paid
       if (!booking.deposit_paid) {
         promises.push(
           fetch(`/api/bookings/${booking.id}/deposit`, {
@@ -85,13 +88,12 @@ export default function BookingDetailsPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               deposit_paid: true,
-              deposit_paid_date: timestamp
+              deposit_paid_date: timestamp,
             }),
           })
         );
       }
 
-      // 2. Mark Final Payment as Paid
       if (!booking.final_payment_paid) {
         promises.push(
           fetch(`/api/bookings/${booking.id}/final-payment`, {
@@ -99,13 +101,12 @@ export default function BookingDetailsPage() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               final_payment_paid: true,
-              final_payment_paid_date: timestamp
+              final_payment_paid_date: timestamp,
             }),
           })
         );
       }
 
-      // 3. Mark Equipment as Picked Up
       if (!booking.equipment_picked_up) {
         promises.push(
           fetch(`/api/bookings/${booking.id}/pickup-status`, {
@@ -114,13 +115,12 @@ export default function BookingDetailsPage() {
             body: JSON.stringify({
               equipment_picked_up: true,
               equipment_pickup_notes: 'Auto-completed via Complete All',
-              equipment_condition_pickup: 'excellent'
+              equipment_condition_pickup: 'excellent',
             }),
           })
         );
       }
 
-      // 4. Mark Equipment as Returned (and complete booking)
       if (!booking.equipment_returned) {
         promises.push(
           fetch(`/api/bookings/${booking.id}/return-status`, {
@@ -130,61 +130,22 @@ export default function BookingDetailsPage() {
               equipment_returned: true,
               equipment_return_notes: 'Auto-completed via Complete All',
               equipment_condition_return: 'excellent',
-              booking_status: 'completed'
+              booking_status: 'completed',
             }),
           })
         );
       }
 
       await Promise.all(promises);
-
-      // Refresh booking data
       await loadBookingData();
       toast.dismiss(toastId);
-      toast.success('✨ Booking fully completed!');
-
+      toast.success('Booking fully completed');
     } catch (error) {
       console.error('Error completing all:', error);
       toast.error('Error processing completion');
     } finally {
       setIsUpdating(false);
     }
-  };
-
-
-
-
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!booking) {
-    return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Booking Not Found</h1>
-        <Link href="/admin/bookings" className="text-blue-600 hover:text-blue-800">
-          ← Back to Bookings
-        </Link>
-      </div>
-    );
-  }
-
-  const updateBookingStatus = (newStatus: Booking['status']) => {
-    setBooking(prev => prev ? { ...prev, status: newStatus } : null);
-  };
-
-  const updatePaymentStatus = (newPaymentStatus: Booking['paymentStatus']) => {
-    setBooking(prev => prev ? { ...prev, paymentStatus: newPaymentStatus } : null);
-  };
-
-  const saveNotes = () => {
-    setBooking(prev => prev ? { ...prev, notes } : null);
-    setIsEditing(false);
   };
 
   const handleDepositPaymentUpdate = async (paid: boolean) => {
@@ -199,7 +160,7 @@ export default function BookingDetailsPage() {
         },
         body: JSON.stringify({
           deposit_paid: paid,
-          deposit_paid_date: paid ? new Date().toISOString() : null
+          deposit_paid_date: paid ? new Date().toISOString() : null,
         }),
       });
 
@@ -207,9 +168,9 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Deposit marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+        toast.success(`Deposit marked as ${paid ? 'paid' : 'unpaid'}`);
       } else {
-        toast.error('Failed to update deposit status: ' + data.error);
+        toast.error(`Failed to update deposit status: ${data.error}`);
       }
     } catch (error) {
       console.error('Error updating deposit status:', error);
@@ -231,7 +192,7 @@ export default function BookingDetailsPage() {
         },
         body: JSON.stringify({
           final_payment_paid: paid,
-          final_payment_paid_date: paid ? new Date().toISOString() : null
+          final_payment_paid_date: paid ? new Date().toISOString() : null,
         }),
       });
 
@@ -239,9 +200,9 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Final payment marked as ${paid ? 'paid' : 'unpaid'} successfully`);
+        toast.success(`Final payment marked as ${paid ? 'paid' : 'unpaid'}`);
       } else {
-        toast.error('Failed to update final payment status: ' + data.error);
+        toast.error(`Failed to update final payment status: ${data.error}`);
       }
     } catch (error) {
       console.error('Error updating final payment status:', error);
@@ -265,7 +226,7 @@ export default function BookingDetailsPage() {
           deposit_refunded: refunded,
           deposit_refund_date: refunded ? new Date().toISOString() : null,
           deposit_refund_notes: refunded ? 'Equipment returned in good condition' : null,
-          deposit_refund_amount: 100
+          deposit_refund_amount: 100,
         }),
       });
 
@@ -273,12 +234,10 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'} successfully`);
-
-        // Reload booking data to ensure all fields are updated
+        toast.success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'}`);
         await loadBookingData();
       } else {
-        toast.error('Failed to update deposit refund status: ' + data.error);
+        toast.error(`Failed to update deposit refund status: ${data.error}`);
       }
     } catch (error) {
       console.error('Error updating deposit refund status:', error);
@@ -288,7 +247,7 @@ export default function BookingDetailsPage() {
     }
   };
 
-  const handlePickupStatusUpdate = async (pickedUp: boolean, notes?: string, condition?: string) => {
+  const handlePickupStatusUpdate = async (pickedUp: boolean, pickupNotes?: string, condition?: string) => {
     if (!booking) return;
 
     setIsUpdatingPickup(true);
@@ -300,8 +259,8 @@ export default function BookingDetailsPage() {
         },
         body: JSON.stringify({
           equipment_picked_up: pickedUp,
-          equipment_pickup_notes: notes || null,
-          equipment_condition_pickup: condition || null
+          equipment_pickup_notes: pickupNotes || null,
+          equipment_condition_pickup: condition || null,
         }),
       });
 
@@ -309,9 +268,9 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'} successfully`);
+        toast.success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'}`);
       } else {
-        toast.error('Failed to update pickup status: ' + data.error);
+        toast.error(`Failed to update pickup status: ${data.error}`);
       }
     } catch (error) {
       console.error('Error updating pickup status:', error);
@@ -321,7 +280,7 @@ export default function BookingDetailsPage() {
     }
   };
 
-  const handleReturnStatusUpdate = async (returned: boolean, notes?: string, condition?: string) => {
+  const handleReturnStatusUpdate = async (returned: boolean, returnNotes?: string, condition?: string) => {
     if (!booking) return;
 
     setIsUpdatingReturn(true);
@@ -333,8 +292,8 @@ export default function BookingDetailsPage() {
         },
         body: JSON.stringify({
           equipment_returned: returned,
-          equipment_return_notes: notes || null,
-          equipment_condition_return: condition || null
+          equipment_return_notes: returnNotes || null,
+          equipment_condition_return: condition || null,
         }),
       });
 
@@ -342,9 +301,9 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Equipment marked as ${returned ? 'returned' : 'not returned'} successfully`);
+        toast.success(`Equipment marked as ${returned ? 'returned' : 'not returned'}`);
       } else {
-        toast.error('Failed to update return status: ' + data.error);
+        toast.error(`Failed to update return status: ${data.error}`);
       }
     } catch (error) {
       console.error('Error updating return status:', error);
@@ -371,7 +330,7 @@ export default function BookingDetailsPage() {
         toast.success('Booking deleted successfully');
         router.push('/admin/bookings');
       } else {
-        toast.error('Failed to delete booking: ' + data.error);
+        toast.error(`Failed to delete booking: ${data.error}`);
       }
     } catch (error) {
       console.error('Error deleting booking:', error);
@@ -382,93 +341,37 @@ export default function BookingDetailsPage() {
   };
 
   const generateReturnReminderMessage = () => {
-    // Debug what data we have
-    console.log('Generating return reminder message...');
-    console.log('Booking data:', {
-      customerName: booking?.customer?.full_name,
-      endDate: booking?.end_date,
-      cameraName: booking?.camera?.name,
-      fullBooking: booking
-    });
-
     if (!booking?.customer?.full_name || !booking?.end_date || !booking?.camera?.name) {
-      console.log('Missing required data for return reminder message');
-      // Return a generic message if some data is missing
       const customerName = booking?.customer?.full_name || 'Customer';
       const cameraName = booking?.camera?.name || 'rented equipment';
 
-      return `Hi ${customerName}! 📷
-
-This is a friendly reminder about your ${cameraName} rental return.
-
-Please ensure the equipment is returned by 8:00 PM tonight to avoid any late fees.
-
-Thank you for choosing Captura! 😊`;
+      return `Hi ${customerName}!\n\nThis is a friendly reminder about your ${cameraName} rental.\n\nPlease ensure the equipment is returned by 8:00 PM tonight to avoid any late fees.\n\nThank you for choosing Captura!`;
     }
 
     const customerName = booking.customer.full_name;
     const returnDate = new Date(booking.end_date);
     const today = new Date();
-    const cameraName = booking.camera?.name;
+    const cameraName = booking.camera.name;
 
-    // Format dates
     const returnDateStr = returnDate.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: '2-digit',
-      year: 'numeric'
+      year: 'numeric',
     });
 
-    // Calculate if it's return day, overdue, or future
     const timeDiff = returnDate.getTime() - today.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-    let message = '';
-
     if (daysDiff === 0) {
-      // Today is return day
-      message = `Hi ${customerName}! 📷
-
-This is a friendly reminder that your rental of the ${cameraName} is due for return TODAY (${returnDateStr}).
-
-Please ensure the camera is returned by tonight to avoid any late fees. 
-
-Return details:
-🎥 Camera: ${cameraName}
-📅 Return Date: ${returnDateStr} (Today)
-⏰ Return before: 8:00 PM
-
-Thank you for choosing Captura! 😊`;
-    } else if (daysDiff < 0) {
-      // Overdue
-      const overdueDays = Math.abs(daysDiff);
-      message = `Hi ${customerName}! 📷
-
-Your rental of the ${cameraName} was due for return on ${returnDateStr} and is now ${overdueDays} day${overdueDays > 1 ? 's' : ''} overdue.
-
-Please return the camera as soon as possible to avoid additional late fees.
-
-Overdue details:
-🎥 Camera: ${cameraName}
-📅 Was due: ${returnDateStr}
-⚠️ Days overdue: ${overdueDays}
-
-Please contact us immediately to arrange return. Thank you!`;
-    } else {
-      // Future return
-      message = `Hi ${customerName}! 📷
-
-Just a friendly reminder about your upcoming camera return:
-
-🎥 Camera: ${cameraName}
-📅 Return Date: ${returnDateStr} (${daysDiff} day${daysDiff > 1 ? 's' : ''} from now)
-⏰ Return before: 8:00 PM
-
-Please ensure the camera is returned on time to avoid any late fees.
-
-Thank you for choosing Captura! 😊`;
+      return `Hi ${customerName}!\n\nThis is a friendly reminder that your rental of the ${cameraName} is due for return TODAY (${returnDateStr}).\n\nPlease ensure the camera is returned by tonight to avoid any late fees.\n\nReturn details:\nCamera: ${cameraName}\nReturn Date: ${returnDateStr} (Today)\nReturn before: 8:00 PM\n\nThank you for choosing Captura!`;
     }
 
-    return message;
+    if (daysDiff < 0) {
+      const overdueDays = Math.abs(daysDiff);
+      return `Hi ${customerName}!\n\nYour rental of the ${cameraName} was due for return on ${returnDateStr} and is now ${overdueDays} day${overdueDays > 1 ? 's' : ''} overdue.\n\nPlease return the camera as soon as possible to avoid additional late fees.\n\nOverdue details:\nCamera: ${cameraName}\nWas due: ${returnDateStr}\nDays overdue: ${overdueDays}\n\nPlease contact us immediately to arrange return. Thank you.`;
+    }
+
+    return `Hi ${customerName}!\n\nJust a friendly reminder about your upcoming camera return:\n\nCamera: ${cameraName}\nReturn Date: ${returnDateStr} (${daysDiff} day${daysDiff > 1 ? 's' : ''} from now)\nReturn before: 8:00 PM\n\nPlease ensure the camera is returned on time to avoid any late fees.\n\nThank you for choosing Captura!`;
   };
 
   const handleReturnReminder = () => {
@@ -478,736 +381,717 @@ Thank you for choosing Captura! 😊`;
     }
 
     const message = generateReturnReminderMessage();
-    console.log('Generated message:', message);
-    console.log('Message length:', message.length);
-
     const phoneNumber = formatPhoneWithCountryCode(booking.customer.phone);
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-
-    console.log('WhatsApp URL:', whatsappUrl);
 
     window.open(whatsappUrl, '_blank');
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusTone = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'confirmed': return 'bg-green-100 text-green-800 border-green-200';
-      case 'active': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-      case 'overdue': return 'bg-red-100 text-red-800 border-red-200';
-      case 'deposit_paid': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'fully_paid': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'pending':
+      case 'pending_approval':
+        return 'border border-[#5b442f] bg-[#2c2118] text-[#fdba74]';
+      case 'approved':
+      case 'confirmed':
+        return 'border border-emerald-900/70 bg-emerald-950/60 text-emerald-300';
+      case 'active':
+      case 'picked_up':
+        return 'border border-sky-900/70 bg-sky-950/60 text-sky-300';
+      case 'completed':
+      case 'fully_paid':
+        return 'border border-stone-700 bg-stone-800/70 text-stone-100';
+      case 'cancelled':
+      case 'rejected':
+      case 'overdue':
+        return 'border border-red-900/70 bg-red-950/50 text-red-300';
+      case 'deposit_paid':
+        return 'border border-[#6a4b23] bg-[#2b2115] text-[#fdba74]';
+      default:
+        return 'border border-stone-700 bg-stone-900/70 text-stone-300';
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/admin/bookings"
-              className="group flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all duration-200 shadow-sm"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:text-slate-900 transition-colors" />
-            </Link>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-                Booking #{booking.id.slice(0, 8)}
-              </h1>
-              <p className="text-sm text-slate-500 mt-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Created on {new Date(booking.created_at).toLocaleDateString('en-MY', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                })}
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className={`px-4 py-2 rounded-xl text-sm font-semibold border-2 ${getStatusColor(booking.booking_status || 'pending')}`}>
-              {(booking.booking_status || 'pending').toUpperCase()}
-            </span>
-            <InvoiceBookingActions bookingId={booking.id} />
-            <Link
-              href={`/admin/bookings/${booking.id}/edit`}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-            >
-              <Edit3 className="w-4 h-4" />
-              Edit
-            </Link>
-            <button
-              onClick={handleDeleteBooking}
-              disabled={isDeleting}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-all duration-200 shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Trash2 className="w-4 h-4" />
-              {isDeleting ? 'Deleting...' : 'Delete'}
-            </button>
-          </div>
-        </div>
+  const getConditionTone = (condition: string | null) => {
+    switch (condition) {
+      case 'excellent':
+        return 'border border-emerald-900/70 bg-emerald-950/50 text-emerald-300';
+      case 'good':
+        return 'border border-sky-900/70 bg-sky-950/50 text-sky-300';
+      case 'fair':
+        return 'border border-[#6a4b23] bg-[#2b2115] text-[#fdba74]';
+      case 'damaged':
+        return 'border border-red-900/70 bg-red-950/50 text-red-300';
+      default:
+        return 'border border-stone-700 bg-stone-900/70 text-stone-300';
+    }
+  };
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Customer Information */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <User className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Customer Information</h3>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</label>
-                  <p className="text-base font-semibold text-slate-900">
-                    {booking.customer?.full_name || 'N/A'}
-                  </p>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Phone</label>
-                  <p className="text-base text-slate-900">
-                    {booking.customer?.phone ? (
-                      <a
-                        href={`tel:${booking.customer.phone}`}
-                        className="hover:text-slate-600 transition-colors inline-flex items-center gap-2 group"
-                      >
-                        <Phone className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
-                        {booking.customer.phone}
-                      </a>
-                    ) : (
-                      'N/A'
-                    )}
-                  </p>
-                </div>
-                <div className="md:col-span-2 space-y-1">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</label>
-                  <p className="text-base text-slate-900">
-                    {booking.customer?.email ? (
-                      <a
-                        href={`mailto:${booking.customer.email}`}
-                        className="hover:text-slate-600 transition-colors"
-                      >
-                        {booking.customer.email}
-                      </a>
-                    ) : (
-                      'N/A'
-                    )}
-                  </p>
-                </div>
-              </div>
-            </div>
+  const formatCurrency = (value?: number | null) =>
+    `RM${Number(value || 0).toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-            {/* Camera & Rental Details */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <Camera className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Rental Details</h3>
-              </div>
-              <div className="space-y-6">
-                <div className="p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl border border-slate-200">
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Camera</label>
-                  <p className="text-xl font-bold text-slate-900">{booking.camera?.name}</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Start Date
-                    </label>
-                    <p className="text-base font-semibold text-slate-900">{booking.start_date}</p>
-                    <p className="text-xs text-slate-500 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {booking.pickup_method === 'pickup' ? 'Pickup' : 'Delivery'}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      End Date
-                    </label>
-                    <p className="text-base font-semibold text-slate-900">{booking.end_date}</p>
-                    <p className="text-xs text-slate-500 capitalize">{booking.booking_source}</p>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
-                      <Clock className="w-3.5 h-3.5" />
-                      Duration
-                    </label>
-                    <p className="text-base font-semibold text-slate-900">{booking.total_days} days</p>
-                    <p className="text-xs text-slate-500">RM{booking.daily_rate}/day</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+  const formatDate = (value?: string | null, withTime = false) => {
+    if (!value) return 'Not set';
 
-            {/* Notes */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                    <FileText className="w-5 h-5 text-slate-700" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900">Notes</h3>
-                </div>
-                <button
-                  onClick={() => isEditing ? saveNotes() : setIsEditing(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-medium transition-all duration-200"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  {isEditing ? 'Save' : 'Edit'}
-                </button>
-              </div>
-              {isEditing ? (
-                <textarea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  className="w-full h-32 p-4 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 transition-all duration-200 text-slate-900 placeholder:text-slate-400"
-                  placeholder="Add notes about this booking..."
-                />
-              ) : (
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
-                  <p className="text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
-                    {booking.notes || 'No notes added yet.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
+    return new Date(value).toLocaleString(
+      'en-MY',
+      withTime
+        ? {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          }
+        : {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          }
+    );
+  };
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Payment Summary */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <DollarSign className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Payment Summary</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Total Amount</span>
-                  <span className="text-lg font-bold text-slate-900">RM{booking.total_amount}</span>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl border border-blue-100">
-                  <span className="text-sm font-medium text-blue-900">Deposit Amount</span>
-                  <span className="text-lg font-bold text-blue-600">RM{booking.deposit_amount}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Deposit Paid</span>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_paid
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-red-100 text-red-700'
-                    }`}>
-                    {booking.deposit_paid ? (
-                      <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
-                    ) : (
-                      <><XCircle className="w-3.5 h-3.5" /> No</>
-                    )}
-                  </span>
-                </div>
-                <div className="border-t border-slate-200 pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Final Payment</span>
-                    <span className="text-lg font-bold text-slate-900">RM{booking.final_payment_amount}</span>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Final Payment Paid</span>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.final_payment_paid
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-red-100 text-red-700'
-                    }`}>
-                    {booking.final_payment_paid ? (
-                      <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
-                    ) : (
-                      <><XCircle className="w-3.5 h-3.5" /> No</>
-                    )}
-                  </span>
-                </div>
-                <div className="border-t border-slate-200 pt-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-600">Deposit Refunded</span>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.deposit_refunded
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : 'bg-amber-100 text-amber-700'
-                      }`}>
-                      {booking.deposit_refunded ? (
-                        <><CheckCircle2 className="w-3.5 h-3.5" /> Yes</>
-                      ) : (
-                        <><AlertCircle className="w-3.5 h-3.5" /> Pending</>
-                      )}
-                    </span>
-                  </div>
-                </div>
-                <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-xl p-4 mt-4">
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    <span className="font-bold text-slate-900 block mb-2">Payment Structure:</span>
-                    • Deposit: RM100 (refundable)<br />
-                    • Rental: RM{booking.final_payment_amount}<br />
-                    • <span className="font-semibold">Total Due: RM{100 + booking.final_payment_amount}</span>
-                  </p>
-                </div>
-              </div>
+  const updateBookingStatus = (newStatus: Booking['booking_status']) => {
+    setBooking((prev) => (prev ? { ...prev, booking_status: newStatus } : null));
+  };
 
-              <div className="space-y-2 mt-6">
-                {!booking.deposit_paid && (
-                  <button
-                    onClick={() => handleDepositPaymentUpdate(true)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-blue-300 disabled:to-blue-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        Mark Deposit as Paid
-                      </>
-                    )}
-                  </button>
-                )}
+  const saveNotes = () => {
+    setBooking((prev) => (prev ? { ...prev, notes } : null));
+    setIsEditing(false);
+  };
 
-                {booking.deposit_paid && (
-                  <button
-                    onClick={() => handleDepositPaymentUpdate(false)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-amber-300 disabled:to-amber-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4" />
-                        Mark Deposit as Unpaid
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {!booking.final_payment_paid && booking.deposit_paid && (
-                  <button
-                    onClick={() => handleFinalPaymentUpdate(true)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 disabled:from-emerald-300 disabled:to-emerald-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        Mark Final Payment as Paid
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {booking.final_payment_paid && (
-                  <button
-                    onClick={() => handleFinalPaymentUpdate(false)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 disabled:from-red-300 disabled:to-red-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Updating...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4" />
-                        Mark Final Payment as Unpaid
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {/* Deposit Refund Management */}
-                {booking.deposit_paid && !booking.deposit_refunded && (
-                  <button
-                    onClick={() => handleDepositRefundUpdate(true)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-purple-300 disabled:to-purple-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        Process Deposit Refund
-                      </>
-                    )}
-                  </button>
-                )}
-
-                {booking.deposit_refunded && (
-                  <button
-                    onClick={() => handleDepositRefundUpdate(false)}
-                    disabled={isUpdatingPayment}
-                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 disabled:from-amber-300 disabled:to-amber-400 text-white py-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    {isUpdatingPayment ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="w-4 h-4" />
-                        Cancel Deposit Refund
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Status Management */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <Settings className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Status Management</h3>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Booking Status</label>
-                  <select
-                    value={booking.booking_status || 'pending'}
-                    onChange={(e) => updateBookingStatus(e.target.value as any)}
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white transition-all duration-200 font-medium"
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Deposit Status</label>
-                  <select
-                    value={booking.deposit_paid ? 'paid' : 'unpaid'}
-                    onChange={(e) => handleDepositPaymentUpdate(e.target.value === 'paid')}
-                    disabled={isUpdatingPayment}
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                  >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Final Payment Status</label>
-                  <select
-                    value={booking.final_payment_paid ? 'paid' : 'unpaid'}
-                    onChange={(e) => handleFinalPaymentUpdate(e.target.value === 'paid')}
-                    disabled={isUpdatingPayment}
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-900 bg-white disabled:bg-slate-100 disabled:cursor-not-allowed transition-all duration-200 font-medium"
-                  >
-                    <option value="unpaid">Unpaid</option>
-                    <option value="paid">Paid</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Equipment Pickup & Return Management */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <Package className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Equipment Pickup & Return</h3>
-              </div>
-              <div className="space-y-6">
-                {/* Pickup Status */}
-                <div className="border-b border-slate-200 pb-6">
-                  <h4 className="text-sm font-bold text-slate-900 mb-4">Equipment Pickup</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600">Pickup Status</span>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_picked_up
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-700'
-                        }`}>
-                        {booking.equipment_picked_up ? (
-                          <><CheckCircle2 className="w-3.5 h-3.5" /> Picked Up</>
-                        ) : (
-                          <><AlertCircle className="w-3.5 h-3.5" /> Not Picked Up</>
-                        )}
-                      </span>
-                    </div>
-
-                    {booking.equipment_pickup_date && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Pickup Date</span>
-                        <span className="text-sm font-medium text-slate-900">
-                          {new Date(booking.equipment_pickup_date).toLocaleString('en-MY', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    )}
-
-                    {booking.equipment_condition_pickup && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Condition</span>
-                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_pickup === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                          booking.equipment_condition_pickup === 'good' ? 'bg-blue-100 text-blue-700' :
-                            booking.equipment_condition_pickup === 'fair' ? 'bg-amber-100 text-amber-700' :
-                              'bg-red-100 text-red-700'
-                          }`}>
-                          {booking.equipment_condition_pickup.charAt(0).toUpperCase() + booking.equipment_condition_pickup.slice(1)}
-                        </span>
-                      </div>
-                    )}
-
-                    {booking.equipment_pickup_notes && (
-                      <div>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Pickup Notes</span>
-                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                          {booking.equipment_pickup_notes}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => handlePickupStatusUpdate(!booking.equipment_picked_up, '', 'excellent')}
-                      disabled={isUpdatingPickup}
-                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_picked_up
-                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
-                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
-                        } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
-                    >
-                      {isUpdatingPickup ? (
-                        <>
-                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Updating...
-                        </>
-                      ) : booking.equipment_picked_up ? (
-                        <><XCircle className="w-4 h-4" /> Mark as Not Picked Up</>
-                      ) : (
-                        <><CheckCircle2 className="w-4 h-4" /> Mark as Picked Up</>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Return Status */}
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 mb-4">Equipment Return</h4>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600">Return Status</span>
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_returned
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-700'
-                        }`}>
-                        {booking.equipment_returned ? (
-                          <><CheckCircle2 className="w-3.5 h-3.5" /> Returned</>
-                        ) : (
-                          <><AlertCircle className="w-3.5 h-3.5" /> Not Returned</>
-                        )}
-                      </span>
-                    </div>
-
-                    {booking.equipment_return_date && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Return Date</span>
-                        <span className="text-sm font-medium text-slate-900">
-                          {new Date(booking.equipment_return_date).toLocaleString('en-MY', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                    )}
-
-                    {booking.equipment_condition_return && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-slate-600">Condition</span>
-                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${booking.equipment_condition_return === 'excellent' ? 'bg-emerald-100 text-emerald-700' :
-                          booking.equipment_condition_return === 'good' ? 'bg-blue-100 text-blue-700' :
-                            booking.equipment_condition_return === 'fair' ? 'bg-amber-100 text-amber-700' :
-                              'bg-red-100 text-red-700'
-                          }`}>
-                          {booking.equipment_condition_return.charAt(0).toUpperCase() + booking.equipment_condition_return.slice(1)}
-                        </span>
-                      </div>
-                    )}
-
-                    {booking.equipment_return_notes && (
-                      <div>
-                        <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-2">Return Notes</span>
-                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200">
-                          {booking.equipment_return_notes}
-                        </p>
-                      </div>
-                    )}
-
-                    <button
-                      onClick={() => handleReturnStatusUpdate(!booking.equipment_returned, '', 'excellent')}
-                      disabled={isUpdatingReturn || !booking.equipment_picked_up}
-                      className={`w-full mt-2 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md ${booking.equipment_returned
-                        ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white'
-                        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white'
-                        } disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed`}
-                    >
-                      {isUpdatingReturn ? (
-                        <>
-                          <div className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Updating...
-                        </>
-                      ) : booking.equipment_returned ? (
-                        <><XCircle className="w-4 h-4" /> Mark as Not Returned</>
-                      ) : (
-                        <><CheckCircle2 className="w-4 h-4" /> Mark as Returned</>
-                      )}
-                    </button>
-
-                    {!booking.equipment_picked_up && (
-                      <p className="text-xs text-slate-500 italic mt-2 flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        Equipment must be picked up before it can be marked as returned.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-
-            {/* Quick Actions */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100">
-                  <Zap className="w-5 h-5 text-slate-700" />
-                </div>
-                <h3 className="text-lg font-bold text-slate-900">Quick Actions</h3>
-              </div>
-              <div className="space-y-3">
-                {booking.booking_status !== 'completed' && (
-                  <button
-                    onClick={() => setShowCompleteAllConfirm(true)}
-                    disabled={isUpdating}
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md mb-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4" />
-                    Complete All
-                  </button>
-                )}
-                {booking.customer?.phone && (
-                  <a
-                    href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    WhatsApp Customer
-                  </a>
-                )}
-                {booking.customer?.phone && (
-                  <button
-                    onClick={handleReturnReminder}
-                    className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    <Bell className="w-4 h-4" />
-                    Return Reminder
-                  </button>
-                )}
-                {booking.customer?.phone && (
-                  <a
-                    href={`tel:${booking.customer.phone}`}
-                    className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                  >
-                    <Phone className="w-4 h-4" />
-                    Call Customer
-                  </a>
-                )}
-                <button
-                  onClick={() => window.print()}
-                  className="w-full bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white py-3 px-4 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print Details
-                </button>
-              </div>
-            </div>
+  if (isLoading) {
+    return (
+      <div className={`${shellCardClass} flex min-h-[360px] items-center justify-center`}>
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-2 border-[#3d342d] border-t-[#c96b2c]" />
+          <div>
+            <p className="text-base font-semibold text-stone-100">Loading booking details</p>
+            <p className="text-sm text-stone-500">Pulling the latest customer, payment, and pickup data.</p>
           </div>
         </div>
       </div>
+    );
+  }
 
-      {/* Complete All Confirmation Modal */}
-      {showCompleteAllConfirm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowCompleteAllConfirm(false)}
-        >
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-          <div
-            className="relative bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl border-t-4 border-emerald-500 animate-in fade-in zoom-in duration-200"
-            onClick={(e) => e.stopPropagation()}
+  if (!booking) {
+    return (
+      <div className={`${shellCardClass} flex min-h-[360px] items-center justify-center p-8`}>
+        <div className="max-w-md text-center">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#3d342d] bg-[#201914]">
+            <AlertCircle className="h-8 w-8 text-[#fdba74]" />
+          </div>
+          <h1 className="text-2xl font-semibold text-stone-100">Booking not found</h1>
+          <p className="mt-3 text-sm leading-6 text-stone-400">
+            This booking may have been deleted or the link is no longer valid.
+          </p>
+          <Link
+            href="/admin/bookings"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
           >
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            <ArrowLeft className="h-4 w-4" />
+            Back to Bookings
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const cameraName = booking.camera?.name || booking.camera_name || 'Camera not assigned';
+  const bookingStatus = booking.booking_status || 'pending_approval';
+  const createdDate = formatDate(booking.created_at);
+  const rentalWindow = `${formatDate(booking.start_date)} - ${formatDate(booking.end_date)}`;
+  const pickupDate = booking.pickup_date || booking.start_date;
+  const finalPaymentAmount =
+    booking.final_payment_amount || Math.max((booking.total_amount || 0) - (booking.deposit_amount || 0), 0);
+  const balanceDue = booking.final_payment_paid ? 0 : finalPaymentAmount;
+
+  return (
+    <div className="space-y-6 px-2 pb-10 xl:px-0">
+      <section
+        className={`${shellCardClass} overflow-hidden`}
+        style={{
+          background:
+            'radial-gradient(circle at top left, rgba(201,107,44,0.18), transparent 36%), linear-gradient(180deg, #1c1713 0%, #14110f 100%)',
+        }}
+      >
+        <div className="flex flex-col gap-6 p-6 lg:p-8">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+            <div className="flex items-start gap-4">
+              <Link
+                href="/admin/bookings"
+                className="mt-1 inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#171411] text-stone-200 transition hover:border-[#56473c] hover:bg-[#211b17]"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#3b2c22] bg-[#21170f] px-3 py-1 text-[11px] font-medium uppercase tracking-[0.25em] text-[#fdba74]">
+                  <FileText className="h-3.5 w-3.5" />
+                  Booking Control
+                </div>
+                <div>
+                  <h1 className="text-3xl font-semibold tracking-tight text-stone-100">
+                    Booking #{booking.id.slice(0, 8)}
+                  </h1>
+                  <p className="mt-2 flex flex-wrap items-center gap-3 text-sm text-stone-400">
+                    <span className="inline-flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-[#fdba74]" />
+                      Created on {createdDate}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-[#fdba74]" />
+                      {booking.total_days} day{booking.total_days > 1 ? 's' : ''} rental
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-[#fdba74]" />
+                      {booking.pickup_method === 'delivery' ? 'Delivery' : 'Self pickup'}
+                    </span>
+                  </p>
+                </div>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">
-                Complete Everything?
-              </h3>
-              <p className="text-sm text-slate-600 font-medium">
-                This will mark deposit & final payment as Paid, and equipment as Picked Up & Returned.
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <span
+                className={`inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold capitalize ${getStatusTone(
+                  bookingStatus
+                )}`}
+              >
+                {bookingStatus.replace('_', ' ')}
+              </span>
+              <InvoiceBookingActions bookingId={booking.id} />
+              <Link
+                href={`/admin/bookings/${booking.id}/edit`}
+                className="inline-flex items-center gap-2 rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </Link>
+              <button
+                onClick={handleDeleteBooking}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 rounded-2xl border border-red-900/70 bg-red-950/50 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className={`${sectionClass} p-4`}>
+              <p className={labelClass}>Customer</p>
+              <p className="mt-3 text-xl font-semibold text-stone-100">{booking.customer?.full_name || 'N/A'}</p>
+              <p className="mt-2 text-sm text-stone-400">{booking.customer?.phone || 'No phone number'}</p>
+            </div>
+            <div className={`${sectionClass} p-4`}>
+              <p className={labelClass}>Rental Window</p>
+              <p className="mt-3 text-lg font-semibold text-stone-100">{rentalWindow}</p>
+              <p className="mt-2 text-sm text-stone-400">{cameraName}</p>
+            </div>
+            <div className={`${sectionClass} p-4`}>
+              <p className={labelClass}>Revenue Snapshot</p>
+              <p className="mt-3 text-2xl font-semibold text-[#fdba74]">{formatCurrency(booking.total_amount)}</p>
+              <p className="mt-2 text-sm text-stone-400">
+                Deposit {formatCurrency(booking.deposit_amount)} · Balance {formatCurrency(balanceDue)}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_380px]">
+        <div className="space-y-6">
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <User className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Customer Information</h2>
+                <p className="text-sm text-stone-500">Billing and contact details for this booking.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className={`${sectionClass} p-4`}>
+                <p className={labelClass}>Customer Name</p>
+                <p className="mt-3 text-lg font-semibold text-stone-100">{booking.customer?.full_name || 'N/A'}</p>
+              </div>
+              <div className={`${sectionClass} p-4`}>
+                <p className={labelClass}>Phone</p>
+                <p className="mt-3 text-lg font-semibold text-stone-100">{booking.customer?.phone || 'N/A'}</p>
+              </div>
+              <div className={`${sectionClass} p-4`}>
+                <p className={labelClass}>Email</p>
+                <p className="mt-3 text-base text-stone-200">{booking.customer?.email || 'N/A'}</p>
+              </div>
+              <div className={`${sectionClass} p-4`}>
+                <p className={labelClass}>ID Number</p>
+                <p className="mt-3 text-base text-stone-200">{booking.customer?.id_number || 'Not provided'}</p>
+              </div>
+              <div className={`${sectionClass} p-4 md:col-span-2`}>
+                <p className={labelClass}>Address</p>
+                <p className="mt-3 text-base leading-7 text-stone-200">
+                  {booking.customer?.address || booking.pickup_address || 'No address recorded'}
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <Camera className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Rental Details</h2>
+                <p className="text-sm text-stone-500">Equipment, dates, pickup flow, and commercial breakdown.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4">
+              <div className={`${sectionClass} p-5`}>
+                <p className={labelClass}>Camera</p>
+                <p className="mt-3 text-2xl font-semibold text-stone-100">{cameraName}</p>
+                <p className="mt-2 text-sm text-stone-400">
+                  {formatCurrency(booking.daily_rate)} / day · Source {booking.booking_source}
+                </p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>Start Date</p>
+                  <p className="mt-3 text-base font-semibold text-stone-100">{formatDate(booking.start_date)}</p>
+                </div>
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>End Date</p>
+                  <p className="mt-3 text-base font-semibold text-stone-100">{formatDate(booking.end_date)}</p>
+                </div>
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>Pickup Date</p>
+                  <p className="mt-3 text-base font-semibold text-stone-100">{formatDate(pickupDate)}</p>
+                </div>
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>Duration</p>
+                  <p className="mt-3 text-base font-semibold text-stone-100">
+                    {booking.total_days} day{booking.total_days > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>Pickup Method</p>
+                  <p className="mt-3 text-base font-semibold capitalize text-stone-100">{booking.pickup_method}</p>
+                  {booking.pickup_address ? (
+                    <p className="mt-2 text-sm leading-6 text-stone-400">{booking.pickup_address}</p>
+                  ) : (
+                    <p className="mt-2 text-sm text-stone-500">No delivery address recorded.</p>
+                  )}
+                </div>
+                <div className={`${sectionClass} p-4`}>
+                  <p className={labelClass}>Commercials</p>
+                  <div className="mt-3 space-y-2 text-sm text-stone-300">
+                    <div className="flex items-center justify-between">
+                      <span>Rental total</span>
+                      <span>{formatCurrency(booking.total_amount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Deposit</span>
+                      <span>{formatCurrency(booking.deposit_amount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Delivery fee</span>
+                      <span>{formatCurrency(booking.delivery_fee)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                  <FileText className="h-5 w-5 text-[#fdba74]" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-stone-100">Notes</h2>
+                  <p className="text-sm text-stone-500">Operational notes and rental instructions.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => (isEditing ? saveNotes() : setIsEditing(true))}
+                className="inline-flex items-center gap-2 rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
+              >
+                <Edit3 className="h-4 w-4" />
+                {isEditing ? 'Save Notes' : 'Edit Notes'}
+              </button>
+            </div>
+
+            {isEditing ? (
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={6}
+                className="admin-dark-textarea min-h-[180px]"
+                placeholder="Add booking notes, collection remarks, or customer context..."
+              />
+            ) : (
+              <div className={`${sectionClass} p-5`}>
+                <p className="text-sm leading-7 text-stone-300">
+                  {notes || booking.notes || booking.admin_notes || 'No notes recorded for this booking yet.'}
+                </p>
+              </div>
+            )}
+
+            {booking.rejection_reason && (
+              <div className="mt-4 rounded-[20px] border border-red-900/60 bg-red-950/30 p-4">
+                <p className={labelClass}>Rejection Reason</p>
+                <p className="mt-3 text-sm leading-7 text-red-200">{booking.rejection_reason}</p>
+              </div>
+            )}
+          </section>
+        </div>
+        <aside className="space-y-6">
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <DollarSign className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Payment Summary</h2>
+                <p className="text-sm text-stone-500">Live settlement state for the rental.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className={`${sectionClass} p-4`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-stone-400">Total Amount</span>
+                  <span className="text-2xl font-semibold text-stone-100">{formatCurrency(booking.total_amount)}</span>
+                </div>
+              </div>
+              <div className={`${sectionClass} p-4`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-stone-400">Deposit</span>
+                  <span className="text-lg font-semibold text-[#fdba74]">{formatCurrency(booking.deposit_amount)}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm text-stone-500">Status</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(
+                      booking.deposit_paid ? 'deposit_paid' : 'pending'
+                    )}`}
+                  >
+                    {booking.deposit_paid ? 'Paid' : 'Unpaid'}
+                  </span>
+                </div>
+              </div>
+              <div className={`${sectionClass} p-4`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-stone-400">Final Payment</span>
+                  <span className="text-lg font-semibold text-stone-100">{formatCurrency(finalPaymentAmount)}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm text-stone-500">Status</span>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(
+                      booking.final_payment_paid ? 'fully_paid' : 'pending'
+                    )}`}
+                  >
+                    {booking.final_payment_paid ? 'Paid' : 'Unpaid'}
+                  </span>
+                </div>
+              </div>
+              <div className={`${sectionClass} space-y-3 p-4 text-sm text-stone-300`}>
+                <div className="flex items-center justify-between">
+                  <span>Deposit refunded</span>
+                  <span className={booking.deposit_refunded ? 'text-emerald-300' : 'text-stone-400'}>
+                    {booking.deposit_refunded ? 'Yes' : 'Pending'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Balance due</span>
+                  <span className="font-semibold text-stone-100">{formatCurrency(balanceDue)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <button
+                onClick={() => handleDepositPaymentUpdate(!booking.deposit_paid)}
+                disabled={isUpdatingPayment}
+                className="w-full rounded-2xl bg-[#c96b2c] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#da7a36] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {booking.deposit_paid ? 'Mark Deposit as Unpaid' : 'Mark Deposit as Paid'}
+              </button>
+              <button
+                onClick={() => handleFinalPaymentUpdate(!booking.final_payment_paid)}
+                disabled={isUpdatingPayment}
+                className="w-full rounded-2xl border border-[#35553b] bg-[#102317] px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-[#14301d] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {booking.final_payment_paid ? 'Mark Final Payment as Unpaid' : 'Mark Final Payment as Paid'}
+              </button>
+              <button
+                onClick={() => handleDepositRefundUpdate(!booking.deposit_refunded)}
+                disabled={isUpdatingPayment}
+                className="w-full rounded-2xl border border-[#4c2d14] bg-[#25170d] px-4 py-3 text-sm font-semibold text-[#fdba74] transition hover:bg-[#2d1b0e] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {booking.deposit_refunded ? 'Cancel Deposit Refund' : 'Process Deposit Refund'}
+              </button>
+            </div>
+          </section>
+
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <Settings className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Status Management</h2>
+                <p className="text-sm text-stone-500">Update the visible booking state from one place.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className={`${labelClass} mb-2 block`}>Booking Status</label>
+                <select
+                  value={booking.booking_status || 'pending_approval'}
+                  onChange={(event) => updateBookingStatus(event.target.value as Booking['booking_status'])}
+                  className="admin-dark-select"
+                >
+                  <option value="pending_approval">Pending Approval</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              <div>
+                <label className={`${labelClass} mb-2 block`}>Deposit Status</label>
+                <select
+                  value={booking.deposit_paid ? 'paid' : 'unpaid'}
+                  onChange={(event) => handleDepositPaymentUpdate(event.target.value === 'paid')}
+                  disabled={isUpdatingPayment}
+                  className="admin-dark-select"
+                >
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+              <div>
+                <label className={`${labelClass} mb-2 block`}>Final Payment</label>
+                <select
+                  value={booking.final_payment_paid ? 'paid' : 'unpaid'}
+                  onChange={(event) => handleFinalPaymentUpdate(event.target.value === 'paid')}
+                  disabled={isUpdatingPayment}
+                  className="admin-dark-select"
+                >
+                  <option value="unpaid">Unpaid</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <Package className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Pickup & Return</h2>
+                <p className="text-sm text-stone-500">Track equipment movement and condition.</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className={`${sectionClass} p-4`}>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-stone-200">Pickup</p>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(
+                      booking.equipment_picked_up ? 'confirmed' : 'pending'
+                    )}`}
+                  >
+                    {booking.equipment_picked_up ? 'Picked Up' : 'Pending'}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-stone-400">
+                  Pickup date: {formatDate(booking.equipment_pickup_date || pickupDate, !!booking.equipment_pickup_date)}
+                </p>
+                {booking.equipment_condition_pickup && (
+                  <span
+                    className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getConditionTone(
+                      booking.equipment_condition_pickup
+                    )}`}
+                  >
+                    {booking.equipment_condition_pickup}
+                  </span>
+                )}
+                {booking.equipment_pickup_notes && (
+                  <p className="mt-3 text-sm leading-6 text-stone-300">{booking.equipment_pickup_notes}</p>
+                )}
+                <button
+                  onClick={() => handlePickupStatusUpdate(!booking.equipment_picked_up, '', 'excellent')}
+                  disabled={isUpdatingPickup}
+                  className="mt-4 w-full rounded-2xl border border-[#35553b] bg-[#102317] px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-[#14301d] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isUpdatingPickup
+                    ? 'Updating pickup...'
+                    : booking.equipment_picked_up
+                      ? 'Mark as Not Picked Up'
+                      : 'Mark as Picked Up'}
+                </button>
+              </div>
+
+              <div className={`${sectionClass} p-4`}>
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-stone-200">Return</p>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusTone(
+                      booking.equipment_returned ? 'completed' : 'pending'
+                    )}`}
+                  >
+                    {booking.equipment_returned ? 'Returned' : 'Pending'}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-stone-400">
+                  Return date: {formatDate(booking.equipment_return_date || booking.end_date, !!booking.equipment_return_date)}
+                </p>
+                {booking.equipment_condition_return && (
+                  <span
+                    className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getConditionTone(
+                      booking.equipment_condition_return
+                    )}`}
+                  >
+                    {booking.equipment_condition_return}
+                  </span>
+                )}
+                {booking.equipment_return_notes && (
+                  <p className="mt-3 text-sm leading-6 text-stone-300">{booking.equipment_return_notes}</p>
+                )}
+                <button
+                  onClick={() => handleReturnStatusUpdate(!booking.equipment_returned, '', 'excellent')}
+                  disabled={isUpdatingReturn || !booking.equipment_picked_up}
+                  className="mt-4 w-full rounded-2xl border border-[#4c2d14] bg-[#25170d] px-4 py-3 text-sm font-semibold text-[#fdba74] transition hover:bg-[#2d1b0e] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isUpdatingReturn
+                    ? 'Updating return...'
+                    : booking.equipment_returned
+                      ? 'Mark as Not Returned'
+                      : 'Mark as Returned'}
+                </button>
+                {!booking.equipment_picked_up && (
+                  <p className="mt-3 flex items-center gap-2 text-xs text-stone-500">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    Equipment must be picked up before it can be marked as returned.
+                  </p>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section className={`${shellCardClass} p-6`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[#3a3129] bg-[#201914]">
+                <Zap className="h-5 w-5 text-[#fdba74]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-stone-100">Quick Actions</h2>
+                <p className="text-sm text-stone-500">Finish the operational tasks around this rental.</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {booking.booking_status !== 'completed' && (
+                <button
+                  onClick={() => setShowCompleteAllConfirm(true)}
+                  disabled={isUpdating}
+                  className="w-full rounded-2xl bg-[#c96b2c] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#da7a36] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Complete All
+                  </span>
+                </button>
+              )}
+              {booking.customer?.phone && (
+                <a
+                  href={`https://wa.me/${formatPhoneWithCountryCode(booking.customer.phone)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#35553b] bg-[#102317] px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-[#14301d]"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  WhatsApp Customer
+                </a>
+              )}
+              {booking.customer?.phone && (
+                <button
+                  onClick={handleReturnReminder}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#4c2d14] bg-[#25170d] px-4 py-3 text-sm font-semibold text-[#fdba74] transition hover:bg-[#2d1b0e]"
+                >
+                  <Bell className="h-4 w-4" />
+                  Return Reminder
+                </button>
+              )}
+              {booking.customer?.phone && (
+                <a
+                  href={`tel:${booking.customer.phone}`}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
+                >
+                  <Phone className="h-4 w-4" />
+                  Call Customer
+                </a>
+              )}
+              <button
+                onClick={() => window.print()}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
+              >
+                <Printer className="h-4 w-4" />
+                Print Details
+              </button>
+            </div>
+          </section>
+        </aside>
+      </div>
+
+      {showCompleteAllConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCompleteAllConfirm(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className={`${shellCardClass} relative w-full max-w-md p-6`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-[#3b2c22] bg-[#21170f]">
+                <CheckCircle2 className="h-8 w-8 text-[#fdba74]" />
+              </div>
+              <h3 className="text-2xl font-semibold text-stone-100">Complete everything?</h3>
+              <p className="mt-3 text-sm leading-7 text-stone-400">
+                This will mark the deposit and final payment as paid, then complete pickup and return in one flow.
               </p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 onClick={() => setShowCompleteAllConfirm(false)}
-                className="flex-1 py-3 px-4 rounded-xl font-bold bg-slate-100 text-slate-900 hover:bg-slate-200 transition-colors"
+                className="rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCompleteAll}
                 disabled={isUpdating}
-                className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl font-bold transition-all shadow-lg shadow-emerald-500/30 flex items-center justify-center gap-2"
+                className="rounded-2xl bg-[#c96b2c] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#da7a36] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isUpdating ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  'Confirm'
-                )}
+                {isUpdating ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>

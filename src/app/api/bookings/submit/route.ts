@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { submitWebsiteBooking, checkCameraAvailability } from '@/lib/api/website-bookings';
 import type { WebsiteBookingData } from '@/lib/api/website-bookings';
 import { sendCustomerThankYouEmail, sendCustomerPickupReminder, sendNewBookingNotification } from '@/lib/email/emailService';
+import { getAdminSettings } from '@/lib/business-settings-server';
 
 export async function POST(request: NextRequest) {
   console.log('API: POST request received at', new Date().toISOString());
   try {
+    const appSettings = await getAdminSettings();
     const bookingData: WebsiteBookingData = await request.json();
     console.log('API: Received booking data:', bookingData);
 
@@ -150,8 +152,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send thank you email to customer
+    // Send booking-related emails if enabled
     try {
+      if (!appSettings.emailNotifications) {
+        return NextResponse.json({
+          success: true,
+          booking_id: result.booking_id,
+          confirmation_number: result.confirmation_number,
+          booking: result.booking,
+          customer: result.customer,
+          message: 'Booking submitted successfully'
+        });
+      }
+
       // Get pickup date from database (already calculated by trigger as start_date - 1 day)
       // Only calculate manually if not present in the booking
       const pickupDateObj = result.booking?.pickup_date 
@@ -168,6 +181,7 @@ export async function POST(request: NextRequest) {
         cameraName: bookingData.camera_name,
         phone: bookingData.customer_phone,
         email: bookingData.customer_email,
+        daysUntilPickup: Number(appSettings.reminderDaysBefore || 0),
         startDate: new Date(bookingData.start_date).toLocaleDateString('en-MY', {
           year: 'numeric',
           month: 'long',
@@ -216,7 +230,10 @@ export async function POST(request: NextRequest) {
       const pickupDate = pickupDateObj.toISOString().split('T')[0];
       
       if (pickupDate === today) {
-        await sendCustomerPickupReminder(emailData);
+        await sendCustomerPickupReminder({
+          ...emailData,
+          daysUntilPickup: 0,
+        });
         console.log('✅ Immediate pickup reminder sent (same-day booking)');
       }
     } catch (emailError) {

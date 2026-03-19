@@ -51,7 +51,7 @@ export default function InvoiceBookingActions({
 
   if (loading) {
     return (
-      <div className={`flex items-center gap-2 text-sm text-slate-500 ${className}`}>
+      <div className={`flex items-center gap-2 text-sm text-stone-500 ${className}`}>
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading invoice actions...
       </div>
@@ -68,8 +68,8 @@ export default function InvoiceBookingActions({
         href={editorHref}
         className={`${baseButtonClass} ${
           mobile
-            ? 'border-blue-200 bg-blue-50 text-blue-700'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
+            ? 'border-[#4c2d14] bg-[#25170d] text-[#fdba74]'
+            : 'border border-[#4c2d14] bg-[#25170d] text-[#fdba74] hover:bg-[#2d1b0e]'
         }`}
       >
         <FilePenLine className="h-4 w-4" />
@@ -80,8 +80,8 @@ export default function InvoiceBookingActions({
         href={exportHref}
         className={`${baseButtonClass} ${
           mobile
-            ? 'border-slate-200 bg-white text-slate-700'
-            : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+            ? 'border-[#3d342d] bg-[#1d1916] text-stone-100'
+            : 'border border-[#3d342d] bg-[#1d1916] text-stone-100 hover:border-[#56473c] hover:bg-[#24201c]'
         }`}
       >
         <FileText className="h-4 w-4" />

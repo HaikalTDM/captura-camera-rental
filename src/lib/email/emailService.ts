@@ -12,8 +12,18 @@ const EMAIL_CONFIG = {
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER || 'captura.my@gmail.com',
-    pass: process.env.EMAIL_APP_PASSWORD // Gmail App Password (not regular password)
-  }
+    pass: process.env.EMAIL_APP_PASSWORD,
+  },
+};
+
+const BUSINESS_INFO = {
+  name: 'Captura Rental',
+  phone: '+60 17-746 4121',
+  email: 'captura.my@gmail.com',
+  locationName: 'Caltex Selayang Pandang',
+  address: 'Caltex Selayang Pandang, Batu Caves, Selangor',
+  mapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=3.2597,101.6497',
+  wazeUrl: 'https://waze.com/ul?ll=3.2597,101.6497&navigate=yes',
 };
 
 // Create transporter
@@ -23,7 +33,7 @@ function getTransporter() {
   if (!transporter) {
     transporter = nodemailer.createTransport({
       service: EMAIL_CONFIG.service,
-      auth: EMAIL_CONFIG.auth
+      auth: EMAIL_CONFIG.auth,
     });
   }
   return transporter;
@@ -36,6 +46,8 @@ export interface EmailData {
   cameraName: string;
   phone: string;
   email: string;
+  daysUntilPickup?: number;
+  daysUntilReturn?: number;
   pickupDate?: string;
   returnDate?: string;
   startDate?: string;
@@ -43,74 +55,587 @@ export interface EmailData {
   totalAmount?: number;
 }
 
+type DetailRow = {
+  label: string;
+  value: string;
+  emphasis?: boolean;
+};
+
+type CalloutTone = 'neutral' | 'accent' | 'warning' | 'success';
+
+type EmailLayoutOptions = {
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  intro?: string;
+  summary?: Array<{ label: string; value: string }>;
+  sections: string[];
+  footerNote?: string;
+};
+
+function describeTiming(days = 0) {
+  if (days <= 0) {
+    return {
+      subjectLabel: 'Today',
+      label: 'today',
+      customerLabel: 'today',
+      uppercaseLabel: 'TODAY',
+    };
+  }
+
+  if (days === 1) {
+    return {
+      subjectLabel: 'Tomorrow',
+      label: 'tomorrow',
+      customerLabel: 'tomorrow',
+      uppercaseLabel: 'TOMORROW',
+    };
+  }
+
+  return {
+    subjectLabel: `In ${days} Days`,
+    label: `in ${days} days`,
+    customerLabel: `in ${days} days`,
+    uppercaseLabel: `IN ${days} DAYS`,
+  };
+}
+
+function escapeHtml(value?: string | number | null) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatBookingCode(bookingId: string) {
+  return escapeHtml(bookingId.slice(-8).toUpperCase());
+}
+
+function formatCurrency(amount?: number) {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) {
+    return 'RM0.00';
+  }
+
+  return `RM${amount.toFixed(2)}`;
+}
+
+function renderDetailTable(rows: DetailRow[]) {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      ${rows
+        .map(
+          (row, index) => `
+            <tr>
+              <td style="padding:14px 0; border-bottom:${index === rows.length - 1 ? 'none' : '1px solid #ede7df'}; color:#6b6258; font-size:13px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; width:38%;">
+                ${escapeHtml(row.label)}
+              </td>
+              <td style="padding:14px 0; border-bottom:${index === rows.length - 1 ? 'none' : '1px solid #ede7df'}; color:${row.emphasis ? '#b85c21' : '#1b1713'}; font-size:${row.emphasis ? '17px' : '15px'}; font-weight:${row.emphasis ? '700' : '600'}; text-align:left;">
+                ${escapeHtml(row.value)}
+              </td>
+            </tr>
+          `
+        )
+        .join('')}
+    </table>
+  `;
+}
+
+function renderSection(title: string, content: string) {
+  return `
+    <tr>
+      <td style="padding:0 32px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate; border-spacing:0; border:1px solid #e8e0d5; border-radius:20px; background:#fffdf9;">
+          <tr>
+            <td style="padding:24px 24px 22px;">
+              <div style="font-size:18px; line-height:1.3; font-weight:700; color:#1b1713; margin:0 0 18px;">
+                ${escapeHtml(title)}
+              </div>
+              ${content}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
+function renderCallout(title: string, text: string, tone: CalloutTone = 'neutral') {
+  const palette = {
+    neutral: { background: '#f6f1ea', border: '#ddd1c2', title: '#1f1a16', body: '#5f564c' },
+    accent: { background: '#fff2e8', border: '#efc3a1', title: '#8b4519', body: '#7a4d2f' },
+    warning: { background: '#fff7e9', border: '#f1d089', title: '#8b5a00', body: '#7a621e' },
+    success: { background: '#eef8f1', border: '#b8dcc0', title: '#215c34', body: '#356848' },
+  }[tone];
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate; border-spacing:0; border:1px solid ${palette.border}; border-radius:16px; background:${palette.background};">
+      <tr>
+        <td style="padding:18px 18px 16px;">
+          <div style="font-size:14px; line-height:1.4; font-weight:700; color:${palette.title}; margin:0 0 8px;">
+            ${escapeHtml(title)}
+          </div>
+          <div style="font-size:14px; line-height:1.7; color:${palette.body};">
+            ${escapeHtml(text)}
+          </div>
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
+function renderChecklist(items: string[]) {
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      ${items
+        .map(
+          (item) => `
+            <tr>
+              <td style="padding:0 0 12px; vertical-align:top; width:18px; color:#b85c21; font-size:14px; font-weight:700;">•</td>
+              <td style="padding:0 0 12px; color:#463f37; font-size:14px; line-height:1.7;">
+                ${escapeHtml(item)}
+              </td>
+            </tr>
+          `
+        )
+        .join('')}
+    </table>
+  `;
+}
+
+function renderButtonRow(buttons: Array<{ label: string; href: string; variant?: 'primary' | 'secondary' }>) {
+  return `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      <tr>
+        ${buttons
+          .map((button, index) => {
+            const isPrimary = button.variant !== 'secondary';
+            return `
+              <td style="padding:${index === 0 ? '0 10px 0 0' : '0'};">
+                <a href="${escapeHtml(button.href)}" style="display:inline-block; padding:12px 18px; border-radius:999px; text-decoration:none; font-size:13px; font-weight:700; letter-spacing:0.04em; color:${isPrimary ? '#171411' : '#6b6258'}; background:${isPrimary ? '#df8a45' : '#efe6db'}; border:1px solid ${isPrimary ? '#df8a45' : '#d7c8b6'};">
+                  ${escapeHtml(button.label)}
+                </a>
+              </td>
+            `;
+          })
+          .join('')}
+      </tr>
+    </table>
+  `;
+}
+
+function renderSummary(summary: Array<{ label: string; value: string }>) {
+  return `
+    <tr>
+      <td style="padding:0 32px 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate; border-spacing:0; border:1px solid #3b332d; border-radius:20px; background:#221c17;">
+          <tr>
+            ${summary
+              .map(
+                (item, index) => `
+                  <td style="padding:18px 20px; ${index < summary.length - 1 ? 'border-right:1px solid #342d27;' : ''}">
+                    <div style="font-size:11px; letter-spacing:0.18em; text-transform:uppercase; color:#9d9185; margin-bottom:8px;">
+                      ${escapeHtml(item.label)}
+                    </div>
+                    <div style="font-size:20px; line-height:1.2; font-weight:700; color:#f7f2eb;">
+                      ${escapeHtml(item.value)}
+                    </div>
+                  </td>
+                `
+              )
+              .join('')}
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `;
+}
+
+function renderEmailLayout({ eyebrow, title, subtitle, intro, summary, sections, footerNote }: EmailLayoutOptions) {
+  return `
+    <div style="margin:0; padding:24px 0; background:#efe9e0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px; border-collapse:collapse;">
+              <tr>
+                <td style="padding:0 18px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate; border-spacing:0; overflow:hidden; border-radius:28px; background:#171411; box-shadow:0 18px 60px rgba(18, 14, 10, 0.22);">
+                    <tr>
+                      <td style="padding:0;">
+                        <div style="height:6px; background:linear-gradient(90deg, #b85c21 0%, #ebad74 100%);"></div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:28px 32px 26px; background:radial-gradient(circle at top left, rgba(223,138,69,0.18), rgba(23,20,17,0) 38%), #171411;">
+                        <div style="font-size:11px; line-height:1.4; letter-spacing:0.24em; text-transform:uppercase; color:#bcaa98; margin:0 0 14px;">
+                          ${escapeHtml(eyebrow)}
+                        </div>
+                        <div style="font-size:34px; line-height:1.15; font-weight:700; color:#f8f4ee; margin:0 0 10px;">
+                          ${escapeHtml(title)}
+                        </div>
+                        <div style="font-size:16px; line-height:1.7; color:#d5c7b9; margin:0;">
+                          ${escapeHtml(subtitle)}
+                        </div>
+                      </td>
+                    </tr>
+                    ${summary && summary.length ? renderSummary(summary) : ''}
+                    <tr>
+                      <td style="padding:0 0 6px; background:#fcfaf6;">
+                        ${
+                          intro
+                            ? `
+                              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                <tr>
+                                  <td style="padding:30px 32px 12px; color:#433a31; font-size:15px; line-height:1.8;">
+                                    ${escapeHtml(intro)}
+                                  </td>
+                                </tr>
+                              </table>
+                            `
+                            : ''
+                        }
+                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                          ${sections.join('')}
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:24px 32px 28px; background:#fcfaf6; border-top:1px solid #ece3d8;">
+                        ${
+                          footerNote
+                            ? `<div style="font-size:13px; line-height:1.7; color:#6f655b; margin:0 0 18px;">${escapeHtml(footerNote)}</div>`
+                            : ''
+                        }
+                        <div style="font-size:13px; line-height:1.8; color:#6f655b;">
+                          <strong style="color:#1b1713;">${escapeHtml(BUSINESS_INFO.name)}</strong><br />
+                          ${escapeHtml(BUSINESS_INFO.address)}<br />
+                          ${escapeHtml(BUSINESS_INFO.phone)}<br />
+                          ${escapeHtml(BUSINESS_INFO.email)}
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+}
+
+function createAdminPickupEmail(data: EmailData) {
+  const timing = describeTiming(data.daysUntilPickup);
+
+  return renderEmailLayout({
+    eyebrow: 'Captura Operations',
+    title: 'Pickup Reminder',
+    subtitle: `A rental is scheduled for collection ${timing.label}.`,
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Customer', value: data.customerName },
+      { label: 'Pickup', value: data.pickupDate || '-' },
+    ],
+    sections: [
+      renderSection(
+        'Booking Details',
+        renderDetailTable([
+          { label: 'Customer', value: data.customerName },
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Phone', value: data.phone },
+          { label: 'Email', value: data.email },
+          { label: 'Pickup Date', value: data.pickupDate || '-', emphasis: true },
+        ])
+      ),
+      renderSection(
+        'Operations Note',
+        renderCallout(
+          'Prepare equipment',
+          `Please make sure the booking is ready for handover ${timing.label} at ${BUSINESS_INFO.locationName}.`,
+          'accent'
+        )
+      ),
+    ],
+    footerNote: 'This notification was sent automatically from your Captura booking workflow.',
+  });
+}
+
+function createAdminReturnEmail(data: EmailData) {
+  const timing = describeTiming(data.daysUntilReturn);
+
+  return renderEmailLayout({
+    eyebrow: 'Captura Operations',
+    title: 'Return Reminder',
+    subtitle: `A rental is due back ${timing.label}.`,
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Customer', value: data.customerName },
+      { label: 'Return', value: data.returnDate || '-' },
+    ],
+    sections: [
+      renderSection(
+        'Booking Details',
+        renderDetailTable([
+          { label: 'Customer', value: data.customerName },
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Phone', value: data.phone },
+          { label: 'Email', value: data.email },
+          { label: 'Return Date', value: data.returnDate || '-', emphasis: true },
+        ])
+      ),
+      renderSection(
+        'Inspection Checklist',
+        [
+          renderCallout(
+            'Prepare for check-in',
+            'Inspect the equipment condition, confirm accessories are returned, then process the deposit refund if applicable.',
+            'warning'
+          ),
+          `<div style="height:16px;"></div>`,
+          renderChecklist([
+            'Check body, lens, battery, charger, and memory card before closing the booking.',
+            'Confirm the final payment and refund status in the admin panel.',
+            'Mark the rental as completed once the return is fully verified.',
+          ]),
+        ].join('')
+      ),
+    ],
+    footerNote: 'This notification was sent automatically from your Captura booking workflow.',
+  });
+}
+
+function createNewBookingAdminEmail(data: EmailData) {
+  return renderEmailLayout({
+    eyebrow: 'Captura Bookings',
+    title: 'New Booking Request',
+    subtitle: 'A new rental request has been submitted and is awaiting review.',
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Rental', value: `${data.startDate || '-'} to ${data.endDate || '-'}` },
+      { label: 'Total', value: formatCurrency(data.totalAmount) },
+    ],
+    sections: [
+      renderSection(
+        'Booking Details',
+        renderDetailTable([
+          { label: 'Customer', value: data.customerName },
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Phone', value: data.phone },
+          { label: 'Email', value: data.email },
+          { label: 'Pickup Date', value: data.pickupDate || '-' },
+        ])
+      ),
+      renderSection(
+        'Action Required',
+        renderCallout(
+          'Review the request',
+          'Open the admin panel to approve or reject this booking, then continue with invoice and agreement processing.',
+          'accent'
+        )
+      ),
+    ],
+    footerNote: 'This notification was sent automatically from your website booking flow.',
+  });
+}
+
+function createCustomerBookingEmail(data: EmailData) {
+  return renderEmailLayout({
+    eyebrow: 'Captura Rental',
+    title: 'Booking Received',
+    subtitle: 'Your rental request is safely in our system and will be reviewed shortly.',
+    intro: `Hi ${data.customerName}, thank you for choosing Captura. We have received your request for ${data.cameraName} and will confirm the booking as soon as possible.`,
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Rental', value: `${data.startDate || '-'} to ${data.endDate || '-'}` },
+      { label: 'Total', value: formatCurrency(data.totalAmount) },
+    ],
+    sections: [
+      renderSection(
+        'Your Booking',
+        renderDetailTable([
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Rental Period', value: `${data.startDate || '-'} to ${data.endDate || '-'}` },
+          { label: 'Pickup Date', value: data.pickupDate || '-', emphasis: true },
+          { label: 'Total Amount', value: formatCurrency(data.totalAmount), emphasis: true },
+        ])
+      ),
+      renderSection(
+        'What Happens Next',
+        [
+          renderChecklist([
+            'Our team will review your request and confirm the booking.',
+            'You will receive a follow-up once everything is approved.',
+            'We will send a reminder before your pickup date.',
+            'Please bring a valid ID during collection.',
+          ]),
+          `<div style="height:16px;"></div>`,
+          renderCallout(
+            'Pickup timing',
+            'Equipment is prepared for collection after 10:00 PM unless we confirm a different arrangement with you.',
+            'warning'
+          ),
+        ].join('')
+      ),
+      renderSection(
+        'Pickup Location',
+        [
+          `<div style="font-size:14px; line-height:1.8; color:#463f37; margin:0 0 18px;">`,
+          `<strong style="color:#1b1713;">${escapeHtml(BUSINESS_INFO.locationName)}</strong><br />`,
+          `${escapeHtml(BUSINESS_INFO.address)}`,
+          `</div>`,
+          renderButtonRow([
+            { label: 'Open in Google Maps', href: BUSINESS_INFO.mapsUrl },
+            { label: 'Open in Waze', href: BUSINESS_INFO.wazeUrl, variant: 'secondary' },
+          ]),
+        ].join(''),
+      ),
+    ],
+    footerNote: 'If you have any questions, reply to this email or contact us directly on WhatsApp.',
+  });
+}
+
+function createCustomerPickupEmail(data: EmailData) {
+  const timing = describeTiming(data.daysUntilPickup);
+
+  return renderEmailLayout({
+    eyebrow: 'Captura Rental',
+    title: 'Pickup Reminder',
+    subtitle: `Your equipment is scheduled for pickup ${timing.customerLabel}.`,
+    intro: `Hi ${data.customerName}, this is a quick reminder that your ${data.cameraName} booking is ready for collection ${timing.customerLabel}.`,
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Camera', value: data.cameraName },
+      { label: 'Pickup', value: data.pickupDate || '-' },
+    ],
+    sections: [
+      renderSection(
+        'Pickup Details',
+        renderDetailTable([
+          { label: 'Booking', value: formatBookingCode(data.bookingId) },
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Pickup Date', value: data.pickupDate || '-', emphasis: true },
+          { label: 'Contact', value: BUSINESS_INFO.phone },
+        ])
+      ),
+      renderSection(
+        'Before You Arrive',
+        [
+          renderChecklist([
+            'Bring a valid ID for verification.',
+            'Keep this email or your booking reference ready.',
+            'Contact us first if you need to adjust the pickup timing.',
+          ]),
+          `<div style="height:16px;"></div>`,
+          renderCallout(
+            'Pickup timing',
+            'Equipment is prepared for collection after 10:00 PM unless a different arrangement has been confirmed with you.',
+            'accent'
+          ),
+        ].join('')
+      ),
+      renderSection(
+        'Pickup Location',
+        [
+          `<div style="font-size:14px; line-height:1.8; color:#463f37; margin:0 0 18px;">`,
+          `<strong style="color:#1b1713;">${escapeHtml(BUSINESS_INFO.locationName)}</strong><br />`,
+          `${escapeHtml(BUSINESS_INFO.address)}`,
+          `</div>`,
+          renderButtonRow([
+            { label: 'Open in Google Maps', href: BUSINESS_INFO.mapsUrl },
+            { label: 'Open in Waze', href: BUSINESS_INFO.wazeUrl, variant: 'secondary' },
+          ]),
+        ].join(''),
+      ),
+    ],
+    footerNote: 'If your plans change, please contact Captura as early as possible so we can help.',
+  });
+}
+
+function createCustomerReturnEmail(data: EmailData) {
+  const timing = describeTiming(data.daysUntilReturn);
+
+  return renderEmailLayout({
+    eyebrow: 'Captura Rental',
+    title: 'Return Reminder',
+    subtitle: `Your rental is scheduled for return ${timing.customerLabel}.`,
+    intro: `Hi ${data.customerName}, thank you for renting with Captura. This is a reminder to return your ${data.cameraName} ${timing.customerLabel}.`,
+    summary: [
+      { label: 'Booking', value: formatBookingCode(data.bookingId) },
+      { label: 'Camera', value: data.cameraName },
+      { label: 'Return', value: data.returnDate || '-' },
+    ],
+    sections: [
+      renderSection(
+        'Return Details',
+        renderDetailTable([
+          { label: 'Booking', value: formatBookingCode(data.bookingId) },
+          { label: 'Camera', value: data.cameraName },
+          { label: 'Return Date', value: data.returnDate || '-', emphasis: true },
+          { label: 'Deadline', value: 'Before 8:00 PM', emphasis: true },
+        ])
+      ),
+      renderSection(
+        'Before You Return',
+        [
+          renderChecklist([
+            'Pack the camera and all accessories that came with it.',
+            'Remove any personal files from the memory card.',
+            'Return the equipment in good condition for inspection.',
+          ]),
+          `<div style="height:16px;"></div>`,
+          renderCallout(
+            'Deposit refund',
+            'Your deposit can be processed after the return inspection is completed and the equipment is confirmed to be in good order.',
+            'success'
+          ),
+          `<div style="height:12px;"></div>`,
+          renderCallout(
+            'Late return policy',
+            'Additional charges may apply if the return is late, so please arrive before the stated deadline.',
+            'warning'
+          ),
+        ].join('')
+      ),
+      renderSection(
+        'Return Location',
+        [
+          `<div style="font-size:14px; line-height:1.8; color:#463f37; margin:0 0 18px;">`,
+          `<strong style="color:#1b1713;">${escapeHtml(BUSINESS_INFO.locationName)}</strong><br />`,
+          `${escapeHtml(BUSINESS_INFO.address)}`,
+          `</div>`,
+          renderButtonRow([
+            { label: 'Open in Google Maps', href: BUSINESS_INFO.mapsUrl },
+            { label: 'Open in Waze', href: BUSINESS_INFO.wazeUrl, variant: 'secondary' },
+          ]),
+        ].join(''),
+      ),
+    ],
+    footerNote: 'We appreciate your business and hope to serve you again on your next shoot.',
+  });
+}
+
 /**
  * Send pickup reminder email
  */
 export async function sendPickupReminder(data: EmailData): Promise<boolean> {
   try {
+    const timing = describeTiming(data.daysUntilPickup);
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: EMAIL_CONFIG.to,
-      subject: `🔔 PICKUP REMINDER - ${data.customerName} - ${data.cameraName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">📦 PICKUP REMINDER</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px;">Equipment Ready for Pickup</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px; border-left: 4px solid #667eea;">
-            <h2 style="color: #2d3748; margin-top: 0;">Booking Details</h2>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Booking ID:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.bookingId.slice(-8).toUpperCase()}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Customer:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.customerName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Camera:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.cameraName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Pickup Date:</td>
-                <td style="padding: 10px 0; color: #2d3748; font-weight: bold; color: #e53e3e;">${data.pickupDate}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Phone:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.phone}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Email:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.email}</td>
-              </tr>
-            </table>
-          </div>
-          
-          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-top: 20px;">
-            <p style="margin: 0; color: #856404;">
-              <strong>⚠️ Action Required:</strong> Customer should pick up equipment today at Caltex Selayang Pandang.
-            </p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 20px; margin-top: 20px; text-align: center; color: #718096; font-size: 14px;">
-            <p>This is an automated reminder from Captura Camera Rental</p>
-            <p style="margin: 5px 0;">📍 Caltex Selayang Pandang, Batu Caves</p>
-            <p style="margin: 5px 0;">📞 +60 17-746 4121</p>
-          </div>
-        </div>
-      `
+      subject: `Pickup Reminder ${timing.uppercaseLabel} - ${data.customerName} - ${data.cameraName}`,
+      html: createAdminPickupEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ Pickup reminder email sent:', data.bookingId);
+    console.log('Pickup reminder email sent:', data.bookingId);
     return true;
   } catch (error) {
-    console.error('❌ Error sending pickup reminder email:', error);
+    console.error('Error sending pickup reminder email:', error);
     return false;
   }
 }
@@ -120,80 +645,20 @@ export async function sendPickupReminder(data: EmailData): Promise<boolean> {
  */
 export async function sendReturnReminder(data: EmailData): Promise<boolean> {
   try {
+    const timing = describeTiming(data.daysUntilReturn);
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: EMAIL_CONFIG.to,
-      subject: `🔔 RETURN REMINDER - ${data.customerName} - ${data.cameraName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🔙 RETURN REMINDER</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px;">Equipment Due for Return</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px; border-left: 4px solid #f5576c;">
-            <h2 style="color: #2d3748; margin-top: 0;">Booking Details</h2>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Booking ID:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.bookingId.slice(-8).toUpperCase()}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Customer:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.customerName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Camera:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.cameraName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Return Date:</td>
-                <td style="padding: 10px 0; color: #2d3748; font-weight: bold; color: #e53e3e;">${data.returnDate}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Phone:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.phone}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Email:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.email}</td>
-              </tr>
-            </table>
-          </div>
-          
-          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-top: 20px;">
-            <p style="margin: 0; color: #856404;">
-              <strong>⚠️ Action Required:</strong> Customer should return equipment today. Please inspect for damages.
-            </p>
-          </div>
-          
-          <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin-top: 20px;">
-            <p style="margin: 0; color: #065f46;">
-              <strong>✅ Next Steps:</strong>
-            </p>
-            <ul style="margin: 10px 0 0 20px; color: #065f46;">
-              <li>Check equipment condition</li>
-              <li>Process deposit refund if applicable</li>
-              <li>Mark booking as completed</li>
-            </ul>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 20px; margin-top: 20px; text-align: center; color: #718096; font-size: 14px;">
-            <p>This is an automated reminder from Captura Camera Rental</p>
-            <p style="margin: 5px 0;">📍 Caltex Selayang Pandang, Batu Caves</p>
-            <p style="margin: 5px 0;">📞 +60 17-746 4121</p>
-          </div>
-        </div>
-      `
+      subject: `Return Reminder ${timing.uppercaseLabel} - ${data.customerName} - ${data.cameraName}`,
+      html: createAdminReturnEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ Return reminder email sent:', data.bookingId);
+    console.log('Return reminder email sent:', data.bookingId);
     return true;
   } catch (error) {
-    console.error('❌ Error sending return reminder email:', error);
+    console.error('Error sending return reminder email:', error);
     return false;
   }
 }
@@ -206,69 +671,16 @@ export async function sendNewBookingNotification(data: EmailData): Promise<boole
     const mailOptions = {
       from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: EMAIL_CONFIG.to,
-      subject: `🆕 NEW BOOKING - ${data.customerName} - ${data.cameraName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 NEW BOOKING!</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px;">Awaiting Approval</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px; border-left: 4px solid #4facfe;">
-            <h2 style="color: #2d3748; margin-top: 0;">Booking Details</h2>
-            
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Booking ID:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.bookingId.slice(-8).toUpperCase()}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Customer:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.customerName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Camera:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.cameraName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Rental Period:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.startDate} - ${data.endDate}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Total Amount:</td>
-                <td style="padding: 10px 0; color: #2d3748; font-weight: bold;">RM${data.totalAmount?.toFixed(2)}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Phone:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.phone}</td>
-              </tr>
-              <tr>
-                <td style="padding: 10px 0; color: #4a5568; font-weight: bold;">Email:</td>
-                <td style="padding: 10px 0; color: #2d3748;">${data.email}</td>
-              </tr>
-            </table>
-          </div>
-          
-          <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-top: 20px;">
-            <p style="margin: 0; color: #856404;">
-              <strong>⚠️ Action Required:</strong> Please approve or reject this booking in the admin panel.
-            </p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 20px; margin-top: 20px; text-align: center; color: #718096; font-size: 14px;">
-            <p>This is an automated notification from Captura Camera Rental</p>
-            <p style="margin: 5px 0;">Log in to admin panel to manage this booking</p>
-          </div>
-        </div>
-      `
+      subject: `New Booking Request - ${data.customerName} - ${data.cameraName}`,
+      html: createNewBookingAdminEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ New booking notification email sent:', data.bookingId);
+    console.log('New booking notification email sent:', data.bookingId);
     return true;
   } catch (error) {
-    console.error('❌ Error sending new booking notification email:', error);
+    console.error('Error sending new booking notification email:', error);
     return false;
   }
 }
@@ -279,112 +691,18 @@ export async function sendNewBookingNotification(data: EmailData): Promise<boole
 export async function sendCustomerThankYouEmail(data: EmailData): Promise<boolean> {
   try {
     const mailOptions = {
-      from: `Captura Camera Rental <${EMAIL_CONFIG.from}>`,
+      from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: data.email,
-      subject: `🎉 Booking Confirmed - Thank You for Choosing Captura!`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 32px;">🎉 Thank You!</h1>
-            <p style="margin: 15px 0 0 0; font-size: 18px;">Your booking has been received</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px;">
-            <p style="color: #2d3748; font-size: 18px; margin-top: 0;">
-              Hi <strong>${data.customerName}</strong>,
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Thank you for choosing <strong>Captura Camera Rental</strong>! We've received your booking request and our team will review it shortly.
-            </p>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h2 style="color: #2d3748; margin-top: 0; font-size: 20px;">📋 Your Booking Details</h2>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Booking ID:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.bookingId.slice(-8).toUpperCase()}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Camera:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.cameraName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Rental Period:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.startDate} - ${data.endDate}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Total Amount:</td>
-                  <td style="padding: 12px 0; color: #10b981; font-weight: bold; font-size: 18px; border-bottom: 1px solid #e2e8f0;">RM${data.totalAmount?.toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold;">Pickup Date:</td>
-                  <td style="padding: 12px 0; color: #e53e3e; font-weight: bold;">${data.pickupDate}</td>
-                </tr>
-              </table>
-            </div>
-            
-            <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <h3 style="color: #1e40af; margin-top: 0; font-size: 18px;">📌 What's Next?</h3>
-              <ol style="color: #1e3a8a; margin: 10px 0 0 20px; line-height: 1.8;">
-                <li>Our team will review and approve your booking</li>
-                <li>You'll receive a confirmation email within 24 hours</li>
-                <li>Pickup your equipment on <strong>${data.pickupDate}</strong></li>
-                <li>We'll send you a reminder before pickup</li>
-              </ol>
-            </div>
-            
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <p style="margin: 0; color: #856404; font-weight: bold;">
-                💡 <strong>Important:</strong> Please bring a valid ID for equipment pickup.
-              </p>
-            </div>
-            
-            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <p style="margin: 0; color: #075985; font-weight: bold; font-size: 16px;">
-                🕘 <strong>Pickup Time:</strong> After 10:00 PM on your pickup date
-              </p>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h3 style="color: #2d3748; margin-top: 0;">📍 Pickup Location</h3>
-              <p style="color: #4a5568; margin: 10px 0;">
-                <strong>Caltex Selayang Pandang</strong><br>
-                Lot 1, 2, Batu 8, Jalan Rawang<br>
-                Selayang Pandang, 68100 Batu Caves<br>
-                Selangor, Malaysia
-              </p>
-            </div>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              If you have any questions, feel free to contact us at <strong>+60 17-746 4121</strong> or reply to this email.
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px;">
-              Thank you for choosing Captura! 📷
-            </p>
-          </div>
-          
-          <div style="background: #2d3748; color: #cbd5e0; padding: 25px; text-align: center; font-size: 14px;">
-            <p style="margin: 5px 0;"><strong>Captura Camera Rental</strong></p>
-            <p style="margin: 5px 0;">📞 +60 17-746 4121</p>
-            <p style="margin: 5px 0;">📧 captura.my@gmail.com</p>
-            <p style="margin: 5px 0;">📍 Caltex Selayang Pandang, Batu Caves</p>
-            <p style="margin: 15px 0 5px 0; color: #9ca3af; font-size: 12px;">
-              © 2024 Captura Camera Rental. All rights reserved.
-            </p>
-          </div>
-        </div>
-      `
+      subject: `Booking Received - ${data.cameraName} | Captura Rental`,
+      html: createCustomerBookingEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ Thank you email sent to customer:', data.email);
+    console.log('Thank you email sent to customer:', data.email);
     return true;
   } catch (error) {
-    console.error('❌ Error sending thank you email to customer:', error);
+    console.error('Error sending thank you email to customer:', error);
     return false;
   }
 }
@@ -394,225 +712,43 @@ export async function sendCustomerThankYouEmail(data: EmailData): Promise<boolea
  */
 export async function sendCustomerPickupReminder(data: EmailData): Promise<boolean> {
   try {
+    const timing = describeTiming(data.daysUntilPickup);
     const mailOptions = {
-      from: `Captura Camera Rental <${EMAIL_CONFIG.from}>`,
+      from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: data.email,
-      subject: `📦 Reminder: Camera Pickup Tomorrow - ${data.cameraName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 32px;">📦 Pickup Reminder</h1>
-            <p style="margin: 15px 0 0 0; font-size: 18px;">Your camera is ready for pickup!</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px;">
-            <p style="color: #2d3748; font-size: 18px; margin-top: 0;">
-              Hi <strong>${data.customerName}</strong>,
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              This is a friendly reminder that your <strong>${data.cameraName}</strong> is ready for pickup!
-            </p>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h2 style="color: #2d3748; margin-top: 0; font-size: 20px;">📋 Pickup Details</h2>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Booking ID:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.bookingId.slice(-8).toUpperCase()}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Camera:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.cameraName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold;">Pickup Date:</td>
-                  <td style="padding: 12px 0; color: #e53e3e; font-weight: bold; font-size: 18px;">${data.pickupDate}</td>
-                </tr>
-              </table>
-            </div>
-            
-            <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <h3 style="color: #065f46; margin-top: 0; font-size: 18px;">✅ What to Bring:</h3>
-              <ul style="color: #047857; margin: 10px 0 0 20px; line-height: 1.8;">
-                <li><strong>Valid ID</strong> (IC, Passport, or Driver's License)</li>
-                <li><strong>Deposit</strong> (RM100 - refundable)</li>
-                <li>This booking confirmation (show this email)</li>
-              </ul>
-            </div>
-            
-            <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <h3 style="color: #075985; margin-top: 0; font-size: 18px;">🕘 Pickup Time</h3>
-              <p style="margin: 0; color: #075985; font-weight: bold; font-size: 18px;">
-                Equipment ready for pickup <strong>after 10:00 PM</strong>
-              </p>
-              <p style="margin: 10px 0 0 0; color: #0c4a6e; font-size: 14px;">
-                Please coordinate pickup time via WhatsApp or call
-              </p>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h3 style="color: #2d3748; margin-top: 0;">📍 Pickup Location</h3>
-              <p style="color: #4a5568; margin: 10px 0; font-size: 16px;">
-                <strong style="color: #2d3748;">Caltex Selayang Pandang</strong><br>
-                Lot 1, 2, Batu 8, Jalan Rawang<br>
-                Selayang Pandang, 68100 Batu Caves<br>
-                Selangor, Malaysia
-              </p>
-              <div style="margin-top: 15px;">
-                <a href="https://www.google.com/maps/dir/?api=1&destination=3.2597,101.6497" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">📍 Google Maps</a>
-                <a href="https://waze.com/ul?ll=3.2597,101.6497&navigate=yes" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">🚗 Waze</a>
-              </div>
-            </div>
-            
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <p style="margin: 0; color: #856404; font-weight: bold;">
-                ⏰ <strong>Pickup after 10:00 PM.</strong> Please contact us at +60 17-746 4121 to confirm your exact pickup time.
-              </p>
-            </div>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Need help? Call us at <strong>+60 17-746 4121</strong> or reply to this email.
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px;">
-              See you soon! 📷
-            </p>
-          </div>
-          
-          <div style="background: #2d3748; color: #cbd5e0; padding: 25px; text-align: center; font-size: 14px;">
-            <p style="margin: 5px 0;"><strong>Captura Camera Rental</strong></p>
-            <p style="margin: 5px 0;">📞 +60 17-746 4121</p>
-            <p style="margin: 5px 0;">📧 captura.my@gmail.com</p>
-            <p style="margin: 5px 0;">📍 Caltex Selayang Pandang, Batu Caves</p>
-          </div>
-        </div>
-      `
+      subject: `Pickup Reminder ${timing.subjectLabel} - ${data.cameraName} | Captura Rental`,
+      html: createCustomerPickupEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ Pickup reminder sent to customer:', data.email);
+    console.log('Pickup reminder sent to customer:', data.email);
     return true;
   } catch (error) {
-    console.error('❌ Error sending pickup reminder to customer:', error);
+    console.error('Error sending pickup reminder to customer:', error);
     return false;
   }
 }
 
 /**
- * Send return reminder to customer (on return date - before 10pm)
+ * Send return reminder to customer (on return date or lead-day reminder)
  */
 export async function sendCustomerReturnReminder(data: EmailData): Promise<boolean> {
   try {
+    const timing = describeTiming(data.daysUntilReturn);
     const mailOptions = {
-      from: `Captura Camera Rental <${EMAIL_CONFIG.from}>`,
+      from: `Captura Rental <${EMAIL_CONFIG.from}>`,
       to: data.email,
-      subject: `🔙 Return Reminder: Camera Due Today by 8 PM - ${data.cameraName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 40px 30px; text-align: center;">
-            <h1 style="margin: 0; font-size: 32px;">🔙 Return Reminder</h1>
-            <p style="margin: 15px 0 0 0; font-size: 18px;">Please return your camera today</p>
-          </div>
-          
-          <div style="background: #f7fafc; padding: 30px;">
-            <p style="color: #2d3748; font-size: 18px; margin-top: 0;">
-              Hi <strong>${data.customerName}</strong>,
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Thank you for renting from <strong>Captura</strong>! We hope you had a great experience with your <strong>${data.cameraName}</strong>.
-            </p>
-            
-            <div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <h3 style="color: #991b1b; margin-top: 0; font-size: 20px;">⏰ Return Due Today</h3>
-              <p style="color: #7f1d1d; font-size: 18px; font-weight: bold; margin: 10px 0;">
-                Please return by: <span style="font-size: 24px;">8:00 PM Tonight</span>
-              </p>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h2 style="color: #2d3748; margin-top: 0; font-size: 20px;">📋 Return Details</h2>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Booking ID:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.bookingId.slice(-8).toUpperCase()}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold; border-bottom: 1px solid #e2e8f0;">Camera:</td>
-                  <td style="padding: 12px 0; color: #2d3748; border-bottom: 1px solid #e2e8f0;">${data.cameraName}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; color: #4a5568; font-weight: bold;">Return Date:</td>
-                  <td style="padding: 12px 0; color: #e53e3e; font-weight: bold; font-size: 18px;">${data.returnDate}</td>
-                </tr>
-              </table>
-            </div>
-            
-            <div style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <h3 style="color: #1e40af; margin-top: 0; font-size: 18px;">✅ Before You Return:</h3>
-              <ul style="color: #1e3a8a; margin: 10px 0 0 20px; line-height: 1.8;">
-                <li>Ensure all equipment is in good condition</li>
-                <li>Pack all accessories (batteries, charger, case, memory card)</li>
-                <li>Format/delete your personal files from memory card</li>
-                <li>Bring the equipment to our location</li>
-              </ul>
-            </div>
-            
-            <div style="background: white; border-radius: 12px; padding: 25px; margin: 25px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-              <h3 style="color: #2d3748; margin-top: 0;">📍 Return Location</h3>
-              <p style="color: #4a5568; margin: 10px 0; font-size: 16px;">
-                <strong style="color: #2d3748;">Caltex Selayang Pandang</strong><br>
-                Lot 1, 2, Batu 8, Jalan Rawang<br>
-                Selayang Pandang, 68100 Batu Caves<br>
-                Selangor, Malaysia
-              </p>
-              <div style="margin-top: 15px;">
-                <a href="https://www.google.com/maps/dir/?api=1&destination=3.2597,101.6497" style="display: inline-block; background: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-right: 10px;">📍 Google Maps</a>
-                <a href="https://waze.com/ul?ll=3.2597,101.6497&navigate=yes" style="display: inline-block; background: #8b5cf6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">🚗 Waze</a>
-              </div>
-            </div>
-            
-            <div style="background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <p style="margin: 0; color: #065f46; font-weight: bold;">
-                💰 <strong>Deposit Refund:</strong> Your RM100 deposit will be refunded after equipment inspection (if no damage).
-              </p>
-            </div>
-            
-            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
-              <p style="margin: 0; color: #856404; font-weight: bold;">
-                ⚠️ <strong>Late Return:</strong> Additional charges apply for late returns. Please return by 8 PM to avoid extra fees.
-              </p>
-            </div>
-            
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Questions? Call us at <strong>+60 17-746 4121</strong> or reply to this email.
-            </p>
-            
-            <p style="color: #4a5568; font-size: 16px;">
-              Thank you for choosing Captura! We hope to serve you again soon. 📷
-            </p>
-          </div>
-          
-          <div style="background: #2d3748; color: #cbd5e0; padding: 25px; text-align: center; font-size: 14px;">
-            <p style="margin: 5px 0;"><strong>Captura Camera Rental</strong></p>
-            <p style="margin: 5px 0;">📞 +60 17-746 4121</p>
-            <p style="margin: 5px 0;">📧 captura.my@gmail.com</p>
-            <p style="margin: 5px 0;">📍 Caltex Selayang Pandang, Batu Caves</p>
-          </div>
-        </div>
-      `
+      subject: `Return Reminder ${timing.subjectLabel} - ${data.cameraName} | Captura Rental`,
+      html: createCustomerReturnEmail(data),
     };
 
     const transport = getTransporter();
     await transport.sendMail(mailOptions);
-    console.log('✅ Return reminder sent to customer:', data.email);
+    console.log('Return reminder sent to customer:', data.email);
     return true;
   } catch (error) {
-    console.error('❌ Error sending return reminder to customer:', error);
+    console.error('Error sending return reminder to customer:', error);
     return false;
   }
 }
@@ -624,11 +760,10 @@ export async function testEmailConfig(): Promise<boolean> {
   try {
     const transport = getTransporter();
     await transport.verify();
-    console.log('✅ Email service configured correctly');
+    console.log('Email service configured correctly');
     return true;
   } catch (error) {
-    console.error('❌ Email service configuration error:', error);
+    console.error('Email service configuration error:', error);
     return false;
   }
 }
-
