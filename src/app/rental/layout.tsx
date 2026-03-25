@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+}
+
 export default function RentalLayout({
   children,
 }: {
@@ -12,9 +16,33 @@ export default function RentalLayout({
 }) {
   const pathname = usePathname();
   const [isOnline, setIsOnline] = useState(true);
+  const [rentalKitCount, setRentalKitCount] = useState(0);
 
   // Service Worker Registration
   useEffect(() => {
+    const rentalKitStorageKey = 'captura_rental_kit_ids';
+    const rentalKitEvent = 'captura-rental-kit-updated';
+
+    const syncRentalKitCount = () => {
+      try {
+        const rawValue = window.localStorage.getItem(rentalKitStorageKey);
+        if (!rawValue) {
+          setRentalKitCount(0);
+          return;
+        }
+
+        const parsed = JSON.parse(rawValue);
+        if (Array.isArray(parsed)) {
+          setRentalKitCount(parsed.filter((value) => typeof value === 'string').length);
+          return;
+        }
+
+        setRentalKitCount(0);
+      } catch {
+        setRentalKitCount(0);
+      }
+    };
+
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
         .register('/sw.js')
@@ -26,23 +54,36 @@ export default function RentalLayout({
         });
     }
 
-    // PWA Install Prompt
-    let deferredPrompt: any;
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      const e = event as BeforeInstallPromptEvent;
       e.preventDefault();
-      deferredPrompt = e;
       console.log('PWA install prompt available');
-    });
+    };
 
     // Online/Offline Status
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === rentalKitStorageKey) {
+        syncRentalKitCount();
+      }
+    };
+    const handleRentalKitUpdated = () => syncRentalKitCount();
+
+    syncRentalKitCount();
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener(rentalKitEvent, handleRentalKitUpdated);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(rentalKitEvent, handleRentalKitUpdated);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
   }, []);
 
@@ -138,17 +179,30 @@ export default function RentalLayout({
           >
             <div className="relative flex items-center justify-between px-2 py-3 bg-zinc-950/95 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl ring-1 ring-white/5">
               {navigation.map((item) => {
-                const isActive = pathname === item.href;
+                const targetHref = item.href === '/rental/cameras' && rentalKitCount > 0 && pathname !== '/rental/cameras'
+                  ? '/rental/cameras?kit=1'
+                  : item.href;
+
+                const isActive = item.href === '/rental/cameras'
+                  ? pathname === '/rental/cameras'
+                  : pathname === item.href;
+
+                const showKitPulse = item.href === '/rental/cameras' && rentalKitCount > 0 && pathname !== '/rental/cameras';
 
                 return (
                   <Link
                     key={item.name}
-                    href={item.href}
+                    href={targetHref}
                     className="relative flex flex-col items-center justify-center w-full py-1 z-10"
                   >
                     <div className={`transition-all duration-300 ${isActive ? '-translate-y-1' : ''}`}>
-                      <div className={`${isActive ? 'text-white' : 'text-zinc-500'}`}>
+                      <div className={`relative ${isActive ? 'text-white' : 'text-zinc-500'}`}>
                         {item.icon(isActive)}
+                        {item.href === '/rental/cameras' && rentalKitCount > 0 && (
+                          <span className={`absolute -right-2 -top-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black text-black shadow-[0_0_12px_rgba(249,115,22,0.45)] ${showKitPulse ? 'animate-pulse' : ''}`}>
+                            {rentalKitCount}
+                          </span>
+                        )}
                       </div>
                     </div>
 

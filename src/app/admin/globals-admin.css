@@ -97,6 +97,36 @@ select:-webkit-autofill:focus {
   display: none;
 }
 
+/* Premium dark scrollbar */
+.admin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #8a8178 #171411;
+}
+
+.admin-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-track {
+  background: #171411;
+  border-radius: 999px;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #9a8f84 0%, #6d6258 100%);
+  border-radius: 999px;
+  border: 2px solid #171411;
+}
+
+.admin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #c96b2c 0%, #8f5628 100%);
+}
+
+.admin-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 /* Responsive table wrapper */
 @media (max-width: 768px) {
   /* Hide table on mobile, show card view */

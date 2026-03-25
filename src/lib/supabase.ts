@@ -147,6 +147,7 @@ export interface Booking {
   id: string
   customer_id: string
   camera_id: string
+  booking_group_id?: string | null
   start_date: string
   end_date: string
   total_days: number
@@ -202,6 +203,46 @@ export interface Booking {
   addons?: string[]
   // Relations
   customer?: Customer
+  camera?: Camera
+  group?: BookingGroup
+}
+
+export interface BookingGroup {
+  id: string
+  group_reference: string
+  customer_id: string
+  start_date: string
+  end_date: string
+  total_days: number
+  pickup_method: 'pickup' | 'delivery'
+  pickup_address: string | null
+  delivery_fee: number
+  subtotal_amount: number
+  deposit_amount: number
+  final_payment_amount: number
+  total_amount: number
+  booking_source: 'website' | 'phone' | 'whatsapp' | 'walk-in' | 'historical' | 'manual'
+  notes: string | null
+  status: 'pending_approval' | 'confirmed' | 'partially_confirmed' | 'completed' | 'cancelled' | 'rejected'
+  created_at: string
+  updated_at: string
+  customer?: Customer
+  items?: BookingGroupItem[]
+  bookings?: Booking[]
+}
+
+export interface BookingGroupItem {
+  id: string
+  booking_group_id: string
+  camera_id: string
+  daily_rate: number
+  total_days: number
+  subtotal_amount: number
+  deposit_amount: number
+  final_payment_amount: number
+  total_amount: number
+  sort_order: number
+  created_at: string
   camera?: Camera
 }
 

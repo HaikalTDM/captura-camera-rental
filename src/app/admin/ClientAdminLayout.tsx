@@ -145,7 +145,7 @@ export default function AdminLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                <nav className="admin-scrollbar flex-1 space-y-1 overflow-y-auto px-4 py-6">
                   {navigation.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
@@ -215,7 +215,7 @@ export default function AdminLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+                <nav className="admin-scrollbar flex-1 space-y-1 overflow-y-auto px-4 py-6">
                   {navigation.map((item) => {
                     const isActive = pathname === item.href;
                     const Icon = item.icon;
@@ -291,7 +291,7 @@ export default function AdminLayout({
               </motion.div>
 
               {/* Page content */}
-              <main className="flex-1 p-3 sm:p-4 md:p-6 bg-[#0d0c0b] overflow-y-auto overflow-x-hidden w-full max-w-full">
+              <main className="admin-scrollbar flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden bg-[#0d0c0b] p-3 sm:p-4 md:p-6">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}

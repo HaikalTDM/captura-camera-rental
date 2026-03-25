@@ -1,16 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { getCameraById, updateCamera, deleteCamera, getAllAccessories, linkAccessoryToCamera, removeAccessoryFromCamera } from '@/lib/api/bookings';
-import type { Camera, Accessory } from '@/lib/supabase';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import {
+  deleteCamera,
+  getAllAccessories,
+  getCameraById,
+  linkAccessoryToCamera,
+  removeAccessoryFromCamera,
+  updateCamera,
+} from '@/lib/api/bookings';
+import type { Accessory, Camera } from '@/lib/supabase';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
+
+type EditTab = 'details' | 'accessories' | 'maintenance';
 
 export default function EditCameraPage() {
   const params = useParams();
   const router = useRouter();
   const cameraId = params.id as string;
+  const { toasts, success, error, removeToast } = useAnimatedToast();
 
   const [camera, setCamera] = useState<Camera | null>(null);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
@@ -18,7 +29,7 @@ export default function EditCameraPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'details' | 'accessories' | 'maintenance'>('details');
+  const [activeTab, setActiveTab] = useState<EditTab>('details');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -38,19 +49,20 @@ export default function EditCameraPage() {
     purchase_price: 0,
     warranty_expiry: '',
     location: 'Main Storage',
-    notes: ''
+    notes: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [cameraId]);
+  const fieldClasses =
+    'w-full rounded-2xl border border-white/10 bg-zinc-950 px-4 py-3 text-sm font-semibold text-stone-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-white/20 focus:ring-0';
+  const labelClasses = 'mb-2 block text-sm font-semibold text-stone-300';
+  const sectionClasses = 'rounded-3xl border border-white/5 bg-zinc-900/70 p-6 shadow-lg';
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const [cameraData, accessoriesData] = await Promise.all([
         getCameraById(cameraId),
-        getAllAccessories()
+        getAllAccessories(),
       ]);
 
       if (cameraData) {
@@ -73,54 +85,62 @@ export default function EditCameraPage() {
           purchase_price: cameraData.purchase_price || 0,
           warranty_expiry: cameraData.warranty_expiry || '',
           location: cameraData.location || 'Main Storage',
-          notes: cameraData.notes || ''
+          notes: cameraData.notes || '',
         });
       }
+
       setAccessories(accessoriesData);
-    } catch (error) {
-      console.error('Error loading data:', error);
+    } catch (loadError) {
+      console.error('Error loading data:', loadError);
+      error('Unable to load camera', 'The camera details could not be loaded right now.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [cameraId, error]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleSave = async () => {
     if (!camera) return;
 
     setIsSaving(true);
     try {
-      // Clean up the form data to handle empty date strings and unique constraints
       const cleanedFormData = {
         ...formData,
-        // Convert empty date strings to null for PostgreSQL
         purchase_date: formData.purchase_date || null,
         warranty_expiry: formData.warranty_expiry || null,
-        // Convert empty serial number to null to avoid unique constraint violation
         serial_number: formData.serial_number?.trim() || null,
-        // Ensure numeric fields are properly formatted
         daily_rate: Number(formData.daily_rate) || 0,
         weekly_rate: Number(formData.weekly_rate) || 0,
         monthly_rate: Number(formData.monthly_rate) || 0,
         deposit_amount: Number(formData.deposit_amount) || 0,
-        purchase_price: Number(formData.purchase_price) || 0
+        purchase_price: Number(formData.purchase_price) || 0,
       };
 
       const updatedCamera = await updateCamera(camera.id, cleanedFormData);
-      if (updatedCamera) {
-        router.push(`/admin/cameras/${camera.id}`);
-      }
-    } catch (error: any) {
-      console.error('Error updating camera:', error);
 
-      // Handle specific database errors
-      if (error?.code === '23505') {
-        if (error?.details?.includes('serial_number')) {
-          alert('Error: This serial number is already in use. Please use a unique serial number or leave it empty.');
+      if (!updatedCamera) {
+        error('Update failed', 'The camera was not updated. Please try again.');
+        return;
+      }
+
+      success('Camera updated', 'Your changes were saved successfully.');
+      router.push(`/admin/cameras/${camera.id}`);
+    } catch (saveError: unknown) {
+      console.error('Error updating camera:', saveError);
+
+      const databaseError = saveError as { code?: string; details?: string };
+
+      if (databaseError?.code === '23505') {
+        if (databaseError?.details?.includes('serial_number')) {
+          error('Duplicate serial number', 'This serial number is already in use. Please use a unique serial number or leave it empty.');
         } else {
-          alert('Error: Duplicate value detected. Please check your input and try again.');
+          error('Duplicate value detected', 'Please check your input and try again.');
         }
       } else {
-        alert('Error updating camera. Please check all fields and try again.');
+        error('Error updating camera', 'Please check all fields and try again.');
       }
     } finally {
       setIsSaving(false);
@@ -136,10 +156,12 @@ export default function EditCameraPage() {
       } else {
         await removeAccessoryFromCamera(camera.id, accessoryId);
       }
-      // Reload data to reflect changes
-      loadData();
-    } catch (error) {
-      console.error('Error updating accessory:', error);
+
+      await loadData();
+      success('Accessories updated', 'The linked accessories were refreshed.');
+    } catch (toggleError) {
+      console.error('Error updating accessory:', toggleError);
+      error('Accessory update failed', 'Please try again.');
     }
   };
 
@@ -148,16 +170,17 @@ export default function EditCameraPage() {
 
     setIsDeleting(true);
     try {
-      const success = await deleteCamera(camera.id);
-      if (success) {
-        alert('Camera deleted successfully!');
-        router.push('/admin/cameras');
-      } else {
-        alert('Failed to delete camera. Please try again.');
+      const deleted = await deleteCamera(camera.id);
+      if (!deleted) {
+        error('Delete failed', 'Failed to delete camera. Please try again.');
+        return;
       }
-    } catch (error) {
-      console.error('Error deleting camera:', error);
-      alert('Error deleting camera. Please try again.');
+
+      success('Camera deleted', 'The camera was removed from inventory.');
+      router.push('/admin/cameras');
+    } catch (deleteError) {
+      console.error('Error deleting camera:', deleteError);
+      error('Error deleting camera', 'Please try again.');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -166,17 +189,19 @@ export default function EditCameraPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="flex h-64 items-center justify-center">
+        <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-orange-400" />
       </div>
     );
   }
 
   if (!camera) {
     return (
-      <div className="text-center py-12">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Camera Not Found</h1>
-        <Link href="/admin/cameras" className="text-blue-600 hover:text-blue-800">
+      <div className="py-12 text-center">
+        <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+        <h1 className="mb-4 text-2xl font-bold text-stone-100">Camera Not Found</h1>
+        <Link href="/admin/cameras" className="text-orange-400 transition-colors hover:text-orange-300">
           ← Back to Cameras
         </Link>
       </div>
@@ -185,51 +210,56 @@ export default function EditCameraPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
+
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Edit Camera</h1>
-          <p className="text-gray-700 mt-1">Update camera details and manage accessories</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-orange-400/80">Fleet Editor</p>
+          <h1 className="mt-2 text-3xl font-bold text-stone-100">Edit Camera</h1>
+          <p className="mt-1 text-stone-400">Update camera details, linked gear, and maintenance information.</p>
         </div>
-        <div className="flex gap-3">
+
+        <div className="flex flex-wrap gap-3">
           <button
+            type="button"
             onClick={() => setShowDeleteConfirm(true)}
-            className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl bg-red-500 px-6 py-2.5 text-white transition-colors hover:bg-red-600"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="h-4 w-4" />
             Delete
           </button>
           <Link
             href={`/admin/cameras/${camera.id}`}
-            className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg transition-colors"
+            className="rounded-xl bg-zinc-700 px-6 py-2.5 text-white transition-colors hover:bg-zinc-600"
           >
             Cancel
           </Link>
           <button
+            type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors disabled:opacity-50"
+            className="rounded-xl bg-orange-500 px-6 py-2.5 font-semibold text-black transition-colors hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
+      <div className="border-b border-white/10">
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'details', name: 'Camera Details', icon: '📷' },
             { id: 'accessories', name: 'Accessories', icon: '🔧' },
-            { id: 'maintenance', name: 'Maintenance', icon: '⚙️' }
+            { id: 'maintenance', name: 'Maintenance', icon: '⚙️' },
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              type="button"
+              onClick={() => setActiveTab(tab.id as EditTab)}
+              className={`border-b-2 px-1 py-2 text-sm font-medium transition-colors ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300'
+                  ? 'border-orange-400 text-stone-100'
+                  : 'border-transparent text-zinc-500 hover:border-white/10 hover:text-stone-300'
               }`}
             >
               {tab.icon} {tab.name}
@@ -238,52 +268,51 @@ export default function EditCameraPage() {
         </nav>
       </div>
 
-      {/* Tab Content */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div className={sectionClasses}>
         {activeTab === 'details' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-bold text-gray-900">Camera Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className="text-lg font-bold text-stone-100">Camera Information</h3>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Camera Name</label>
+                <label className={labelClasses}>Camera Name</label>
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={fieldClasses}
                   placeholder="DJI Osmo Pocket 3"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Brand</label>
+                <label className={labelClasses}>Brand</label>
                 <input
                   type="text"
                   value={formData.brand}
-                  onChange={(e) => setFormData({...formData, brand: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  className={fieldClasses}
                   placeholder="DJI"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                <label className={labelClasses}>Model</label>
                 <input
                   type="text"
                   value={formData.model}
-                  onChange={(e) => setFormData({...formData, model: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                  className={fieldClasses}
                   placeholder="Osmo Pocket 3"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                <label className={labelClasses}>Type</label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({...formData, type: e.target.value as Camera['type']})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value as Camera['type'] })}
+                  className={fieldClasses}
                 >
                   <option value="action">Action Camera</option>
                   <option value="mirrorless">Mirrorless</option>
@@ -293,14 +322,14 @@ export default function EditCameraPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Daily Rate (RM)</label>
+                <label className={labelClasses}>Daily Rate (RM)</label>
                 <input
                   type="number"
                   value={formData.daily_rate || ''}
-                  onChange={(e) => setFormData({...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  className={fieldClasses}
                   placeholder="50"
                   step="0.01"
                   min="0"
@@ -308,12 +337,12 @@ export default function EditCameraPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Weekly Rate (RM)</label>
+                <label className={labelClasses}>Weekly Rate (RM)</label>
                 <input
                   type="number"
                   value={formData.weekly_rate || ''}
-                  onChange={(e) => setFormData({...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  className={fieldClasses}
                   placeholder="300"
                   step="0.01"
                   min="0"
@@ -321,24 +350,26 @@ export default function EditCameraPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Rate (RM)</label>
+                <label className={labelClasses}>Monthly Rate (RM)</label>
                 <input
                   type="number"
                   value={formData.monthly_rate || ''}
-                  onChange={(e) => setFormData({...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  className={fieldClasses}
                   placeholder="1000"
+                  step="0.01"
+                  min="0"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Deposit Amount (RM)</label>
+              <label className={labelClasses}>Deposit Amount (RM)</label>
               <input
                 type="number"
                 value={formData.deposit_amount || ''}
-                onChange={(e) => setFormData({...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                onChange={(e) => setFormData({ ...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                className={fieldClasses}
                 placeholder="200"
                 step="0.01"
                 min="0"
@@ -346,23 +377,23 @@ export default function EditCameraPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+              <label className={labelClasses}>Description</label>
               <textarea
                 value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className={fieldClasses}
                 placeholder="Detailed description of the camera..."
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
+              <label className={labelClasses}>Image URL</label>
               <input
                 type="url"
                 value={formData.image_url}
-                onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                className={fieldClasses}
                 placeholder="https://example.com/camera-image.jpg"
               />
             </div>
@@ -371,32 +402,33 @@ export default function EditCameraPage() {
 
         {activeTab === 'accessories' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-bold text-gray-900">Manage Accessories</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <h3 className="text-lg font-bold text-stone-100">Manage Accessories</h3>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {accessories.map((accessory) => {
-                const isLinked = camera.camera_accessories?.some(ca => ca.accessory_id === accessory.id);
-                
+                const isLinked = camera.camera_accessories?.some((ca) => ca.accessory_id === accessory.id);
+
                 return (
-                  <div key={accessory.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
+                  <div key={accessory.id} className="rounded-2xl border border-white/10 bg-zinc-950 p-4">
+                    <div className="mb-3 flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-gray-900">{accessory.name}</h4>
-                        <p className="text-sm text-gray-700">{accessory.type}</p>
-                        <p className="text-sm font-medium text-green-600">RM{accessory.daily_rate}/day</p>
+                        <h4 className="font-medium text-stone-100">{accessory.name}</h4>
+                        <p className="text-sm text-zinc-400">{accessory.type}</p>
+                        <p className="text-sm font-medium text-green-500">RM{accessory.daily_rate}/day</p>
                       </div>
                       <label className="flex items-center">
                         <input
                           type="checkbox"
                           checked={isLinked}
-                          onChange={(e) => handleAccessoryToggle(accessory.id, e.target.checked)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          onChange={(e) => void handleAccessoryToggle(accessory.id, e.target.checked)}
+                          className="rounded border-white/10 bg-zinc-900 text-orange-400 focus:ring-orange-400"
                         />
-                        <span className="ml-2 text-sm text-gray-700">Include</span>
+                        <span className="ml-2 text-sm text-stone-300">Include</span>
                       </label>
                     </div>
+
                     {accessory.description && (
-                      <p className="text-xs text-gray-700">{accessory.description}</p>
+                      <p className="text-xs text-zinc-500">{accessory.description}</p>
                     )}
                   </div>
                 );
@@ -407,15 +439,15 @@ export default function EditCameraPage() {
 
         {activeTab === 'maintenance' && (
           <div className="space-y-6">
-            <h3 className="text-lg font-bold text-gray-900">Maintenance & Details</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h3 className="text-lg font-bold text-stone-100">Maintenance & Details</h3>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                <label className={labelClasses}>Condition</label>
                 <select
                   value={formData.condition}
-                  onChange={(e) => setFormData({...formData, condition: e.target.value as Camera['condition']})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, condition: e.target.value as Camera['condition'] })}
+                  className={fieldClasses}
                 >
                   <option value="excellent">Excellent</option>
                   <option value="good">Good</option>
@@ -425,33 +457,33 @@ export default function EditCameraPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
+                <label className={labelClasses}>Serial Number</label>
                 <input
                   type="text"
                   value={formData.serial_number}
-                  onChange={(e) => setFormData({...formData, serial_number: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
+                  className={fieldClasses}
                   placeholder="SN123456789"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Date</label>
+                <label className={labelClasses}>Purchase Date</label>
                 <input
                   type="date"
                   value={formData.purchase_date}
-                  onChange={(e) => setFormData({...formData, purchase_date: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
+                  className={fieldClasses}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Purchase Price (RM)</label>
+                <label className={labelClasses}>Purchase Price (RM)</label>
                 <input
                   type="number"
                   value={formData.purchase_price || ''}
-                  onChange={(e) => setFormData({...formData, purchase_price: e.target.value === '' ? 0 : parseFloat(e.target.value)})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  className={fieldClasses}
                   placeholder="2000"
                   step="0.01"
                   min="0"
@@ -459,34 +491,34 @@ export default function EditCameraPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Warranty Expiry</label>
+                <label className={labelClasses}>Warranty Expiry</label>
                 <input
                   type="date"
                   value={formData.warranty_expiry}
-                  onChange={(e) => setFormData({...formData, warranty_expiry: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, warranty_expiry: e.target.value })}
+                  className={fieldClasses}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Storage Location</label>
+                <label className={labelClasses}>Storage Location</label>
                 <input
                   type="text"
                   value={formData.location}
-                  onChange={(e) => setFormData({...formData, location: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                  className={fieldClasses}
                   placeholder="Main Storage"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+              <label className={labelClasses}>Notes</label>
               <textarea
                 value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={4}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className={fieldClasses}
                 placeholder="Additional notes about this camera..."
               />
             </div>
@@ -494,50 +526,51 @@ export default function EditCameraPage() {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                <Trash2 className="w-6 h-6 text-red-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/15">
+                <Trash2 className="h-6 w-6 text-red-500" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Delete Camera</h3>
-                <p className="text-sm text-gray-600">This action cannot be undone</p>
+                <h3 className="text-xl font-bold text-stone-100">Delete Camera</h3>
+                <p className="text-sm text-zinc-400">This action cannot be undone</p>
               </div>
             </div>
 
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800 font-medium mb-2">
+            <div className="mb-6 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+              <p className="mb-2 text-sm font-medium text-red-200">
                 Are you sure you want to delete <span className="font-bold">{camera.name}</span>?
               </p>
-              <p className="text-xs text-red-600">
+              <p className="text-xs text-red-300">
                 This will permanently remove the camera from your inventory. All associated data will be deleted.
               </p>
             </div>
 
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 rounded-xl bg-zinc-800 px-4 py-3 font-semibold text-stone-100 transition-colors hover:bg-zinc-700 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
               >
                 {isDeleting ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
                     Deleting...
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                     Delete Camera
                   </>
                 )}

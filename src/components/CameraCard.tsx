@@ -4,18 +4,28 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Camera } from '@/types';
-import { formatCurrency } from '@/lib/pricing';
-import ImageGallery from './ImageGallery';
 
 interface CameraCardProps {
   camera: Camera;
   onBookNow: (camera: Camera) => void;
+  onAddToKit?: (camera: Camera) => void;
   onViewSpecs?: (camera: Camera) => void;
   variant?: 'default' | 'dark';
   tags?: string[];
+  isInKit?: boolean;
+  canAddToKit?: boolean;
 }
 
-export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = 'default', tags = [] }: CameraCardProps) {
+export default function CameraCard({
+  camera,
+  onBookNow,
+  onAddToKit,
+  onViewSpecs,
+  variant = 'default',
+  tags = [],
+  isInKit = false,
+  canAddToKit = true,
+}: CameraCardProps) {
   const [viewerCount, setViewerCount] = useState(0);
   const isDark = variant === 'dark';
 
@@ -42,6 +52,12 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
   const handleSpecsClick = () => {
     if (onViewSpecs) {
       onViewSpecs(camera);
+    }
+  };
+
+  const handleAddToKitClick = () => {
+    if (onAddToKit) {
+      onAddToKit(camera);
     }
   };
 
@@ -121,8 +137,8 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
 
         {/* Use Case Tags (Dark Mode Only) */}
         {isDark && tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-2">
-            {tags.slice(0, 2).map((tag, i) => (
+          <div className="mb-2 flex flex-wrap gap-1">
+            {tags.slice(0, 1).map((tag, i) => (
               <span key={i} className="px-1.5 py-0.5 bg-white/5 rounded text-[9px] font-bold text-zinc-400 uppercase tracking-wider border border-white/5">
                 {tag}
               </span>
@@ -131,12 +147,12 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
         )}
 
         <div className="flex justify-between items-start mb-1">
-          <h3 className={`font-black tracking-tight leading-tight line-clamp-2 ${isDark ? 'text-sm text-white' : 'text-sm sm:text-2xl text-slate-800'}`}>
+          <h3 className={`font-black tracking-tight leading-tight line-clamp-2 ${isDark ? 'text-[13px] text-white sm:text-sm' : 'text-sm sm:text-2xl text-slate-800'}`}>
             {camera.name}
           </h3>
         </div>
 
-        <div className={`flex items-baseline gap-1.5 ${isDark ? 'mb-3' : 'mb-2 sm:mb-4'}`}>
+        <div className={`flex flex-wrap items-end gap-x-1.5 gap-y-1 ${isDark ? 'mb-3' : 'mb-2 sm:mb-4'}`}>
           {camera.discountRate && (
             <span className={`font-bold line-through ${isDark ? 'text-xs text-zinc-600' : 'text-xs sm:text-sm text-slate-400'}`}>
               RM{Math.round(camera.dailyRate * 1.3)}
@@ -147,10 +163,10 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
               From
             </span>
           )}
-          <span className={`font-black ${isDark ? 'text-lg text-white' : 'text-lg sm:text-3xl text-slate-900'}`}>
+          <span className={`font-black ${isDark ? 'text-base text-white sm:text-lg' : 'text-lg sm:text-3xl text-slate-900'}`}>
             RM{camera.dailyRate}
           </span>
-          <span className={`font-bold ${isDark ? 'text-xs text-zinc-500' : 'text-xs sm:text-sm text-slate-500'}`}>/day</span>
+          <span className={`font-bold ${isDark ? 'text-[11px] text-zinc-500' : 'text-xs sm:text-sm text-slate-500'}`}>/day</span>
         </div>
 
         {/* Savings Badge - Hide on minimalist dark mobile to save vertical space if needed, or keep petite */}
@@ -190,7 +206,7 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
             className={`
               w-full font-black h-auto rounded-lg transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-2 group relative overflow-hidden
               ${isDark
-                ? 'py-3 text-xs bg-white text-black hover:bg-zinc-200'
+                ? 'py-2.5 text-[11px] bg-white text-black hover:bg-zinc-200'
                 : 'py-3 sm:py-5 text-xs sm:text-lg rounded-xl sm:gap-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white hover:shadow-2xl hover:shadow-purple-500/40'
               }
             `}
@@ -205,6 +221,28 @@ export default function CameraCard({ camera, onBookNow, onViewSpecs, variant = '
               </>
             )}
           </Button>
+
+          {onAddToKit && (
+            <Button
+              type="button"
+              onClick={handleAddToKitClick}
+              variant="outline"
+              disabled={isInKit || !canAddToKit}
+              className={`
+                mt-2 w-full border rounded-lg font-bold h-auto transition-all
+                ${isDark
+                  ? isInKit
+                    ? 'border-emerald-500/20 bg-emerald-500/10 py-2 text-[10px] text-emerald-300'
+                    : !canAddToKit
+                      ? 'border-red-500/20 bg-red-500/10 py-2 text-[10px] text-red-300'
+                      : 'border-white/10 bg-transparent py-2 text-[10px] text-zinc-300 hover:bg-white/5 hover:text-white'
+                  : 'rounded-xl border-slate-200 py-2.5 text-xs text-slate-700 hover:bg-slate-50 hover:border-slate-300 disabled:border-emerald-200 disabled:bg-emerald-50 disabled:text-emerald-700'
+                }
+              `}
+            >
+              {isInKit ? 'Added to Kit' : canAddToKit ? 'Add to Rental Kit' : 'Kit Full'}
+            </Button>
+          )}
 
           {/* Secondary CTA - Only for Default Mode */}
           {!isDark && (

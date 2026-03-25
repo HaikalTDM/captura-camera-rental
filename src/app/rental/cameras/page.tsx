@@ -1,14 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import CameraCatalog from '@/components/CameraCatalog';
 import RentalSummary from '@/components/RentalSummary';
 import ClientAvailabilityCalendar from '@/components/ClientAvailabilityCalendar';
 import { Camera, BookingDetails, CustomerDetails } from '@/types';
 
 export default function CamerasPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [completedBooking, setCompletedBooking] = useState<BookingDetails | null>(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [shouldOpenRentalKit, setShouldOpenRentalKit] = useState(searchParams.get('kit') === '1');
+
+  useEffect(() => {
+    const shouldOpenFromQuery = searchParams.get('kit') === '1';
+    if (!shouldOpenFromQuery) return;
+
+    setShouldOpenRentalKit(true);
+    router.replace('/rental/cameras', { scroll: false });
+  }, [router, searchParams]);
 
   const handleCameraBookingComplete = (
     camera: Camera,
@@ -59,7 +71,11 @@ export default function CamerasPage() {
 
       {/* Camera Catalog */}
       <section id="camera-catalog" className="py-8">
-        <CameraCatalog onBookCamera={handleCameraBookingComplete} variant="dark" />
+        <CameraCatalog
+          onBookCamera={handleCameraBookingComplete}
+          variant="dark"
+          initialOpenRentalKit={shouldOpenRentalKit}
+        />
       </section>
 
       {/* Rental Summary Modal */}

@@ -103,6 +103,7 @@ export default function RootLayout({
         <meta name="google" content="notranslate" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
       >
         <ErrorBoundary>

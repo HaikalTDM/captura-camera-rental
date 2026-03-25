@@ -1,6 +1,6 @@
 import { supabase } from '../supabase';
 import { createCustomer } from './bookings';
-import type { Booking, Customer } from '../supabase';
+import type { Booking, BookingGroup, Customer } from '../supabase';
 
 // Interface for website booking submission
 export interface WebsiteBookingData {
@@ -38,13 +38,52 @@ export interface WebsiteBookingData {
   referral_source?: string;
 }
 
+export interface WebsiteBookingGroupItemData {
+  camera_id: string;
+  camera_name: string;
+  total_days: number;
+  daily_rate: number;
+  total_amount: number;
+  deposit_amount: number;
+  final_payment_amount: number;
+}
+
+export interface WebsiteBookingGroupData {
+  items: WebsiteBookingGroupItemData[];
+  start_date: string;
+  end_date: string;
+  total_days: number;
+  subtotal_amount?: number;
+  deposit_amount?: number;
+  final_payment_amount?: number;
+  total_amount?: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_whatsapp?: string;
+  customer_address?: string;
+  customer_id_number?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+  pickup_method: 'pickup' | 'delivery';
+  pickup_address?: string;
+  delivery_fee?: number;
+  special_requests?: string;
+  booking_source: 'website' | 'phone' | 'whatsapp';
+  referral_source?: string;
+}
+
 // Interface for booking submission response
 export interface BookingSubmissionResult {
   success: boolean;
   booking?: Booking;
+  bookings?: Booking[];
   customer?: Customer;
+  booking_group?: BookingGroup;
   error?: string;
   booking_id?: string;
+  booking_group_id?: string;
+  booking_group_reference?: string;
   confirmation_number?: string;
 }
 
@@ -54,81 +93,90 @@ type WhatsAppCustomerSummary = Pick<Customer, 'email' | 'phone'> & {
   name?: string;
 };
 
+function generateBookingGroupReference() {
+  const random = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `KIT-${random}`;
+}
+
+async function createOrUpdateWebsiteCustomer(bookingData: {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  customer_whatsapp?: string;
+  customer_address?: string;
+  customer_id_number?: string;
+  emergency_contact_name?: string;
+  emergency_contact_phone?: string;
+}): Promise<Customer | null> {
+  let customer: Customer | null = null;
+
+  const { data: existingCustomers, error: customerSearchError } = await supabase
+    .from('customers')
+    .select('*')
+    .eq('email', bookingData.customer_email)
+    .limit(1);
+
+  if (customerSearchError) {
+    console.error('Error searching for existing customer:', customerSearchError);
+    return null;
+  }
+
+  if (existingCustomers && existingCustomers.length > 0) {
+    customer = existingCustomers[0];
+
+    const customerUpdates: Partial<Customer> = {};
+    if (customer.full_name !== bookingData.customer_name) {
+      customerUpdates.full_name = bookingData.customer_name;
+    }
+    if (customer.phone !== bookingData.customer_phone) {
+      customerUpdates.phone = bookingData.customer_phone;
+    }
+    if (bookingData.customer_whatsapp && customer.whatsapp !== bookingData.customer_whatsapp) {
+      customerUpdates.whatsapp = bookingData.customer_whatsapp;
+    }
+    if (bookingData.customer_address && customer.address !== bookingData.customer_address) {
+      customerUpdates.address = bookingData.customer_address;
+    }
+
+    if (Object.keys(customerUpdates).length > 0) {
+      const { error: updateError } = await supabase
+        .from('customers')
+        .update(customerUpdates)
+        .eq('id', customer.id);
+
+      if (updateError) {
+        console.error('Error updating customer:', updateError);
+      } else {
+        customer = { ...customer, ...customerUpdates };
+      }
+    }
+  } else {
+    customer = await createCustomer({
+      full_name: bookingData.customer_name,
+      email: bookingData.customer_email,
+      phone: bookingData.customer_phone,
+      whatsapp: bookingData.customer_whatsapp,
+      address: bookingData.customer_address,
+      id_number: bookingData.customer_id_number,
+      emergency_contact_name: bookingData.emergency_contact_name,
+      emergency_contact_phone: bookingData.emergency_contact_phone,
+    });
+  }
+
+  return customer;
+}
+
 // Submit a new booking from the website
 export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Promise<BookingSubmissionResult> {
   try {
     console.log('Submitting website booking:', bookingData);
 
-    // Step 1: Check if customer already exists by email
-    let customer: Customer | null = null;
-    
-    const { data: existingCustomers, error: customerSearchError } = await supabase
-      .from('customers')
-      .select('*')
-      .eq('email', bookingData.customer_email)
-      .limit(1);
-
-    if (customerSearchError) {
-      console.error('Error searching for existing customer:', customerSearchError);
+    const customer = await createOrUpdateWebsiteCustomer(bookingData);
+    if (!customer) {
       return {
         success: false,
-        error: 'Failed to check customer records'
+        error: 'Failed to create customer record'
       };
-    }
-
-    // Step 2: Create or update customer
-    if (existingCustomers && existingCustomers.length > 0) {
-      customer = existingCustomers[0];
-      console.log('Found existing customer:', customer.id);
-      
-      // Update customer info if needed
-      const customerUpdates: Partial<Customer> = {};
-      if (customer.full_name !== bookingData.customer_name) {
-        customerUpdates.full_name = bookingData.customer_name;
-      }
-      if (customer.phone !== bookingData.customer_phone) {
-        customerUpdates.phone = bookingData.customer_phone;
-      }
-      if (bookingData.customer_whatsapp && customer.whatsapp !== bookingData.customer_whatsapp) {
-        customerUpdates.whatsapp = bookingData.customer_whatsapp;
-      }
-      if (bookingData.customer_address && customer.address !== bookingData.customer_address) {
-        customerUpdates.address = bookingData.customer_address;
-      }
-
-      // Update customer if there are changes
-      if (Object.keys(customerUpdates).length > 0) {
-        const { error: updateError } = await supabase
-          .from('customers')
-          .update(customerUpdates)
-          .eq('id', customer.id);
-
-        if (updateError) {
-          console.error('Error updating customer:', updateError);
-        } else {
-          customer = { ...customer, ...customerUpdates };
-        }
-      }
-    } else {
-      // Create new customer
-      console.log('Creating new customer');
-      customer = await createCustomer({
-        full_name: bookingData.customer_name,
-        email: bookingData.customer_email,
-        phone: bookingData.customer_phone,
-        whatsapp: bookingData.customer_whatsapp,
-        address: bookingData.customer_address,
-        id_number: bookingData.customer_id_number,
-        emergency_contact_name: bookingData.emergency_contact_name,
-        emergency_contact_phone: bookingData.emergency_contact_phone
-      });
-
-      if (!customer) {
-        return {
-          success: false,
-          error: 'Failed to create customer record'
-        };
-      }
     }
 
     // Step 3: Create the booking
@@ -197,6 +245,138 @@ export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Pro
     return {
       success: false,
       error: 'An unexpected error occurred while processing your booking'
+    };
+  }
+}
+
+export async function submitWebsiteBookingGroup(
+  bookingData: WebsiteBookingGroupData,
+): Promise<BookingSubmissionResult> {
+  try {
+    console.log('Submitting grouped website booking:', bookingData);
+
+    const customer = await createOrUpdateWebsiteCustomer(bookingData);
+    if (!customer) {
+      return {
+        success: false,
+        error: 'Failed to create customer record',
+      };
+    }
+
+    const groupReference = generateBookingGroupReference();
+    const deliveryFee = Number(bookingData.delivery_fee || 0);
+    const subtotalAmount = bookingData.items.reduce((sum, item) => sum + Number(item.total_amount || 0), 0);
+    const depositAmount = bookingData.items.reduce((sum, item) => sum + Number(item.deposit_amount || 0), 0);
+    const finalPaymentAmount = bookingData.items.reduce((sum, item) => sum + Number(item.final_payment_amount || 0), 0);
+    const totalAmount = subtotalAmount + deliveryFee;
+
+    const { data: bookingGroup, error: bookingGroupError } = await supabase
+      .from('booking_groups')
+      .insert([
+        {
+          group_reference: groupReference,
+          customer_id: customer.id,
+          start_date: bookingData.start_date,
+          end_date: bookingData.end_date,
+          total_days: bookingData.total_days,
+          pickup_method: bookingData.pickup_method,
+          pickup_address: bookingData.pickup_address || null,
+          delivery_fee: deliveryFee,
+          subtotal_amount: subtotalAmount,
+          deposit_amount: depositAmount,
+          final_payment_amount: finalPaymentAmount,
+          total_amount: totalAmount,
+          booking_source: bookingData.booking_source,
+          notes: bookingData.special_requests || null,
+          status: 'pending_approval',
+        },
+      ])
+      .select('*')
+      .single();
+
+    if (bookingGroupError || !bookingGroup) {
+      console.error('Error creating booking group:', bookingGroupError);
+      return {
+        success: false,
+        error: 'Failed to create rental kit request',
+      };
+    }
+
+    const groupItemsPayload = bookingData.items.map((item, index) => ({
+      booking_group_id: bookingGroup.id,
+      camera_id: item.camera_id,
+      daily_rate: item.daily_rate,
+      total_days: bookingData.total_days,
+      subtotal_amount: item.total_amount,
+      deposit_amount: item.deposit_amount,
+      final_payment_amount: item.final_payment_amount,
+      total_amount: item.total_amount,
+      sort_order: index,
+    }));
+
+    const { error: bookingGroupItemsError } = await supabase
+      .from('booking_group_items')
+      .insert(groupItemsPayload);
+
+    if (bookingGroupItemsError) {
+      console.error('Error creating booking group items:', bookingGroupItemsError);
+      return {
+        success: false,
+        error: 'Failed to save rental kit items',
+      };
+    }
+
+    const bookingRows = bookingData.items.map((item) => ({
+      customer_id: customer.id,
+      booking_group_id: bookingGroup.id,
+      camera_id: item.camera_id,
+      start_date: bookingData.start_date,
+      end_date: bookingData.end_date,
+      total_days: bookingData.total_days,
+      daily_rate: item.daily_rate,
+      total_amount: item.total_amount,
+      deposit_amount: item.deposit_amount,
+      final_payment_amount: item.final_payment_amount,
+      status: 'pending',
+      booking_status: 'pending_approval',
+      pickup_method: bookingData.pickup_method,
+      pickup_address: bookingData.pickup_address || null,
+      delivery_fee: 0,
+      booking_source: bookingData.booking_source,
+      notes: bookingData.special_requests
+        ? `[Rental Kit ${groupReference}] ${bookingData.special_requests}`
+        : `[Rental Kit ${groupReference}]`,
+      deposit_paid: false,
+      final_payment_paid: false,
+    }));
+
+    const { data: createdBookings, error: bookingsError } = await supabase
+      .from('bookings')
+      .insert(bookingRows)
+      .select('*');
+
+    if (bookingsError || !createdBookings) {
+      console.error('Error creating grouped bookings:', bookingsError);
+      return {
+        success: false,
+        error: 'Failed to create grouped booking records',
+      };
+    }
+
+    return {
+      success: true,
+      bookings: createdBookings,
+      customer,
+      booking_group: bookingGroup,
+      booking_group_id: bookingGroup.id,
+      booking_group_reference: groupReference,
+      confirmation_number: groupReference,
+    };
+  } catch (error) {
+    console.error('Error submitting grouped website booking:', error);
+    return {
+      success: false,
+      error: 'An unexpected error occurred while processing your rental kit request',
     };
   }
 }
@@ -405,6 +585,52 @@ export function generateWhatsAppContactUrl(
   bookingData: WebsiteBookingData
 ): string {
   const message = generateWhatsAppMessage(booking, customer, bookingData);
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60177464121';
+
+  return `https://wa.me/${whatsappNumber.replace('+', '')}?text=${encodedMessage}`;
+}
+
+export function generateRentalKitWhatsAppMessage(
+  bookingGroupReference: string,
+  bookingData: WebsiteBookingGroupData
+): string {
+  const itemLines = bookingData.items
+    .map((item) => `• ${item.camera_name} - RM${item.total_amount}`)
+    .join('\n');
+
+  return `🎥 *CAPTURA Rental Kit Request*
+
+📋 *Reference:* ${bookingGroupReference}
+
+🧰 *Selected Gear:*
+${itemLines}
+
+📅 *Rental Window:*
+• Dates: ${bookingData.start_date} to ${bookingData.end_date}
+• Duration: ${bookingData.total_days} day${bookingData.total_days > 1 ? 's' : ''}
+
+👤 *Customer Details:*
+• Name: ${bookingData.customer_name}
+• Email: ${bookingData.customer_email}
+• Phone: ${bookingData.customer_phone}
+• Pickup Method: ${bookingData.pickup_method}
+
+💰 *Pricing:*
+• Rental Total: RM${bookingData.subtotal_amount ?? bookingData.total_amount ?? 0}
+• Deposit Hold: RM${bookingData.deposit_amount ?? 0}
+• Delivery Fee: ${bookingData.pickup_method === 'delivery' ? 'Paid directly to Lalamove' : 'N/A'}
+
+📝 *Special Requests:* ${bookingData.special_requests || 'None'}
+
+Hi Captura, I just submitted this Rental Kit request and would like to continue the confirmation on WhatsApp.`;
+}
+
+export function generateRentalKitWhatsAppUrl(
+  bookingGroupReference: string,
+  bookingData: WebsiteBookingGroupData
+): string {
+  const message = generateRentalKitWhatsAppMessage(bookingGroupReference, bookingData);
   const encodedMessage = encodeURIComponent(message);
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS_NUMBER || '+60177464121';
 
