@@ -10,9 +10,12 @@ import {
   Eye,
   Image as ImageIcon,
   Layers3,
+  Maximize2,
   Sparkles,
+  X,
 } from 'lucide-react';
 import { useAdminData } from '@/contexts/AdminDataContext';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import type { Booking, Camera } from '@/lib/supabase';
 
 type CreatorTheme = 'playful' | 'premium';
@@ -513,7 +516,13 @@ function CreatorPoster({
   );
 }
 
-function PosterPreview({ children }: { children: React.ReactNode }) {
+function PosterPreview({
+  children,
+  compact = false,
+}: {
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scale, setScale] = useState(1);
 
@@ -533,7 +542,10 @@ function PosterPreview({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden rounded-[32px] border border-[#2f2923] bg-[#0f0d0c] p-4">
+    <div
+      ref={containerRef}
+      className={`w-full overflow-hidden border border-[#2f2923] bg-[#0f0d0c] ${compact ? 'rounded-[24px] p-2' : 'rounded-[32px] p-4'}`}
+    >
       <div style={{ width: POSTER_WIDTH * scale, height: POSTER_HEIGHT * scale }}>
         <div
           style={{
@@ -552,11 +564,26 @@ function PosterPreview({ children }: { children: React.ReactNode }) {
 
 export default function CreatorCalendarStudio() {
   const { bookings, cameras, isLoading, error } = useAdminData();
+  const isCompactLayout = useIsMobile(1024);
+  const isPhone = useIsMobile(640);
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [theme, setTheme] = useState<CreatorTheme>('playful');
   const [bookedOnly, setBookedOnly] = useState(true);
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
   const [notice, setNotice] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
+  const [sectionOpen, setSectionOpen] = useState({
+    controls: true,
+    export: false,
+    ideas: false,
+  });
+
+  const toggleSection = (section: keyof typeof sectionOpen) => {
+    setSectionOpen((current) => ({
+      ...current,
+      [section]: !current[section],
+    }));
+  };
 
   const creatorBookings = useMemo<CreatorBooking[]>(() => {
     const { start, end } = getMonthBounds(currentDate);
@@ -716,7 +743,7 @@ export default function CreatorCalendarStudio() {
   return (
     <div className="space-y-6">
       <div
-        className="rounded-[32px] border border-[#2d2823] p-8 shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+        className={`overflow-hidden border border-[#2d2823] shadow-[0_24px_60px_rgba(0,0,0,0.28)] ${isCompactLayout ? 'rounded-[24px] p-5' : 'rounded-[32px] p-8'}`}
         style={{ background: THEME_STYLES[theme].appBg }}
       >
         <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
@@ -725,183 +752,386 @@ export default function CreatorCalendarStudio() {
               <Sparkles className="h-3.5 w-3.5" />
               Creator
             </div>
-            <h1 className="text-3xl font-bold text-stone-50 sm:text-4xl">Creator Calendar Studio</h1>
+            <h1 className={`font-bold text-stone-50 ${isCompactLayout ? 'text-2xl' : 'text-3xl sm:text-4xl'}`}>Creator Calendar Studio</h1>
             <p className="mt-3 max-w-xl text-sm leading-6 text-stone-400 sm:text-base">
               Turn your current bookings into a stylish social poster for TikTok, Instagram Stories, and creator updates.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[560px]">
+          <div className={`grid gap-3 ${isPhone ? 'grid-cols-1' : isCompactLayout ? 'grid-cols-2' : 'sm:grid-cols-3'} xl:min-w-[560px]`}>
             {[
               { label: 'Poster Style', value: theme === 'playful' ? 'Playful' : 'Premium', icon: Layers3 },
               { label: 'Sticker Cap', value: '3 per day', icon: ImageIcon },
               { label: 'Mode', value: bookedOnly ? 'Booked only' : 'All visible', icon: CalendarDays },
-            ].map(({ label, value, icon: Icon }) => (
+            ].map(({ label, value, icon: Icon }, index) => (
               <div
                 key={label}
-                className="rounded-[24px] border border-[#2f2a25] bg-[#181513]/90 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)]"
+                className={`rounded-[24px] border border-[#2f2a25] bg-[#181513]/90 p-5 shadow-[0_18px_45px_rgba(0,0,0,0.18)] ${isCompactLayout && !isPhone && index === 2 ? 'col-span-2' : ''}`}
               >
                 <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#241b15]">
                   <Icon className="h-5 w-5 text-orange-300" />
                 </div>
                 <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">{label}</div>
-                <div className="mt-2 text-3xl font-bold tracking-tight text-stone-100">{value}</div>
+                <div className={`mt-2 font-bold tracking-tight text-stone-100 ${isCompactLayout ? 'text-xl' : 'text-3xl'}`}>{value}</div>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
-        <div className="space-y-6">
-          <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
-            <h2 className="text-xl font-bold text-stone-100">Creator Controls</h2>
-            <p className="mt-2 text-sm text-stone-400">Set the month, the vibe, and what stays visible on the poster.</p>
-
-            <div className="mt-5 space-y-5">
-              <div className="flex items-center justify-between rounded-2xl border border-[#312b25] bg-[#191715] p-3">
+      <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)] xl:gap-6">
+        <div className={`min-w-0 space-y-4 xl:space-y-6 ${isCompactLayout ? 'order-2' : ''}`}>
+          <div className={`overflow-hidden border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)] ${isCompactLayout ? 'rounded-[24px] p-4' : 'rounded-[28px] p-6'}`}>
+            {isCompactLayout ? (
+              <>
                 <button
-                  onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
+                  onClick={() => toggleSection('controls')}
+                  className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#312b25] bg-[#191715] px-4 py-4 text-left"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-100">Creator Controls</h2>
+                    <p className="mt-1 text-sm text-stone-400">Month, theme, and poster visibility.</p>
+                  </div>
+                  <ChevronRight className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${sectionOpen.controls ? 'rotate-90' : ''}`} />
                 </button>
-                <div className="text-center">
-                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Poster Month</div>
-                  <div className="mt-1 text-xl font-bold text-stone-100">{getFormattedMonthYear(currentDate)}</div>
-                </div>
-                <button
-                  onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div>
-                <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Theme</div>
-                <div className="grid grid-cols-2 gap-3">
-                  {(['playful', 'premium'] as CreatorTheme[]).map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => setTheme(option)}
-                      className={`rounded-2xl border px-4 py-4 text-left transition-all ${
-                        theme === option
-                          ? 'border-[#c96b2c] bg-[#281b14] text-stone-100 shadow-[0_18px_34px_rgba(201,107,44,0.18)]'
-                          : 'border-[#312b25] bg-[#191715] text-stone-400 hover:bg-[#201c19]'
-                      }`}
-                    >
-                      <div className="font-semibold capitalize">{option}</div>
-                      <div className="mt-1 text-xs text-inherit opacity-80">
-                        {option === 'playful' ? 'Sticker-board, warm, expressive' : 'Cleaner, calmer, premium'}
+                {sectionOpen.controls && (
+                  <div className="mt-4 space-y-5">
+                    <div className="flex items-center justify-between rounded-2xl border border-[#312b25] bg-[#191715] p-3">
+                      <button
+                        onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </button>
+                      <div className="text-center">
+                        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Poster Month</div>
+                        <div className="mt-1 text-xl font-bold text-stone-100">{getFormattedMonthYear(currentDate)}</div>
                       </div>
+                      <button
+                        onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))}
+                        className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </button>
+                    </div>
+
+                    <div>
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Theme</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {(['playful', 'premium'] as CreatorTheme[]).map((option) => (
+                          <button
+                            key={option}
+                            onClick={() => setTheme(option)}
+                            className={`rounded-2xl border px-4 py-4 text-left transition-all ${
+                              theme === option
+                                ? 'border-[#c96b2c] bg-[#281b14] text-stone-100 shadow-[0_18px_34px_rgba(201,107,44,0.18)]'
+                                : 'border-[#312b25] bg-[#191715] text-stone-400 hover:bg-[#201c19]'
+                            }`}
+                          >
+                            <div className="font-semibold capitalize">{option}</div>
+                            <div className="mt-1 text-xs text-inherit opacity-80">
+                              {option === 'playful' ? 'Sticker-board, warm, expressive' : 'Cleaner, calmer, premium'}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {[
+                        {
+                          title: 'Booked-only mode',
+                          description: 'Hide tentative jobs and keep the poster focused on confirmed activity.',
+                          checked: bookedOnly,
+                          onChange: () => setBookedOnly((value) => !value),
+                          icon: Eye,
+                        },
+                      ].map(({ title, description, checked, onChange, icon: Icon }) => (
+                        <button
+                          key={title}
+                          onClick={onChange}
+                          className="flex w-full items-start gap-3 rounded-2xl border border-[#312b25] bg-[#191715] p-4 text-left transition-colors hover:bg-[#201c19]"
+                        >
+                          <div className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl ${checked ? 'bg-[#281b14] text-orange-300' : 'bg-[#221f1b] text-stone-500'}`}>
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-semibold text-stone-100">{title}</div>
+                            <div className="mt-1 text-sm leading-5 text-stone-400">{description}</div>
+                          </div>
+                          <div className={`mt-1 h-6 w-11 rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-[#332d27]'}`}>
+                            <div className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-stone-100">Creator Controls</h2>
+                <p className="mt-2 text-sm text-stone-400">Set the month, the vibe, and what stays visible on the poster.</p>
+
+                <div className="mt-5 space-y-5">
+                  <div className="flex items-center justify-between rounded-2xl border border-[#312b25] bg-[#191715] p-3">
+                    <button
+                      onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() - 1, 1))}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
                     </button>
-                  ))}
+                    <div className="text-center">
+                      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Poster Month</div>
+                      <div className="mt-1 text-xl font-bold text-stone-100">{getFormattedMonthYear(currentDate)}</div>
+                    </div>
+                    <button
+                      onClick={() => setCurrentDate((value) => new Date(value.getFullYear(), value.getMonth() + 1, 1))}
+                      className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#3a332c] bg-[#1d1916] text-stone-300 transition-colors hover:bg-[#25211d]"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </div>
+
+                  <div>
+                    <div className="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">Theme</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {(['playful', 'premium'] as CreatorTheme[]).map((option) => (
+                        <button
+                          key={option}
+                          onClick={() => setTheme(option)}
+                          className={`rounded-2xl border px-4 py-4 text-left transition-all ${
+                            theme === option
+                              ? 'border-[#c96b2c] bg-[#281b14] text-stone-100 shadow-[0_18px_34px_rgba(201,107,44,0.18)]'
+                              : 'border-[#312b25] bg-[#191715] text-stone-400 hover:bg-[#201c19]'
+                          }`}
+                        >
+                          <div className="font-semibold capitalize">{option}</div>
+                          <div className="mt-1 text-xs text-inherit opacity-80">
+                            {option === 'playful' ? 'Sticker-board, warm, expressive' : 'Cleaner, calmer, premium'}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {[
+                      {
+                        title: 'Booked-only mode',
+                        description: 'Hide tentative jobs and keep the poster focused on confirmed activity.',
+                        checked: bookedOnly,
+                        onChange: () => setBookedOnly((value) => !value),
+                        icon: Eye,
+                      },
+                    ].map(({ title, description, checked, onChange, icon: Icon }) => (
+                      <button
+                        key={title}
+                        onClick={onChange}
+                        className="flex w-full items-start gap-3 rounded-2xl border border-[#312b25] bg-[#191715] p-4 text-left transition-colors hover:bg-[#201c19]"
+                      >
+                        <div className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl ${checked ? 'bg-[#281b14] text-orange-300' : 'bg-[#221f1b] text-stone-500'}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-stone-100">{title}</div>
+                          <div className="mt-1 text-sm leading-5 text-stone-400">{description}</div>
+                        </div>
+                        <div className={`mt-1 h-6 w-11 rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-[#332d27]'}`}>
+                          <div className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-              <div className="space-y-3">
-                {[
-                  {
-                    title: 'Booked-only mode',
-                    description: 'Hide tentative jobs and keep the poster focused on confirmed activity.',
-                    checked: bookedOnly,
-                    onChange: () => setBookedOnly((value) => !value),
-                    icon: Eye,
-                  },
-                ].map(({ title, description, checked, onChange, icon: Icon }) => (
-                  <button
-                    key={title}
-                    onClick={onChange}
-                    className="flex w-full items-start gap-3 rounded-2xl border border-[#312b25] bg-[#191715] p-4 text-left transition-colors hover:bg-[#201c19]"
-                  >
-                    <div className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-xl ${checked ? 'bg-[#281b14] text-orange-300' : 'bg-[#221f1b] text-stone-500'}`}>
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-semibold text-stone-100">{title}</div>
-                      <div className="mt-1 text-sm leading-5 text-stone-400">{description}</div>
-                    </div>
-                    <div className={`mt-1 h-6 w-11 rounded-full transition-colors ${checked ? 'bg-orange-500' : 'bg-[#332d27]'}`}>
-                      <div className={`mt-0.5 h-5 w-5 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
-            <h2 className="text-xl font-bold text-stone-100">Export</h2>
-            <p className="mt-2 text-sm leading-6 text-stone-400">
-              Use the creator poster as a TikTok story, announcement slide, or quick booking-update asset.
-            </p>
-
-            <div className="mt-5 grid gap-3">
-              <button
-                onClick={() => exportPoster('png')}
-                disabled={!!exporting}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-[#f3efe8] px-5 py-4 font-semibold text-[#11100f] transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                <ImageIcon className="h-5 w-5" />
-                {exporting === 'png' ? 'Exporting PNG...' : 'Export PNG'}
-              </button>
-              <button
-                onClick={() => exportPoster('jpeg')}
-                disabled={!!exporting}
-                className="flex items-center justify-center gap-2 rounded-2xl border border-[#3a332c] bg-[#1d1916] px-5 py-4 font-semibold text-stone-200 transition-all hover:bg-[#24201c] disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                <Download className="h-5 w-5" />
-                {exporting === 'jpeg' ? 'Exporting JPEG...' : 'Export JPEG'}
-              </button>
-            </div>
-
-            {notice && (
-              <div
-                className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
-                  notice.tone === 'success'
-                    ? 'border-[#3a332c] bg-[#1b1815] text-stone-200'
-                    : 'border-[#4a2926] bg-[#1a1312] text-red-200'
-                }`}
-              >
-                {notice.message}
-              </div>
+              </>
             )}
           </div>
 
-          <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
-            <h2 className="text-xl font-bold text-stone-100">More Creator Ideas</h2>
-            <div className="mt-5 grid gap-3">
-              {ideaCards.map((idea) => (
-                <div key={idea.title} className="rounded-2xl border border-[#312b25] bg-[#191715] p-4">
-                  <div className="font-semibold text-stone-100">{idea.title}</div>
-                  <div className="mt-2 text-sm leading-6 text-stone-400">{idea.body}</div>
+          <div className={`overflow-hidden border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)] ${isCompactLayout ? 'rounded-[24px] p-4' : 'rounded-[28px] p-6'}`}>
+            {isCompactLayout ? (
+              <>
+                <button
+                  onClick={() => toggleSection('export')}
+                  className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#312b25] bg-[#191715] px-4 py-4 text-left"
+                >
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-100">Export</h2>
+                    <p className="mt-1 text-sm text-stone-400">PNG or JPEG for social posting.</p>
+                  </div>
+                  <ChevronRight className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${sectionOpen.export ? 'rotate-90' : ''}`} />
+                </button>
+                {sectionOpen.export && (
+                  <>
+                    <p className="mt-4 text-sm leading-6 text-stone-400">
+                      Use the creator poster as a TikTok story, announcement slide, or quick booking-update asset.
+                    </p>
+
+                    <div className="mt-5 grid gap-3">
+                      <button
+                        onClick={() => exportPoster('png')}
+                        disabled={!!exporting}
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f3efe8] px-5 py-4 font-semibold text-[#11100f] transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <ImageIcon className="h-5 w-5" />
+                        {exporting === 'png' ? 'Exporting PNG...' : 'Export PNG'}
+                      </button>
+                      <button
+                        onClick={() => exportPoster('jpeg')}
+                        disabled={!!exporting}
+                        className="flex items-center justify-center gap-2 rounded-2xl border border-[#3a332c] bg-[#1d1916] px-5 py-4 font-semibold text-stone-200 transition-all hover:bg-[#24201c] disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        <Download className="h-5 w-5" />
+                        {exporting === 'jpeg' ? 'Exporting JPEG...' : 'Export JPEG'}
+                      </button>
+                    </div>
+
+                    {notice && (
+                      <div
+                        className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+                          notice.tone === 'success'
+                            ? 'border-[#3a332c] bg-[#1b1815] text-stone-200'
+                            : 'border-[#4a2926] bg-[#1a1312] text-red-200'
+                        }`}
+                      >
+                        {notice.message}
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-stone-100">Export</h2>
+                <p className="mt-2 text-sm leading-6 text-stone-400">
+                  Use the creator poster as a TikTok story, announcement slide, or quick booking-update asset.
+                </p>
+
+                <div className="mt-5 grid gap-3">
+                  <button
+                    onClick={() => exportPoster('png')}
+                    disabled={!!exporting}
+                    className="flex items-center justify-center gap-2 rounded-2xl bg-[#f3efe8] px-5 py-4 font-semibold text-[#11100f] transition-all hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <ImageIcon className="h-5 w-5" />
+                    {exporting === 'png' ? 'Exporting PNG...' : 'Export PNG'}
+                  </button>
+                  <button
+                    onClick={() => exportPoster('jpeg')}
+                    disabled={!!exporting}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-[#3a332c] bg-[#1d1916] px-5 py-4 font-semibold text-stone-200 transition-all hover:bg-[#24201c] disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <Download className="h-5 w-5" />
+                    {exporting === 'jpeg' ? 'Exporting JPEG...' : 'Export JPEG'}
+                  </button>
                 </div>
-              ))}
-            </div>
+
+                {notice && (
+                  <div
+                    className={`mt-4 rounded-2xl border px-4 py-3 text-sm ${
+                      notice.tone === 'success'
+                        ? 'border-[#3a332c] bg-[#1b1815] text-stone-200'
+                        : 'border-[#4a2926] bg-[#1a1312] text-red-200'
+                    }`}
+                  >
+                    {notice.message}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className={`overflow-hidden border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)] ${isCompactLayout ? 'rounded-[24px] p-4' : 'rounded-[28px] p-6'}`}>
+            {isCompactLayout ? (
+              <>
+                <button
+                  onClick={() => toggleSection('ideas')}
+                  className="flex w-full items-center justify-between gap-4 rounded-2xl border border-[#312b25] bg-[#191715] px-4 py-4 text-left"
+                >
+                  <div>
+                    <h2 className="text-lg font-bold text-stone-100">More Creator Ideas</h2>
+                    <p className="mt-1 text-sm text-stone-400">Quick content prompts from this month.</p>
+                  </div>
+                  <ChevronRight className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${sectionOpen.ideas ? 'rotate-90' : ''}`} />
+                </button>
+                {sectionOpen.ideas && (
+                  <div className="mt-4 grid gap-3">
+                    {ideaCards.map((idea) => (
+                      <div key={idea.title} className="rounded-2xl border border-[#312b25] bg-[#191715] p-4">
+                        <div className="font-semibold text-stone-100">{idea.title}</div>
+                        <div className="mt-2 text-sm leading-6 text-stone-400">{idea.body}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-stone-100">More Creator Ideas</h2>
+                <div className="mt-5 grid gap-3">
+                  {ideaCards.map((idea) => (
+                    <div key={idea.title} className="rounded-2xl border border-[#312b25] bg-[#191715] p-4">
+                      <div className="font-semibold text-stone-100">{idea.title}</div>
+                      <div className="mt-2 text-sm leading-6 text-stone-400">{idea.body}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[28px] border border-[#2d2823] bg-[#161412] p-6 shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+        <div className={`min-w-0 space-y-4 xl:space-y-6 ${isCompactLayout ? 'order-1' : ''}`}>
+          <div className={`overflow-hidden border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)] ${isCompactLayout ? 'rounded-[24px] p-4' : 'rounded-[28px] p-6'}`}>
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-bold text-stone-100">Live Poster Preview</h2>
-                <p className="mt-1 text-sm text-stone-400">Vertical 1080 x 1920 layout with sticker cutouts and export-safe styling.</p>
+                <p className="mt-1 text-sm text-stone-400">{isCompactLayout ? 'Compact preview below. Open full poster for a better phone view.' : 'Vertical 1080 x 1920 layout with sticker cutouts and export-safe styling.'}</p>
               </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#332d27] bg-[#1d1916] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-stone-400">
-                <Sparkles className="h-3.5 w-3.5 text-orange-300" />
-                {theme === 'playful' ? 'Playful Creator' : 'Clean Premium'}
+              <div className="flex items-center gap-2">
+                {isCompactLayout && (
+                  <button
+                    onClick={() => setShowMobilePreview(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[#3a332c] bg-[#1d1916] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-stone-300"
+                  >
+                    <Maximize2 className="h-3.5 w-3.5 text-orange-300" />
+                    Full Preview
+                  </button>
+                )}
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#332d27] bg-[#1d1916] px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-stone-400">
+                  <Sparkles className="h-3.5 w-3.5 text-orange-300" />
+                  {theme === 'playful' ? 'Playful Creator' : 'Clean Premium'}
+                </div>
               </div>
             </div>
 
-            <PosterPreview>
-              <CreatorPoster
-                currentDate={currentDate}
-                theme={theme}
-                days={days}
-              />
-            </PosterPreview>
+            {isCompactLayout ? (
+              <div className="space-y-4">
+                <div className={`mx-auto ${isPhone ? 'max-w-[220px]' : 'max-w-[280px]'}`}>
+                  <PosterPreview compact>
+                    <CreatorPoster
+                      currentDate={currentDate}
+                      theme={theme}
+                      days={days}
+                    />
+                  </PosterPreview>
+                </div>
+                <button
+                  onClick={() => setShowMobilePreview(true)}
+                  className="w-full rounded-2xl border border-[#3a332c] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-200 transition-colors hover:bg-[#24201c]"
+                >
+                  Open full poster preview
+                </button>
+              </div>
+            ) : (
+              <PosterPreview>
+                <CreatorPoster
+                  currentDate={currentDate}
+                  theme={theme}
+                  days={days}
+                />
+              </PosterPreview>
+            )}
           </div>
         </div>
       </div>
@@ -924,6 +1154,35 @@ export default function CreatorCalendarStudio() {
           />
         </div>
       </div>
+
+      {isCompactLayout && showMobilePreview && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm">
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-[#2d2823] bg-[#141210] px-4 py-4">
+              <div>
+                <h2 className="text-lg font-bold text-stone-100">Poster Preview</h2>
+                <p className="text-xs text-stone-400">Full mobile view of the creator poster</p>
+              </div>
+              <button
+                onClick={() => setShowMobilePreview(false)}
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#332d27] bg-[#1d1916] text-stone-300"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-[#0d0c0b] p-3">
+              <PosterPreview compact>
+                <CreatorPoster
+                  currentDate={currentDate}
+                  theme={theme}
+                  days={days}
+                />
+              </PosterPreview>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
