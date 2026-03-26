@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, useScroll, useTransform, Variants } from 'framer-motion';
 import PickupDeliverySection from '@/components/PickupDeliverySection';
 import { getGalleryImagesLightweight } from '@/lib/api/gallery';
+import type { PublicReview } from '@/lib/reviews/types';
 
 // Define a client-side Camera type that matches what we receive from props
 interface ClientCamera {
@@ -39,6 +40,7 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
     const router = useRouter();
     const containerRef = useRef<HTMLDivElement>(null);
     const [galleryImages, setGalleryImages] = useState<LightweightGalleryImage[]>(initialGalleryImages);
+    const [reviews, setReviews] = useState<PublicReview[]>([]);
 
     // Fetch gallery images on client side if not provided or empty
     useEffect(() => {
@@ -54,6 +56,20 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
             fetchImages();
         }
     }, [galleryImages.length]);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await fetch('/api/reviews/public', { cache: 'no-store' });
+                const result = await response.json();
+                setReviews((result.reviews || []) as PublicReview[]);
+            } catch (error) {
+                console.error('Failed to fetch reviews:', error);
+            }
+        };
+
+        fetchReviews();
+    }, []);
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -278,6 +294,71 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
                         <h3 className="text-xl font-bold mb-2">Top Rated Service</h3>
                         <p className="text-zinc-500 text-sm">Trusted by 150+ creators. We go the extra mile to ensure your shoot is a success.</p>
                     </div>
+                </div>
+
+                <div className="mt-4 rounded-3xl border border-white/5 bg-zinc-900/50 p-6 backdrop-blur-sm">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p className="text-[11px] font-black uppercase tracking-[0.32em] text-yellow-400/80">Verified Reviews</p>
+                            <h3 className="mt-2 text-2xl font-bold text-white">What renters say after booking with us</h3>
+                        </div>
+                        <div className="flex flex-col items-start gap-2 sm:items-end">
+                            <button
+                                onClick={() => router.push('/rental/reviews')}
+                                className="text-left text-sm font-bold text-yellow-300 transition-colors hover:text-yellow-200 sm:text-right"
+                            >
+                                View More Reviews
+                            </button>
+                            <button
+                                onClick={() => router.push('/rental/cameras')}
+                                className="text-left text-sm font-bold text-white transition-colors hover:text-zinc-300 sm:text-right"
+                            >
+                                Book your setup
+                            </button>
+                        </div>
+                    </div>
+
+                    {reviews.length > 0 ? (
+                        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+                            {reviews.slice(0, 3).map((review) => (
+                                <div
+                                    key={review.id}
+                                    className="rounded-3xl border border-white/5 bg-black/20 p-5"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                            <h4 className="text-lg font-bold text-white">{review.name}</h4>
+                                            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                                                {review.cameraName || 'Verified rental review'}
+                                            </p>
+                                        </div>
+                                        {review.featured && (
+                                            <span className="rounded-full bg-yellow-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-yellow-300">
+                                                Featured
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 flex items-center gap-1 text-yellow-400">
+                                        {Array.from({ length: 5 }).map((_, index) => (
+                                            <span key={`${review.id}-${index}`} className={index < review.rating ? 'opacity-100' : 'opacity-25'}>
+                                                ★
+                                            </span>
+                                        ))}
+                                    </div>
+
+                                    <p className="mt-4 text-sm leading-7 text-zinc-300">
+                                        "{review.review.length > 160 ? `${review.review.slice(0, 160)}...` : review.review}"
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="mt-6 rounded-3xl border border-dashed border-white/10 bg-black/10 px-5 py-10 text-center">
+                            <p className="text-sm font-bold text-white">No approved rental reviews yet</p>
+                            <p className="mt-2 text-sm text-zinc-500">Approved booking reviews will appear here automatically.</p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Pickup Section Component */}

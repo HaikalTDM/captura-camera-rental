@@ -220,7 +220,7 @@ export interface ToastContainerProps {
 
 export function AnimatedToastContainer({ toasts, onClose }: ToastContainerProps) {
   return (
-    <div className="fixed top-4 right-4 z-[9999] pointer-events-none">
+    <div className="pointer-events-none fixed inset-x-4 top-4 z-[9999] sm:left-auto sm:right-4 sm:w-full sm:max-w-md">
       <AnimatePresence mode="popLayout">
         <div className="flex flex-col gap-2">
           {toasts.map((toast) => (

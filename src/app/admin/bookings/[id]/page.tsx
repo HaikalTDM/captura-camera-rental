@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import toast from 'react-hot-toast';
 import {
   AlertCircle,
   ArrowLeft,
@@ -29,6 +28,7 @@ import { getBookingById } from '@/lib/api/bookings';
 import type { Booking } from '@/lib/supabase';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import InvoiceBookingActions from '@/components/InvoiceBookingActions';
+import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 const shellCardClass =
   'rounded-[28px] border border-[#2c2722] bg-[#171411] shadow-[0_24px_55px_rgba(0,0,0,0.28)]';
@@ -47,9 +47,12 @@ export default function BookingDetailsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdatingPayment, setIsUpdatingPayment] = useState(false);
   const [showCompleteAllConfirm, setShowCompleteAllConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isUpdatingPickup, setIsUpdatingPickup] = useState(false);
   const [isUpdatingReturn, setIsUpdatingReturn] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSendingReview, setIsSendingReview] = useState(false);
+  const { toasts, success, error, loading, removeToast } = useAnimatedToast();
 
   const loadBookingData = useCallback(async () => {
     setIsLoading(true);
@@ -70,6 +73,49 @@ export default function BookingDetailsPage() {
     loadBookingData();
   }, [loadBookingData]);
 
+  const handleAskForReview = async () => {
+    if (!booking?.customer?.phone) {
+      error('Missing phone number', 'Customer phone number is required before sending a review link.');
+      return;
+    }
+
+    try {
+      setIsSendingReview(true);
+
+      const response = await fetch('/api/reviews/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customerId: booking.customer_id,
+          bookingId: booking.id,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create review request');
+      }
+
+      const popup = window.open(result.whatsappUrl, '_blank', 'noopener,noreferrer');
+
+      if (!popup && result.reviewUrl && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(result.reviewUrl);
+        success('Review link copied', 'Paste it into WhatsApp manually if the popup was blocked.');
+        return;
+      }
+
+      success('Review request opened', 'WhatsApp opened with the booking-specific review link.');
+    } catch (requestError) {
+      console.error('Error creating review request:', requestError);
+      error('Failed to create review request', requestError instanceof Error ? requestError.message : 'Please try again.');
+    } finally {
+      setIsSendingReview(false);
+    }
+  };
+
   const handleCompleteAll = async () => {
     if (!booking || isUpdating) return;
 
@@ -77,7 +123,7 @@ export default function BookingDetailsPage() {
     setShowCompleteAllConfirm(false);
 
     try {
-      const toastId = toast.loading('Processing booking completion...');
+      const loadingToastId = loading('Processing booking completion...');
       const timestamp = new Date().toISOString();
       const promises: Promise<Response>[] = [];
 
@@ -138,11 +184,11 @@ export default function BookingDetailsPage() {
 
       await Promise.all(promises);
       await loadBookingData();
-      toast.dismiss(toastId);
-      toast.success('Booking fully completed');
-    } catch (error) {
-      console.error('Error completing all:', error);
-      toast.error('Error processing completion');
+      removeToast(loadingToastId);
+      success('Booking fully completed');
+    } catch (completeError) {
+      console.error('Error completing all:', completeError);
+      error('Error processing completion', completeError instanceof Error ? completeError.message : 'Please try again.');
     } finally {
       setIsUpdating(false);
     }
@@ -168,13 +214,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Deposit marked as ${paid ? 'paid' : 'unpaid'}`);
+        success(`Deposit marked as ${paid ? 'paid' : 'unpaid'}`);
       } else {
-        toast.error(`Failed to update deposit status: ${data.error}`);
+        error('Failed to update deposit status', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error updating deposit status:', error);
-      toast.error('Failed to update deposit status. Please try again.');
+    } catch (updateError) {
+      console.error('Error updating deposit status:', updateError);
+      error('Failed to update deposit status', 'Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -200,13 +246,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Final payment marked as ${paid ? 'paid' : 'unpaid'}`);
+        success(`Final payment marked as ${paid ? 'paid' : 'unpaid'}`);
       } else {
-        toast.error(`Failed to update final payment status: ${data.error}`);
+        error('Failed to update final payment status', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error updating final payment status:', error);
-      toast.error('Failed to update final payment status. Please try again.');
+    } catch (updateError) {
+      console.error('Error updating final payment status:', updateError);
+      error('Failed to update final payment status', 'Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -234,14 +280,14 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'}`);
+        success(data.message || `Deposit ${refunded ? 'refunded' : 'refund cancelled'}`);
         await loadBookingData();
       } else {
-        toast.error(`Failed to update deposit refund status: ${data.error}`);
+        error('Failed to update deposit refund status', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error updating deposit refund status:', error);
-      toast.error('Failed to update deposit refund status. Please try again.');
+    } catch (updateError) {
+      console.error('Error updating deposit refund status:', updateError);
+      error('Failed to update deposit refund status', 'Please try again.');
     } finally {
       setIsUpdatingPayment(false);
     }
@@ -268,13 +314,13 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'}`);
+        success(`Equipment marked as ${pickedUp ? 'picked up' : 'not picked up'}`);
       } else {
-        toast.error(`Failed to update pickup status: ${data.error}`);
+        error('Failed to update pickup status', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error updating pickup status:', error);
-      toast.error('Failed to update pickup status. Please try again.');
+    } catch (updateError) {
+      console.error('Error updating pickup status:', updateError);
+      error('Failed to update pickup status', 'Please try again.');
     } finally {
       setIsUpdatingPickup(false);
     }
@@ -301,24 +347,21 @@ export default function BookingDetailsPage() {
 
       if (data.success) {
         setBooking(data.booking);
-        toast.success(`Equipment marked as ${returned ? 'returned' : 'not returned'}`);
+        success(`Equipment marked as ${returned ? 'returned' : 'not returned'}`);
       } else {
-        toast.error(`Failed to update return status: ${data.error}`);
+        error('Failed to update return status', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error updating return status:', error);
-      toast.error('Failed to update return status. Please try again.');
+    } catch (updateError) {
+      console.error('Error updating return status:', updateError);
+      error('Failed to update return status', 'Please try again.');
     } finally {
       setIsUpdatingReturn(false);
     }
   };
 
   const handleDeleteBooking = async () => {
-    if (!confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
-      return;
-    }
-
     setIsDeleting(true);
+    setShowDeleteConfirm(false);
     try {
       const response = await fetch(`/api/bookings/${bookingId}`, {
         method: 'DELETE',
@@ -327,14 +370,14 @@ export default function BookingDetailsPage() {
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Booking deleted successfully');
+        success('Booking deleted successfully');
         router.push('/admin/bookings');
       } else {
-        toast.error(`Failed to delete booking: ${data.error}`);
+        error('Failed to delete booking', data.error || 'Please try again.');
       }
-    } catch (error) {
-      console.error('Error deleting booking:', error);
-      toast.error('Failed to delete booking. Please try again.');
+    } catch (deleteError) {
+      console.error('Error deleting booking:', deleteError);
+      error('Failed to delete booking', 'Please try again.');
     } finally {
       setIsDeleting(false);
     }
@@ -377,7 +420,7 @@ export default function BookingDetailsPage() {
 
   const handlePickupReminder = () => {
     if (!booking?.customer?.phone) {
-      toast.error('Customer phone number not available');
+      error('Missing phone number', 'Add a customer phone number before sending a pickup reminder.');
       return;
     }
 
@@ -424,7 +467,7 @@ export default function BookingDetailsPage() {
 
   const handleReturnReminder = () => {
     if (!booking?.customer?.phone) {
-      toast.error('Customer phone number not available');
+      error('Missing phone number', 'Add a customer phone number before sending a return reminder.');
       return;
     }
 
@@ -616,7 +659,7 @@ export default function BookingDetailsPage() {
                 Edit
               </Link>
               <button
-                onClick={handleDeleteBooking}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
                 className="inline-flex items-center gap-2 rounded-2xl border border-red-900/70 bg-red-950/50 px-4 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-900/40 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -1082,6 +1125,16 @@ export default function BookingDetailsPage() {
               )}
               {booking.customer?.phone && (
                 <button
+                  onClick={handleAskForReview}
+                  disabled={isSendingReview}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#6a5321] bg-[#2b210a] px-4 py-3 text-sm font-semibold text-amber-100 transition hover:bg-[#35280c] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Bell className="h-4 w-4" />
+                  {isSendingReview ? 'Preparing Review Link...' : 'Ask for Review'}
+                </button>
+              )}
+              {booking.customer?.phone && (
+                <button
                   onClick={handlePickupReminder}
                   className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#35553b] bg-[#102317] px-4 py-3 text-sm font-semibold text-emerald-200 transition hover:bg-[#14301d]"
                 >
@@ -1154,6 +1207,44 @@ export default function BookingDetailsPage() {
           </div>
         </div>
       )}
+
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowDeleteConfirm(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div
+            className={`${shellCardClass} relative w-full max-w-md p-6`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl border border-red-900/60 bg-red-950/40">
+                <Trash2 className="h-8 w-8 text-red-300" />
+              </div>
+              <h3 className="text-2xl font-semibold text-stone-100">Delete this booking?</h3>
+              <p className="mt-3 text-sm leading-7 text-stone-400">
+                This will permanently remove the booking record. This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="rounded-2xl border border-[#3d342d] bg-[#1d1916] px-4 py-3 text-sm font-semibold text-stone-100 transition hover:border-[#56473c] hover:bg-[#24201c]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteBooking}
+                disabled={isDeleting}
+                className="rounded-2xl bg-red-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AnimatedToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 }

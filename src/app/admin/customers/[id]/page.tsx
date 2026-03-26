@@ -81,7 +81,7 @@ export default function CustomerDetailsPage() {
     setIsEditingNotes(false);
   };
 
-  const getReliabilityColor = (reliability: Customer['reliability']) => {
+  const getReliabilityColor = (reliability?: Customer['reliability']) => {
     switch (reliability) {
       case 'excellent': return 'bg-green-100 text-green-800 border-green-200';
       case 'good': return 'bg-blue-100 text-blue-800 border-blue-200';
@@ -89,6 +89,10 @@ export default function CustomerDetailsPage() {
       case 'poor': return 'bg-red-100 text-red-800 border-red-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  const getReliabilityLabel = (reliability?: Customer['reliability']) => {
+    return reliability ? reliability.toUpperCase() : 'UNRATED';
   };
 
   const getStatusColor = (status: string) => {
@@ -103,9 +107,10 @@ export default function CustomerDetailsPage() {
     }
   };
 
-  const totalOverdue = overduePayments.reduce((sum, booking) => sum + booking.balanceDue, 0);
-  const averageRental = customer.totalRentals > 0 ? Math.round(customer.totalSpent / customer.totalRentals) : 0;
-
+  const totalOverdue = overduePayments.reduce((sum, booking) => sum + (booking.balanceDue || 0), 0);
+  const totalRentals = customer.totalRentals || 0;
+  const totalSpent = customer.totalSpent || 0;
+  const averageRental = totalRentals > 0 ? Math.round(totalSpent / totalRentals) : 0;
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -118,13 +123,13 @@ export default function CustomerDetailsPage() {
             ←
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{customer.name || customer.full_name || 'Customer'}</h1>
             <p className="text-gray-600">{customer.phone} • {customer.email}</p>
           </div>
         </div>
         <div className="flex gap-3">
           <span className={`px-4 py-2 rounded-lg text-sm font-medium border ${getReliabilityColor(customer.reliability)}`}>
-            {customer.reliability.toUpperCase()}
+            {getReliabilityLabel(customer.reliability)}
           </span>
           {overduePayments.length > 0 && (
             <span className="px-4 py-2 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-200">
@@ -145,7 +150,7 @@ export default function CustomerDetailsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="text-sm font-medium text-gray-500">Full Name</label>
-                <p className="text-lg font-semibold text-gray-900">{customer.name}</p>
+                <p className="text-lg font-semibold text-gray-900">{customer.name || customer.full_name || 'Customer'}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Phone Number</label>
@@ -378,11 +383,11 @@ export default function CustomerDetailsPage() {
             <div className="space-y-4">
               <div>
                 <label className="text-sm font-medium text-gray-500">Total Spent</label>
-                <p className="text-2xl font-bold text-green-600">RM{customer.totalSpent}</p>
+                <p className="text-2xl font-bold text-green-600">RM{totalSpent}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Total Rentals</label>
-                <p className="text-2xl font-bold text-blue-600">{customer.totalRentals}</p>
+                <p className="text-2xl font-bold text-blue-600">{totalRentals}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-500">Average per Rental</label>
@@ -405,7 +410,7 @@ export default function CustomerDetailsPage() {
             <div>
               <label className="text-sm font-medium text-gray-500 block mb-2">Customer Rating</label>
               <select
-                value={customer.reliability}
+                value={customer.reliability || 'fair'}
                 onChange={(e) => updateReliability(e.target.value as Customer['reliability'])}
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
               >

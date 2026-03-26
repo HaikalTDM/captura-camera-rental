@@ -246,6 +246,47 @@ export interface BookingGroupItem {
   camera?: Camera
 }
 
+export interface ReviewRequest {
+  id: string
+  customer_id: string
+  booking_id?: string | null
+  booking_group_id?: string | null
+  token_hash: string
+  token_last4?: string | null
+  status: 'pending' | 'opened' | 'submitted' | 'expired' | 'cancelled'
+  sent_via: 'whatsapp' | 'email' | 'manual'
+  expires_at: string
+  opened_at?: string | null
+  submitted_at?: string | null
+  created_at: string
+  updated_at: string
+  customer?: Customer
+  booking?: Booking
+  group?: BookingGroup
+}
+
+export interface CustomerReview {
+  id: string
+  review_request_id: string
+  customer_id: string
+  booking_id?: string | null
+  booking_group_id?: string | null
+  rating: number
+  review_text: string
+  display_name_masked: string
+  camera_name_snapshot?: string | null
+  status: 'pending' | 'approved' | 'rejected' | 'hidden'
+  featured: boolean
+  submitted_at: string
+  approved_at?: string | null
+  approved_by?: string | null
+  created_at: string
+  updated_at: string
+  customer?: Customer
+  booking?: Booking
+  request?: ReviewRequest
+}
+
 
 export interface GalleryImage {
   id: string
