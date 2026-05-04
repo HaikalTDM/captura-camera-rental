@@ -4,8 +4,6 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAdminData } from '@/contexts/AdminDataContext';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileCameras from '@/components/admin/MobileCameras';
 import {
   Camera as CameraIcon,
   CheckCircle,
@@ -40,7 +38,6 @@ function getStatusText(isAvailable: boolean, availableQuantity: number, totalQua
 
 export default function CamerasPage() {
   const { cameras, bookings, isLoading } = useAdminData();
-  const isMobile = useIsMobile(768);
 
   const getCameraRentalInfo = useMemo(() => {
     return (cameraId: string) => {
@@ -107,18 +104,6 @@ export default function CamerasPage() {
     return Array.from(cameraMetrics.values()).reduce((sum, metric) => sum + metric.totalRevenue, 0);
   }, [cameraMetrics]);
 
-  if (isMobile) {
-    return (
-      <MobileCameras
-        cameras={cameras}
-        bookings={bookings}
-        statusCounts={statusCounts}
-        cameraMetrics={cameraMetrics}
-        getCameraRentalInfo={getCameraRentalInfo}
-      />
-    );
-  }
-
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -157,7 +142,7 @@ export default function CamerasPage() {
                 asChild
                 className="h-11 gap-2 rounded-xl bg-[#c96b2c] text-black hover:bg-[#d97a39]"
               >
-                <Link href="/admin/mobile/cameras">
+                <Link href="/admin/cameras">
                   <Plus className="h-4 w-4" />
                   Open Camera Hub
                 </Link>

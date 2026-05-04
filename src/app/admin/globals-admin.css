@@ -127,24 +127,18 @@ select:-webkit-autofill:focus {
   background: transparent;
 }
 
-/* Responsive table wrapper */
-@media (max-width: 768px) {
-  /* Hide table on mobile, show card view */
-  .desktop-table {
-    display: none;
-  }
-  
-  .mobile-cards {
-    display: block;
-  }
+/* Responsive table wrapper: keep desktop tables available and scroll them on phones. */
+.desktop-table,
+.mobile-cards {
+  max-width: 100%;
+}
+
+.desktop-table {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 769px) {
-  /* Show table on desktop, hide card view */
-  .desktop-table {
-    display: block;
-  }
-  
   .mobile-cards {
     display: none;
   }
@@ -154,7 +148,7 @@ select:-webkit-autofill:focus {
 @media (max-width: 640px) {
   button, a {
     min-height: 44px;
-    min-width: 44px;
+    min-width: 0;
   }
 }
 

@@ -41,9 +41,8 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check if current route is photography admin or mobile admin
+  // Check if current route is photography admin
   const isPhotographyRoute = pathname?.startsWith('/admin/photography');
-  const isMobileRoute = pathname?.startsWith('/admin/mobile');
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
@@ -51,19 +50,19 @@ export default function AdminLayout({
     const authStatus = localStorage.getItem('adminAuth');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
-    } else if (pathname !== '/admin/login' && !isMobileRoute) {
+    } else if (pathname !== '/admin/login') {
       router.push('/admin/login');
     }
     setIsLoading(false);
-  }, [pathname, router, isMobileRoute]);
+  }, [pathname, router]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminAuth');
     router.push('/admin/login');
   };
 
-  // Don't show layout for login page or mobile routes
-  if (pathname === '/admin/login' || isMobileRoute) {
+  // Don't show layout for login page
+  if (pathname === '/admin/login') {
     return children;
   }
 
@@ -106,7 +105,7 @@ export default function AdminLayout({
     <AdminPWAWrapper>
       <ErrorBoundary>
         <AdminDataProvider>
-          <div className="h-screen bg-[#0d0c0b] flex overflow-hidden text-stone-100">
+          <div className="h-screen w-screen max-w-full overflow-hidden bg-[#0d0c0b] flex text-stone-100">
             {/* Mobile sidebar overlay */}
             <AnimatePresence>
               {isSidebarOpen && (
@@ -252,12 +251,12 @@ export default function AdminLayout({
             </motion.div>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col min-w-0 lg:pl-0 w-full max-w-full overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:pl-0">
               {/* Top bar */}
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="bg-[#161412] border border-[#2c2723] m-4 mb-0 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.24)] z-30 w-auto flex-shrink-0"
+                className="z-30 m-3 mb-0 min-w-0 flex-shrink-0 rounded-2xl border border-[#2c2723] bg-[#161412] shadow-[0_16px_40px_rgba(0,0,0,0.24)] sm:m-4 sm:mb-0"
               >
                 <div className="flex items-center justify-between h-14 sm:h-16 px-3 sm:px-4 md:px-6 max-w-full">
                   <div className="flex items-center gap-2 sm:gap-4">
@@ -293,12 +292,12 @@ export default function AdminLayout({
               </motion.div>
 
               {/* Page content */}
-              <main className="admin-scrollbar flex-1 w-full max-w-full overflow-y-auto overflow-x-hidden bg-[#0d0c0b] p-3 sm:p-4 md:p-6">
+              <main className="admin-scrollbar min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-[#0d0c0b] p-2 sm:p-4 md:p-6">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="max-w-full"
+                  className="min-w-0 max-w-full"
                 >
                   {children}
                 </motion.div>

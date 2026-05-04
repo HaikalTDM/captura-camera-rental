@@ -44,9 +44,8 @@ export default function AdminLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  // Check if current route is photography admin or mobile admin
+  // Check if current route is photography admin
   const isPhotographyRoute = pathname?.startsWith('/admin/photography');
-  const isMobileRoute = pathname?.startsWith('/admin/mobile');
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
@@ -54,11 +53,11 @@ export default function AdminLayout({
     const authStatus = localStorage.getItem('adminAuth');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
-    } else if (pathname !== '/admin/login' && !isMobileRoute) {
+    } else if (pathname !== '/admin/login') {
       router.push('/admin/login');
     }
     setIsLoading(false);
-  }, [pathname, router, isMobileRoute]);
+  }, [pathname, router]);
 
   // Auto-expand Mother section if on a Mother route
   useEffect(() => {
@@ -72,8 +71,8 @@ export default function AdminLayout({
     router.push('/admin/login');
   };
 
-  // Don't show layout for login page or mobile routes
-  if (pathname === '/admin/login' || isMobileRoute) {
+  // Don't show layout for login page
+  if (pathname === '/admin/login') {
     return children;
   }
 

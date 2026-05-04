@@ -8,8 +8,6 @@ import { useAdminData } from '@/contexts/AdminDataContext';
 import { getAllCustomers } from '@/lib/api/bookings';
 import type { Customer } from '@/lib/supabase';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileCustomers, { type CustomerWithMetrics } from '@/components/admin/MobileCustomers';
 import {
   ArrowUpDown,
   Calendar,
@@ -32,6 +30,12 @@ import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animat
 
 type CustomerSort = 'full_name' | 'totalSpent' | 'totalRentals' | 'created_at';
 
+type CustomerWithMetrics = Customer & {
+  totalRentals: number;
+  totalSpent: number;
+  lastRental: string | null;
+};
+
 function getReliabilityTone(totalRentals: number) {
   if (totalRentals >= 5) return 'border-[#30412f] bg-[#1f2b20] text-emerald-200';
   if (totalRentals >= 2) return 'border-[#31414f] bg-[#1c242c] text-sky-200';
@@ -47,7 +51,6 @@ function getReliabilityLabel(totalRentals: number) {
 }
 
 export default function CustomersPage() {
-  const isMobile = useIsMobile(768);
   const { bookings, isLoading: bookingsLoading } = useAdminData();
   const { data: customers = [], isLoading: customersLoading, mutate } = useSWR<Customer[]>(
     'admin-customers',
@@ -224,29 +227,6 @@ export default function CustomersPage() {
           <p className="mt-4 text-stone-500">Loading customer database...</p>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileCustomers
-        customers={customers}
-        filteredCustomers={filteredCustomers}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-        selectedCustomers={selectedCustomers}
-        handleSelectCustomer={handleSelectCustomer}
-        handleSelectAll={handleSelectAll}
-        handleBulkDelete={handleBulkDelete}
-        handleDeleteSingleCustomer={handleDeleteSingleCustomer}
-        isDeleting={isDeleting}
-        customerStats={customerStats}
-        getCustomerBookings={getCustomerBookings}
-      />
     );
   }
 

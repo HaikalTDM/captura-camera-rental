@@ -35,8 +35,6 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import type { Booking } from '@/lib/supabase';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileBookings from '@/components/admin/MobileBookings';
 
 type FilterState = {
   search: string;
@@ -135,7 +133,6 @@ function getToggleChipClasses(enabled: boolean, tone: 'orange' | 'green' | 'blue
 
 export default function BookingsPage() {
   const { bookings, isLoading, mutateBookings } = useAdminData();
-  const isMobile = useIsMobile(768);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
@@ -760,14 +757,6 @@ export default function BookingsPage() {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0 },
   };
-
-  if (isMobile) {
-    return (
-      <div className="p-4">
-        <MobileBookings bookings={bookings} onMutate={mutateBookings} />
-      </div>
-    );
-  }
 
   const attentionCount = stats.pending + filteredBookings.filter((booking) => !booking.deposit_paid).length;
 

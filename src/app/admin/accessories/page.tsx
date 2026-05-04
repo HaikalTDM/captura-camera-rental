@@ -16,8 +16,6 @@ import { getAllAccessories, createAccessory, updateAccessory, deleteAccessory } 
 import type { Accessory } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileAccessories from '@/components/admin/MobileAccessories';
 import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 const accessoryTypes = ['battery', 'memory_card', 'tripod', 'case', 'charger', 'filter', 'lens', 'other'];
@@ -35,7 +33,6 @@ function getAccessoryStatusTone(isAvailable: boolean, availableQuantity: number)
 }
 
 export default function AccessoriesPage() {
-  const isMobile = useIsMobile(768);
   const [accessories, setAccessories] = useState<Accessory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -196,32 +193,6 @@ export default function AccessoriesPage() {
       <div className="flex h-64 items-center justify-center">
         <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-[#c96b2c]"></div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileAccessories
-        accessories={accessories}
-        filteredAccessories={filteredAccessories}
-        accessoryTypes={accessoryTypes}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filterType={filterType}
-        setFilterType={setFilterType}
-        showAddForm={showAddForm}
-        setShowAddForm={setShowAddForm}
-        editingAccessory={editingAccessory}
-        formData={formData}
-        setFormData={setFormData}
-        handleSubmit={handleSubmit}
-        handleEdit={handleEdit}
-        handleDelete={handleDelete}
-        resetForm={resetForm}
-        formatAccessoryType={formatAccessoryType}
-        getAccessoryStatusTone={getAccessoryStatusTone}
-        accessoryStats={accessoryStats}
-      />
     );
   }
 

@@ -21,7 +21,7 @@ export default function AdminLogin() {
     // Simple authentication (replace with real auth later)
     if (credentials.username === 'admin' && credentials.password === 'captura2024') {
       localStorage.setItem('adminAuth', 'true');
-      router.push('/admin/mobile');
+      router.push('/admin');
     } else {
       setError('Invalid credentials. Please try again.');
     }

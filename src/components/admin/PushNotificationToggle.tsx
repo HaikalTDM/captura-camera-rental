@@ -56,7 +56,7 @@ export default function PushNotificationToggle() {
         return;
       }
 
-      // Ensure ONLY the mobile admin service worker is used
+      // Ensure ONLY the admin service worker is used
       // Unregister any existing non-admin workers first
       const existingRegs = await navigator.serviceWorker.getRegistrations();
       await Promise.all(
@@ -69,8 +69,8 @@ export default function PushNotificationToggle() {
         })
       );
 
-      // Register the NEW mobile admin service worker with the correct scope
-      const registration = await navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin/mobile/' });
+      // Register the admin service worker with the main admin scope
+      const registration = await navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin/' });
       if (registration.waiting) {
         registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }

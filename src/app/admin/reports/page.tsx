@@ -20,8 +20,6 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { excludeMotherBookings } from '@/lib/utils/revenue';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileReports from '@/components/admin/MobileReports';
 import { customToast } from '@/components/ui/toast-config';
 
 type DateRange = 'all' | 'week' | 'month' | 'quarter' | 'year';
@@ -70,7 +68,6 @@ function getPillClasses(tone: 'orange' | 'blue' | 'green' | 'red' | 'stone') {
 }
 
 export default function ReportsPage() {
-  const isMobile = useIsMobile(768);
   const [dateRange, setDateRange] = useState<DateRange>('month');
   const [reportType, setReportType] = useState<ReportType>('revenue');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -272,30 +269,6 @@ export default function ReportsPage() {
           <p className="mt-4 font-medium text-stone-500">Loading reports...</p>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileReports
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        reportType={reportType}
-        setReportType={setReportType}
-        reportScopeLabel={reportScopeLabel}
-        reportTypeLabel={reportTypeLabel}
-        scopeRevenue={scopeRevenue}
-        totalRevenue={totalRevenue}
-        totalBookings={totalBookings}
-        activeBookings={activeBookings}
-        completedBookingsCount={completedBookingsCount}
-        includedCameraCount={includedCameraCount}
-        activeCameraCount={activeCameraCount}
-        paymentAnalysis={paymentAnalysis}
-        monthlyTrend={monthlyTrend}
-        cameraPerformance={cameraPerformance}
-        topCustomers={topCustomers}
-      />
     );
   }
 

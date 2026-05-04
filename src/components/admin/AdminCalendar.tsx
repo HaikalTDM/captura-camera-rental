@@ -395,7 +395,7 @@ export default function AdminCalendar() {
                 {selectedDateBookings.map((booking, index) => (
                   <Link
                     key={booking.id}
-                    href={`/admin/mobile/bookings/${booking.id}`}
+                    href={`/admin/bookings/${booking.id}`}
                     className={`block ${isDarkMode ? 'bg-slate-800/50 hover:bg-slate-800' : 'bg-slate-50 hover:bg-slate-100'} rounded-xl p-3 transition-all duration-200 active:scale-[0.98] animate-fadeIn`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -434,7 +434,7 @@ export default function AdminCalendar() {
           {bookings.map((booking, index) => (
             <Link
               key={booking.id}
-              href={`/admin/mobile/bookings/${booking.id}`}
+              href={`/admin/bookings/${booking.id}`}
               className={`block ${isDarkMode ? 'bg-slate-900 border-slate-800 hover:bg-slate-800' : 'bg-white border-slate-200 hover:bg-slate-50'} rounded-2xl border shadow-sm transition-all duration-200 active:scale-[0.98] p-4 animate-fadeIn`}
               style={{ animationDelay: `${index * 30}ms` }}
             >

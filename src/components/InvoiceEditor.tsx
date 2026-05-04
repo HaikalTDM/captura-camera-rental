@@ -38,7 +38,7 @@ export default function InvoiceEditor({ bookingId, mobile = false }: InvoiceEdit
   const [hasAutoExported, setHasAutoExported] = useState(false);
 
   const exportOnLoad = searchParams.get('export') === '1';
-  const backHref = mobile ? `/admin/mobile/bookings/${bookingId}` : `/admin/bookings/${bookingId}`;
+  const backHref = `/admin/bookings/${bookingId}`;
 
   useEffect(() => {
     let active = true;
@@ -202,9 +202,7 @@ export default function InvoiceEditor({ bookingId, mobile = false }: InvoiceEdit
         ),
       });
       setStatusMessage('Invoice PDF exported.');
-      if (fromAutoExport && mobile) {
-        router.replace(`/admin/mobile/bookings/${bookingId}/invoice`);
-      } else if (fromAutoExport) {
+      if (fromAutoExport) {
         router.replace(`/admin/bookings/${bookingId}/invoice`);
       }
     } catch (error) {

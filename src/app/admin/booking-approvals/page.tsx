@@ -20,8 +20,6 @@ import {
 import { supabase } from '@/lib/supabase';
 import type { Booking } from '@/lib/supabase';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileApprovals from '@/components/admin/MobileApprovals';
 import { customToast } from '@/components/ui/toast-config';
 
 type CameraOption = {
@@ -54,7 +52,6 @@ export default function BookingApprovalsPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const isMobile = useIsMobile(768);
 
   useEffect(() => {
     loadPendingBookings();
@@ -234,21 +231,6 @@ export default function BookingApprovalsPage() {
           <p className="text-sm font-medium text-stone-400">Loading approvals...</p>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileApprovals
-        pendingBookings={pendingBookings}
-        cameras={cameras}
-        isLoading={isLoading}
-        processingBooking={processingBooking}
-        onRefresh={loadPendingBookings}
-        onApprove={quickApprove}
-        onReject={quickReject}
-        getCameraInfo={getCameraInfo}
-      />
     );
   }
 

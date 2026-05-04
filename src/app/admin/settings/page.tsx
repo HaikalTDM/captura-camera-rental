@@ -19,15 +19,12 @@ import {
   Settings as SettingsIcon,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileSettings from '@/components/admin/MobileSettings';
 import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 import { defaultAdminSettings, type AdminSettingsState } from '@/lib/business-settings';
 
 type SettingsTab = 'business' | 'booking' | 'notifications' | 'schedule';
 
 export default function SettingsPage() {
-  const isMobile = useIsMobile(768);
   const [settings, setSettings] = useState<AdminSettingsState>(defaultAdminSettings);
 
   const [activeTab, setActiveTab] = useState<SettingsTab>('business');
@@ -146,24 +143,6 @@ export default function SettingsPage() {
     { id: 'notifications', name: 'Notifications', icon: Bell },
     { id: 'schedule', name: 'Schedule', icon: Clock },
   ];
-
-  if (isMobile) {
-    return (
-      <MobileSettings
-        settings={settings}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        isSaving={isSaving}
-        isSendingTestReminder={isSendingTestReminder}
-        handleSave={handleSave}
-        handleSendTestReminder={handleSendTestReminder}
-        updateSetting={updateSetting}
-        updateWorkingHours={updateWorkingHours}
-        toggleWorkingDay={toggleWorkingDay}
-        isLoading={isLoading}
-      />
-    );
-  }
 
   return (
     <>

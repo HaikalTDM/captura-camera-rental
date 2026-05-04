@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -9,6 +9,7 @@ import {
   CalendarClock,
   Camera,
   CheckCircle2,
+  ChevronDown,
   Clock3,
   TrendingUp,
   Wallet,
@@ -27,8 +28,6 @@ import {
 } from 'recharts';
 import toast from 'react-hot-toast';
 import { useAdminData } from '@/contexts/AdminDataContext';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileDashboard from '@/components/admin/MobileDashboard';
 import ScrapeHubButton from '@/components/admin/ScrapeHubButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -140,7 +139,7 @@ function OperationsInboxPanel({
   onWindowChange: (value: ScheduleWindow) => void;
 }) {
   return (
-    <Card className="rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+    <Card className="min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -152,8 +151,8 @@ function OperationsInboxPanel({
       </CardHeader>
       <CardContent className="space-y-3">
         {items.length > 0 ? items.map((item) => (
-          <div key={`${item.kind}-${item.id}`} className="rounded-2xl border border-[#2a2521] bg-[#1c1916] p-4">
-            <div className="flex items-start justify-between gap-4">
+          <div key={`${item.kind}-${item.id}`} className="min-w-0 rounded-2xl border border-[#2a2521] bg-[#1c1916] p-4">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate font-semibold text-stone-100">{item.customerName}</p>
@@ -178,19 +177,19 @@ function OperationsInboxPanel({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto">
                 {item.whatsappUrl && (
                   <button
                     type="button"
                     onClick={() => window.open(item.whatsappUrl, '_blank', 'noopener,noreferrer')}
-                    className="rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#25d366] hover:text-emerald-300"
+                    className="flex-1 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#25d366] hover:text-emerald-300 sm:flex-none"
                   >
                     WhatsApp
                   </button>
                 )}
                 <Link
                   href={item.bookingHref}
-                  className="rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300"
+                  className="flex-1 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-center text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300 sm:flex-none"
                 >
                   Open
                 </Link>
@@ -225,7 +224,7 @@ function CommandCenterAction({
   const palette = toneClasses(tone);
 
   const content = (
-    <div className={`rounded-2xl border bg-gradient-to-br p-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:border-[#4c4036] ${palette.shell}`}>
+    <div className={`min-w-0 rounded-2xl border bg-gradient-to-br p-4 text-left shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-all hover:-translate-y-0.5 hover:border-[#4c4036] ${palette.shell}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">{title}</p>
@@ -260,19 +259,82 @@ function CommandShortcut({
   href: string;
 }) {
   return (
-    <Link href={href}>
+    <Link href={href} className="block min-w-0">
       <motion.div
         whileHover={{ y: -2 }}
         whileTap={{ scale: 0.99 }}
-        className="flex items-center justify-between rounded-2xl border border-[#2c2723] bg-[#191715] px-4 py-4 transition-colors hover:border-[#c96b2c]"
+        className="flex min-w-0 items-center justify-between gap-3 rounded-2xl border border-[#2c2723] bg-[#191715] px-4 py-4 transition-colors hover:border-[#c96b2c]"
       >
-        <div>
+        <div className="min-w-0">
           <p className="font-semibold text-stone-100">{title}</p>
           <p className="mt-1 text-sm text-stone-400">{detail}</p>
         </div>
-        <ArrowUpRight className="h-4 w-4 text-stone-500" />
+        <ArrowUpRight className="h-4 w-4 shrink-0 text-stone-500" />
       </motion.div>
     </Link>
+  );
+}
+
+function MobileCollapsibleSection({
+  title,
+  detail,
+  meta,
+  defaultOpen = false,
+  isCompact,
+  children,
+}: {
+  title: string;
+  detail?: string;
+  meta?: string | number;
+  defaultOpen?: boolean;
+  isCompact: boolean;
+  children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  if (!isCompact) {
+    return <>{children}</>;
+  }
+
+  return (
+    <section className="min-w-0 overflow-hidden rounded-[24px] border border-[#2c2723] bg-[#151311] shadow-[0_18px_45px_rgba(0,0,0,0.24)]">
+      <button
+        type="button"
+        onClick={() => setIsOpen((current) => !current)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left"
+        aria-expanded={isOpen}
+      >
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-stone-50">{title}</p>
+            {meta !== undefined && (
+              <span className="rounded-full border border-[#4a382a] bg-[#241b14] px-2 py-0.5 text-[11px] font-semibold text-orange-300">
+                {meta}
+              </span>
+            )}
+          </div>
+          {detail && <p className="mt-1 text-xs leading-5 text-stone-500">{detail}</p>}
+        </div>
+        <ChevronDown className={`h-5 w-5 shrink-0 text-stone-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            key="section-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            className="overflow-hidden border-t border-[#25211d]"
+          >
+            <div className="p-3">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
   );
 }
 
@@ -334,7 +396,7 @@ function OperationalWindowPanel({
   const totalItems = items.length;
 
   return (
-    <Card className="rounded-[28px] border border-[#2c2723] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+    <Card className="min-w-0 rounded-[28px] border border-[#2c2723] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
       <CardHeader className="border-b border-[#24211d] pb-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
@@ -348,9 +410,9 @@ function OperationalWindowPanel({
           </span>
         </div>
       </CardHeader>
-      <CardContent className="grid gap-4 p-5 xl:grid-cols-3">
+      <CardContent className="grid min-w-0 gap-4 p-4 sm:p-5 xl:grid-cols-3">
         {grouped.map((group) => (
-          <div key={group.date} className="rounded-[24px] border border-[#2a2521] bg-[#1b1815] p-4">
+          <div key={group.date} className="min-w-0 rounded-[24px] border border-[#2a2521] bg-[#1b1815] p-4">
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
                 <p className="font-semibold text-stone-100">{formatDayBucketTitle(group.date)}</p>
@@ -377,7 +439,7 @@ function OperationalWindowPanel({
                     }}
                     className="rounded-2xl border border-[#312b25] bg-[#201c18] p-4 transition-colors hover:border-[#c96b2c] hover:bg-[#24201c]"
                   >
-                    <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <button
@@ -407,7 +469,7 @@ function OperationalWindowPanel({
                       <Link
                         href={item.bookingHref}
                         onClick={(event) => event.stopPropagation()}
-                        className="shrink-0 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300"
+                        className="shrink-0 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-center text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300"
                       >
                         Booking
                       </Link>
@@ -437,7 +499,7 @@ function RevenueByCameraPanel({
   cameras: Array<{ name: string; revenue: number; bookings: number }>;
 }) {
   return (
-    <Card className="rounded-[28px] border border-[#2c2723] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+    <Card className="min-w-0 rounded-[28px] border border-[#2c2723] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
       <CardHeader className="border-b border-[#24211d] pb-4">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -1010,10 +1072,20 @@ async function postBookingUpdate(endpoint: string, body: Record<string, unknown>
 
 export default function AdminDashboard() {
   const { bookings, cameras, mutate } = useAdminData();
-  const isMobile = useIsMobile(768);
   const [selectedDrilldown, setSelectedDrilldown] = useState<DrilldownType | null>(null);
   const [scheduleWindow, setScheduleWindow] = useState<ScheduleWindow>('3days');
   const [nextMoveActionId, setNextMoveActionId] = useState<string | null>(null);
+  const [isCompactDashboard, setIsCompactDashboard] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const syncCompactState = () => setIsCompactDashboard(mediaQuery.matches);
+
+    syncCompactState();
+    mediaQuery.addEventListener('change', syncCompactState);
+
+    return () => mediaQuery.removeEventListener('change', syncCompactState);
+  }, []);
 
   const dashboardData = useMemo(() => {
     const today = formatLocalDateKey(new Date());
@@ -1297,14 +1369,6 @@ export default function AdminDashboard() {
     };
   }, [bookings, cameras]);
 
-  if (isMobile) {
-    return (
-      <div className="p-4">
-        <MobileDashboard bookings={bookings} cameras={cameras} onMutate={mutate} />
-      </div>
-    );
-  }
-
   const {
     todayPickups,
     activeRentals,
@@ -1450,15 +1514,15 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="space-y-6 rounded-[36px] border border-[#2a2622] bg-[#11100f] p-6 text-stone-100 shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
-      <div>
+    <div className="min-w-0 max-w-full space-y-4 overflow-hidden rounded-[24px] border border-[#2a2622] bg-[#11100f] p-3 text-stone-100 shadow-[0_30px_90px_rgba(0,0,0,0.35)] sm:space-y-6 sm:rounded-[36px] sm:p-6">
+      <div className="min-w-0">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-[28px] border border-[#2d2823] bg-[radial-gradient(circle_at_top_left,_rgba(201,107,44,0.16),_transparent_32%),linear-gradient(135deg,#191614_0%,#141210_55%,#1b1714_100%)] p-7 shadow-[0_24px_60px_rgba(0,0,0,0.28)]"
+          className="relative min-w-0 overflow-hidden rounded-[24px] border border-[#2d2823] bg-[radial-gradient(circle_at_top_left,_rgba(201,107,44,0.16),_transparent_32%),linear-gradient(135deg,#191614_0%,#141210_55%,#1b1714_100%)] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.28)] sm:rounded-[28px] sm:p-7"
         >
           <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-orange-500/10 blur-3xl" />
-          <div className="relative space-y-6">
+          <div className="relative space-y-4 sm:space-y-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#3a332c] bg-[#1a1714] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-stone-300">
@@ -1466,7 +1530,7 @@ export default function AdminDashboard() {
                   Command Center
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-stone-50">Dashboard Command Center</h1>
+                  <h1 className="text-2xl font-bold tracking-tight text-stone-50 sm:text-3xl">Dashboard Command Center</h1>
                   <p className="mt-2 text-sm text-stone-400">{todayLabel}</p>
                 </div>
               </div>
@@ -1476,8 +1540,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_360px]">
-              <div className="rounded-3xl border border-[#2f2a25] bg-[#1b1815] p-5 backdrop-blur">
+            <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.35fr)_360px]">
+              <div className="min-w-0 rounded-3xl border border-[#2f2a25] bg-[#1b1815] p-4 backdrop-blur sm:p-5">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Operations Now</p>
@@ -1488,7 +1552,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="mt-4 grid min-w-0 gap-3 md:grid-cols-2">
                   <CommandCenterAction
                     title="Today Pickups"
                     count={todayPickups.length}
@@ -1519,8 +1583,8 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <div className="mt-4 rounded-3xl border border-[#2f2a25] bg-[#171513] p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="mt-4 min-w-0 rounded-3xl border border-[#2f2a25] bg-[#171513] p-4">
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Next Move</p>
                       {nextOperationalItem ? (
@@ -1537,12 +1601,12 @@ export default function AdminDashboard() {
                       )}
                     </div>
                     {nextOperationalItem && (
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                         <button
                           type="button"
                           onClick={() => handleNextMoveAction(nextOperationalItem)}
                           disabled={nextMoveActionId === nextOperationalItem.id}
-                          className="rounded-2xl border border-[#5d3b20] bg-[#2f1d12] px-4 py-2 text-sm font-semibold text-orange-200 transition-colors hover:border-[#d97706] hover:text-orange-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="flex-1 rounded-2xl border border-[#5d3b20] bg-[#2f1d12] px-4 py-2 text-sm font-semibold text-orange-200 transition-colors hover:border-[#d97706] hover:text-orange-100 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
                         >
                           {nextMoveActionId === nextOperationalItem.id
                             ? 'Updating...'
@@ -1553,7 +1617,7 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           onClick={() => window.open(buildReminderWhatsAppUrl(nextOperationalItem), '_blank', 'noopener,noreferrer')}
-                          className="rounded-2xl border border-[#43372d] bg-[#26211c] px-4 py-2 text-sm font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300"
+                          className="flex-1 rounded-2xl border border-[#43372d] bg-[#26211c] px-4 py-2 text-sm font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300 sm:flex-none"
                         >
                           WhatsApp next customer
                         </button>
@@ -1563,7 +1627,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-[#2f2a25] bg-[#1b1815] p-5 backdrop-blur">
+              <div className="min-w-0 rounded-3xl border border-[#2f2a25] bg-[#1b1815] p-4 backdrop-blur sm:p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Quick Actions</p>
                 <div className="mt-4 space-y-3">
                   <CommandShortcut
@@ -1588,7 +1652,7 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
                   <div className="rounded-2xl border border-[#2a2521] bg-[#171513] p-4">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">3-Day Pickups</p>
                     <p className="mt-2 text-2xl font-bold text-stone-50">{threeDayPickupCount}</p>
@@ -1617,7 +1681,14 @@ export default function AdminDashboard() {
 
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+        <MobileCollapsibleSection
+          title="Operations Inbox"
+          detail="Pickups, returns, approvals"
+          meta={operationsInboxItems.length}
+          defaultOpen={operationsInboxItems.length > 0}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1629,19 +1700,26 @@ export default function AdminDashboard() {
             onWindowChange={setScheduleWindow}
           />
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Business Pulse"
+          detail="Stock and utilization"
+          meta={`${fleetUtilization}%`}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.16 }}
         >
-          <Card className="rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <Card className="min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg text-stone-50">Business Pulse</CardTitle>
               <CardDescription className="text-stone-400">Short health summary of today&apos;s operations and stock position.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-[#2a2521] bg-[#1c1916] p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-stone-500">Available Cameras</p>
                   <p className="mt-2 text-2xl font-bold text-stone-50">{availableCameras.length}</p>
@@ -1690,18 +1768,32 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
       </div>
 
+      <MobileCollapsibleSection
+        title="Next 3 Days"
+        detail="Upcoming pickup and return schedule"
+        meta={nextThreeDayOperations.length}
+        isCompact={isCompactDashboard}
+      >
       <OperationalWindowPanel items={nextThreeDayOperations} />
+      </MobileCollapsibleSection>
 
-      <div className="grid gap-6 xl:grid-cols-12">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-12">
+        <MobileCollapsibleSection
+          title="Revenue Trend"
+          detail="Last 7 days"
+          meta={`RM${monthlyRevenue.toFixed(0)}`}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="xl:col-span-4"
+          className="min-w-0 xl:col-span-4"
         >
-          <Card className="h-full rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <Card className="h-full min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg text-stone-50">Revenue Trend</CardTitle>
               <CardDescription className="text-stone-400">Last 7 days of collected revenue.</CardDescription>
@@ -1741,14 +1833,21 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Booking Momentum"
+          detail="Bookings created this week"
+          meta={chartData.reduce((sum, day) => sum + day.bookings, 0)}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.24 }}
-          className="xl:col-span-4"
+          className="min-w-0 xl:col-span-4"
         >
-          <Card className="h-full rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <Card className="h-full min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg text-stone-50">Booking Momentum</CardTitle>
               <CardDescription className="text-stone-400">How many bookings were created each day this week.</CardDescription>
@@ -1775,15 +1874,22 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Recent Bookings"
+          detail="Fresh activity and next actions"
+          meta={recentBookings.length}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.28 }}
-          className="xl:col-span-4 xl:row-span-2"
+          className="min-w-0 xl:col-span-4 xl:row-span-2"
         >
-          <Card className="h-full rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <Card className="h-full min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+            <CardHeader className="flex flex-col gap-3 space-y-0 pb-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <CardTitle className="text-lg text-stone-50">Recent Bookings</CardTitle>
                 <CardDescription className="text-stone-400">Fresh activity with the next action visible on each row.</CardDescription>
@@ -1800,9 +1906,9 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={booking.id}
-                      className="rounded-2xl border border-[#2a2521] bg-[#1c1916] px-4 py-4"
+                      className="min-w-0 rounded-2xl border border-[#2a2521] bg-[#1c1916] px-4 py-4"
                     >
-                      <div className="flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="truncate font-semibold text-stone-100">{booking.customer?.full_name || 'Unknown Customer'}</p>
@@ -1818,21 +1924,21 @@ export default function AdminDashboard() {
                             Next: {nextAction.label}
                           </p>
                         </div>
-                        <div className="flex flex-col items-end gap-2">
+                        <div className="flex flex-col gap-2 sm:items-end">
                           <span className="text-sm font-semibold text-stone-100">RM{booking.total_amount}</span>
-                          <div className="flex items-center gap-2">
+                          <div className="flex flex-wrap items-center gap-2">
                             {nextAction.whatsappUrl && (
                               <button
                                 type="button"
                                 onClick={() => window.open(nextAction.whatsappUrl || '', '_blank', 'noopener,noreferrer')}
-                                className="rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#25d366] hover:text-emerald-300"
+                                className="flex-1 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#25d366] hover:text-emerald-300 sm:flex-none"
                               >
                                 WhatsApp
                               </button>
                             )}
                             <Link
                               href={nextAction.href}
-                              className="rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300"
+                              className="flex-1 rounded-xl border border-[#43372d] bg-[#26211c] px-3 py-2 text-center text-xs font-semibold text-stone-100 transition-colors hover:border-[#c96b2c] hover:text-orange-300 sm:flex-none"
                             >
                               Open
                             </Link>
@@ -1850,12 +1956,19 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Camera Revenue"
+          detail="Monthly revenue by camera"
+          meta={`RM${monthlyRevenue.toFixed(0)}`}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.32 }}
-          className="xl:col-span-8"
+          className="min-w-0 xl:col-span-8"
         >
           <RevenueByCameraPanel
             monthLabel={currentMonthLabel}
@@ -1863,14 +1976,21 @@ export default function AdminDashboard() {
             cameras={revenueInsights.monthlyCameraRevenue}
           />
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Inventory Snapshot"
+          detail="Camera stock overview"
+          meta={`${availableCameras.length}/${cameras.length}`}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.36 }}
-          className="xl:col-span-6"
+          className="min-w-0 xl:col-span-6"
         >
-          <Card className="h-full rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <Card className="h-full min-w-0 rounded-[26px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
             <CardHeader className="pb-4">
               <CardTitle className="flex items-center gap-2 text-lg text-stone-50">
                 <Camera className="h-5 w-5 text-orange-400" />
@@ -1882,7 +2002,7 @@ export default function AdminDashboard() {
               {cameras.slice(0, 6).map((camera) => (
                 <div
                   key={camera.id}
-                  className="flex items-center justify-between rounded-2xl border border-[#2a2521] bg-[#1c1916] px-4 py-3"
+                  className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[#2a2521] bg-[#1c1916] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0">
                     <p className="truncate font-semibold text-stone-100">{camera.name}</p>
@@ -1892,7 +2012,7 @@ export default function AdminDashboard() {
                         : 'Currently rented'}
                     </p>
                   </div>
-                  <div className="ml-4 flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 sm:ml-4">
                     <span className="text-sm font-semibold text-stone-100">RM{camera.daily_rate}/day</span>
                     <Badge variant={camera.is_available ? 'success' : 'secondary'} className="text-xs">
                       {camera.is_available ? 'Available' : 'Rented'}
@@ -1914,14 +2034,22 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
 
+        <MobileCollapsibleSection
+          title="Overdue Payments"
+          detail="Late balances to chase"
+          meta={overduePayments.length}
+          defaultOpen={overduePayments.length > 0}
+          isCompact={isCompactDashboard}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="xl:col-span-6"
+          className="min-w-0 xl:col-span-6"
         >
-          <Card className="h-full rounded-[26px] border border-[#3a2421] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
+          <Card className="h-full min-w-0 rounded-[26px] border border-[#3a2421] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.28)]">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-lg text-stone-50">
                 <AlertCircle className="h-5 w-5 text-red-400" />
@@ -1934,7 +2062,7 @@ export default function AdminDashboard() {
                 <div className="space-y-3">
                   {overduePayments.slice(0, 4).map((booking) => (
                     <div key={booking.id} className="rounded-2xl border border-[#4a2926] bg-[#211614] p-4">
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="font-semibold text-stone-100">{booking.customer?.full_name || 'Unknown Customer'}</p>
                           <p className="mt-1 text-sm text-stone-400">{booking.customer?.phone || 'No phone number'}</p>
@@ -1959,6 +2087,7 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         </motion.div>
+        </MobileCollapsibleSection>
       </div>
 
       <DrilldownModal

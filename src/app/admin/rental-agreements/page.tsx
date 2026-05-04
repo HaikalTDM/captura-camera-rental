@@ -16,8 +16,6 @@ import { supabase } from '@/lib/supabase';
 import type { Booking, Camera, Customer } from '@/lib/supabase';
 import RentalAgreementTemplate from '@/components/RentalAgreementTemplate';
 import { exportToPDF, generatePDFFilename, printAgreement } from '@/utils/pdfExport';
-import { useIsMobile } from '@/hooks/useIsMobile';
-import MobileRentalAgreements from '@/components/admin/MobileRentalAgreements';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { customToast } from '@/components/ui/toast-config';
@@ -60,7 +58,6 @@ export default function RentalAgreementsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const agreementRef = useRef<HTMLDivElement>(null);
-  const isMobile = useIsMobile(768);
 
   useEffect(() => {
     fetchBookings();
@@ -188,32 +185,6 @@ export default function RentalAgreementsPage() {
           <p className="mt-4 text-stone-500">Loading rental agreements...</p>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileRentalAgreements
-        bookings={bookings}
-        selectedBooking={selectedBooking}
-        loading={loading}
-        exporting={exporting}
-        searchTerm={searchTerm}
-        statusFilter={statusFilter}
-        onSearchChange={setSearchTerm}
-        onStatusFilterChange={setStatusFilter}
-        onSelectBooking={(booking) => setSelectedBooking(booking as BookingWithDetails)}
-        onClearSelection={() => setSelectedBooking(null)}
-        onExportPDF={(booking) => handleExportPDF(booking as BookingWithDetails)}
-        onPrint={handlePrint}
-        agreementRef={agreementRef as React.RefObject<HTMLDivElement>}
-        AgreementTemplate={RentalAgreementTemplate as React.ComponentType<{
-          booking: BookingWithDetails;
-          customer: BookingWithDetails['customer'];
-          camera: BookingWithDetails['camera'];
-          confirmationNumber: string;
-        }>}
-      />
     );
   }
 

@@ -10,9 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { useBookings, useAdminData } from '@/contexts/AdminDataContext';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import TikTokCalendarExport from '@/components/TikTokCalendarExport';
-import MobileCalendar from '@/components/admin/MobileCalendar';
 
 interface CalendarDay {
   date: Date;
@@ -76,7 +74,6 @@ export default function CalendarPage() {
   const [isMounted, setIsMounted] = useState(false);
   const { bookings = [], isLoading = false, error = null } = useBookings() || {};
   const { cameras = [] } = useAdminData();
-  const isMobile = useIsMobile(768);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -236,17 +233,6 @@ export default function CalendarPage() {
           </button>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileCalendar
-        bookings={bookings}
-        cameras={cameras}
-        currentDate={currentDate}
-        onDateChange={setCurrentDate}
-      />
     );
   }
 

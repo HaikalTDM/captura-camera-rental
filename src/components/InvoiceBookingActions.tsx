@@ -44,9 +44,7 @@ export default function InvoiceBookingActions({
     };
   }, [bookingId]);
 
-  const editorHref = mobile
-    ? `/admin/mobile/bookings/${bookingId}/invoice`
-    : `/admin/bookings/${bookingId}/invoice`;
+  const editorHref = `/admin/bookings/${bookingId}/invoice`;
   const exportHref = `${editorHref}?export=1`;
 
   if (loading) {

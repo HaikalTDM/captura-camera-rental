@@ -13,7 +13,6 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   getGalleryImages,
   getGalleryStats,
@@ -25,11 +24,9 @@ import {
 } from '../../../lib/api/gallery';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import MobileGallery from '@/components/admin/MobileGallery';
 import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
 
 export default function GalleryPage() {
-  const isMobile = useIsMobile(768);
   const [images, setImages] = useState<GalleryImage[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -244,36 +241,6 @@ export default function GalleryPage() {
           <p className="mt-4 text-stone-500">Loading gallery management...</p>
         </div>
       </div>
-    );
-  }
-
-  if (isMobile) {
-    return (
-      <MobileGallery
-        images={images}
-        activeImages={activeImages}
-        inactiveImages={inactiveImages}
-        stats={stats}
-        showAddForm={showAddForm}
-        setShowAddForm={setShowAddForm}
-        selectedImage={selectedImage}
-        setSelectedImage={setSelectedImage}
-        previewUrl={previewUrl}
-        setPreviewUrl={setPreviewUrl}
-        isDragOver={isDragOver}
-        setIsDragOver={setIsDragOver}
-        isUploading={isUploading}
-        newImage={newImage}
-        setNewImage={setNewImage}
-        handleImageSelect={handleImageSelect}
-        handleDragOver={handleDragOver}
-        handleDragLeave={handleDragLeave}
-        handleDrop={handleDrop}
-        resetUploadState={resetUploadState}
-        addImage={addImage}
-        toggleImageStatus={toggleImageStatus}
-        deleteImage={deleteImage}
-      />
     );
   }
 
