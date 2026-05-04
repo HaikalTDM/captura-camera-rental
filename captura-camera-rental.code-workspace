@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../OneDrive/Documents/BILL-MemoryCore"
+		}
+	],
+	"settings": {
+		"chat.tools.terminal.autoApprove": {
+			"git add": true,
+			"git commit": true,
+			"git push": true
+		}
+	}
+}

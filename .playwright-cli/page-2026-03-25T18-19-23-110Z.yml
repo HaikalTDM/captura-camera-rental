@@ -1,0 +1,28 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - paragraph [ref=e49]: Loading cameras...
+    - navigation [ref=e50]:
+      - generic [ref=e51]:
+        - link "Home" [ref=e52] [cursor=pointer]:
+          - /url: /rental
+          - img [ref=e55]
+          - generic: Home
+        - link "Cameras" [ref=e57] [cursor=pointer]:
+          - /url: /rental/cameras
+          - img [ref=e60]
+          - generic [ref=e63]: Cameras
+        - link "Events" [ref=e66] [cursor=pointer]:
+          - /url: /rental/events
+          - img [ref=e69]
+          - generic: Events
+        - link "Gallery" [ref=e71] [cursor=pointer]:
+          - /url: /rental/gallery
+          - img [ref=e74]
+          - generic: Gallery
+        - link "More" [ref=e76] [cursor=pointer]:
+          - /url: /rental/more
+          - img [ref=e79]
+          - generic: More
+  - button "Open Next.js Dev Tools" [ref=e86] [cursor=pointer]:
+    - img [ref=e87]

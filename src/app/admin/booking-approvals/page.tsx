@@ -51,7 +51,6 @@ export default function BookingApprovalsPage() {
   const [cameras, setCameras] = useState<CameraOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingBooking, setProcessingBooking] = useState<string | null>(null);
-  const [showApproveModal, setShowApproveModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
@@ -201,8 +200,7 @@ export default function BookingApprovalsPage() {
   };
 
   const quickApprove = (bookingId: string) => {
-    setSelectedBookingId(bookingId);
-    setShowApproveModal(true);
+    void handleApproveBooking(bookingId, 'Quick approval from approvals board');
   };
 
   const quickReject = (bookingId: string) => {
@@ -211,27 +209,10 @@ export default function BookingApprovalsPage() {
     setShowRejectModal(true);
   };
 
-  const closeApproveModal = () => {
-    setShowApproveModal(false);
-    setSelectedBookingId(null);
-  };
-
   const closeRejectModal = () => {
     setShowRejectModal(false);
     setSelectedBookingId(null);
     setRejectReason('');
-  };
-
-  const handleConfirmApprove = async () => {
-    if (!selectedBookingId) {
-      closeApproveModal();
-      return;
-    }
-
-    const success = await handleApproveBooking(selectedBookingId, 'Quick approval from approvals board');
-    if (success) {
-      closeApproveModal();
-    }
   };
 
   const handleConfirmReject = async () => {
@@ -539,52 +520,6 @@ export default function BookingApprovalsPage() {
           )}
         </div>
       </div>
-
-      {showApproveModal && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm"
-          onClick={closeApproveModal}
-        >
-          <div
-            className="w-full max-w-sm overflow-hidden rounded-[28px] border border-[#2d2823] bg-[#161412] shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="p-6 pb-4">
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#3a332c] bg-[#221912]">
-                  <CheckCircle className="h-6 w-6 text-orange-300" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-bold text-stone-100">Approve Booking</h3>
-                  <p className="mt-1 text-sm text-stone-400">
-                    Confirm this booking and notify the customer that the request has been approved.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3 px-6 pb-6">
-              <button
-                onClick={closeApproveModal}
-                className="flex-1 rounded-xl border border-[#332d27] bg-[#1d1916] px-4 py-3 font-semibold text-stone-300 transition-colors hover:bg-[#24201c]"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmApprove}
-                disabled={processingBooking === selectedBookingId}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#f3efe8] px-4 py-3 font-semibold text-[#11100f] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {processingBooking === selectedBookingId ? (
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#11100f]/20 border-t-[#11100f]" />
-                ) : (
-                  'Approve'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {showRejectModal && (
         <div

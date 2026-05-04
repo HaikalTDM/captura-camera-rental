@@ -1,0 +1,32 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e14]:
+    - generic [ref=e15]:
+      - img [ref=e17]
+      - heading "CAPTURA" [level=1] [ref=e20]
+      - paragraph [ref=e21]: Admin Dashboard
+    - generic [ref=e22]:
+      - generic [ref=e23]:
+        - heading "Welcome Back" [level=2] [ref=e24]
+        - paragraph [ref=e25]: Sign in to access your dashboard
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Username
+          - generic [ref=e29]:
+            - generic:
+              - img
+            - textbox "Username" [ref=e30]:
+              - /placeholder: Enter your username
+        - generic [ref=e31]:
+          - generic [ref=e32]: Password
+          - generic [ref=e33]:
+            - generic:
+              - img
+            - textbox "Password" [ref=e34]:
+              - /placeholder: Enter your password
+            - button [ref=e35]:
+              - img [ref=e36]
+        - button "Sign In" [ref=e39]
+    - paragraph [ref=e41]: © 2024 CAPTURA
+  - button "Open Next.js Dev Tools" [ref=e9] [cursor=pointer]:
+    - img [ref=e10]
+  - alert [ref=e42]

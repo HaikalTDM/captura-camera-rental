@@ -1,0 +1,257 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e7]:
+          - button "Check Availability Select a camera to view availability" [ref=e90]:
+            - generic [ref=e91]:
+              - img [ref=e93]
+              - generic [ref=e95]:
+                - heading "Check Availability" [level=3] [ref=e96]
+                - paragraph [ref=e97]: Select a camera to view availability
+            - img [ref=e98]
+          - generic [ref=e100]:
+            - generic [ref=e101]:
+              - heading "1 Select Camera" [level=4] [ref=e102]:
+                - generic [ref=e103]: "1"
+                - text: Select Camera
+              - generic [ref=e104]:
+                - button "DJI Osmo Pocket 3 RM50/day" [ref=e105]:
+                  - generic [ref=e106]:
+                    - paragraph [ref=e109]: DJI Osmo Pocket 3
+                    - paragraph [ref=e110]: RM50/day
+                - button "Fujifilm X-T30 II RM100/day" [ref=e111]:
+                  - generic [ref=e112]:
+                    - paragraph [ref=e115]: Fujifilm X-T30 II
+                    - paragraph [ref=e116]: RM100/day
+                - button "DJI Osmo Pocket 3 (ii) RM50/day" [ref=e117]:
+                  - generic [ref=e118]:
+                    - paragraph [ref=e121]: DJI Osmo Pocket 3 (ii)
+                    - paragraph [ref=e122]: RM50/day
+                - button "DJI Action 5 Pro RM50/day" [ref=e123]:
+                  - generic [ref=e124]:
+                    - paragraph [ref=e127]: DJI Action 5 Pro
+                    - paragraph [ref=e128]: RM50/day
+                - button "Canon R50 RM60/day" [ref=e129]:
+                  - generic [ref=e130]:
+                    - paragraph [ref=e133]: Canon R50
+                    - paragraph [ref=e134]: RM60/day
+                - button "R50 (ii) RM50/day" [ref=e135]:
+                  - generic [ref=e136]:
+                    - paragraph [ref=e139]: R50 (ii)
+                    - paragraph [ref=e140]: RM50/day
+            - generic:
+              - button [disabled]:
+                - img
+              - generic:
+                - heading "March 2026" [level=4]
+              - button [disabled]:
+                - img
+            - button "Today" [disabled] [ref=e142]
+            - generic [ref=e143]:
+              - generic [ref=e144]: Sun
+              - generic [ref=e145]: Mon
+              - generic [ref=e146]: Tue
+              - generic [ref=e147]: Wed
+              - generic [ref=e148]: Thu
+              - generic [ref=e149]: Fri
+              - generic [ref=e150]: Sat
+            - generic [ref=e151]:
+              - generic [ref=e153]: "1"
+              - generic [ref=e155]: "2"
+              - generic [ref=e157]: "3"
+              - generic [ref=e159]: "4"
+              - generic [ref=e161]: "5"
+              - generic [ref=e163]: "6"
+              - generic [ref=e165]: "7"
+              - generic [ref=e167]: "8"
+              - generic [ref=e169]: "9"
+              - generic [ref=e171]: "10"
+              - generic [ref=e173]: "11"
+              - generic [ref=e175]: "12"
+              - generic [ref=e177]: "13"
+              - generic [ref=e179]: "14"
+              - generic [ref=e181]: "15"
+              - generic [ref=e183]: "16"
+              - generic [ref=e185]: "17"
+              - generic [ref=e187]: "18"
+              - generic [ref=e189]: "19"
+              - generic [ref=e191]: "20"
+              - generic [ref=e193]: "21"
+              - generic [ref=e195]: "22"
+              - generic [ref=e197]: "23"
+              - generic [ref=e199]: "24"
+              - generic [ref=e201]: "25"
+              - generic [ref=e203]: "26"
+              - generic [ref=e205]: "27"
+              - generic [ref=e207]: "28"
+              - generic [ref=e209]: "29"
+              - generic [ref=e211]: "30"
+              - generic [ref=e213]: "31"
+              - generic [ref=e215]: "1"
+              - generic [ref=e217]: "2"
+              - generic [ref=e219]: "3"
+              - generic [ref=e221]: "4"
+              - generic [ref=e223]: "5"
+              - generic [ref=e225]: "6"
+              - generic [ref=e227]: "7"
+              - generic [ref=e229]: "8"
+              - generic [ref=e231]: "9"
+              - generic [ref=e233]: "10"
+              - generic [ref=e235]: "11"
+        - generic [ref=e45]:
+          - generic [ref=e46]:
+            - generic [ref=e47]:
+              - heading "Available for Rent" [level=2] [ref=e236]
+              - paragraph [ref=e49]: Professional equipment · Ready to ship · RM100 deposit
+            - generic [ref=e237]:
+              - generic [ref=e238]:
+                - paragraph [ref=e239]: Rental Kit
+                - heading "Need more than one camera?" [level=3] [ref=e240]
+                - paragraph [ref=e241]: Add up to 3 cameras into one clean request. Same dates, one smoother checkout, less friction for the customer.
+              - button "Open Rental Kit (2)" [ref=e372]
+            - generic [ref=e243]:
+              - generic [ref=e245]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "24"
+                - img "DJI Osmo Pocket 3" [ref=e248]
+                - generic [ref=e250]:
+                  - generic [ref=e252]: Vlogging
+                  - heading "DJI Osmo Pocket 3" [level=3] [ref=e254]
+                  - generic [ref=e255]:
+                    - generic [ref=e256]: RM65
+                    - generic [ref=e257]: RM50
+                    - generic [ref=e258]: /day
+                  - generic [ref=e259]:
+                    - button "Book Now" [ref=e260]:
+                      - generic [ref=e261]: Book Now
+                    - button "Added to Kit" [disabled]
+              - generic [ref=e264]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "18"
+                - img "Fujifilm X-T30 II" [ref=e267]
+                - generic [ref=e269]:
+                  - generic [ref=e271]: Professional
+                  - heading "Fujifilm X-T30 II" [level=3] [ref=e273]
+                  - generic [ref=e274]:
+                    - generic [ref=e275]: RM130
+                    - generic [ref=e276]: From
+                    - generic [ref=e277]: RM100
+                    - generic [ref=e278]: /day
+                  - generic [ref=e279]:
+                    - button "Book Now" [ref=e280]:
+                      - generic [ref=e281]: Book Now
+                    - button "Added to Kit" [disabled]
+              - generic [ref=e284]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "24"
+                - img "DJI Osmo Pocket 3 (ii)" [ref=e287]
+                - generic [ref=e289]:
+                  - generic [ref=e291]: Vlogging
+                  - heading "DJI Osmo Pocket 3 (ii)" [level=3] [ref=e293]
+                  - generic [ref=e294]:
+                    - generic [ref=e295]: RM65
+                    - generic [ref=e296]: RM50
+                    - generic [ref=e297]: /day
+                  - generic [ref=e298]:
+                    - button "Book Now" [ref=e299]:
+                      - generic [ref=e300]: Book Now
+                    - button "Add to Rental Kit" [ref=e301]
+              - generic [ref=e303]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "18"
+                - img "DJI Action 5 Pro" [ref=e306]
+                - generic [ref=e308]:
+                  - generic [ref=e310]: Diving
+                  - heading "DJI Action 5 Pro" [level=3] [ref=e312]
+                  - generic [ref=e313]:
+                    - generic [ref=e314]: RM65
+                    - generic [ref=e315]: RM50
+                    - generic [ref=e316]: /day
+                  - generic [ref=e317]:
+                    - button "Book Now" [ref=e318]:
+                      - generic [ref=e319]: Book Now
+                    - button "Add to Rental Kit" [ref=e320]
+              - generic [ref=e322]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "18"
+                - img "Canon R50" [ref=e325]
+                - generic [ref=e327]:
+                  - generic [ref=e329]: Photography
+                  - heading "Canon R50" [level=3] [ref=e331]
+                  - generic [ref=e332]:
+                    - generic [ref=e333]: RM78
+                    - generic [ref=e334]: RM60
+                    - generic [ref=e335]: /day
+                  - generic [ref=e336]:
+                    - button "Book Now" [ref=e337]:
+                      - generic [ref=e338]: Book Now
+                    - button "Add to Rental Kit" [ref=e339]
+              - generic [ref=e341]:
+                - generic:
+                  - generic:
+                    - generic:
+                      - img
+                      - generic: "18"
+                - img "R50 (ii)" [ref=e344]
+                - generic [ref=e346]:
+                  - generic [ref=e348]: Professional
+                  - heading "R50 (ii)" [level=3] [ref=e350]
+                  - generic [ref=e351]:
+                    - generic [ref=e352]: RM65
+                    - generic [ref=e353]: RM50
+                    - generic [ref=e354]: /day
+                  - generic [ref=e355]:
+                    - button "Book Now" [ref=e356]:
+                      - generic [ref=e357]: Book Now
+                    - button "Add to Rental Kit" [ref=e358]
+          - generic [ref=e362]:
+            - generic [ref=e363]:
+              - paragraph [ref=e364]: Your Rental Kit
+              - paragraph [ref=e365]: DJI Osmo Pocket 3 · Fujifilm X-T30 II
+              - paragraph [ref=e366]: 2/3 cameras selected
+            - generic [ref=e367]:
+              - button "Clear" [ref=e368]
+              - button "Open Kit" [ref=e369]
+    - navigation [ref=e50]:
+      - generic [ref=e51]:
+        - link "Home" [ref=e52] [cursor=pointer]:
+          - /url: /rental
+          - img [ref=e55]
+          - generic: Home
+        - link "2 Cameras" [ref=e373] [cursor=pointer]:
+          - /url: /rental/cameras
+          - generic [ref=e59]:
+            - img [ref=e60]
+            - generic [ref=e371]: "2"
+          - generic [ref=e63]: Cameras
+        - link "Events" [ref=e66] [cursor=pointer]:
+          - /url: /rental/events
+          - img [ref=e69]
+          - generic: Events
+        - link "Gallery" [ref=e71] [cursor=pointer]:
+          - /url: /rental/gallery
+          - img [ref=e74]
+          - generic: Gallery
+        - link "More" [ref=e76] [cursor=pointer]:
+          - /url: /rental/more
+          - img [ref=e79]
+          - generic: More
+  - button "Open Next.js Dev Tools" [ref=e86] [cursor=pointer]:
+    - img [ref=e87]
+  - alert [ref=e359]

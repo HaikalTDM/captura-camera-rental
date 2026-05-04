@@ -137,6 +137,7 @@ export default function BookingsPage() {
   const { bookings, isLoading, mutateBookings } = useAdminData();
   const isMobile = useIsMobile(768);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [processingActionId, setProcessingActionId] = useState<string | null>(null);
   const [showFilterPanel, setShowFilterPanel] = useState(false);
   const [quickFilter, setQuickFilter] = useState<'all' | 'pending' | 'confirmed' | 'completed'>('all');
   const [includeMotherBookings, setIncludeMotherBookings] = useState(false);
@@ -369,6 +370,83 @@ export default function BookingsPage() {
     );
   };
 
+  const getPrimaryAction = (booking: Booking) => {
+    if (booking.booking_status === 'pending_approval') {
+      return { id: 'approve', label: 'Approve booking' };
+    }
+
+    if (booking.booking_status === 'cancelled' || booking.booking_status === 'rejected') {
+      return null;
+    }
+
+    if (!booking.final_payment_paid && !booking.equipment_picked_up) {
+      return {
+        id: 'customer_collected',
+        label: booking.final_payment_amount > 0 ? 'Customer collected' : 'Mark collected',
+      };
+    }
+
+    if (!booking.final_payment_paid && booking.final_payment_amount > 0) {
+      return { id: 'final_payment', label: 'Collect final payment' };
+    }
+
+    if (!booking.equipment_picked_up) {
+      return { id: 'pickup', label: 'Mark picked up' };
+    }
+
+    if (!booking.equipment_returned) {
+      return { id: 'return', label: 'Complete return' };
+    }
+
+    return null;
+  };
+
+  const postBookingUpdate = async (endpoint: string, body: Record<string, unknown>) => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to update booking');
+    }
+
+    return data;
+  };
+
+  const requestReviewAndOpen = async (booking: Booking) => {
+    if (!booking.customer?.phone) {
+      throw new Error('Customer phone number is required before sending a review link.');
+    }
+
+    const response = await fetch('/api/reviews/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerId: booking.customer_id,
+        bookingId: booking.id,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || 'Failed to create review request');
+    }
+
+    const popup = window.open(data.whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    if (!popup && data.reviewUrl && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(data.reviewUrl);
+      return 'copied';
+    }
+
+    return 'opened';
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this booking?')) return;
 
@@ -392,6 +470,134 @@ export default function BookingsPage() {
     }
   };
 
+  const handlePrimaryAction = async (e: React.MouseEvent, booking: Booking) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const action = getPrimaryAction(booking);
+    if (!action) return;
+
+    const toastId = toast.loading('Processing booking...');
+    setProcessingActionId(booking.id);
+
+    try {
+      const timestamp = new Date().toISOString();
+
+      switch (action.id) {
+        case 'approve':
+          await postBookingUpdate(`/api/bookings/${booking.id}/approve`, {
+            admin_notes: 'Approved from bookings board',
+          });
+          toast.success('Booking approved and deposit marked paid', { id: toastId });
+          break;
+        case 'customer_collected': {
+          const updates = [];
+
+          if (!booking.final_payment_paid && booking.final_payment_amount > 0) {
+            updates.push(
+              postBookingUpdate(`/api/bookings/${booking.id}/final-payment`, {
+                final_payment_paid: true,
+                final_payment_paid_date: timestamp,
+              })
+            );
+          }
+
+          if (!booking.equipment_picked_up) {
+            updates.push(
+              postBookingUpdate(`/api/bookings/${booking.id}/pickup-status`, {
+                equipment_picked_up: true,
+                equipment_pickup_notes: 'Marked from bookings board',
+                equipment_condition_pickup: null,
+              })
+            );
+          }
+
+          await Promise.all(updates);
+          toast.success('Customer collection completed', { id: toastId });
+          break;
+        }
+        case 'final_payment':
+          await postBookingUpdate(`/api/bookings/${booking.id}/final-payment`, {
+            final_payment_paid: true,
+            final_payment_paid_date: timestamp,
+          });
+          toast.success('Final payment collected', { id: toastId });
+          break;
+        case 'pickup':
+          await postBookingUpdate(`/api/bookings/${booking.id}/pickup-status`, {
+            equipment_picked_up: true,
+            equipment_pickup_notes: 'Marked from bookings board',
+            equipment_condition_pickup: null,
+          });
+          toast.success('Equipment marked picked up', { id: toastId });
+          break;
+        case 'return': {
+          const updates = [
+            postBookingUpdate(`/api/bookings/${booking.id}/return-status`, {
+              equipment_returned: true,
+              equipment_return_notes: 'Marked from bookings board',
+              equipment_condition_return: null,
+            }),
+          ];
+
+          if (!booking.equipment_picked_up) {
+            updates.push(
+              postBookingUpdate(`/api/bookings/${booking.id}/pickup-status`, {
+                equipment_picked_up: true,
+                equipment_pickup_notes: 'Marked from bookings board',
+                equipment_condition_pickup: null,
+              })
+            );
+          }
+
+          if (!booking.final_payment_paid && booking.final_payment_amount > 0) {
+            updates.push(
+              postBookingUpdate(`/api/bookings/${booking.id}/final-payment`, {
+                final_payment_paid: true,
+                final_payment_paid_date: timestamp,
+              })
+            );
+          }
+
+          if (!booking.deposit_paid) {
+            updates.push(
+              postBookingUpdate(`/api/bookings/${booking.id}/deposit`, {
+                deposit_paid: true,
+                deposit_paid_date: timestamp,
+              })
+            );
+          }
+
+          await Promise.all(updates);
+
+          try {
+            const reviewResult = await requestReviewAndOpen(booking);
+
+            if (reviewResult === 'copied') {
+              toast.success('Return completed. Review link copied', { id: toastId });
+            } else {
+              toast.success('Return completed and review request opened', { id: toastId });
+            }
+          } catch (reviewError) {
+            toast.success('Return completed', { id: toastId });
+            customToast.error(
+              'Review request not sent',
+              reviewError instanceof Error ? reviewError.message : 'Send it manually from booking details.'
+            );
+          }
+          break;
+        }
+      }
+
+      mutateBookings();
+    } catch (error) {
+      console.error(error);
+      toast.error(error instanceof Error ? error.message : 'Error processing booking', { id: toastId });
+    } finally {
+      setProcessingActionId(null);
+    }
+  };
+
   const handleToggleStatus = async (
     e: React.MouseEvent,
     booking: Booking,
@@ -404,6 +610,39 @@ export default function BookingsPage() {
     const toastId = toast.loading('Updating status...');
 
     try {
+      if (field === 'equipment_picked_up' && newValue === true) {
+        const timestamp = new Date().toISOString();
+        const updates = [
+          fetch(`/api/bookings/${booking.id}/pickup-status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              equipment_picked_up: true,
+              equipment_pickup_notes: null,
+              equipment_condition_pickup: null,
+            }),
+          }),
+        ];
+
+        if (!booking.final_payment_paid && booking.final_payment_amount > 0) {
+          updates.push(
+            fetch(`/api/bookings/${booking.id}/final-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                final_payment_paid: true,
+                final_payment_paid_date: timestamp,
+              }),
+            })
+          );
+        }
+
+        await Promise.all(updates);
+        toast.success('Pickup completed and final payment marked paid', { id: toastId });
+        mutateBookings();
+        return;
+      }
+
       if (field === 'equipment_returned' && newValue === true) {
         const timestamp = new Date().toISOString();
         const updates = [
@@ -1079,11 +1318,15 @@ export default function BookingsPage() {
                 </TableHeader>
                 <TableBody>
                   {filteredBookings.length > 0 ? (
-                    filteredBookings.map((booking) => (
-                      <TableRow
-                        key={booking.id}
-                        className="border-[#211d19] transition-colors hover:bg-[#171411]"
-                      >
+                    filteredBookings.map((booking) => {
+                      const primaryAction = getPrimaryAction(booking);
+                      const isProcessingAction = processingActionId === booking.id;
+
+                      return (
+                        <TableRow
+                          key={booking.id}
+                          className="border-[#211d19] transition-colors hover:bg-[#171411]"
+                        >
                         <TableCell className="align-top">
                           <div className="space-y-2">
                             <div className="font-mono text-sm text-stone-200">#{booking.id.slice(0, 8)}</div>
@@ -1128,7 +1371,19 @@ export default function BookingsPage() {
                         </TableCell>
                         <TableCell className="align-top">
                           <div className="space-y-3">
-                            {getStatusBadge(booking.booking_status || 'pending_approval')}
+                            <div className="flex flex-wrap items-center gap-2">
+                              {getStatusBadge(booking.booking_status || 'pending_approval')}
+                              {primaryAction && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handlePrimaryAction(e, booking)}
+                                  disabled={isProcessingAction}
+                                  className="rounded-full border border-[#5a4328] bg-[#332316] px-3 py-1 text-[11px] font-semibold text-orange-200 transition-colors hover:border-[#c96b2c] hover:bg-[#3c2918] disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {isProcessingAction ? 'Working...' : primaryAction.label}
+                                </button>
+                              )}
+                            </div>
                             <div className="flex flex-wrap gap-1.5">
                               <button
                                 type="button"
@@ -1194,8 +1449,9 @@ export default function BookingsPage() {
                             </Button>
                           </div>
                         </TableCell>
-                      </TableRow>
-                    ))
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow className="border-[#211d19] hover:bg-transparent">
                       <TableCell colSpan={7} className="py-16">

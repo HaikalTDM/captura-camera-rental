@@ -1,23 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
-
-interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  company?: string;
-  rating: number;
-  review: string;
-  image?: string;
-  eventType: 'wedding' | 'corporate' | 'graduation' | 'portrait' | 'event';
-  date: string;
-  featured: boolean;
-}
+import { useEffect, useRef, useState } from 'react';
+import type { PublicReview } from '@/lib/reviews/types';
 
 interface MobileTestimonialsGridProps {
-  testimonials: Testimonial[];
+  testimonials: PublicReview[];
   isLoading?: boolean;
 }
 
@@ -25,10 +12,8 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
   const [currentGridIndex, setCurrentGridIndex] = useState(0);
   const [mounted, setMounted] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const autoSlideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Mobile: 2x2 = 4 testimonials per grid
   const testimonialsPerGrid = 4;
   const totalGrids = Math.ceil(testimonials.length / testimonialsPerGrid);
 
@@ -36,22 +21,19 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
     setMounted(true);
   }, []);
 
-  // Auto-slide functionality with smooth transition
   useEffect(() => {
     if (totalGrids > 1 && !isTransitioning) {
       autoSlideRef.current = setTimeout(() => {
         setIsTransitioning(true);
-        
-        // Start fade out
+
         setTimeout(() => {
           setCurrentGridIndex((prev) => (prev + 1) % totalGrids);
-          
-          // End transition after fade in completes
+
           setTimeout(() => {
             setIsTransitioning(false);
-          }, 400); // Half of transition duration for fade in
-        }, 400); // Half of transition duration for fade out
-      }, 4000); // 4 seconds for testimonials (longer than gallery)
+          }, 400);
+        }, 400);
+      }, 4000);
     }
 
     return () => {
@@ -61,18 +43,16 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
     };
   }, [currentGridIndex, totalGrids, isTransitioning]);
 
-  // Get testimonials for current grid
-  const getCurrentGridTestimonials = () => {
-    const startIndex = currentGridIndex * testimonialsPerGrid;
-    const endIndex = startIndex + testimonialsPerGrid;
-    return testimonials.slice(startIndex, endIndex);
-  };
+  const currentGridTestimonials = testimonials.slice(
+    currentGridIndex * testimonialsPerGrid,
+    currentGridIndex * testimonialsPerGrid + testimonialsPerGrid,
+  );
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }).map((_, index) => (
       <svg
         key={index}
-        className={`w-3 h-3 ${index < rating ? 'text-[#d4af37]' : 'text-gray-300'}`}
+        className={`h-3 w-3 ${index < rating ? 'text-[#d4af37]' : 'text-gray-300'}`}
         fill="currentColor"
         viewBox="0 0 20 20"
       >
@@ -81,44 +61,22 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
     ));
   };
 
-  if (!mounted) {
-    return (
-      <div className="block sm:hidden">
-        <div className="grid grid-cols-2 gap-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={`mobile-skeleton-${index}`}
-              className="bg-white rounded-xl p-4 shadow-lg animate-pulse"
-            >
-              <div className="flex items-center mb-3">
-                <div className="w-8 h-8 bg-gray-200 rounded-full mr-2"></div>
-                <div>
-                  <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
-                  <div className="h-2 bg-gray-200 rounded w-12"></div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="h-2 bg-gray-200 rounded w-full"></div>
-                <div className="h-2 bg-gray-200 rounded w-full"></div>
-                <div className="h-2 bg-gray-200 rounded w-3/4"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="block sm:hidden">
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={`mobile-loading-${index}`}
-              className="bg-white rounded-xl p-4 shadow-lg animate-pulse flex items-center justify-center min-h-[200px]"
+              className="min-h-[200px] rounded-xl border border-[#d4af37]/10 bg-white p-4 shadow-lg animate-pulse"
             >
-              <div className="w-6 h-6 border-2 border-[#d4af37] border-t-transparent rounded-full animate-spin"></div>
+              <div className="mb-3 h-3 w-20 rounded bg-gray-200" />
+              <div className="mb-3 h-2 w-24 rounded bg-gray-200" />
+              <div className="space-y-2">
+                <div className="h-2 rounded bg-gray-200" />
+                <div className="h-2 rounded bg-gray-200" />
+                <div className="h-2 w-3/4 rounded bg-gray-200" />
+              </div>
             </div>
           ))}
         </div>
@@ -126,29 +84,20 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
     );
   }
 
-  const currentGridTestimonials = getCurrentGridTestimonials();
-
   return (
     <div className="block sm:hidden">
       <div className="relative">
-        <div 
-          ref={containerRef}
-          className={`grid grid-cols-2 gap-4 ${
-            isTransitioning 
-              ? 'gallery-fade-out' 
-              : 'gallery-fade-in'
-          }`}
-        >
+        <div className={`grid grid-cols-2 gap-4 ${isTransitioning ? 'gallery-fade-out' : 'gallery-fade-in'}`}>
           {Array.from({ length: 4 }).map((_, index) => {
             const testimonial = currentGridTestimonials[index];
-            
+
             if (!testimonial) {
               return (
                 <div
                   key={`mobile-empty-${index}`}
-                  className="bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 min-h-[200px] flex items-center justify-center"
+                  className="flex min-h-[200px] items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50"
                 >
-                  <span className="text-gray-400 text-xs">No more reviews</span>
+                  <span className="text-xs text-gray-400">No more reviews</span>
                 </div>
               );
             }
@@ -156,72 +105,44 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
             return (
               <div
                 key={testimonial.id}
-                className={`bg-white rounded-xl shadow-lg border transition-all duration-300 p-4 relative ${
-                  testimonial.featured 
-                    ? 'border-[#d4af37] ring-2 ring-[#d4af37]/10' 
+                className={`relative rounded-xl border bg-white p-4 shadow-lg transition-all duration-300 ${
+                  testimonial.featured
+                    ? 'border-[#d4af37] ring-2 ring-[#d4af37]/10'
                     : 'border-[#d4af37]/10'
-                } ${
-                  isTransitioning ? 'opacity-0' : 'opacity-100'
-                }`}
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  transition: 'opacity 0.5s ease-in-out'
-                }}
+                } ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}
               >
-                {/* Featured Badge */}
                 {testimonial.featured && (
                   <div className="absolute -top-2 left-2">
-                    <span className="bg-[#d4af37] text-black text-xs font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                    <span className="rounded-full bg-[#d4af37] px-2 py-1 text-xs font-bold uppercase tracking-wider text-black">
                       Featured
                     </span>
                   </div>
                 )}
-                
-                {/* Client Info */}
-                <div className="flex items-center mb-3">
-                  {testimonial.image && (
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden mr-2 border border-[#d4af37]/20 flex-shrink-0">
-                      <Image
-                        src={testimonial.image}
-                        alt={testimonial.name}
-                        fill
-                        className="object-cover"
-                        sizes="32px"
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-black text-xs truncate">{testimonial.name}</h3>
-                    <p className="text-black/60 text-xs truncate">
-                      {testimonial.role}
-                    </p>
-                  </div>
+
+                <div className="mb-3">
+                  <h3 className="truncate text-xs font-bold text-black">{testimonial.name}</h3>
+                  <p className="mt-1 truncate text-xs text-black/60">
+                    {testimonial.cameraName || 'Camera rental customer'}
+                  </p>
                 </div>
 
-                {/* Rating */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center">
-                    {renderStars(testimonial.rating)}
-                  </div>
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center">{renderStars(testimonial.rating)}</div>
                   <span className="text-xs text-black/50">
-                    {new Date(testimonial.date).toLocaleDateString('en-US', { 
-                      month: 'short', 
-                      year: '2-digit' 
+                    {new Date(testimonial.date).toLocaleDateString('en-US', {
+                      month: 'short',
+                      year: '2-digit',
                     })}
                   </span>
                 </div>
 
-                {/* Review - Truncated */}
-                <p className="text-black/80 text-xs leading-relaxed mb-3 italic line-clamp-4">
-                  "{testimonial.review.length > 80 
-                    ? testimonial.review.substring(0, 80) + '...' 
-                    : testimonial.review}"
+                <p className="mb-3 line-clamp-4 text-xs italic leading-relaxed text-black/80">
+                  &quot;{testimonial.review.length > 80 ? `${testimonial.review.substring(0, 80)}...` : testimonial.review}&quot;
                 </p>
 
-                {/* Event Type Badge */}
                 <div className="flex justify-center">
-                  <span className="inline-block px-2 py-1 bg-[#d4af37]/10 text-[#d4af37] text-xs font-bold rounded-full uppercase tracking-wider">
-                    {testimonial.eventType}
+                  <span className="inline-block rounded-full bg-[#d4af37]/10 px-2 py-1 text-xs font-bold uppercase tracking-wider text-[#d4af37]">
+                    Verified review
                   </span>
                 </div>
               </div>
@@ -229,17 +150,16 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
           })}
         </div>
 
-        {/* Progress Bar */}
         {totalGrids > 1 && (
           <div className="mt-6 px-4">
             <div className="flex space-x-1">
               {Array.from({ length: totalGrids }).map((_, index) => (
                 <div
                   key={index}
-                  className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden"
+                  className="h-1 flex-1 overflow-hidden rounded-full bg-gray-200"
                 >
                   <div
-                    className={`h-full transition-all duration-700 ease-in-out rounded-full ${
+                    className={`h-full rounded-full transition-all duration-700 ease-in-out ${
                       index === currentGridIndex
                         ? 'bg-[#d4af37] animate-pulse'
                         : index < currentGridIndex
@@ -247,7 +167,7 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
                         : 'bg-gray-200'
                     }`}
                     style={{
-                      width: index === currentGridIndex ? '100%' : index < currentGridIndex ? '100%' : '0%'
+                      width: index === currentGridIndex ? '100%' : index < currentGridIndex ? '100%' : '0%',
                     }}
                   />
                 </div>
@@ -256,10 +176,9 @@ export default function MobileTestimonialsGrid({ testimonials, isLoading = false
           </div>
         )}
 
-        {/* Grid Counter */}
         {totalGrids > 1 && (
-          <div className="text-center mt-4">
-            <span className="text-sm text-gray-500 font-medium">
+          <div className="mt-4 text-center">
+            <span className="text-sm font-medium text-gray-500">
               Grid {currentGridIndex + 1} of {totalGrids} • {testimonials.length} reviews
             </span>
           </div>

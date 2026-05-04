@@ -63,14 +63,18 @@ export async function POST(
       );
     }
 
-    // Update booking status to confirmed
+    const timestamp = new Date().toISOString();
+
+    // Update booking status to confirmed and auto-mark deposit as paid
     const { data: updatedBooking, error: updateError } = await supabase
       .from('bookings')
       .update({
         booking_status: 'confirmed',
-        approved_at: new Date().toISOString(),
+        approved_at: timestamp,
+        deposit_paid: true,
+        deposit_paid_date: booking.deposit_paid_date || timestamp,
         admin_notes: admin_notes || null,
-        updated_at: new Date().toISOString()
+        updated_at: timestamp
       })
       .eq('id', bookingId)
       .select()

@@ -27,7 +27,12 @@ export default function CameraCard({
   canAddToKit = true,
 }: CameraCardProps) {
   const [viewerCount, setViewerCount] = useState(0);
+  const [currentImage, setCurrentImage] = useState(camera.image);
   const isDark = variant === 'dark';
+
+  useEffect(() => {
+    setCurrentImage(camera.image);
+  }, [camera.image]);
 
   // Simulate active viewers for urgency (3-7 random viewers)
   useEffect(() => {
@@ -58,6 +63,14 @@ export default function CameraCard({
   const handleAddToKitClick = () => {
     if (onAddToKit) {
       onAddToKit(camera);
+    }
+  };
+
+  const fallbackImage = camera.images.find((image) => image && image !== currentImage) || currentImage;
+
+  const handleImageError = () => {
+    if (fallbackImage !== currentImage) {
+      setCurrentImage(fallbackImage);
     }
   };
 
@@ -100,18 +113,19 @@ export default function CameraCard({
         {camera.images && camera.images.length > 0 ? (
           <div className="w-full h-full relative group-hover:scale-105 transition-transform duration-500">
             <Image
-              src={camera.image}
+              src={currentImage}
               alt={camera.name}
               fill
               className="object-contain p-4 z-10 relative"
               sizes="(max-width: 768px) 50vw, 33vw"
               priority
+              onError={handleImageError}
             />
             {/* Background Blur Effect */}
             <div
               className="absolute inset-0 opacity-30 transform scale-150 blur-3xl"
               style={{
-                backgroundImage: `url(${camera.image})`,
+                backgroundImage: `url(${currentImage})`,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover'
               }}

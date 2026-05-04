@@ -14,6 +14,7 @@ export type PublicCamera = Pick<
   | 'weekly_rate'
   | 'monthly_rate'
   | 'discount_threshold'
+  | 'image_url'
   | 'specifications'
   | 'is_available'
   | 'available_quantity'
@@ -556,6 +557,7 @@ export async function getPublicCameras(): Promise<PublicCamera[]> {
         weekly_rate,
         monthly_rate,
         discount_threshold,
+        image_url,
         specifications,
         is_available,
         available_quantity,

@@ -8,6 +8,7 @@ import {
   getAllCameras
 } from '@/lib/api/bookings';
 import type { Camera } from '@/lib/supabase';
+import { getRateForDuration } from '@/lib/cameraPricing';
 import { Sparkles, Loader2, ChevronLeft, Send, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -121,7 +122,7 @@ export default function MobileAddBookingPage() {
 
       const camera = cameras.find(c => c.id === bookingData.camera_id);
       if (camera && days > 0) {
-        let dailyRate = camera.daily_rate;
+        let dailyRate = getRateForDuration(camera, days);
 
         if (socialMediaDiscount) {
           dailyRate = dailyRate - discountPerDay;

@@ -8,6 +8,7 @@ import {
   getAllCameras
 } from '@/lib/api/bookings';
 import type { Camera } from '@/lib/supabase';
+import { getRateForDuration } from '@/lib/cameraPricing';
 import { Sparkles, MessageSquare, Loader2, CheckCircle2, Send, ChevronDown, X, ArrowLeft } from 'lucide-react';
 import { formatPhoneWithCountryCode } from '@/utils/phoneFormatter';
 import toast from 'react-hot-toast';
@@ -122,14 +123,8 @@ export default function AddBookingPage() {
         if (customPriceEnabled && customDailyRate > 0) {
           dailyRate = customDailyRate;
         } else {
-          // Otherwise, apply automatic pricing logic
-          // Dynamic pricing for Osmo Pocket 3 and Action 5 Pro
-          const isPromoCamera = camera.name.toLowerCase().includes('osmo pocket 3') ||
-            camera.name.toLowerCase().includes('action 5 pro');
-
-          if (isPromoCamera && days >= 3) {
-            dailyRate = 45;
-          }
+          // Otherwise, apply camera-specific threshold pricing
+          dailyRate = getRateForDuration(camera, days);
 
           // Apply social media discount if enabled
           if (socialMediaDiscount) {

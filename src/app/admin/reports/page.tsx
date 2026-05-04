@@ -6,7 +6,6 @@ import type { Booking, Camera, Customer } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
-  AlertTriangle,
   BarChart3,
   Calendar,
   Camera as CameraIcon,
@@ -25,8 +24,35 @@ import { useIsMobile } from '@/hooks/useIsMobile';
 import MobileReports from '@/components/admin/MobileReports';
 import { customToast } from '@/components/ui/toast-config';
 
-type DateRange = 'week' | 'month' | 'quarter' | 'year';
+type DateRange = 'all' | 'week' | 'month' | 'quarter' | 'year';
 type ReportType = 'revenue' | 'bookings' | 'customers' | 'payments';
+
+function getRangeStart(range: DateRange, referenceDate: Date) {
+  const start = new Date(referenceDate);
+  start.setHours(0, 0, 0, 0);
+
+  switch (range) {
+    case 'all':
+      return new Date(0);
+    case 'week': {
+      const day = start.getDay();
+      const diff = day === 0 ? 6 : day - 1;
+      start.setDate(start.getDate() - diff);
+      return start;
+    }
+    case 'month':
+      start.setDate(1);
+      return start;
+    case 'quarter':
+      start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+      return start;
+    case 'year':
+      start.setMonth(0, 1);
+      return start;
+    default:
+      return start;
+  }
+}
 
 function getPillClasses(tone: 'orange' | 'blue' | 'green' | 'red' | 'stone') {
   switch (tone) {
@@ -77,6 +103,8 @@ export default function ReportsPage() {
 
   const reportScopeLabel = useMemo(() => {
     switch (dateRange) {
+      case 'all':
+        return 'All Time';
       case 'week':
         return 'This Week';
       case 'quarter':
@@ -101,31 +129,48 @@ export default function ReportsPage() {
     }
   }, [reportType]);
 
-  const capturaBookings = excludeMotherBookings(bookings, cameras);
+  const rangeStart = useMemo(() => getRangeStart(dateRange, new Date()), [dateRange]);
+  const filteredBookings = useMemo(
+    () =>
+      bookings.filter((booking) => {
+        const createdAt = new Date(booking.created_at);
+        return !Number.isNaN(createdAt.getTime()) && createdAt >= rangeStart;
+      }),
+    [bookings, rangeStart]
+  );
+  const includedCameras = useMemo(
+    () => cameras.filter((camera) => camera.name !== 'Canon R50 - Mother'),
+    [cameras]
+  );
+  const capturaBookings = useMemo(() => excludeMotherBookings(bookings, cameras), [bookings, cameras]);
+  const filteredCapturaBookings = useMemo(
+    () => excludeMotherBookings(filteredBookings, cameras),
+    [filteredBookings, cameras]
+  );
   const fullyPaidBookings = capturaBookings.filter((booking) => booking.deposit_paid && booking.final_payment_paid);
+  const filteredFullyPaidBookings = filteredCapturaBookings.filter(
+    (booking) => booking.deposit_paid && booking.final_payment_paid
+  );
 
   const totalRevenue = fullyPaidBookings.reduce((sum, booking) => {
     const isNewPaymentSystem = booking.deposit_amount === 100;
     return sum + (isNewPaymentSystem ? booking.final_payment_amount : booking.total_amount - booking.deposit_amount);
   }, 0);
 
-  const currentMonth = new Date().toISOString().slice(0, 7);
-  const monthlyRevenue = fullyPaidBookings
-    .filter((booking) => booking.created_at.startsWith(currentMonth))
+  const scopeRevenue = filteredFullyPaidBookings
     .reduce((sum, booking) => {
       const isNewPaymentSystem = booking.deposit_amount === 100;
       return sum + (isNewPaymentSystem ? booking.final_payment_amount : booking.total_amount - booking.deposit_amount);
     }, 0);
 
-  const totalBookings = capturaBookings.length;
-  const activeBookings = capturaBookings.filter((booking) => booking.status === 'active').length;
-  const completedBookings = capturaBookings.filter((booking) => booking.status === 'completed');
+  const totalBookings = filteredCapturaBookings.length;
+  const activeBookings = filteredCapturaBookings.filter((booking) => booking.status === 'active').length;
+  const completedBookings = filteredCapturaBookings.filter((booking) => booking.status === 'completed');
   const completedBookingsCount = completedBookings.length;
 
-  const cameraPerformance = cameras
-    .filter((camera) => camera.name !== 'Canon R50 - Mother')
+  const cameraPerformance = includedCameras
     .map((camera) => {
-      const cameraBookings = capturaBookings.filter((booking) => booking.camera_id === camera.id);
+      const cameraBookings = filteredCapturaBookings.filter((booking) => booking.camera_id === camera.id);
       const paidCameraBookings = cameraBookings.filter((booking) => booking.deposit_paid && booking.final_payment_paid);
       const revenue = paidCameraBookings.reduce((sum, booking) => {
         const isNewPaymentSystem = booking.deposit_amount === 100;
@@ -141,9 +186,11 @@ export default function ReportsPage() {
       };
     })
     .sort((a, b) => b.revenue - a.revenue);
+  const includedCameraCount = includedCameras.length;
+  const activeCameraCount = cameraPerformance.filter((camera) => camera.bookings > 0).length;
 
   const customerMetrics = customers.map((customer) => {
-    const customerBookings = capturaBookings.filter((booking) => booking.customer_id === customer.id);
+    const customerBookings = filteredCapturaBookings.filter((booking) => booking.customer_id === customer.id);
     const paidCustomerBookings = customerBookings.filter((booking) => booking.deposit_paid && booking.final_payment_paid);
     const totalSpent = paidCustomerBookings.reduce((sum, booking) => {
       const isNewPaymentSystem = booking.deposit_amount === 100;
@@ -162,10 +209,10 @@ export default function ReportsPage() {
     .slice(0, 5);
 
   const paymentAnalysis = {
-    fullyPaid: bookings.filter((booking) => booking.final_payment_paid).length,
-    depositPaid: bookings.filter((booking) => booking.deposit_paid && !booking.final_payment_paid).length,
-    pending: bookings.filter((booking) => !booking.deposit_paid).length,
-    overdue: bookings.filter(
+    fullyPaid: filteredCapturaBookings.filter((booking) => booking.final_payment_paid).length,
+    depositPaid: filteredCapturaBookings.filter((booking) => booking.deposit_paid && !booking.final_payment_paid).length,
+    pending: filteredCapturaBookings.filter((booking) => !booking.deposit_paid).length,
+    overdue: filteredCapturaBookings.filter(
       (booking) =>
         !booking.final_payment_paid &&
         new Date(booking.end_date) < new Date() &&
@@ -173,7 +220,7 @@ export default function ReportsPage() {
     ).length,
   };
 
-  const overdueAmount = bookings
+  const overdueAmount = filteredCapturaBookings
     .filter(
       (booking) =>
         !booking.final_payment_paid &&
@@ -237,12 +284,13 @@ export default function ReportsPage() {
         setReportType={setReportType}
         reportScopeLabel={reportScopeLabel}
         reportTypeLabel={reportTypeLabel}
+        scopeRevenue={scopeRevenue}
         totalRevenue={totalRevenue}
-        monthlyRevenue={monthlyRevenue}
         totalBookings={totalBookings}
         activeBookings={activeBookings}
-        overdueAmount={overdueAmount}
         completedBookingsCount={completedBookingsCount}
+        includedCameraCount={includedCameraCount}
+        activeCameraCount={activeCameraCount}
         paymentAnalysis={paymentAnalysis}
         monthlyTrend={monthlyTrend}
         cameraPerformance={cameraPerformance}
@@ -280,6 +328,7 @@ export default function ReportsPage() {
                   onChange={(e) => setDateRange(e.target.value as DateRange)}
                   className="admin-dark-select text-sm font-medium"
                 >
+                  <option value="all">All Time</option>
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
                   <option value="quarter">This Quarter</option>
@@ -312,7 +361,7 @@ export default function ReportsPage() {
               <div className="rounded-2xl border border-[#3f3125] bg-[#241b14] p-4">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-stone-500">Completed bookings</p>
                 <p className="mt-3 text-3xl font-semibold text-stone-50">{completedBookingsCount}</p>
-                <p className="mt-2 text-sm text-stone-400">Closed bookings currently represented in the reporting dataset.</p>
+                <p className="mt-2 text-sm text-stone-400">Closed bookings inside selected reporting window.</p>
               </div>
             </div>
           </CardContent>
@@ -338,6 +387,12 @@ export default function ReportsPage() {
                 The main CAPTURA reports intentionally exclude Mother&apos;s R50 activity from the business summary.
               </p>
             </div>
+            <div className="rounded-2xl border border-[#2c2621] bg-[#1d1a17] p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-stone-500">Camera coverage</p>
+              <p className="mt-2 text-sm leading-6 text-stone-300">
+                {includedCameraCount} cameras tracked in reports. {activeCameraCount} have bookings in {reportScopeLabel.toLowerCase()}.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -352,9 +407,9 @@ export default function ReportsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Total Revenue</p>
-                <p className="mt-3 text-3xl font-semibold text-stone-50">RM{totalRevenue}</p>
-                <p className="mt-1 text-sm text-stone-400">All time</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Revenue In Scope</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">RM{scopeRevenue}</p>
+                <p className="mt-1 text-sm text-stone-400">{reportScopeLabel}</p>
               </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1f2b20] text-emerald-300">
                 <DollarSign className="h-5 w-5" />
@@ -367,11 +422,9 @@ export default function ReportsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Monthly Revenue</p>
-                <p className="mt-3 text-3xl font-semibold text-stone-50">RM{monthlyRevenue}</p>
-                <p className="mt-1 text-sm text-stone-400">
-                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                </p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Lifetime Revenue</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">RM{totalRevenue}</p>
+                <p className="mt-1 text-sm text-stone-400">All time</p>
               </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#1d2933] text-sky-300">
                 <TrendingUp className="h-5 w-5" />
@@ -384,7 +437,7 @@ export default function ReportsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Total Bookings</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Bookings In Scope</p>
                 <p className="mt-3 text-3xl font-semibold text-stone-50">{totalBookings}</p>
                 <p className="mt-1 text-sm text-stone-400">{activeBookings} active</p>
               </div>
@@ -399,12 +452,12 @@ export default function ReportsPage() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Overdue Amount</p>
-                <p className="mt-3 text-3xl font-semibold text-stone-50">RM{overdueAmount}</p>
-                <p className="mt-1 text-sm text-stone-400">{paymentAnalysis.overdue} customers</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500">Cameras Included</p>
+                <p className="mt-3 text-3xl font-semibold text-stone-50">{includedCameraCount}</p>
+                <p className="mt-1 text-sm text-stone-400">{activeCameraCount} with bookings in scope</p>
               </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#302219] text-orange-300">
-                <AlertTriangle className="h-5 w-5" />
+                <CameraIcon className="h-5 w-5" />
               </div>
             </div>
           </CardContent>
@@ -453,7 +506,7 @@ export default function ReportsPage() {
               <CreditCard className="h-5 w-5 text-orange-300" />
               Payment Status
             </CardTitle>
-            <CardDescription className="text-stone-400">Current payment breakdown</CardDescription>
+            <CardDescription className="text-stone-400">Current payment breakdown with RM{overdueAmount} overdue in scope</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 p-5">
             {[

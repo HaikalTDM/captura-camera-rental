@@ -1,6 +1,7 @@
 // import { getGalleryImagesLightweight } from '@/lib/api/gallery';
 import { getPublicCameras } from '@/lib/api/bookings';
 import RentalHomeClient from '@/components/RentalHomeClient';
+import { getExtendedDailyRate } from '@/lib/cameraPricing';
 
 // Enable ISR caching - revalidate every 60 seconds
 export const revalidate = 60;
@@ -42,6 +43,10 @@ export default async function RentalHome() {
 
   const cameras = sortedCameras.map(dbCamera => {
     const cameraImages = getStaticImages(dbCamera.name);
+    const primaryImage = dbCamera.image_url || cameraImages.main;
+    const imageFallbacks = [primaryImage, cameraImages.main, cameraImages.variant].filter(
+      (image, index, images) => Boolean(image) && images.indexOf(image) === index
+    );
 
     // Generate features based on camera type
     const features = [
@@ -57,10 +62,10 @@ export default async function RentalHome() {
       id: dbCamera.id,
       name: dbCamera.name,
       description: dbCamera.description || 'Professional camera equipment.',
-      image: cameraImages.main,
-      images: [cameraImages.variant],
+      image: primaryImage,
+      images: imageFallbacks,
       dailyRate: dbCamera.daily_rate,
-      discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9,
+      discountRate: getExtendedDailyRate(dbCamera),
       features,
       specifications: typeof dbCamera.specifications === 'object' ? dbCamera.specifications as Record<string, unknown> : {},
     };

@@ -1,296 +1,219 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import PhotographyNavigation from '@/components/PhotographyNavigation';
 import MobileTestimonialsGrid from '@/components/MobileTestimonialsGrid';
+import type { PublicReview } from '@/lib/reviews/types';
 
-interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  company?: string;
-  rating: number;
-  review: string;
-  image?: string;
-  eventType: 'wedding' | 'corporate' | 'graduation' | 'portrait' | 'event';
-  date: string;
-  featured: boolean;
+type ReviewFilter = 'all' | 'featured' | '5' | '4plus';
+
+function renderStars(rating: number) {
+  return Array.from({ length: 5 }).map((_, index) => (
+    <svg
+      key={`${rating}-${index}`}
+      className={`h-5 w-5 ${index < rating ? 'text-[#d4af37]' : 'text-gray-300'}`}
+      fill="currentColor"
+      viewBox="0 0 20 20"
+    >
+      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+    </svg>
+  ));
 }
 
-// Mock testimonials data - in real app, this would come from admin panel/database
-const testimonials: Testimonial[] = [
-  {
-    id: '1',
-    name: 'Sarah & Ahmad',
-    role: 'Wedding Couple',
-    rating: 5,
-    review: 'Absolutely stunning work! The photographer captured every precious moment of our wedding day. The photos are cinematic and tell our love story beautifully. Professional, punctual, and incredibly talented.',
-    image: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'wedding',
-    date: '2024-12-15',
-    featured: true
-  },
-  {
-    id: '2',
-    name: 'Dr. Melissa Chen',
-    role: 'Medical Director',
-    company: 'KL Medical Centre',
-    rating: 5,
-    review: 'Hired for our annual corporate gala. The quality exceeded our expectations. Every shot was perfectly composed and the team was incredibly professional throughout the event.',
-    image: 'https://images.unsplash.com/photo-1594824388853-2c5d00f4b7b1?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'corporate',
-    date: '2024-11-20',
-    featured: true
-  },
-  {
-    id: '3',
-    name: 'Aisha Rahman',
-    role: 'Graduate',
-    company: 'Universiti Malaya',
-    rating: 5,
-    review: 'My graduation photos are absolutely perfect! The photographer made me feel comfortable and confident. The editing style is exactly what I wanted - elegant and timeless.',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'graduation',
-    date: '2024-10-08',
-    featured: false
-  },
-  {
-    id: '4',
-    name: 'Raj & Priya',
-    role: 'Engaged Couple',
-    rating: 5,
-    review: 'Our engagement shoot was magical! The photographer guided us through poses naturally and captured our personalities perfectly. We can\'t wait to book for our wedding!',
-    image: 'https://images.unsplash.com/photo-1516726817505-f5ed825624d8?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'wedding',
-    date: '2024-09-22',
-    featured: false
-  },
-  {
-    id: '5',
-    name: 'Marcus Lim',
-    role: 'CEO',
-    company: 'Tech Innovators Sdn Bhd',
-    rating: 5,
-    review: 'Professional headshots that elevated our company image. The attention to detail and lighting expertise is exceptional. Highly recommend for any corporate photography needs.',
-    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'corporate',
-    date: '2024-08-15',
-    featured: false
-  },
-  {
-    id: '6',
-    name: 'Fatimah & Hakim',
-    role: 'Wedding Couple',
-    rating: 5,
-    review: 'From our nikah to sanding, every moment was captured beautifully. The photos reflect the joy and emotion of our special day. Thank you for preserving our memories so perfectly!',
-    image: 'https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    eventType: 'wedding',
-    date: '2024-07-30',
-    featured: true
-  }
-];
-
 export default function TestimonialsPage() {
-  const [filter, setFilter] = useState<'all' | 'wedding' | 'corporate' | 'graduation' | 'portrait' | 'event'>('all');
-  const [isLoading, setIsLoading] = useState(false);
+  const [reviews, setReviews] = useState<PublicReview[]>([])
+  const [filter, setFilter] = useState<ReviewFilter>('all')
+  const [isLoading, setIsLoading] = useState(true)
 
-  const filteredTestimonials = filter === 'all' 
-    ? testimonials.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0))
-    : testimonials.filter(t => t.eventType === filter).sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-
-  const handleFilterChange = (newFilter: typeof filter) => {
-    if (newFilter !== filter) {
-      setIsLoading(true);
-      setTimeout(() => {
-        setFilter(newFilter);
-        setIsLoading(false);
-      }, 300);
+  useEffect(() => {
+    async function loadReviews() {
+      try {
+        setIsLoading(true)
+        const response = await fetch('/api/reviews/public', { cache: 'no-store' })
+        const result = await response.json()
+        setReviews((result.reviews || []) as PublicReview[])
+      } catch (error) {
+        console.error('Error loading public reviews:', error)
+        setReviews([])
+      } finally {
+        setIsLoading(false)
+      }
     }
-  };
 
-  const renderStars = (rating: number) => {
-    return Array.from({ length: 5 }).map((_, index) => (
-      <svg
-        key={index}
-        className={`w-5 h-5 ${index < rating ? 'text-[#d4af37]' : 'text-gray-300'}`}
-        fill="currentColor"
-        viewBox="0 0 20 20"
-      >
-        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-      </svg>
-    ));
-  };
+    loadReviews()
+  }, [])
+
+  const filteredReviews = useMemo(() => {
+    switch (filter) {
+      case 'featured':
+        return reviews.filter((review) => review.featured)
+      case '5':
+        return reviews.filter((review) => review.rating === 5)
+      case '4plus':
+        return reviews.filter((review) => review.rating >= 4)
+      default:
+        return reviews
+    }
+  }, [filter, reviews])
+
+  const averageRating = useMemo(() => {
+    if (reviews.length === 0) return 0
+    return reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
+  }, [reviews])
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Photography Navigation */}
       <PhotographyNavigation />
 
-      {/* Hero Section */}
-      <section className="py-16 sm:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 sm:mb-8 font-serif text-black leading-tight">
-            Client
+      <section className="bg-white py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <p className="text-xs font-bold uppercase tracking-[0.4em] text-[#d4af37]">Verified Reviews</p>
+          <h1 className="mt-6 text-4xl font-bold leading-tight text-black sm:text-6xl md:text-7xl lg:text-8xl font-serif">
+            Real Rental
             <br />
-            <span className="italic">Testimonials</span>
+            <span className="italic">Experiences</span>
           </h1>
-          <div className="w-16 sm:w-24 h-px bg-[#d4af37] mx-auto mb-6 sm:mb-8"></div>
-          <p className="text-lg sm:text-xl text-black/80 mb-3 sm:mb-4 font-medium">
-            Stories from our satisfied clients
-          </p>
-          <p className="text-base sm:text-lg text-black/60 max-w-3xl mx-auto mb-12 sm:mb-16 leading-relaxed px-4">
-            Real feedback from weddings, corporate events, graduations, and portrait sessions.
-            See why clients trust us to capture their most important moments.
+          <div className="mx-auto mb-8 mt-6 h-px w-20 bg-[#d4af37] sm:w-24" />
+          <p className="mx-auto max-w-3xl text-base leading-relaxed text-black/60 sm:text-lg">
+            Feedback from verified CAPTURA customers who rented gear and shared how the experience actually felt.
           </p>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Filter Buttons */}
-          <div className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-12 sm:mb-16 px-4">
-            {(['all', 'wedding', 'corporate', 'graduation', 'portrait', 'event'] as const).map((category) => (
+      <section className="bg-gray-50 py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-[#d4af37]/15 bg-white p-6 shadow-sm">
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-black/50">Approved Reviews</p>
+              <p className="mt-3 text-4xl font-black text-black">{reviews.length}</p>
+            </div>
+            <div className="rounded-2xl border border-[#d4af37]/15 bg-white p-6 shadow-sm">
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-black/50">Average Rating</p>
+              <p className="mt-3 text-4xl font-black text-black">{averageRating.toFixed(1)}</p>
+            </div>
+            <div className="rounded-2xl border border-[#d4af37]/15 bg-white p-6 shadow-sm">
+              <p className="text-sm font-bold uppercase tracking-[0.24em] text-black/50">Featured Picks</p>
+              <p className="mt-3 text-4xl font-black text-black">{reviews.filter((review) => review.featured).length}</p>
+            </div>
+          </div>
+
+          <div className="mt-12 flex flex-wrap justify-center gap-2 sm:gap-4">
+            {[
+              { label: 'All', value: 'all' as const },
+              { label: 'Featured', value: 'featured' as const },
+              { label: '5 Stars', value: '5' as const },
+              { label: '4+ Stars', value: '4plus' as const },
+            ].map((item) => (
               <button
-                key={category}
-                onClick={() => handleFilterChange(category)}
-                className={`px-3 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm font-bold uppercase tracking-widest rounded-full border-2 transition-all duration-300 ${
-                  filter === category
-                    ? 'bg-[#d4af37] text-black border-[#d4af37]'
-                    : 'bg-white text-black border-[#d4af37]/30 hover:border-[#d4af37] hover:text-[#d4af37]'
+                key={item.value}
+                onClick={() => setFilter(item.value)}
+                className={`rounded-full border-2 px-4 py-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 sm:px-6 sm:text-sm ${
+                  filter === item.value
+                    ? 'border-[#d4af37] bg-[#d4af37] text-black'
+                    : 'border-[#d4af37]/30 bg-white text-black hover:border-[#d4af37] hover:text-[#d4af37]'
                 }`}
               >
-                {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
+                {item.label}
               </button>
             ))}
           </div>
 
-          {/* Mobile Testimonials Grid */}
-          <MobileTestimonialsGrid 
-            testimonials={filteredTestimonials}
-            isLoading={isLoading}
-          />
+          <div className="mt-12">
+            <MobileTestimonialsGrid testimonials={filteredReviews} isLoading={isLoading} />
+          </div>
 
-          {/* Desktop Testimonials Grid */}
           <div className="hidden sm:grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {isLoading ? (
-              // Loading Skeleton
               Array.from({ length: 6 }).map((_, index) => (
                 <div
-                  key={`skeleton-${index}`}
-                  className="bg-white rounded-2xl p-8 shadow-lg border border-[#d4af37]/10 animate-pulse"
+                  key={`review-skeleton-${index}`}
+                  className="rounded-2xl border border-[#d4af37]/10 bg-white p-8 shadow-lg animate-pulse"
                 >
-                  <div className="flex items-center mb-6">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full mr-4"></div>
-                    <div>
-                      <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
-                      <div className="h-3 bg-gray-200 rounded w-16"></div>
-                    </div>
-                  </div>
+                  <div className="mb-4 h-4 w-24 rounded bg-gray-200" />
+                  <div className="mb-3 h-3 w-32 rounded bg-gray-200" />
                   <div className="space-y-3">
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                    <div className="h-3 bg-gray-200 rounded w-full"></div>
-                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 rounded bg-gray-200" />
+                    <div className="h-3 rounded bg-gray-200" />
+                    <div className="h-3 w-3/4 rounded bg-gray-200" />
                   </div>
                 </div>
               ))
-            ) : (
-              filteredTestimonials.map((testimonial, index) => (
-                <div
-                  key={testimonial.id}
-                  className={`bg-white rounded-2xl p-8 shadow-lg border transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 ${
-                    testimonial.featured 
-                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/10' 
+            ) : filteredReviews.length > 0 ? (
+              filteredReviews.map((review) => (
+                <article
+                  key={review.id}
+                  className={`relative rounded-2xl border bg-white p-8 shadow-lg transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ${
+                    review.featured
+                      ? 'border-[#d4af37] ring-2 ring-[#d4af37]/10'
                       : 'border-[#d4af37]/10 hover:border-[#d4af37]'
                   }`}
                 >
-                  {testimonial.featured && (
+                  {review.featured && (
                     <div className="absolute -top-3 left-6">
-                      <span className="bg-[#d4af37] text-black text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                      <span className="rounded-full bg-[#d4af37] px-3 py-1 text-xs font-bold uppercase tracking-wider text-black">
                         Featured
                       </span>
                     </div>
                   )}
-                  
-                  {/* Client Info */}
-                  <div className="flex items-center mb-6">
-                    {testimonial.image && (
-                      <div className="relative w-16 h-16 rounded-full overflow-hidden mr-4 border-2 border-[#d4af37]/20">
-                        <Image
-                          src={testimonial.image}
-                          alt={testimonial.name}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-bold text-black text-lg">{testimonial.name}</h3>
-                      <p className="text-black/60 text-sm">
-                        {testimonial.role}
-                        {testimonial.company && ` • ${testimonial.company}`}
-                      </p>
-                    </div>
+
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-black">{review.name}</h3>
+                    <p className="mt-2 text-sm text-black/60">
+                      {review.cameraName || 'Verified CAPTURA customer'}
+                    </p>
                   </div>
 
-                  {/* Rating */}
-                  <div className="flex items-center mb-4">
-                    {renderStars(testimonial.rating)}
-                    <span className="ml-2 text-sm text-black/60">
-                      {new Date(testimonial.date).toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        year: 'numeric' 
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="flex items-center">{renderStars(review.rating)}</div>
+                    <span className="text-sm text-black/50">
+                      {new Date(review.date).toLocaleDateString('en-US', {
+                        month: 'short',
+                        year: 'numeric',
                       })}
                     </span>
                   </div>
 
-                  {/* Review */}
-                  <p className="text-black/80 leading-relaxed mb-4 italic">
-                    "{testimonial.review}"
+                  <p className="mb-4 italic leading-relaxed text-black/80">
+                    &quot;{review.review}&quot;
                   </p>
 
-                  {/* Event Type Badge */}
                   <div className="flex justify-between items-center">
-                    <span className="inline-block px-3 py-1 bg-[#d4af37]/10 text-[#d4af37] text-xs font-bold rounded-full uppercase tracking-wider">
-                      {testimonial.eventType}
+                    <span className="inline-block rounded-full bg-[#d4af37]/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#d4af37]">
+                      Verified review
                     </span>
                   </div>
-                </div>
+                </article>
               ))
+            ) : (
+              <div className="col-span-full rounded-2xl border-2 border-dashed border-[#d4af37]/20 bg-white px-6 py-16 text-center">
+                <p className="text-2xl font-bold text-black">No approved reviews yet</p>
+                <p className="mt-3 text-sm text-black/60">
+                  Reviews will appear here after customers submit feedback and CAPTURA approves them.
+                </p>
+              </div>
             )}
           </div>
 
-          {/* CTA Section */}
-          <div className="text-center mt-16 sm:mt-20">
-            <div className="bg-white rounded-2xl p-6 sm:p-12 shadow-xl border border-[#d4af37]/20 mx-4 sm:mx-0">
-              <h3 className="text-2xl sm:text-3xl font-bold text-black mb-3 sm:mb-4 font-serif">Ready to Create Your Story?</h3>
-              <p className="text-black/60 mb-6 sm:mb-8 max-w-2xl mx-auto text-sm sm:text-base px-4">
-                Join our satisfied clients and let us capture your special moments with the same level of excellence and professionalism.
+          <div className="mt-16 text-center">
+            <div className="mx-4 rounded-2xl border border-[#d4af37]/20 bg-white p-6 shadow-xl sm:mx-0 sm:p-12">
+              <h3 className="font-serif text-2xl font-bold text-black sm:text-3xl">Need Help Choosing Your Gear?</h3>
+              <p className="mx-auto mt-4 max-w-2xl text-sm text-black/60 sm:text-base">
+                Explore the rental lineup or talk to CAPTURA directly for recommendations based on your shoot.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+              <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
                 <Link
-                  href="/photography"
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-[#d4af37] text-black font-bold text-xs sm:text-sm uppercase tracking-widest rounded-lg hover:bg-[#d4af37]/90 transition-all duration-300 transform hover:scale-105"
+                  href="/rental/cameras"
+                  className="inline-flex items-center justify-center rounded-lg bg-[#d4af37] px-6 py-4 text-xs font-bold uppercase tracking-widest text-black transition-all duration-300 hover:scale-105 hover:bg-[#d4af37]/90 sm:px-8 sm:text-sm"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                  </svg>
-                  View Packages
+                  Explore Cameras
                 </Link>
-                <button
-                  onClick={() => {
-                    const message = "Hi! I saw the testimonials and I'm interested in booking photography services. Can you provide more details?";
-                    window.open(`https://wa.me/60177464121?text=${encodeURIComponent(message)}`, '_blank');
-                  }}
-                  className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-black text-white font-bold text-xs sm:text-sm uppercase tracking-widest rounded-lg hover:bg-[#d4af37] hover:text-black transition-all duration-300"
+                <Link
+                  href="/rental/support"
+                  className="inline-flex items-center justify-center rounded-lg bg-black px-6 py-4 text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#d4af37] hover:text-black sm:px-8 sm:text-sm"
                 >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.687"/>
-                  </svg>
-                  Contact Us
-                </button>
+                  Contact Support
+                </Link>
               </div>
             </div>
           </div>

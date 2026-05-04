@@ -206,6 +206,11 @@ export default function MobileCameraManagementPage() {
         img.onload = () => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
+          const preserveTransparency = file.type === 'image/png' || file.type === 'image/webp';
+          const outputType = preserveTransparency ? 'image/png' : 'image/jpeg';
+          const outputName = preserveTransparency
+            ? file.name.replace(/\.[^.]+$/, '.png')
+            : file.name.replace(/\.[^.]+$/, '.jpg');
           
           // Calculate new dimensions (max 1200px width)
           let width = img.width;
@@ -221,12 +226,13 @@ export default function MobileCameraManagementPage() {
           canvas.height = height;
           
           // Draw and compress
+          ctx?.clearRect(0, 0, width, height);
           ctx?.drawImage(img, 0, 0, width, height);
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
+                const compressedFile = new File([blob], outputName, {
+                  type: outputType,
                   lastModified: Date.now(),
                 });
                 resolve(compressedFile);
@@ -234,8 +240,8 @@ export default function MobileCameraManagementPage() {
                 resolve(file);
               }
             },
-            'image/jpeg',
-            0.85 // 85% quality for cameras
+            outputType,
+            preserveTransparency ? undefined : 0.85
           );
         };
         img.src = e.target?.result as string;

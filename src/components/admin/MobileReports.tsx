@@ -17,7 +17,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type DateRange = 'week' | 'month' | 'quarter' | 'year';
+type DateRange = 'all' | 'week' | 'month' | 'quarter' | 'year';
 type ReportType = 'revenue' | 'bookings' | 'customers' | 'payments';
 
 interface MobileReportsProps {
@@ -27,12 +27,13 @@ interface MobileReportsProps {
   setReportType: React.Dispatch<React.SetStateAction<ReportType>>;
   reportScopeLabel: string;
   reportTypeLabel: string;
+  scopeRevenue: number;
   totalRevenue: number;
-  monthlyRevenue: number;
   totalBookings: number;
   activeBookings: number;
-  overdueAmount: number;
   completedBookingsCount: number;
+  includedCameraCount: number;
+  activeCameraCount: number;
   paymentAnalysis: {
     fullyPaid: number;
     depositPaid: number;
@@ -77,12 +78,13 @@ export default function MobileReports({
   setReportType,
   reportScopeLabel,
   reportTypeLabel,
+  scopeRevenue,
   totalRevenue,
-  monthlyRevenue,
   totalBookings,
   activeBookings,
-  overdueAmount,
   completedBookingsCount,
+  includedCameraCount,
+  activeCameraCount,
   paymentAnalysis,
   monthlyTrend,
   cameraPerformance,
@@ -107,16 +109,16 @@ export default function MobileReports({
 
         <div className="mt-4 grid grid-cols-3 gap-2">
           <div className="rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-3 text-center">
-            <p className="text-lg font-bold text-orange-300">RM{monthlyRevenue}</p>
-            <p className="text-[10px] text-stone-500">This month</p>
+            <p className="text-lg font-bold text-orange-300">RM{scopeRevenue}</p>
+            <p className="text-[10px] text-stone-500">{reportScopeLabel}</p>
           </div>
           <div className="rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-3 text-center">
             <p className="text-lg font-bold text-stone-200">{totalBookings}</p>
-            <p className="text-[10px] text-stone-500">Bookings</p>
+            <p className="text-[10px] text-stone-500">In scope</p>
           </div>
           <div className="rounded-xl border border-[#332b25] bg-[#1f1a16] px-3 py-3 text-center">
-            <p className="text-lg font-bold text-rose-200">RM{overdueAmount}</p>
-            <p className="text-[10px] text-stone-500">Overdue</p>
+            <p className="text-lg font-bold text-sky-200">{includedCameraCount}</p>
+            <p className="text-[10px] text-stone-500">Cameras</p>
           </div>
         </div>
       </motion.div>
@@ -129,6 +131,7 @@ export default function MobileReports({
               onChange={(e) => setDateRange(e.target.value as DateRange)}
               className="h-11 w-full rounded-2xl border border-[#322b26] bg-[#11100f] px-4 text-sm text-stone-100 outline-none focus:border-[#c96b2c]"
             >
+              <option value="all">All Time</option>
               <option value="week">This Week</option>
               <option value="month">This Month</option>
               <option value="quarter">This Quarter</option>
@@ -160,6 +163,10 @@ export default function MobileReports({
               <p className="mt-2 text-sm font-semibold text-stone-100">{completedBookingsCount}</p>
             </div>
           </div>
+          <div className="rounded-xl border border-[#2c2722] bg-[#1b1714] p-3">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Coverage</p>
+            <p className="mt-2 text-sm font-semibold text-stone-100">{activeCameraCount}/{includedCameraCount} active cameras</p>
+          </div>
         </CardContent>
       </Card>
 
@@ -168,7 +175,7 @@ export default function MobileReports({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Total Revenue</p>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-stone-500">Lifetime Revenue</p>
                 <p className="mt-2 text-xl font-semibold text-stone-100">RM{totalRevenue}</p>
               </div>
               <DollarSign className="h-5 w-5 text-emerald-300" />

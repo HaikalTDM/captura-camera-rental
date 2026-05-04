@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { getPublicCameras } from '@/lib/api/bookings';
 import { Camera, CustomerDetails } from '@/types';
+import { getDiscountThreshold, getExtendedDailyRate } from '@/lib/cameraPricing';
 import CameraCard from './CameraCard';
 import SpecsBottomSheet from './SpecsBottomSheet';
 import BookingBottomSheet from './BookingBottomSheet';
@@ -32,7 +33,6 @@ const RENTAL_KIT_EVENT = 'captura-rental-kit-updated';
 
 const getStaticImages = (cameraName: string) => {
   const name = cameraName.toLowerCase();
-  const isCanonR50 = (name.includes('canon') && name.includes('r50')) || name.includes('r50 (ii)') || name.includes('r50(ii)');
 
   if (name.includes('insta360') && name.includes('x5')) {
     return {
@@ -41,7 +41,7 @@ const getStaticImages = (cameraName: string) => {
     };
   }
 
-  if (isCanonR50) {
+  if (name.includes('canon') && name.includes('r50')) {
     return {
       main: '/images/R50.png',
       variant: '/images/R50-1.png',
@@ -91,11 +91,10 @@ const getStaticImages = (cameraName: string) => {
 
 const getTags = (cameraName: string): string[] => {
   const name = cameraName.toLowerCase();
-  const isCanonR50 = (name.includes('canon') && name.includes('r50')) || name.includes('r50 (ii)') || name.includes('r50(ii)');
   if (name.includes('pocket')) return ['Vlogging', 'Travel', 'Compact'];
   if (name.includes('action')) return ['Diving', 'Sports', 'Waterproof'];
   if (name.includes('insta360')) return ['360', 'Creative', 'Travel'];
-  if (isCanonR50 || name.includes('sony')) return ['Photography', 'Portrait', 'Pro'];
+  if (name.includes('canon') || name.includes('sony')) return ['Photography', 'Portrait', 'Pro'];
   return ['Professional', 'Rental'];
 };
 
@@ -188,16 +187,20 @@ export default function CameraCatalog({
       const convertedCameras: Camera[] = sortedCameras.map((dbCamera) => {
         const cameraImages = getStaticImages(dbCamera.name);
         const cameraTags = getTags(dbCamera.name);
+        const primaryImage = dbCamera.image_url || cameraImages.main;
+        const imageFallbacks = [primaryImage, cameraImages.main, cameraImages.variant].filter(
+          (image, index, images) => Boolean(image) && images.indexOf(image) === index
+        );
 
         const baseCameraInfo: Camera & { tags?: string[] } = {
           id: dbCamera.id,
           name: dbCamera.name,
           description: dbCamera.description || 'Professional camera equipment for your creative projects.',
-          image: cameraImages.main,
-          images: [cameraImages.variant],
+          image: primaryImage,
+          images: imageFallbacks,
           dailyRate: dbCamera.daily_rate,
-          discountRate: dbCamera.weekly_rate ? Math.round(dbCamera.weekly_rate / 7) : dbCamera.daily_rate * 0.9,
-          discountThreshold: dbCamera.discount_threshold,
+          discountRate: getExtendedDailyRate(dbCamera),
+          discountThreshold: getDiscountThreshold(dbCamera),
           features: [
             `${dbCamera.type.charAt(0).toUpperCase() + dbCamera.type.slice(1)} Camera`,
             `RM${dbCamera.daily_rate}/day rental`,
@@ -320,7 +323,7 @@ export default function CameraCatalog({
               Need more than one camera?
             </h3>
             <p className={`mt-1 max-w-2xl text-sm font-semibold ${isDark ? 'text-zinc-400' : 'text-slate-600'}`}>
-              Add up to 3 cameras into one clean request. Same dates, one smoother checkout, less friction for the customer.
+              Add up to 3 cameras into one clean request. Same dates, one smoother checkout.
             </p>
           </div>
           <button

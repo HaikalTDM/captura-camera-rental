@@ -41,6 +41,7 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
     const containerRef = useRef<HTMLDivElement>(null);
     const [galleryImages, setGalleryImages] = useState<LightweightGalleryImage[]>(initialGalleryImages);
     const [reviews, setReviews] = useState<PublicReview[]>([]);
+    const [failedCameraImages, setFailedCameraImages] = useState<Record<string, boolean>>({});
 
     // Fetch gallery images on client side if not provided or empty
     useEffect(() => {
@@ -204,13 +205,25 @@ export default function RentalHomeClient({ cameras, galleryImages: initialGaller
                             >
                                 {/* Image */}
                                 <div className="absolute inset-0 bg-white/5">
-                                    <Image
-                                        src={camera.image}
-                                        alt={camera.name}
-                                        fill
-                                        className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500 scale-105 group-hover:scale-110"
-                                        sizes="260px"
-                                    />
+                                    {(() => {
+                                        const fallbackImage = camera.images.find((image) => image && image !== camera.image);
+                                        const imageSrc = failedCameraImages[camera.id] && fallbackImage ? fallbackImage : camera.image;
+
+                                        return (
+                                            <Image
+                                                src={imageSrc}
+                                                alt={camera.name}
+                                                fill
+                                                className="object-cover opacity-70 group-hover:opacity-100 transition-opacity duration-500 scale-105 group-hover:scale-110"
+                                                sizes="260px"
+                                                onError={() => {
+                                                    if (fallbackImage) {
+                                                        setFailedCameraImages((current) => ({ ...current, [camera.id]: true }));
+                                                    }
+                                                }}
+                                            />
+                                        );
+                                    })()}
                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
                                 </div>
 

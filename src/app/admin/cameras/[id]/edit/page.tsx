@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
 import {
@@ -14,6 +15,8 @@ import {
 } from '@/lib/api/bookings';
 import type { Accessory, Camera } from '@/lib/supabase';
 import { AnimatedToastContainer, useAnimatedToast } from '@/components/ui/animated-toast';
+import { getDiscountThreshold, getExtendedDailyRate } from '@/lib/cameraPricing';
+import { uploadImage } from '@/lib/api/gallery';
 
 type EditTab = 'details' | 'accessories' | 'maintenance';
 
@@ -30,6 +33,10 @@ export default function EditCameraPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [activeTab, setActiveTab] = useState<EditTab>('details');
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,7 +44,8 @@ export default function EditCameraPage() {
     model: '',
     type: 'action' as Camera['type'],
     daily_rate: 0,
-    weekly_rate: 0,
+    extended_daily_rate: 0,
+    discount_threshold: 3,
     monthly_rate: 0,
     deposit_amount: 0,
     description: '',
@@ -53,9 +61,65 @@ export default function EditCameraPage() {
   });
 
   const fieldClasses =
-    'w-full rounded-2xl border border-white/10 bg-zinc-950 px-4 py-3 text-sm font-semibold text-stone-100 outline-none transition-colors placeholder:text-zinc-500 focus:border-white/20 focus:ring-0';
+    'w-full rounded-2xl border border-white/10 bg-zinc-950 px-4 py-3 text-sm font-semibold text-stone-50 outline-none transition-colors placeholder:text-stone-500 focus:border-white/20 focus:ring-0';
   const labelClasses = 'mb-2 block text-sm font-semibold text-stone-300';
   const sectionClasses = 'rounded-3xl border border-white/5 bg-zinc-900/70 p-6 shadow-lg';
+  const inputTextStyle = {
+    WebkitTextFillColor: '#f5f5f4',
+    WebkitBoxShadow: '0 0 0px 1000px rgb(9 9 11) inset',
+    caretColor: '#f5f5f4',
+  } as const;
+
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const preserveTransparency = file.type === 'image/png' || file.type === 'image/webp';
+          const outputType = preserveTransparency ? 'image/png' : 'image/jpeg';
+          const outputName = preserveTransparency
+            ? file.name.replace(/\.[^.]+$/, '.png')
+            : file.name.replace(/\.[^.]+$/, '.jpg');
+
+          let width = img.width;
+          let height = img.height;
+          const maxWidth = 1200;
+
+          if (width > maxWidth) {
+            height = (height * maxWidth) / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          ctx?.clearRect(0, 0, width, height);
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(
+                  new File([blob], outputName, {
+                    type: outputType,
+                    lastModified: Date.now(),
+                  })
+                );
+              } else {
+                resolve(file);
+              }
+            },
+            outputType,
+            preserveTransparency ? undefined : 0.85
+          );
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -73,7 +137,8 @@ export default function EditCameraPage() {
           model: cameraData.model || '',
           type: cameraData.type || 'action',
           daily_rate: cameraData.daily_rate || 0,
-          weekly_rate: cameraData.weekly_rate || 0,
+          extended_daily_rate: getExtendedDailyRate(cameraData),
+          discount_threshold: getDiscountThreshold(cameraData),
           monthly_rate: cameraData.monthly_rate || 0,
           deposit_amount: cameraData.deposit_amount || 0,
           description: cameraData.description || '',
@@ -87,6 +152,7 @@ export default function EditCameraPage() {
           location: cameraData.location || 'Main Storage',
           notes: cameraData.notes || '',
         });
+        setImagePreview(cameraData.image_url || null);
       }
 
       setAccessories(accessoriesData);
@@ -108,12 +174,22 @@ export default function EditCameraPage() {
     setIsSaving(true);
     try {
       const cleanedFormData = {
-        ...formData,
+        name: formData.name,
+        brand: formData.brand,
+        model: formData.model,
+        type: formData.type,
+        description: formData.description,
+        specifications: formData.specifications,
+        image_url: formData.image_url,
+        condition: formData.condition,
+        location: formData.location,
+        notes: formData.notes,
         purchase_date: formData.purchase_date || null,
         warranty_expiry: formData.warranty_expiry || null,
         serial_number: formData.serial_number?.trim() || null,
         daily_rate: Number(formData.daily_rate) || 0,
-        weekly_rate: Number(formData.weekly_rate) || 0,
+        weekly_rate: Number(formData.extended_daily_rate) || Number(formData.daily_rate) || 0,
+        discount_threshold: Number(formData.discount_threshold) || 3,
         monthly_rate: Number(formData.monthly_rate) || 0,
         deposit_amount: Number(formData.deposit_amount) || 0,
         purchase_price: Number(formData.purchase_price) || 0,
@@ -162,6 +238,54 @@ export default function EditCameraPage() {
     } catch (toggleError) {
       console.error('Error updating accessory:', toggleError);
       error('Accessory update failed', 'Please try again.');
+    }
+  };
+
+  const handleImageFile = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      error('Image too large', 'Image size must be less than 5MB.');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      error('Invalid file', 'Please upload an image file.');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const imageUrl = await uploadImage(compressedFile);
+
+      if (!imageUrl) {
+        error('Upload failed', 'Image could not be uploaded.');
+        return;
+      }
+
+      setFormData((prev) => ({ ...prev, image_url: imageUrl }));
+      setImagePreview(imageUrl);
+      success('Image uploaded', 'Camera image updated successfully.');
+    } catch (uploadError) {
+      console.error('Error uploading image:', uploadError);
+      error('Upload failed', 'Please try again.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await handleImageFile(file);
+    e.target.value = '';
+  };
+
+  const handleImageDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await handleImageFile(file);
     }
   };
 
@@ -281,6 +405,7 @@ export default function EditCameraPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="DJI Osmo Pocket 3"
                 />
               </div>
@@ -292,6 +417,7 @@ export default function EditCameraPage() {
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="DJI"
                 />
               </div>
@@ -303,6 +429,7 @@ export default function EditCameraPage() {
                   value={formData.model}
                   onChange={(e) => setFormData({ ...formData, model: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="Osmo Pocket 3"
                 />
               </div>
@@ -313,6 +440,7 @@ export default function EditCameraPage() {
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value as Camera['type'] })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                 >
                   <option value="action">Action Camera</option>
                   <option value="mirrorless">Mirrorless</option>
@@ -330,6 +458,7 @@ export default function EditCameraPage() {
                   value={formData.daily_rate || ''}
                   onChange={(e) => setFormData({ ...formData, daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="50"
                   step="0.01"
                   min="0"
@@ -337,30 +466,36 @@ export default function EditCameraPage() {
               </div>
 
               <div>
-                <label className={labelClasses}>Weekly Rate (RM)</label>
+                <label className={labelClasses}>Discount Starts At (Days)</label>
                 <input
                   type="number"
-                  value={formData.weekly_rate || ''}
-                  onChange={(e) => setFormData({ ...formData, weekly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  value={formData.discount_threshold || ''}
+                  onChange={(e) => setFormData({ ...formData, discount_threshold: e.target.value === '' ? 0 : parseInt(e.target.value, 10) })}
                   className={fieldClasses}
-                  placeholder="300"
-                  step="0.01"
-                  min="0"
+                  style={inputTextStyle}
+                  placeholder="3"
+                  step="1"
+                  min="2"
                 />
               </div>
 
               <div>
-                <label className={labelClasses}>Monthly Rate (RM)</label>
+                <label className={labelClasses}>Rate After Threshold (RM/day)</label>
                 <input
                   type="number"
-                  value={formData.monthly_rate || ''}
-                  onChange={(e) => setFormData({ ...formData, monthly_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
+                  value={formData.extended_daily_rate || ''}
+                  onChange={(e) => setFormData({ ...formData, extended_daily_rate: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={fieldClasses}
-                  placeholder="1000"
+                  style={inputTextStyle}
+                  placeholder="45"
                   step="0.01"
                   min="0"
                 />
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-orange-500/15 bg-orange-500/5 px-4 py-3 text-sm text-stone-300">
+              Example: daily rate `RM50`, discount starts at `3` days, rate after threshold `RM45/day`.
             </div>
 
             <div>
@@ -370,6 +505,7 @@ export default function EditCameraPage() {
                 value={formData.deposit_amount || ''}
                 onChange={(e) => setFormData({ ...formData, deposit_amount: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                 className={fieldClasses}
+                style={inputTextStyle}
                 placeholder="200"
                 step="0.01"
                 min="0"
@@ -383,19 +519,85 @@ export default function EditCameraPage() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={4}
                 className={fieldClasses}
+                style={inputTextStyle}
                 placeholder="Detailed description of the camera..."
               />
             </div>
 
             <div>
-              <label className={labelClasses}>Image URL</label>
-              <input
-                type="url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                className={fieldClasses}
-                placeholder="https://example.com/camera-image.jpg"
-              />
+              <label className={labelClasses}>Camera Image</label>
+
+              {imagePreview && (
+                <div className="mb-4 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950">
+                  <Image
+                    src={imagePreview}
+                    alt="Camera preview"
+                    width={1200}
+                    height={560}
+                    className="h-56 w-full object-cover"
+                    unoptimized
+                  />
+                  <div className="flex items-center justify-between border-t border-white/10 px-4 py-3">
+                    <p className="text-sm text-stone-400">Current preview</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview(null);
+                        setFormData((prev) => ({ ...prev, image_url: '' }));
+                      }}
+                      className="text-sm font-semibold text-rose-300 transition-colors hover:text-rose-200"
+                    >
+                      Remove image
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <label
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragActive(true);
+                }}
+                onDragLeave={() => setIsDragActive(false)}
+                onDrop={(e) => void handleImageDrop(e)}
+                className={`block cursor-pointer rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-all ${
+                  isDragActive
+                    ? 'border-orange-400 bg-orange-500/10'
+                    : isUploadingImage
+                      ? 'border-sky-400 bg-sky-500/10'
+                      : 'border-white/10 bg-zinc-950 hover:border-white/20 hover:bg-zinc-900'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => void handleImageUpload(e)}
+                  disabled={isUploadingImage}
+                  className="hidden"
+                />
+
+                {isUploadingImage ? (
+                  <div className="space-y-3">
+                    <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-300/30 border-t-sky-300" />
+                    <p className="text-sm font-semibold text-sky-200">Uploading image...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-[#171411] text-stone-300">
+                      <svg className="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 16.5V18a2 2 0 002 2h14a2 2 0 002-2v-1.5M16 8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-stone-100">
+                        {imagePreview ? 'Drop new image here or click to replace' : 'Drag and drop image here or click to upload'}
+                      </p>
+                      <p className="mt-1 text-xs text-stone-500">Max 5MB • JPG, PNG, WEBP • local gallery supported</p>
+                    </div>
+                  </div>
+                )}
+              </label>
             </div>
           </div>
         )}
@@ -448,6 +650,7 @@ export default function EditCameraPage() {
                   value={formData.condition}
                   onChange={(e) => setFormData({ ...formData, condition: e.target.value as Camera['condition'] })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                 >
                   <option value="excellent">Excellent</option>
                   <option value="good">Good</option>
@@ -463,6 +666,7 @@ export default function EditCameraPage() {
                   value={formData.serial_number}
                   onChange={(e) => setFormData({ ...formData, serial_number: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="SN123456789"
                 />
               </div>
@@ -474,6 +678,7 @@ export default function EditCameraPage() {
                   value={formData.purchase_date}
                   onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                 />
               </div>
 
@@ -484,6 +689,7 @@ export default function EditCameraPage() {
                   value={formData.purchase_price || ''}
                   onChange={(e) => setFormData({ ...formData, purchase_price: e.target.value === '' ? 0 : parseFloat(e.target.value) })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="2000"
                   step="0.01"
                   min="0"
@@ -497,6 +703,7 @@ export default function EditCameraPage() {
                   value={formData.warranty_expiry}
                   onChange={(e) => setFormData({ ...formData, warranty_expiry: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                 />
               </div>
 
@@ -507,6 +714,7 @@ export default function EditCameraPage() {
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                   className={fieldClasses}
+                  style={inputTextStyle}
                   placeholder="Main Storage"
                 />
               </div>
@@ -519,6 +727,7 @@ export default function EditCameraPage() {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={4}
                 className={fieldClasses}
+                style={inputTextStyle}
                 placeholder="Additional notes about this camera..."
               />
             </div>

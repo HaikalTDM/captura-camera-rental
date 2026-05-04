@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getPublicCameras } from '@/lib/api/bookings';
 import type { PublicCamera as DBCamera } from '@/lib/api/bookings';
+import { getDiscountThreshold, getExtendedDailyRate } from '@/lib/cameraPricing';
 
 export default function BookPage() {
   const router = useRouter();
@@ -145,8 +146,8 @@ export default function BookPage() {
                   <div className="text-xl font-black text-black">RM{selectedCamera.daily_rate}</div>
                 </div>
                 <div className="bg-white rounded-xl p-3 border border-slate-200">
-                  <div className="text-xs text-slate-500 font-bold mb-1">Weekly Rate</div>
-                  <div className="text-xl font-black text-black">RM{selectedCamera.weekly_rate || selectedCamera.daily_rate * 7}</div>
+                  <div className="text-xs text-slate-500 font-bold mb-1">{getDiscountThreshold(selectedCamera)}+ Days Rate</div>
+                  <div className="text-xl font-black text-black">RM{getExtendedDailyRate(selectedCamera)}</div>
                 </div>
               </div>
             </div>

@@ -73,41 +73,48 @@ export default function BookingDetailsPage() {
     loadBookingData();
   }, [loadBookingData]);
 
-  const handleAskForReview = async () => {
-    if (!booking?.customer?.phone) {
-      error('Missing phone number', 'Customer phone number is required before sending a review link.');
-      return;
+  const requestReviewAndOpen = async (targetBooking: Booking) => {
+    if (!targetBooking.customer?.phone) {
+      throw new Error('Customer phone number is required before sending a review link.');
     }
+
+    const response = await fetch('/api/reviews/request', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        customerId: targetBooking.customer_id,
+        bookingId: targetBooking.id,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || 'Failed to create review request');
+    }
+
+    const popup = window.open(result.whatsappUrl, '_blank', 'noopener,noreferrer');
+
+    if (!popup && result.reviewUrl && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(result.reviewUrl);
+      success('Review link copied', 'Paste it into WhatsApp manually if the popup was blocked.');
+      return 'copied';
+    }
+
+    return 'opened';
+  };
+
+  const handleAskForReview = async () => {
+    if (!booking) return;
 
     try {
       setIsSendingReview(true);
-
-      const response = await fetch('/api/reviews/request', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customerId: booking.customer_id,
-          bookingId: booking.id,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Failed to create review request');
+      const reviewResult = await requestReviewAndOpen(booking);
+      if (reviewResult === 'opened') {
+        success('Review request opened', 'WhatsApp opened with the booking-specific review link.');
       }
-
-      const popup = window.open(result.whatsappUrl, '_blank', 'noopener,noreferrer');
-
-      if (!popup && result.reviewUrl && navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(result.reviewUrl);
-        success('Review link copied', 'Paste it into WhatsApp manually if the popup was blocked.');
-        return;
-      }
-
-      success('Review request opened', 'WhatsApp opened with the booking-specific review link.');
     } catch (requestError) {
       console.error('Error creating review request:', requestError);
       error('Failed to create review request', requestError instanceof Error ? requestError.message : 'Please try again.');
@@ -346,8 +353,27 @@ export default function BookingDetailsPage() {
       const data = await response.json();
 
       if (data.success) {
-        setBooking(data.booking);
+        const updatedBooking = data.booking as Booking;
+        setBooking(updatedBooking);
         success(`Equipment marked as ${returned ? 'returned' : 'not returned'}`);
+
+        if (returned) {
+          try {
+            setIsSendingReview(true);
+            const reviewResult = await requestReviewAndOpen(updatedBooking);
+            if (reviewResult === 'opened') {
+              success('Review request opened', 'WhatsApp opened for customer review right after return completion.');
+            }
+          } catch (reviewError) {
+            console.error('Error auto-sending review request:', reviewError);
+            error(
+              'Return completed, review not sent',
+              reviewError instanceof Error ? reviewError.message : 'Please send the review request manually.'
+            );
+          } finally {
+            setIsSendingReview(false);
+          }
+        }
       } else {
         error('Failed to update return status', data.error || 'Please try again.');
       }
