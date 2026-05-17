@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getPhotographyGalleryImages } from '@/lib/api/photography-gallery';
 
 // GET - Fetch individual image data
 export async function GET(
@@ -11,19 +11,7 @@ export async function GET(
 
     console.log(`Loading image data for ID: ${id}`);
 
-    const { data, error } = await supabase
-      .from('photography_gallery_images')
-      .select('id, image_url')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      console.error('Error loading image:', error);
-      return NextResponse.json(
-        { error: 'Failed to load image' },
-        { status: 500 }
-      );
-    }
+    const data = (await getPhotographyGalleryImages()).find(image => image.id === id);
 
     if (!data) {
       return NextResponse.json(

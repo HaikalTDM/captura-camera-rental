@@ -12,7 +12,7 @@ export default function BookingStepsSection() {
     {
       id: 1,
       title: "Browse & Select Camera",
-      description: "Choose your preferred camera from our professional collection below",
+      description: "Choose your preferred camera from our professional collection below.",
       icon: "📷",
       details: "Browse through our high-quality cameras and select the one that fits your project needs",
       color: "from-blue-500 to-cyan-500"

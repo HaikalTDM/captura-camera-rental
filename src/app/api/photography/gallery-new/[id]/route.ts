@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import {
+  deletePhotographyGalleryImage,
+  togglePhotographyImageFeatured,
+  togglePhotographyImageStatus,
+  updatePhotographyGalleryImage
+} from '@/lib/api/photography-gallery';
 
 // PUT - Update photography gallery image
 export async function PUT(
@@ -13,83 +18,27 @@ export async function PUT(
     const { action, data: updateData } = body;
 
     if (action === 'toggle_active') {
-      // Toggle active status
-      const { data: currentImage, error: fetchError } = await supabase
-        .from('photography_gallery_images')
-        .select('is_active')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching current image status:', fetchError);
-        return NextResponse.json(
-          { error: 'Failed to fetch current status' },
-          { status: 500 }
-        );
-      }
-
-      const { data, error } = await supabase
-        .from('photography_gallery_images')
-        .update({
-          is_active: !currentImage.is_active,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error toggling active status:', error);
+      const success = await togglePhotographyImageStatus(id);
+      if (!success) {
         return NextResponse.json(
           { error: 'Failed to toggle active status' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        image: data
-      });
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'toggle_featured') {
-      // Toggle featured status
-      const { data: currentImage, error: fetchError } = await supabase
-        .from('photography_gallery_images')
-        .select('is_featured')
-        .eq('id', id)
-        .single();
-
-      if (fetchError) {
-        console.error('Error fetching current image status:', fetchError);
-        return NextResponse.json(
-          { error: 'Failed to fetch current status' },
-          { status: 500 }
-        );
-      }
-
-      const { data, error } = await supabase
-        .from('photography_gallery_images')
-        .update({
-          is_featured: !currentImage.is_featured,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error toggling featured status:', error);
+      const success = await togglePhotographyImageFeatured(id);
+      if (!success) {
         return NextResponse.json(
           { error: 'Failed to toggle featured status' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({
-        success: true,
-        image: data
-      });
+      return NextResponse.json({ success: true });
     }
 
     if (action === 'update') {
@@ -105,25 +54,18 @@ export async function PUT(
       }
 
       // Update the image
-      const { data, error } = await supabase
-        .from('photography_gallery_images')
-        .update({
-          title,
-          description: description || '',
-          category,
-          photographer_name: photographer_name || '',
-          location: location || '',
-          shoot_date: shoot_date || null,
-          is_featured: is_featured ?? false,
-          is_active: is_active ?? true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-        .select()
-        .single();
+      const data = await updatePhotographyGalleryImage(id, {
+        title,
+        description: description || '',
+        category,
+        photographer_name: photographer_name || '',
+        location: location || '',
+        shoot_date: shoot_date || undefined,
+        is_featured: is_featured ?? false,
+        is_active: is_active ?? true
+      });
 
-      if (error) {
-        console.error('Error updating image:', error);
+      if (!data) {
         return NextResponse.json(
           { error: 'Failed to update image' },
           { status: 500 }
@@ -157,15 +99,9 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+    const success = await deletePhotographyGalleryImage(id);
 
-    // Delete the image
-    const { error } = await supabase
-      .from('photography_gallery_images')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      console.error('Error deleting image:', error);
+    if (!success) {
       return NextResponse.json(
         { error: 'Failed to delete image' },
         { status: 500 }

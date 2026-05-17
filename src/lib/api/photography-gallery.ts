@@ -22,11 +22,24 @@ export interface PhotographyGalleryImage {
   updated_at: string
 }
 
+const PHOTOGRAPHY_GALLERY_TABLE = 'photography_gallery'
+
+const normalizePhotographyGalleryImage = (
+  image: PhotographyGalleryImage | Record<string, any>
+): PhotographyGalleryImage => {
+  return {
+    ...image,
+    is_active: (image as any).is_active ?? (image as any).is_public ?? true,
+    is_featured: (image as any).is_featured ?? false,
+    sort_order: (image as any).sort_order ?? 0
+  } as PhotographyGalleryImage
+}
+
 // Get all photography gallery images
 export async function getPhotographyGalleryImages(): Promise<PhotographyGalleryImage[]> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .select('*')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
@@ -36,7 +49,7 @@ export async function getPhotographyGalleryImages(): Promise<PhotographyGalleryI
       return []
     }
 
-    return data || []
+    return (data || []).map(normalizePhotographyGalleryImage)
   } catch (error) {
     console.error('Error in getPhotographyGalleryImages:', error)
     return []
@@ -47,9 +60,9 @@ export async function getPhotographyGalleryImages(): Promise<PhotographyGalleryI
 export async function getActivePhotographyGalleryImages(): Promise<PhotographyGalleryImage[]> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .select('*')
-      .eq('is_active', true)
+      .eq('is_public', true)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
 
@@ -58,7 +71,7 @@ export async function getActivePhotographyGalleryImages(): Promise<PhotographyGa
       return []
     }
 
-    return data || []
+    return (data || []).map(normalizePhotographyGalleryImage)
   } catch (error) {
     console.error('Error in getActivePhotographyGalleryImages:', error)
     return []
@@ -69,9 +82,9 @@ export async function getActivePhotographyGalleryImages(): Promise<PhotographyGa
 export async function getFeaturedPhotographyGalleryImages(): Promise<PhotographyGalleryImage[]> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .select('*')
-      .eq('is_active', true)
+      .eq('is_public', true)
       .eq('is_featured', true)
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false })
@@ -81,7 +94,7 @@ export async function getFeaturedPhotographyGalleryImages(): Promise<Photography
       return []
     }
 
-    return data || []
+    return (data || []).map(normalizePhotographyGalleryImage)
   } catch (error) {
     console.error('Error in getFeaturedPhotographyGalleryImages:', error)
     return []
@@ -98,6 +111,7 @@ export async function addPhotographyGalleryImage(imageData: {
   aspect_ratio: 'portrait' | 'landscape' | 'square'
   is_featured?: boolean
   is_active?: boolean
+  is_public?: boolean
   sort_order?: number
   photographer_name?: string
   location?: string
@@ -109,11 +123,11 @@ export async function addPhotographyGalleryImage(imageData: {
 }): Promise<PhotographyGalleryImage | null> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .insert([{
         ...imageData,
         is_featured: imageData.is_featured ?? false,
-        is_active: imageData.is_active ?? true,
+        is_public: imageData.is_active ?? imageData.is_public ?? true,
         sort_order: imageData.sort_order ?? 0
       }])
       .select()
@@ -124,7 +138,7 @@ export async function addPhotographyGalleryImage(imageData: {
       return null
     }
 
-    return data
+    return normalizePhotographyGalleryImage(data)
   } catch (error) {
     console.error('Error in addPhotographyGalleryImage:', error)
     return null
@@ -136,8 +150,8 @@ export async function togglePhotographyImageStatus(id: string): Promise<boolean>
   try {
     // First get current status
     const { data: currentImage, error: fetchError } = await supabase
-      .from('photography_gallery_images')
-      .select('is_active')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
+      .select('is_public')
       .eq('id', id)
       .single()
 
@@ -148,8 +162,8 @@ export async function togglePhotographyImageStatus(id: string): Promise<boolean>
 
     // Toggle the status
     const { error: updateError } = await supabase
-      .from('photography_gallery_images')
-      .update({ is_active: !currentImage.is_active })
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
+      .update({ is_public: !currentImage.is_public })
       .eq('id', id)
 
     if (updateError) {
@@ -169,7 +183,7 @@ export async function togglePhotographyImageFeatured(id: string): Promise<boolea
   try {
     // First get current status
     const { data: currentImage, error: fetchError } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .select('is_featured')
       .eq('id', id)
       .single()
@@ -181,7 +195,7 @@ export async function togglePhotographyImageFeatured(id: string): Promise<boolea
 
     // Toggle the status
     const { error: updateError } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .update({ is_featured: !currentImage.is_featured })
       .eq('id', id)
 
@@ -207,12 +221,14 @@ export async function updatePhotographyGalleryImage(id: string, updateData: {
   shoot_date?: string
   is_featured?: boolean
   is_active?: boolean
+  is_public?: boolean
 }): Promise<PhotographyGalleryImage | null> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .update({
         ...updateData,
+        is_public: updateData.is_active ?? updateData.is_public,
         updated_at: new Date().toISOString()
       })
       .eq('id', id)
@@ -224,7 +240,7 @@ export async function updatePhotographyGalleryImage(id: string, updateData: {
       return null
     }
 
-    return data
+    return normalizePhotographyGalleryImage(data)
   } catch (error) {
     console.error('Error in updatePhotographyGalleryImage:', error)
     return null
@@ -235,7 +251,7 @@ export async function updatePhotographyGalleryImage(id: string, updateData: {
 export async function deletePhotographyGalleryImage(id: string): Promise<boolean> {
   try {
     const { error } = await supabase
-      .from('photography_gallery_images')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
       .delete()
       .eq('id', id)
 
@@ -284,8 +300,8 @@ export async function getPhotographyGalleryStats(): Promise<{
 }> {
   try {
     const { data, error } = await supabase
-      .from('photography_gallery_images')
-      .select('is_active, is_featured, category')
+      .from(PHOTOGRAPHY_GALLERY_TABLE)
+      .select('is_public, is_featured, category')
 
     if (error) {
       console.error('Error fetching photography gallery stats:', error)
@@ -293,9 +309,9 @@ export async function getPhotographyGalleryStats(): Promise<{
     }
 
     const total = data.length
-    const active = data.filter(img => img.is_active).length
+    const active = data.filter(img => img.is_public).length
     const inactive = total - active
-    const featured = data.filter(img => img.is_featured && img.is_active).length
+    const featured = data.filter(img => img.is_featured && img.is_public).length
     
     const by_category = data.reduce((acc, img) => {
       acc[img.category] = (acc[img.category] || 0) + 1

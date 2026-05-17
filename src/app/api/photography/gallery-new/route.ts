@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { addPhotographyGalleryImage } from '@/lib/api/photography-gallery';
-import { supabase } from '@/lib/supabase';
+import {
+  addPhotographyGalleryImage,
+  getActivePhotographyGalleryImages,
+  getPhotographyGalleryImages
+} from '@/lib/api/photography-gallery';
 
 // GET - Fetch photography gallery images
 export async function GET(request: NextRequest) {
@@ -11,36 +14,14 @@ export async function GET(request: NextRequest) {
     const limit = limitParam ? parseInt(limitParam, 10) : (isAdmin ? 50 : 20);
 
     console.log(`Gallery API called - isAdmin: ${isAdmin}, limit: ${limit}`);
+    const images = isAdmin
+      ? await getPhotographyGalleryImages()
+      : await getActivePhotographyGalleryImages();
 
-    // Simplified approach like rental gallery - only essential fields
-    let selectFields = isAdmin
-      ? 'id, title, alt_text, is_featured, is_active, created_at'  // Admin: minimal metadata only
-      : 'id, title, image_url, alt_text, is_active, created_at';    // Client: essential fields only
+    const limitedImages = images.slice(0, Math.min(limit, isAdmin ? 100 : 20));
 
-    let query = supabase
-      .from('photography_gallery_images')
-      .select(selectFields)
-      .order('created_at', { ascending: false })
-      .limit(Math.min(limit, isAdmin ? 100 : 20)); // Cap limits for safety
-
-    // If not admin, only fetch active images
-    if (!isAdmin) {
-      query = query.eq('is_active', true);
-    }
-
-    console.log('Executing database query...');
-    const { data, error } = await query;
-
-    if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch gallery images', details: error.message },
-        { status: 500 }
-      );
-    }
-
-    console.log(`Query successful - found ${data?.length || 0} images`);
-    return NextResponse.json({ images: data || [] });
+    console.log(`Query successful - found ${limitedImages.length} images`);
+    return NextResponse.json({ images: limitedImages });
     
   } catch (error) {
     console.error('API error:', error);
@@ -63,6 +44,7 @@ export async function POST(request: NextRequest) {
     const location = formData.get('location') as string;
     const shoot_date = formData.get('shoot_date') as string;
     const is_featured = formData.get('is_featured') === 'true';
+    const isPublic = formData.get('isPublic');
 
     // Validate required fields
     if (!file || !title || !category) {
@@ -105,6 +87,7 @@ export async function POST(request: NextRequest) {
       category: category as 'wedding' | 'corporate' | 'graduation' | 'portrait' | 'event',
       aspect_ratio: aspectRatio as 'portrait' | 'landscape' | 'square',
       is_featured: is_featured,
+      is_active: isPublic !== null ? isPublic === 'true' : true,
       photographer_name: photographer_name || '',
       location: location || '',
       shoot_date: shoot_date || undefined,
