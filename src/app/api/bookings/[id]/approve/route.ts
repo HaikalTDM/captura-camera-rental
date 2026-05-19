@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { mirrorBookingUpsert } from '@/lib/hermes-mirror';
 
 export async function POST(
   request: NextRequest,
@@ -91,6 +92,7 @@ export async function POST(
     // The calendar block will be automatically created by the database trigger
 
     console.log('Booking approved successfully:', updatedBooking);
+    void mirrorBookingUpsert(bookingId);
 
     return NextResponse.json({
       success: true,

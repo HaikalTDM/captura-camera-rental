@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { mirrorBookingUpsert } from '@/lib/hermes-mirror';
 
 export async function POST(
   request: NextRequest,
@@ -57,6 +58,7 @@ export async function POST(
     }
 
     console.log('Deposit payment status updated successfully:', updatedBooking);
+    void mirrorBookingUpsert(bookingId);
 
     return NextResponse.json({
       success: true,

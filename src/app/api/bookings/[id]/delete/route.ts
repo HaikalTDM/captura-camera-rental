@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { mirrorBookingDelete } from '@/lib/hermes-mirror';
 
 export async function DELETE(
   request: NextRequest,
@@ -48,6 +49,7 @@ export async function DELETE(
     }
 
     console.log('Booking deleted successfully:', deletedBooking.id);
+    void mirrorBookingDelete(bookingId);
 
     return NextResponse.json({
       success: true,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { mirrorBookingUpsert } from '@/lib/hermes-mirror'
 
 export async function POST(
   request: NextRequest,
@@ -98,6 +99,7 @@ export async function POST(
     }
 
     console.log('Return status updated successfully:', data);
+    void mirrorBookingUpsert(bookingId);
 
     return NextResponse.json({
       success: true,

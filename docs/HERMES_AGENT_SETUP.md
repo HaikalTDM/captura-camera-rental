@@ -7,6 +7,7 @@ Use one reusable CLI instead of generating a new Python script every session.
 - Reads become one short command instead of 30-50 lines of generated code.
 - Booking state changes reuse the existing app routes, so Hermes does not need to know table internals.
 - Output stays compact by default, which keeps token usage low.
+- Hermes can read from a local SQLite mirror when Supabase is unavailable or quota-blocked.
 
 ## Files
 
@@ -32,6 +33,14 @@ Recommended value:
 - `CAPTURA_BASE_URL`
   - Local dev: `http://localhost:3000`
   - Production: `https://captura.my`
+- `CAPTURA_LOCAL_DB_PATH`
+  - Optional override for the local SQLite cache
+  - Default: `~/.hermes/data/captura.db`
+
+Additional value for near-real-time mirror receiver:
+
+- `CAPTURA_MIRROR_WEBHOOK_SECRET`
+  - Must match the website's `HERMES_MIRROR_WEBHOOK_SECRET`
 
 ## Install
 
@@ -53,16 +62,52 @@ Health:
 ~/.hermes/bin/captura-db health
 ```
 
+Initial sync:
+
+```bash
+~/.hermes/bin/captura-db sync
+```
+
+Start local mirror receiver:
+
+```bash
+~/.hermes/bin/captura-db serve-mirror --host 0.0.0.0 --port 8765
+```
+
 Operations summary:
 
 ```bash
 ~/.hermes/bin/captura-db summary
 ```
 
+Latest booking created:
+
+```bash
+~/.hermes/bin/captura-db latest --by created_at
+```
+
+Latest booking by rental start:
+
+```bash
+~/.hermes/bin/captura-db latest --by start_date
+```
+
 Pending approvals:
 
 ```bash
 ~/.hermes/bin/captura-db bookings --booking-status pending_approval --limit 10
+```
+
+Shortcut for pending approvals:
+
+```bash
+~/.hermes/bin/captura-db pending
+```
+
+Next actions queue:
+
+```bash
+~/.hermes/bin/captura-db next-actions
 ```
 
 Confirmed bookings on a date:
@@ -137,7 +182,49 @@ Mark deposit refunded and complete booking:
 ~/.hermes/bin/captura-db refund BOOKING_ID true --amount 100 --notes "Cash refund on return"
 ```
 
+Complete full booking workflow in one command:
+
+```bash
+~/.hermes/bin/captura-db complete BOOKING_ID
+```
+
 Use `--json` on any command if Hermes needs machine-readable output.
+
+## Local-first behavior
+
+- `summary`, `bookings`, `latest`, `pending`, `next-actions`, `booking`, `cameras`, and `customers` read from the local SQLite cache by default.
+- Use `--live` on those commands to force a live fetch from Supabase or the app API.
+- `availability` reads from the local cache by default if the cache exists, and falls back to live when needed.
+- If a live availability check returns Supabase `402`, the CLI falls back to the local cache automatically when possible.
+
+Recommended first step after deploying or rotating data:
+
+```bash
+~/.hermes/bin/captura-db sync
+```
+
+## Website push configuration
+
+Set these on the Captura website host:
+
+```env
+HERMES_MIRROR_WEBHOOK_URL=http://YOUR-HERMES-HOST:8765/mirror
+HERMES_MIRROR_WEBHOOK_SECRET=YOUR_SHARED_SECRET
+```
+
+Set this on the Hermes host:
+
+```env
+CAPTURA_MIRROR_WEBHOOK_SECRET=YOUR_SHARED_SECRET
+```
+
+When customer bookings or booking status changes succeed, the website will push the affected booking into the Hermes SQLite mirror immediately. Cron `sync` remains the fallback.
+
+Important:
+
+- The website must be able to reach the Hermes host.
+- If Hermes is behind NAT or not publicly reachable, use Tailscale, Cloudflare Tunnel, or another secure tunnel.
+- Keep `sync` as a backup even when webhook push is enabled.
 
 ## Recommended Hermes behavior
 
@@ -148,6 +235,8 @@ Use ~/.hermes/bin/captura-db for all Captura reads and booking actions.
 Do not generate temporary Python scripts for Supabase access.
 Prefer compact text output unless JSON is explicitly needed.
 For state changes, use the CLI commands instead of raw Supabase PATCH calls.
+Prefer high-level commands like `latest`, `pending`, `next-actions`, and `complete` before chaining lower-level commands.
+Run `captura-db sync` when the cache is new, stale, or after long downtime.
 ```
 
 ## Why writes use app routes
@@ -159,6 +248,14 @@ Direct table updates skip booking logic already implemented in the app. Example:
 - Approve flow also checks availability before confirming.
 
 The CLI keeps reads fast and lets the app own workflow rules.
+
+## No-cost read strategy
+
+- Sync from Supabase occasionally.
+- Serve most Hermes reads from the local SQLite file.
+- Keep live calls mainly for writes and manual refreshes.
+
+This reduces Supabase egress and keeps Hermes usable during temporary quota blocks.
 
 ## Security note
 

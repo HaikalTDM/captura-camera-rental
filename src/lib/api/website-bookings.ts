@@ -1,6 +1,7 @@
 import { supabase } from '../supabase';
 import { createCustomer } from './bookings';
 import type { Booking, BookingGroup, Customer } from '../supabase';
+import { mirrorBookingUpsert, mirrorBookingsUpsert } from '@/lib/hermes-mirror';
 
 // Interface for website booking submission
 export interface WebsiteBookingData {
@@ -232,6 +233,8 @@ export async function submitWebsiteBooking(bookingData: WebsiteBookingData): Pro
     // Step 5: Booking completed successfully - no automatic WhatsApp notifications
     console.log('Booking submission completed without WhatsApp integration');
 
+    void mirrorBookingUpsert(booking.id);
+
     return {
       success: true,
       booking,
@@ -362,6 +365,8 @@ export async function submitWebsiteBookingGroup(
         error: 'Failed to create grouped booking records',
       };
     }
+
+    void mirrorBookingsUpsert(createdBookings.map((item) => item.id));
 
     return {
       success: true,
