@@ -40,4 +40,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# captura bot
+bot/.venv-bot/
+bot/__pycache__/
+bot/.chat_id
+bot/*.pyc
+
 .vercel
