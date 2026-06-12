@@ -10,7 +10,6 @@ export async function generateInvoice(bookingId: string): Promise<Invoice> {
     .from('bookings')
     .select(`
       *,
-      customer:customers(*),
       customer:customers(*)
     `)
     .eq('id', bookingId)
@@ -35,15 +34,18 @@ export async function generateInvoice(bookingId: string): Promise<Invoice> {
     if (cam) cameraName = cam.name;
   }
 
-  // Fetch business settings
+  // Fetch business settings (columns may be setting_key/setting_value or key/value)
+  type SettingsRow = Record<string, unknown>;
   const { data: settings } = await supabase
     .from('business_settings')
-    .select('setting_key, setting_value');
+    .select('*');
 
   const settingsMap: Record<string, string> = {};
   if (settings) {
-    for (const s of settings) {
-      settingsMap[s.setting_key] = s.setting_value;
+    for (const s of settings as SettingsRow[]) {
+      const k = (s.setting_key ?? s.key ?? '') as string;
+      const v = (s.setting_value ?? s.value ?? '') as string;
+      if (k) settingsMap[k] = v;
     }
   }
 

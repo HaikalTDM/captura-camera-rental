@@ -7,7 +7,6 @@ export async function generateInvoice(bookingId) {
         .from('bookings')
         .select(`
       *,
-      customer:customers(*),
       customer:customers(*)
     `)
         .eq('id', bookingId)
@@ -30,14 +29,16 @@ export async function generateInvoice(bookingId) {
         if (cam)
             cameraName = cam.name;
     }
-    // Fetch business settings
     const { data: settings } = await supabase
         .from('business_settings')
-        .select('setting_key, setting_value');
+        .select('*');
     const settingsMap = {};
     if (settings) {
         for (const s of settings) {
-            settingsMap[s.setting_key] = s.setting_value;
+            const k = (s.setting_key ?? s.key ?? '');
+            const v = (s.setting_value ?? s.value ?? '');
+            if (k)
+                settingsMap[k] = v;
         }
     }
     // Check if invoice already exists

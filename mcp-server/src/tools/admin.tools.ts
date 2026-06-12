@@ -1,23 +1,45 @@
 import { getSupabaseAdmin, logQueryError } from '../supabase/client.js';
 import type { BusinessSettings } from '../supabase/types.js';
 
+type SettingsRow = Record<string, unknown> & {
+  setting_key?: string | null;
+  setting_value?: string | null;
+  key?: string | null;
+  value?: string | null;
+};
+
+function getRowKey(row: SettingsRow): string {
+  return String(row.setting_key ?? row.key ?? '');
+}
+
+function getRowValue(row: SettingsRow): string {
+  return String(row.setting_value ?? row.value ?? '');
+}
+
 export async function getSettings(settingKey?: string): Promise<BusinessSettings[]> {
   const supabase = getSupabaseAdmin();
 
-  let query = supabase.from('business_settings').select('*');
-
-  if (settingKey) {
-    query = query.eq('setting_key', settingKey);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.from('business_settings').select('*');
 
   if (error) {
     logQueryError('admin.getSettings', error);
     throw new Error('Failed to fetch settings');
   }
 
-  return (data || []) as BusinessSettings[];
+  const rows = (data || []) as SettingsRow[];
+
+  const filtered = settingKey
+    ? rows.filter((r) => getRowKey(r) === settingKey)
+    : rows;
+
+  return filtered.map((r) => ({
+    id: String(r.id ?? ''),
+    setting_key: getRowKey(r),
+    setting_value: getRowValue(r),
+    description: (r.description as string | null) ?? null,
+    created_at: String(r.created_at ?? ''),
+    updated_at: String(r.updated_at ?? ''),
+  }));
 }
 
 export async function updateSetting(
@@ -26,23 +48,42 @@ export async function updateSetting(
   _description?: string
 ): Promise<BusinessSettings> {
   const supabase = getSupabaseAdmin();
+  const now = new Date().toISOString();
 
-  const { data, error } = await supabase
-    .from('business_settings')
-    .upsert({
-      setting_key: settingKey,
-      setting_value: settingValue,
-      updated_at: new Date().toISOString(),
-    }, { onConflict: 'setting_key' })
-    .select()
-    .single();
+  const attempts: [Record<string, string>, string][] = [
+    [{ setting_key: settingKey, setting_value: settingValue, updated_at: now }, 'setting_key'],
+    [{ key: settingKey, value: settingValue, updated_at: now }, 'key'],
+  ];
 
-  if (error) {
-    logQueryError('admin.updateSetting', error);
-    throw new Error('Failed to update setting');
+  let lastError: { code?: string | null; message?: string } | null = null;
+
+  for (const [payload, onConflict] of attempts) {
+    const { data, error } = await supabase
+      .from('business_settings')
+      .upsert(payload, { onConflict })
+      .select()
+      .single();
+
+    if (!error) {
+      const row = data as SettingsRow;
+      return {
+        id: String(row.id ?? ''),
+        setting_key: getRowKey(row),
+        setting_value: getRowValue(row),
+        description: (row.description as string | null) ?? null,
+        created_at: String(row.created_at ?? ''),
+        updated_at: String(row.updated_at ?? ''),
+      };
+    }
+
+    lastError = error;
+    if (error.code !== '42703') {
+      break;
+    }
   }
 
-  return data as BusinessSettings;
+  logQueryError('admin.updateSetting', lastError ?? new Error('Unknown error'));
+  throw new Error('Failed to update setting');
 }
 
 export async function getDashboardSummary(period: string): Promise<Record<string, unknown>> {
