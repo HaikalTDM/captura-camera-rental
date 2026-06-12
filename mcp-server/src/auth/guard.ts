@@ -23,7 +23,7 @@ export function requireAccess(
   accessLevel: AccessLevel,
   apiKey?: string
 ): void {
-  if (!isAuthRequired() && accessLevel === AccessLevel.PUBLIC_READ) {
+  if (!isAuthRequired()) {
     return;
   }
 

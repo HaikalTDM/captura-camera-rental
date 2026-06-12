@@ -12,7 +12,7 @@ export class AuthError extends Error {
     }
 }
 export function requireAccess(toolName, accessLevel, apiKey) {
-    if (!isAuthRequired() && accessLevel === AccessLevel.PUBLIC_READ) {
+    if (!isAuthRequired()) {
         return;
     }
     if (accessLevel === AccessLevel.PUBLIC_READ) {
