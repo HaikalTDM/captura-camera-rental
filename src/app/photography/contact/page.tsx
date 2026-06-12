@@ -82,7 +82,7 @@ export default function ContactPage() {
         </svg>
       ),
       title: 'Location',
-      content: 'Seri Kembangan, Selangor',
+      content: 'Selayang, Kuala Lumpur',
       description: 'Coverage within 30km included',
       action: () => window.open('https://maps.google.com/?q=Seri+Kembangan+Selangor', '_blank')
     }

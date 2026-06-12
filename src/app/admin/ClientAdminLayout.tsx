@@ -43,6 +43,8 @@ export default function AdminLayout({
 
   // Check if current route is photography admin
   const isPhotographyRoute = pathname?.startsWith('/admin/photography');
+  // Check if current route is studio admin (has its own layout)
+  const isStudioRoute = pathname?.startsWith('/admin/studio');
 
   // ALL HOOKS MUST BE AT THE TOP - BEFORE ANY CONDITIONAL RETURNS
   useEffect(() => {
@@ -82,6 +84,11 @@ export default function AdminLayout({
 
   // For photography routes, return children without admin layout
   if (isPhotographyRoute) {
+    return children;
+  }
+
+  // For studio routes, return children without admin layout (studio has its own)
+  if (isStudioRoute) {
     return children;
   }
 
@@ -166,8 +173,17 @@ export default function AdminLayout({
                   })}
                 </nav>
 
-                {/* Logout Button */}
-                <div className="p-4 border-t border-[#26211d]">
+                {/* Studio Admin + Logout */}
+                <div className="p-4 border-t border-[#26211d] space-y-1">
+                  <Link
+                    href="/admin/studio"
+                    className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#191525] hover:text-purple-300 rounded-xl transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium text-sm">Studio Admin</span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#211614] hover:text-red-300 rounded-xl transition-all duration-200"
@@ -237,8 +253,18 @@ export default function AdminLayout({
                   })}
                 </nav>
 
-                {/* Logout Button */}
-                <div className="p-4 border-t border-[#26211d]">
+                {/* Studio Admin + Logout */}
+                <div className="p-4 border-t border-[#26211d] space-y-1">
+                  <Link
+                    href="/admin/studio"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#191525] hover:text-purple-300 rounded-xl transition-all duration-200"
+                  >
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="font-medium text-sm">Studio Admin</span>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="flex items-center gap-3 w-full px-4 py-3 text-stone-400 hover:bg-[#211614] hover:text-red-300 rounded-xl transition-all duration-200"

@@ -1,0 +1,176 @@
+import { getSupabaseAdmin, logQueryError } from '../supabase/client.js';
+export async function getSettings(settingKey) {
+    const supabase = getSupabaseAdmin();
+    let query = supabase.from('business_settings').select('*');
+    if (settingKey) {
+        query = query.eq('setting_key', settingKey);
+    }
+    const { data, error } = await query;
+    if (error) {
+        logQueryError('admin.getSettings', error);
+        throw new Error('Failed to fetch settings');
+    }
+    return (data || []);
+}
+export async function updateSetting(settingKey, settingValue, description) {
+    const supabase = getSupabaseAdmin();
+    const updates = {
+        setting_value: settingValue,
+        updated_at: new Date().toISOString(),
+    };
+    if (description) {
+        updates.description = description;
+    }
+    const { data, error } = await supabase
+        .from('business_settings')
+        .upsert({
+        setting_key: settingKey,
+        setting_value: settingValue,
+        description: description || null,
+        updated_at: new Date().toISOString(),
+    }, { onConflict: 'setting_key' })
+        .select()
+        .single();
+    if (error) {
+        logQueryError('admin.updateSetting', error);
+        throw new Error('Failed to update setting');
+    }
+    return data;
+}
+export async function getDashboardSummary(period) {
+    const supabase = getSupabaseAdmin();
+    const now = new Date();
+    let dateFrom;
+    switch (period) {
+        case 'today':
+            dateFrom = now.toISOString().split('T')[0];
+            break;
+        case 'week':
+            dateFrom = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+            break;
+        case 'month':
+            dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+            break;
+        case 'year':
+            dateFrom = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
+            break;
+        default:
+            dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+    }
+    // Active bookings count
+    const { count: activeBookings, error: activeError } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('booking_status', 'confirmed');
+    if (activeError) {
+        logQueryError('admin.dashboard.active', activeError);
+    }
+    // Pending bookings
+    const { count: pendingBookings, error: pendingError } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('booking_status', 'pending_approval');
+    if (pendingError) {
+        logQueryError('admin.dashboard.pending', pendingError);
+    }
+    // New bookings this period
+    const { count: newBookings, error: newError } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', dateFrom);
+    if (newError) {
+        logQueryError('admin.dashboard.new', newError);
+    }
+    // Revenue this period
+    const { data: revenueData, error: revenueError } = await supabase
+        .from('bookings')
+        .select('total_amount')
+        .gte('created_at', dateFrom)
+        .not('booking_status', 'in', '("cancelled","rejected")');
+    if (revenueError) {
+        logQueryError('admin.dashboard.revenue', revenueError);
+    }
+    const totalRevenue = (revenueData || []).reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+    // Available cameras
+    const { count: availableCameras, error: camerasError } = await supabase
+        .from('cameras')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_available', true);
+    if (camerasError) {
+        logQueryError('admin.dashboard.cameras', camerasError);
+    }
+    // Customers count this period
+    const { count: customersCount, error: customersError } = await supabase
+        .from('customers')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', dateFrom);
+    if (customersError) {
+        logQueryError('admin.dashboard.customers', customersError);
+    }
+    return {
+        period,
+        date_from: dateFrom,
+        metrics: {
+            active_bookings: activeBookings || 0,
+            pending_approvals: pendingBookings || 0,
+            new_bookings: newBookings || 0,
+            total_revenue_rm: totalRevenue,
+            available_cameras: availableCameras || 0,
+            new_customers: customersCount || 0,
+        },
+    };
+}
+export async function getRevenueReport(startDate, endDate, groupBy) {
+    const supabase = getSupabaseAdmin();
+    const { data: bookings, error } = await supabase
+        .from('bookings')
+        .select(`
+      id,
+      total_amount,
+      start_date,
+      end_date,
+      camera_id,
+      camera:cameras(name),
+      booking_status
+    `)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .not('booking_status', 'in', '("cancelled","rejected")');
+    if (error) {
+        logQueryError('admin.revenueReport', error);
+        throw new Error('Failed to generate revenue report');
+    }
+    const grouped = {};
+    for (const booking of bookings || []) {
+        let key;
+        switch (groupBy) {
+            case 'camera':
+                key = booking.camera?.name || 'Unknown';
+                break;
+            case 'month':
+                key = booking.start_date.substring(0, 7);
+                break;
+            default:
+                key = booking.start_date.substring(0, 7);
+        }
+        if (!grouped[key]) {
+            grouped[key] = { count: 0, revenue: 0 };
+        }
+        grouped[key].count++;
+        grouped[key].revenue += Number(booking.total_amount || 0);
+    }
+    const breakdown = Object.entries(grouped).map(([key, value]) => ({
+        label: key,
+        bookings: value.count,
+        revenue_rm: Math.round(value.revenue * 100) / 100,
+    }));
+    const totalRevenue = breakdown.reduce((sum, item) => sum + item.revenue_rm, 0);
+    return {
+        period: { start_date: startDate, end_date: endDate },
+        group_by: groupBy,
+        total_revenue_rm: Math.round(totalRevenue * 100) / 100,
+        total_bookings: breakdown.reduce((sum, item) => sum + item.bookings, 0),
+        breakdown,
+    };
+}
+//# sourceMappingURL=admin.tools.js.map

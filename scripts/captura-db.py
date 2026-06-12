@@ -1074,7 +1074,8 @@ def booking_select() -> str:
     return (
         "id,start_date,end_date,total_days,total_amount,deposit_amount,deposit_paid,"
         "final_payment_paid,deposit_refunded,status,booking_status,pickup_method,"
-        "equipment_picked_up,equipment_returned,created_at,customer_id,camera_id"
+        "equipment_picked_up,equipment_returned,created_at,customer_id,camera_id,"
+        "equipment_return_date,equipment_pickup_date,pickup_date"
     )
 
 
@@ -1260,6 +1261,55 @@ def pending_bookings(args: argparse.Namespace) -> None:
     print(f"count={len(rows)}")
 
 
+def latest_returned(args: argparse.Namespace) -> None:
+    connection = connect_local_db()
+    use_local = not args.live and local_cache_ready(connection, "bookings")
+    if use_local:
+        rows = sqlite_rows(
+            connection.execute(
+                """
+                SELECT
+                    b.*,
+                    c.full_name AS customer_full_name,
+                    c.phone AS customer_phone,
+                    c.email AS customer_email,
+                    cam.name AS camera_name,
+                    cam.brand AS camera_brand,
+                    cam.model AS camera_model
+                FROM bookings b
+                LEFT JOIN customers c ON c.id = b.customer_id
+                LEFT JOIN cameras cam ON cam.id = b.camera_id
+                WHERE b.equipment_returned = 1 AND b.equipment_return_date IS NOT NULL
+                ORDER BY b.equipment_return_date DESC
+                LIMIT 1
+                """
+            )
+        )
+        rows = [normalize_local_booking(row) for row in rows]
+    else:
+        rows = enrich_bookings(
+            supabase_request(
+                "bookings",
+                params={
+                    "select": booking_select(),
+                    "equipment_returned": "eq.true",
+                    "not": "equipment_return_date.is.null",
+                    "order": "equipment_return_date.desc",
+                    "limit": 1,
+                },
+            )
+        )
+    if not rows:
+        print("count=0")
+        return
+    row = rows[0]
+    if args.json:
+        print_json(add_source(row, "cache" if use_local else "live"))
+        return
+    print(summarize_booking(row))
+    print(f"returned_at={row.get('equipment_return_date') or '-'}")
+
+
 def get_booking(args: argparse.Namespace) -> None:
     connection = connect_local_db()
     use_local = not args.live and local_cache_ready(connection, "bookings")
@@ -1416,6 +1466,57 @@ def next_actions(args: argparse.Namespace) -> None:
             print(f"{row.get('id')} | {customer_name} | {camera_name} | {start}->{end} | booking={booking_status}{status_suffix}")
 
 
+def overdue_bookings(args: argparse.Namespace) -> None:
+    today = dt.date.today().isoformat()
+    connection = connect_local_db()
+    use_local = not args.live and local_cache_ready(connection, "bookings")
+    if use_local:
+        rows = sqlite_rows(
+            connection.execute(
+                """
+                SELECT
+                    b.*,
+                    c.full_name AS customer_full_name,
+                    c.phone AS customer_phone,
+                    c.email AS customer_email,
+                    cam.name AS camera_name,
+                    cam.brand AS camera_brand,
+                    cam.model AS camera_model
+                FROM bookings b
+                LEFT JOIN customers c ON c.id = b.customer_id
+                LEFT JOIN cameras cam ON cam.id = b.camera_id
+                WHERE b.final_payment_paid = 0
+                  AND b.booking_status = 'completed'
+                  AND b.end_date < ?
+                ORDER BY b.end_date DESC
+                LIMIT ?
+                """,
+                (today, args.limit),
+            )
+        )
+        rows = [normalize_local_booking(row) for row in rows]
+    else:
+        rows = enrich_bookings(
+            supabase_request(
+                "bookings",
+                params={
+                    "select": booking_select(),
+                    "final_payment_paid": "eq.false",
+                    "booking_status": "eq.completed",
+                    "end_date": f"lt.{today}",
+                    "order": "end_date.desc",
+                    "limit": args.limit,
+                },
+            )
+        )
+    if args.json:
+        print_json(add_source(rows, "cache" if use_local else "live"))
+        return
+    for row in rows:
+        print(summarize_booking(row))
+    print(f"count={len(rows)}")
+
+
 def check_availability(args: argparse.Namespace) -> None:
     connection = connect_local_db()
     if not args.live and local_cache_ready(connection, None):
@@ -1526,6 +1627,25 @@ def mark_pickup(args: argparse.Namespace) -> None:
         "booking_id": ((data.get("booking") or {}).get("id")),
         "equipment_picked_up": ((data.get("booking") or {}).get("equipment_picked_up")),
         "equipment_pickup_date": ((data.get("booking") or {}).get("equipment_pickup_date")),
+        "status": ((data.get("booking") or {}).get("status")),
+    })
+
+
+def mark_return(args: argparse.Namespace) -> None:
+    payload = {
+        "equipment_returned": args.returned,
+        "equipment_return_notes": args.notes,
+        "equipment_condition_return": args.condition,
+        "booking_status": args.booking_status,
+    }
+    data = app_request("POST", f"/api/bookings/{args.booking_id}/return-status", payload)
+    refresh_local_booking_cache(args.booking_id)
+    print_json(data if args.json else {
+        "success": data.get("success"),
+        "booking_id": ((data.get("booking") or {}).get("id")),
+        "equipment_returned": ((data.get("booking") or {}).get("equipment_returned")),
+        "equipment_return_date": ((data.get("booking") or {}).get("equipment_return_date")),
+        "booking_status": ((data.get("booking") or {}).get("booking_status")),
         "status": ((data.get("booking") or {}).get("status")),
     })
 
@@ -1649,6 +1769,33 @@ def complete_booking(args: argparse.Namespace) -> None:
     )
 
 
+def cancel_booking(args: argparse.Namespace) -> None:
+    payload = {
+        "cancellation_reason": args.reason,
+        "admin_notes": args.notes,
+    }
+    data = app_request("POST", f"/api/bookings/{args.booking_id}/cancel", payload)
+    refresh_local_booking_cache(args.booking_id)
+    print_json(data if args.json else {
+        "success": data.get("success"),
+        "message": data.get("message"),
+        "booking_id": ((data.get("booking") or {}).get("id")),
+        "booking_status": ((data.get("booking") or {}).get("booking_status")),
+        "status": ((data.get("booking") or {}).get("status")),
+    })
+
+
+def delete_booking(args: argparse.Namespace) -> None:
+    data = app_request("DELETE", f"/api/bookings/{args.booking_id}")
+    connection = connect_local_db()
+    apply_mirror_delete_payload(connection, {"booking_id": args.booking_id, "sent_at": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z"})
+    print_json(data if args.json else {
+        "success": data.get("success"),
+        "message": data.get("message"),
+        "booking_id": ((data.get("booking") or {}).get("id")) or args.booking_id,
+    })
+
+
 def health(args: argparse.Namespace) -> None:
     connection = connect_local_db()
     cache = cache_health(connection)
@@ -1754,6 +1901,11 @@ def build_parser() -> argparse.ArgumentParser:
     latest_parser.add_argument("--json", action="store_true")
     latest_parser.set_defaults(func=latest_booking)
 
+    latest_returned_parser = subparsers.add_parser("latest-returned", help="Get latest returned booking.")
+    latest_returned_parser.add_argument("--live", action="store_true")
+    latest_returned_parser.add_argument("--json", action="store_true")
+    latest_returned_parser.set_defaults(func=latest_returned)
+
     pending_parser = subparsers.add_parser("pending", help="List pending approval bookings.")
     pending_parser.add_argument("--live", action="store_true")
     pending_parser.add_argument("--limit", type=int, default=10)
@@ -1765,6 +1917,12 @@ def build_parser() -> argparse.ArgumentParser:
     next_actions_parser.add_argument("--limit", type=int, default=5)
     next_actions_parser.add_argument("--json", action="store_true")
     next_actions_parser.set_defaults(func=next_actions)
+
+    overdue_parser = subparsers.add_parser("overdue", help="List overdue final-payment bookings.")
+    overdue_parser.add_argument("--live", action="store_true")
+    overdue_parser.add_argument("--limit", type=int, default=20)
+    overdue_parser.add_argument("--json", action="store_true")
+    overdue_parser.set_defaults(func=overdue_bookings)
 
     booking_parser = subparsers.add_parser("booking", help="Get one booking.")
     booking_parser.add_argument("booking_id")
@@ -1834,6 +1992,15 @@ def build_parser() -> argparse.ArgumentParser:
     pickup_parser.add_argument("--json", action="store_true")
     pickup_parser.set_defaults(func=mark_pickup)
 
+    return_parser = subparsers.add_parser("return", help="Mark equipment returned or undo return.")
+    return_parser.add_argument("booking_id")
+    return_parser.add_argument("returned", type=bool_arg)
+    return_parser.add_argument("--condition", choices=["excellent", "good", "fair", "damaged"], default="good")
+    return_parser.add_argument("--notes")
+    return_parser.add_argument("--booking-status")
+    return_parser.add_argument("--json", action="store_true")
+    return_parser.set_defaults(func=mark_return)
+
     refund_parser = subparsers.add_parser("refund", help="Mark deposit refund state.")
     refund_parser.add_argument("booking_id")
     refund_parser.add_argument("refunded", type=bool_arg)
@@ -1842,6 +2009,18 @@ def build_parser() -> argparse.ArgumentParser:
     refund_parser.add_argument("--notes")
     refund_parser.add_argument("--json", action="store_true")
     refund_parser.set_defaults(func=mark_refund)
+
+    cancel_parser = subparsers.add_parser("cancel", help="Cancel a booking.")
+    cancel_parser.add_argument("booking_id")
+    cancel_parser.add_argument("--reason")
+    cancel_parser.add_argument("--notes")
+    cancel_parser.add_argument("--json", action="store_true")
+    cancel_parser.set_defaults(func=cancel_booking)
+
+    delete_parser = subparsers.add_parser("delete", help="Delete a booking.")
+    delete_parser.add_argument("booking_id")
+    delete_parser.add_argument("--json", action="store_true")
+    delete_parser.set_defaults(func=delete_booking)
 
     complete_parser = subparsers.add_parser("complete", help="Complete booking workflow in one command.")
     complete_parser.add_argument("booking_id")

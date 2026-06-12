@@ -95,7 +95,7 @@ export default function Footer() {
         {/* Bottom Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-white/10">
           <p className="text-slate-500 text-xs font-semibold">
-            © 2024 CAPTURA • Kuala Lumpur
+            © {new Date().getFullYear()} CAPTURA • Kuala Lumpur
           </p>
           <div className="flex gap-4">
             <a href="#" className="text-slate-500 hover:text-white text-xs font-semibold transition-colors">Privacy</a>

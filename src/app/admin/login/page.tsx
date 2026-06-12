@@ -153,7 +153,7 @@ export default function AdminLogin() {
         {/* Footer */}
         <div className="text-center mt-8">
           <p className="text-gray-500 text-sm font-medium">
-            © 2024 CAPTURA
+            © {new Date().getFullYear()} CAPTURA
           </p>
         </div>
       </div>

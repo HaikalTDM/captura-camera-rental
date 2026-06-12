@@ -129,7 +129,7 @@ export default function PhotographyAdminLogin() {
         {/* Footer */}
         <div className="text-center mt-4">
           <p className="text-black/40 text-sm">
-            © 2024 CAPTURA Photography - Admin Panel
+            © {new Date().getFullYear()} CAPTURA Photography - Admin Panel
           </p>
         </div>
       </div>

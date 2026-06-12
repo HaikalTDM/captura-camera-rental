@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import html2canvas from 'html2canvas';
+import type html2canvasType from 'html2canvas';
 
 interface CalendarEvent {
   id: string;
@@ -91,7 +91,8 @@ export default function TikTokCalendarExport({
             console.warn('Font loading warning:', error);
           }
         }
-      } as unknown as Parameters<typeof html2canvas>[1];
+      } as unknown as Parameters<typeof html2canvasType>[1];
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(exportElement, canvasOptions);
 
       // Create download link

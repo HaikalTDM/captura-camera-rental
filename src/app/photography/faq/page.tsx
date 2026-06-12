@@ -28,8 +28,8 @@ const faqData: FAQItem[] = [
   {
     id: '3',
     category: 'booking',
-    question: 'Do you travel outside Seri Kembangan?',
-    answer: 'Yes! Our standard coverage area is within 30km of Seri Kembangan. For locations beyond this, additional travel charges may apply. We\'re happy to travel anywhere for your special event.'
+    question: 'Do you travel outside Selayang / Kuala Lumpur?',
+    answer: 'Yes! Our standard coverage area is within 30km of Selayang / KL. For locations beyond this, additional travel charges may apply. We\'re happy to travel anywhere for your special event.'
   },
 
   // Pricing Questions

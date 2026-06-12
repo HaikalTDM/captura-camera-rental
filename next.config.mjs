@@ -17,12 +17,20 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'api.placeholder.com',
       },
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
-    unoptimized: true
+    formats: ['image/avif', 'image/webp'],
   },
   // Reduce console warnings
   experimental: {
-    optimizePackageImports: ['@supabase/supabase-js']
+    optimizePackageImports: ['@supabase/supabase-js', 'framer-motion', 'recharts', 'lucide-react']
   },
   turbopack: {
     // Ensure correct project root to avoid conflicts (e.g., favicon) and dev mis-detection
@@ -48,6 +56,17 @@ const nextConfig = {
           },
         ],
       },
+    ];
+  },
+  // Redirects from old /photography routes to new /studio routes
+  async redirects() {
+    return [
+      { source: '/photography', destination: '/studio/photography', permanent: true },
+      { source: '/photography/packages', destination: '/studio/photography/packages', permanent: true },
+      { source: '/photography/gallery', destination: '/studio/photography/gallery', permanent: true },
+      { source: '/photography/testimonials', destination: '/studio/testimonials', permanent: true },
+      { source: '/photography/faq', destination: '/studio/faq', permanent: true },
+      { source: '/photography/contact', destination: '/studio/contact', permanent: true },
     ];
   },
 };

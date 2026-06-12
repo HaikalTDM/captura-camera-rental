@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import html2canvas from 'html2canvas';
+import type html2canvasType from 'html2canvas';
 import {
   CalendarDays,
   ChevronLeft,
@@ -679,6 +679,7 @@ export default function CreatorCalendarStudio() {
       await waitForImages(iframeDoc);
       await new Promise((resolve) => setTimeout(resolve, 80));
 
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(clonedElement, {
         width: POSTER_WIDTH,
         height: POSTER_HEIGHT,
@@ -690,7 +691,7 @@ export default function CreatorCalendarStudio() {
         imageTimeout: 15000,
         removeContainer: true,
         foreignObjectRendering: false,
-      } as Parameters<typeof html2canvas>[1]);
+      } as Parameters<typeof html2canvasType>[1]);
 
       const extension = format === 'png' ? 'png' : 'jpg';
       const link = document.createElement('a');

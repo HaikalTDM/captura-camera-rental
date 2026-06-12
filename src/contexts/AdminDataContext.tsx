@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo, useCallback } from 'react';
+import { createContext, useContext, useMemo, useCallback, useState } from 'react';
 import useSWR from 'swr';
 import { getAllBookings, getAllCameras } from '@/lib/api/bookings';
 import type { Booking, Camera } from '@/lib/supabase';
@@ -13,6 +13,13 @@ interface BookingStats {
   completed: number;
   cancelled: number;
   bySource: Record<string, number>;
+}
+
+interface PaginationState {
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
 }
 
 interface AdminDataContextType {
@@ -149,5 +156,71 @@ export function useCameras() {
 export function useBookingStats() {
   const { stats, isLoading, error } = useAdminData();
   return { stats, isLoading, error };
+}
+
+/**
+ * Paginated bookings hook for components that display lists.
+ * Provides client-side pagination over the cached bookings data.
+ */
+export function usePaginatedBookings(options?: {
+  pageSize?: number;
+  statusFilter?: string;
+  sortField?: keyof Booking;
+  sortDirection?: 'asc' | 'desc';
+}) {
+  const { bookings, isLoading, error, mutateBookings } = useAdminData();
+  const pageSize = options?.pageSize ?? 20;
+  const [page, setPage] = useState(1);
+
+  const filteredBookings = useMemo(() => {
+    let result = [...bookings];
+
+    if (options?.statusFilter) {
+      result = result.filter(
+        (b) => b.booking_status === options.statusFilter || b.status === options.statusFilter
+      );
+    }
+
+    if (options?.sortField) {
+      const dir = options.sortDirection === 'asc' ? 1 : -1;
+      result.sort((a, b) => {
+        const aVal = a[options.sortField!] ?? '';
+        const bVal = b[options.sortField!] ?? '';
+        if (aVal < bVal) return -1 * dir;
+        if (aVal > bVal) return 1 * dir;
+        return 0;
+      });
+    }
+
+    return result;
+  }, [bookings, options?.statusFilter, options?.sortField, options?.sortDirection]);
+
+  const totalItems = filteredBookings.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const safePage = Math.min(page, totalPages);
+
+  const paginatedBookings = useMemo(() => {
+    const start = (safePage - 1) * pageSize;
+    return filteredBookings.slice(start, start + pageSize);
+  }, [filteredBookings, safePage, pageSize]);
+
+  const pagination: PaginationState = {
+    page: safePage,
+    pageSize,
+    totalPages,
+    totalItems,
+  };
+
+  return {
+    bookings: paginatedBookings,
+    allBookings: filteredBookings,
+    pagination,
+    setPage,
+    nextPage: () => setPage((p) => Math.min(p + 1, totalPages)),
+    prevPage: () => setPage((p) => Math.max(p - 1, 1)),
+    isLoading,
+    error,
+    mutate: mutateBookings,
+  };
 }
 

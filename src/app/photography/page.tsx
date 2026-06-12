@@ -312,7 +312,7 @@ export default function PhotographyPage() {
                   </svg>
                 </div>
                 <h3 className="font-bold text-black mb-3 uppercase tracking-widest text-sm">Coverage Area</h3>
-                <p className="text-black/70 text-base leading-relaxed">30km from Seri Kembangan</p>
+                <p className="text-black/70 text-base leading-relaxed">30km from Selayang / KL</p>
               </div>
               
               <div className="bg-white rounded-lg p-8 shadow-lg border border-[#d4af37]/20 hover:border-[#d4af37] hover:shadow-xl transition-all duration-300 text-center group">
