@@ -28,35 +28,36 @@ export async function getSettings(settingKey) {
 export async function updateSetting(settingKey, settingValue, _description) {
     const supabase = getSupabaseAdmin();
     const now = new Date().toISOString();
-    const attempts = [
-        [{ setting_key: settingKey, setting_value: settingValue, updated_at: now }, 'setting_key'],
-        [{ key: settingKey, value: settingValue, updated_at: now }, 'key'],
-    ];
-    let lastError = null;
-    for (const [payload, onConflict] of attempts) {
-        const { data, error } = await supabase
-            .from('business_settings')
-            .upsert(payload, { onConflict })
-            .select()
-            .single();
-        if (!error) {
-            const row = data;
-            return {
-                id: String(row.id ?? ''),
-                setting_key: getRowKey(row),
-                setting_value: getRowValue(row),
-                description: row.description ?? null,
-                created_at: String(row.created_at ?? ''),
-                updated_at: String(row.updated_at ?? ''),
-            };
-        }
-        lastError = error;
-        if (error.code !== '42703') {
-            break;
-        }
+    // First, get the existing row to find its id
+    const { data: existing, error: fetchError } = await supabase
+        .from('business_settings')
+        .select('id')
+        .limit(1)
+        .single();
+    if (fetchError || !existing) {
+        logQueryError('admin.updateSetting', fetchError ?? new Error('No settings row found'));
+        throw new Error('Failed to update setting');
     }
-    logQueryError('admin.updateSetting', lastError ?? new Error('Unknown error'));
-    throw new Error('Failed to update setting');
+    // Update the specific column directly
+    const { data, error } = await supabase
+        .from('business_settings')
+        .update({ [settingKey]: settingValue, updated_at: now })
+        .eq('id', existing.id)
+        .select()
+        .single();
+    if (error) {
+        logQueryError('admin.updateSetting', error);
+        throw new Error('Failed to update setting');
+    }
+    const row = data;
+    return {
+        id: String(row.id ?? ''),
+        setting_key: settingKey,
+        setting_value: String(row[settingKey] ?? settingValue),
+        description: row.description ?? null,
+        created_at: String(row.created_at ?? ''),
+        updated_at: String(row.updated_at ?? ''),
+    };
 }
 export async function getDashboardSummary(period) {
     const supabase = getSupabaseAdmin();

@@ -50,40 +50,40 @@ export async function updateSetting(
   const supabase = getSupabaseAdmin();
   const now = new Date().toISOString();
 
-  const attempts: [Record<string, string>, string][] = [
-    [{ setting_key: settingKey, setting_value: settingValue, updated_at: now }, 'setting_key'],
-    [{ key: settingKey, value: settingValue, updated_at: now }, 'key'],
-  ];
+  // First, get the existing row to find its id
+  const { data: existing, error: fetchError } = await supabase
+    .from('business_settings')
+    .select('id')
+    .limit(1)
+    .single();
 
-  let lastError: { code?: string | null; message?: string } | null = null;
-
-  for (const [payload, onConflict] of attempts) {
-    const { data, error } = await supabase
-      .from('business_settings')
-      .upsert(payload, { onConflict })
-      .select()
-      .single();
-
-    if (!error) {
-      const row = data as SettingsRow;
-      return {
-        id: String(row.id ?? ''),
-        setting_key: getRowKey(row),
-        setting_value: getRowValue(row),
-        description: (row.description as string | null) ?? null,
-        created_at: String(row.created_at ?? ''),
-        updated_at: String(row.updated_at ?? ''),
-      };
-    }
-
-    lastError = error;
-    if (error.code !== '42703') {
-      break;
-    }
+  if (fetchError || !existing) {
+    logQueryError('admin.updateSetting', fetchError ?? new Error('No settings row found'));
+    throw new Error('Failed to update setting');
   }
 
-  logQueryError('admin.updateSetting', lastError ?? new Error('Unknown error'));
-  throw new Error('Failed to update setting');
+  // Update the specific column directly
+  const { data, error } = await supabase
+    .from('business_settings')
+    .update({ [settingKey]: settingValue, updated_at: now } as Record<string, unknown>)
+    .eq('id', existing.id)
+    .select()
+    .single();
+
+  if (error) {
+    logQueryError('admin.updateSetting', error);
+    throw new Error('Failed to update setting');
+  }
+
+  const row = data as SettingsRow & Record<string, unknown>;
+  return {
+    id: String(row.id ?? ''),
+    setting_key: settingKey,
+    setting_value: String(row[settingKey] ?? settingValue),
+    description: (row.description as string | null) ?? null,
+    created_at: String(row.created_at ?? ''),
+    updated_at: String(row.updated_at ?? ''),
+  };
 }
 
 export async function getDashboardSummary(period: string): Promise<Record<string, unknown>> {
