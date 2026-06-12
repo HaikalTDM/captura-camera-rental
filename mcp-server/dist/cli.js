@@ -12,7 +12,8 @@
  * All reads go through the same Supabase service-role client.
  * All writes call the existing Next.js API routes (matches captura-db.py behavior).
  */
-import { listBookings, getBooking, searchBookings, getTodayReturns, smartCreateBooking, bulkApproveBookings, } from './tools/bookings.tools.js';
+import { listCameras, getCamera, checkAvailability, } from './tools/cameras.tools.js';
+import { listBookings, getBooking, searchBookings, getTodayReturns, smartCreateBooking, bulkApproveBookings, getOverduePayments, getNextActions, } from './tools/bookings.tools.js';
 import { listCustomers, getCustomer, } from './tools/customers.tools.js';
 import { getDashboardSummary, } from './tools/admin.tools.js';
 const BASE_URL = process.env.CAPTURA_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -36,6 +37,8 @@ function usage() {
         '  bookings search QUERY           Search by customer name/email/phone',
         '  bookings today-returns          Today\'s expected returns',
         '  bookings pending                Pending approvals',
+        '  bookings next-actions           Action queue (pending, pickups, returns, overdue)',
+        '  bookings overdue                Overdue final payments',
         '  customers [--search QUERY] [--limit N]',
         '  customers get CUSTOMER_ID',
         '  summary                         Dashboard KPIs',
@@ -123,6 +126,50 @@ async function main() {
                 if (error)
                     throw error;
                 print({ status: 'ok', supabase: 'connected' });
+                break;
+            }
+            case 'cameras': {
+                switch (subcmd) {
+                    case 'list': {
+                        const filter = parsed.filter === 'all' ? 'all' : 'available_only';
+                        const sortBy = parsed.sortBy || 'display_order';
+                        const cameras = await listCameras(filter, sortBy);
+                        if (jsonMode)
+                            print(cameras);
+                        else
+                            for (const c of cameras) {
+                                const threshold = c.discount_threshold || 3;
+                                process.stdout.write(`${c.id} | ${c.name} | RM${c.daily_rate}/day | ${threshold}+ days discount | ${c.is_available ? 'AVAILABLE' : 'UNAVAILABLE'}\n`);
+                            }
+                        break;
+                    }
+                    case 'get': {
+                        const cameraId = posArgs[1];
+                        if (!cameraId) {
+                            process.stderr.write('Usage: cameras get CAMERA_ID\n');
+                            process.exit(1);
+                        }
+                        const cam = await getCamera(cameraId);
+                        print(cam);
+                        break;
+                    }
+                    case 'availability': {
+                        const camId = posArgs[1];
+                        const start = posArgs[2];
+                        const end = posArgs[3];
+                        if (!camId || !start || !end) {
+                            process.stderr.write('Usage: cameras availability CAMERA_ID START END\n');
+                            process.exit(1);
+                        }
+                        const result = await checkAvailability(camId, start, end);
+                        print(result);
+                        break;
+                    }
+                    default:
+                        process.stderr.write(`Unknown subcommand: ${subcmd}\n`);
+                        usage();
+                        break;
+                }
                 break;
             }
             case 'bookings': {
@@ -291,6 +338,30 @@ async function main() {
                         const bookingIds = idsStr.split(',').map(s => s.trim()).filter(Boolean);
                         const result = await bulkApproveBookings(bookingIds, parsed.notes);
                         print(result);
+                        break;
+                    }
+                    case 'next-actions': {
+                        const actions = await getNextActions(Number(parsed.limit) || 10);
+                        if (jsonMode)
+                            print(actions);
+                        else {
+                            const fmt = (arr) => arr.map(b => `${b.id} | ${b.customer?.full_name || 'N/A'} | ${b.camera?.name || 'N/A'} | ${b.start_date || '-'} → ${b.end_date || '-'}`);
+                            process.stdout.write(`[pending_approvals] ${actions.pending_approvals.length}\n` + fmt(actions.pending_approvals).join('\n') + '\n');
+                            process.stdout.write(`[todays_pickups] ${actions.todays_pickups.length}\n` + fmt(actions.todays_pickups).join('\n') + '\n');
+                            process.stdout.write(`[todays_returns] ${actions.todays_returns.length}\n` + fmt(actions.todays_returns).join('\n') + '\n');
+                            process.stdout.write(`[overdue_payments] ${actions.overdue_payments.length}\n` + fmt(actions.overdue_payments).join('\n') + '\n');
+                        }
+                        break;
+                    }
+                    case 'overdue': {
+                        const bookings = await getOverduePayments(Number(parsed.limit) || 20);
+                        if (jsonMode)
+                            print(bookings);
+                        else
+                            for (const b of bookings) {
+                                const cust = b.customer?.full_name || 'N/A';
+                                process.stdout.write(`${b.id} | ${cust} | ${b.end_date} | RM${b.total_amount}\n`);
+                            }
                         break;
                     }
                     default:
