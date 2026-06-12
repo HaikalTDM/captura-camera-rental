@@ -68,36 +68,52 @@ export async function getBooking(bookingId: string): Promise<Booking> {
 
 export async function searchBookings(query: string): Promise<Booking[]> {
   const supabase = getSupabaseAdmin();
+  const sanitized = query.replace(/%/g, '').trim();
 
-  // Search by customer name, email, or phone via join
-  const { data, error } = await supabase
-    .from('bookings')
-    .select(BOOKING_SELECT)
-    .or(
-      `customer.full_name.ilike.%${query}%,customer.email.ilike.%${query}%,customer.phone.ilike.%${query}%`,
-      { referencedTable: 'customer' }
-    )
-    .order('created_at', { ascending: false })
+  // Search customers first, then find their bookings
+  const { data: customers } = await supabase
+    .from('customers')
+    .select('id')
+    .or(`full_name.ilike.%${sanitized}%,email.ilike.%${sanitized}%,phone.ilike.%${sanitized}%`)
     .limit(50);
 
-  if (error) {
-    // Fallback: search by notes/booking ID
-    const { data: fallbackData, error: fallbackError } = await supabase
+  const customerIds = (customers || []).map(c => c.id);
+
+  let bookings: Booking[] = [];
+
+  if (customerIds.length > 0) {
+    const { data, error } = await supabase
       .from('bookings')
       .select(BOOKING_SELECT)
-      .or(`notes.ilike.%${query}%,id.eq.${query}`)
+      .in('customer_id', customerIds)
       .order('created_at', { ascending: false })
       .limit(50);
 
-    if (fallbackError) {
-      logQueryError('bookings.search', fallbackError);
-      throw new Error('Failed to search bookings');
+    if (error) {
+      logQueryError('bookings.search.byCustomer', error);
+    } else {
+      bookings = data as Booking[];
     }
-
-    return fallbackData as Booking[];
   }
 
-  return data as Booking[];
+  // Also search by notes (for booking references)
+  const { data: notesBookings, error: notesError } = await supabase
+    .from('bookings')
+    .select(BOOKING_SELECT)
+    .ilike('notes', `%${sanitized}%`)
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (!notesError && notesBookings) {
+    const existingIds = new Set(bookings.map(b => b.id));
+    for (const nb of notesBookings as Booking[]) {
+      if (!existingIds.has(nb.id)) {
+        bookings.push(nb);
+      }
+    }
+  }
+
+  return bookings.slice(0, 50);
 }
 
 export async function getTodayReturns(): Promise<Booking[]> {

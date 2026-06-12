@@ -1,4 +1,3 @@
-import type { PaymentRecord } from '../supabase/types.js';
 export declare function recordPayment(fields: {
     booking_id: string;
     payment_type: 'deposit' | 'final' | 'refund';
@@ -7,8 +6,14 @@ export declare function recordPayment(fields: {
     payment_reference?: string;
     notes?: string;
 }): Promise<{
-    payment: PaymentRecord;
-    bookingUpdated: boolean;
+    success: boolean;
+    booking_id: string;
+    payment_type: string;
+    amount: number;
 }>;
-export declare function markDepositRefunded(bookingId: string, refundAmount?: number, refundNotes?: string): Promise<PaymentRecord>;
+export declare function markDepositRefunded(bookingId: string, refundAmount?: number, refundNotes?: string): Promise<{
+    success: boolean;
+    booking_id: string;
+    refund_amount: number;
+}>;
 //# sourceMappingURL=payments.tools.d.ts.map

@@ -49,7 +49,6 @@ export interface Customer {
     emergency_contact_name: string;
     emergency_contact_phone: string;
     notes?: string;
-    reliability?: 'excellent' | 'good' | 'fair' | 'poor';
     created_at: string;
     updated_at: string;
 }

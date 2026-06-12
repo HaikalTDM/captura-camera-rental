@@ -513,7 +513,7 @@ export function createServer() {
             const fields = validate(paymentRecordSchema, stripAuthArg(args));
             const result = await recordPayment(fields);
             auditLog({ tool_name: 'captura.payments.admin.record', action: 'record_payment', target_id: fields.booking_id, details: { type: fields.payment_type, amount: fields.amount } });
-            return { content: [{ type: 'text', text: JSON.stringify({ success: true, payment: result.payment, booking_updated: result.bookingUpdated }, null, 2) }] };
+            return { content: [{ type: 'text', text: JSON.stringify({ success: true, payment: result }, null, 2) }] };
         }
         catch (e) {
             return formatError(e);
@@ -529,7 +529,7 @@ export function createServer() {
             authGate('captura.payments.admin.mark_deposit_refunded', args);
             const fields = validate(depositRefundSchema, stripAuthArg(args));
             const refund = await markDepositRefunded(fields.booking_id, fields.refund_amount, fields.refund_notes);
-            auditLog({ tool_name: 'captura.payments.admin.mark_deposit_refunded', action: 'refund_deposit', target_id: fields.booking_id, details: { amount: refund.amount } });
+            auditLog({ tool_name: 'captura.payments.admin.mark_deposit_refunded', action: 'refund_deposit', target_id: fields.booking_id, details: { amount: refund.refund_amount } });
             return { content: [{ type: 'text', text: JSON.stringify({ success: true, refund }, null, 2) }] };
         }
         catch (e) {

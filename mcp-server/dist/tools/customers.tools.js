@@ -1,6 +1,6 @@
 import { getSupabaseAdmin, logQueryError } from '../supabase/client.js';
 import { NotFoundError } from '../errors/handler.js';
-const CUSTOMER_SELECT = 'id, full_name, email, phone, whatsapp, address, id_number, emergency_contact_name, emergency_contact_phone, notes, reliability, created_at, updated_at';
+const CUSTOMER_SELECT = 'id, name, full_name, email, phone, whatsapp, address, id_number, emergency_contact_name, emergency_contact_phone, notes, created_at, updated_at';
 export async function listCustomers(query, limit, offset) {
     const supabase = getSupabaseAdmin();
     let dbQuery = supabase.from('customers').select(CUSTOMER_SELECT);

@@ -11,7 +11,7 @@ export async function generateInvoice(bookingId: string): Promise<Invoice> {
     .select(`
       *,
       customer:customers(*),
-      camera:cameras(*)
+      customer:customers(*)
     `)
     .eq('id', bookingId)
     .single();
@@ -22,6 +22,17 @@ export async function generateInvoice(bookingId: string): Promise<Invoice> {
     }
     logQueryError('invoices.generate.booking', bookingError);
     throw new Error('Failed to fetch booking');
+  }
+
+  // Fetch camera separately (no FK in schema cache)
+  let cameraName = 'Unknown Camera';
+  if (booking?.camera_id) {
+    const { data: cam } = await supabase
+      .from('cameras')
+      .select('name')
+      .eq('id', booking.camera_id)
+      .single();
+    if (cam) cameraName = cam.name;
   }
 
   // Fetch business settings
@@ -80,7 +91,7 @@ export async function generateInvoice(bookingId: string): Promise<Invoice> {
 
   const bookingSnapshot = {
     booking_id: bookingId,
-    camera_name: camera.name || 'Unknown Camera',
+    camera_name: cameraName,
     rental_start_date: booking.start_date,
     rental_end_date: booking.end_date,
     total_days: booking.total_days,

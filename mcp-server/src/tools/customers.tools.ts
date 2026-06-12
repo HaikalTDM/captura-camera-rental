@@ -2,7 +2,7 @@ import { getSupabaseAdmin, logQueryError } from '../supabase/client.js';
 import { NotFoundError } from '../errors/handler.js';
 import type { Customer } from '../supabase/types.js';
 
-const CUSTOMER_SELECT = 'id, full_name, email, phone, whatsapp, address, id_number, emergency_contact_name, emergency_contact_phone, notes, reliability, created_at, updated_at';
+const CUSTOMER_SELECT = 'id, name, full_name, email, phone, whatsapp, address, id_number, emergency_contact_name, emergency_contact_phone, notes, created_at, updated_at';
 
 export async function listCustomers(query: string, limit: number, offset: number): Promise<Customer[]> {
   const supabase = getSupabaseAdmin();

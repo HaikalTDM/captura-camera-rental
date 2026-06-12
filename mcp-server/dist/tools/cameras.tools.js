@@ -68,9 +68,17 @@ export async function checkAvailability(cameraId, startDate, endDate) {
 }
 export async function createCamera(fields) {
     const supabase = getSupabaseAdmin();
+    const payload = {
+        ...fields,
+        purchase_date: fields.purchase_date || new Date().toISOString().split('T')[0],
+        total_quantity: fields.total_quantity ?? 1,
+        available_quantity: fields.available_quantity ?? 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+    };
     const { data, error } = await supabase
         .from('cameras')
-        .insert([fields])
+        .insert([payload])
         .select()
         .single();
     if (error) {

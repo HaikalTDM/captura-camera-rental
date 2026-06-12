@@ -12,21 +12,13 @@ export async function getSettings(settingKey) {
     }
     return (data || []);
 }
-export async function updateSetting(settingKey, settingValue, description) {
+export async function updateSetting(settingKey, settingValue, _description) {
     const supabase = getSupabaseAdmin();
-    const updates = {
-        setting_value: settingValue,
-        updated_at: new Date().toISOString(),
-    };
-    if (description) {
-        updates.description = description;
-    }
     const { data, error } = await supabase
         .from('business_settings')
         .upsert({
         setting_key: settingKey,
         setting_value: settingValue,
-        description: description || null,
         updated_at: new Date().toISOString(),
     }, { onConflict: 'setting_key' })
         .select()
@@ -128,9 +120,7 @@ export async function getRevenueReport(startDate, endDate, groupBy) {
       id,
       total_amount,
       start_date,
-      end_date,
       camera_id,
-      camera:cameras(name),
       booking_status
     `)
         .gte('created_at', startDate)
@@ -140,12 +130,24 @@ export async function getRevenueReport(startDate, endDate, groupBy) {
         logQueryError('admin.revenueReport', error);
         throw new Error('Failed to generate revenue report');
     }
+    // Fetch all camera names in one query
+    const cameraIds = [...new Set((bookings || []).map(b => b.camera_id).filter(Boolean))];
+    const cameraMap = new Map();
+    if (cameraIds.length > 0) {
+        const { data: cameras } = await supabase
+            .from('cameras')
+            .select('id, name')
+            .in('id', cameraIds);
+        for (const c of (cameras || [])) {
+            cameraMap.set(c.id, c.name);
+        }
+    }
     const grouped = {};
     for (const booking of bookings || []) {
         let key;
         switch (groupBy) {
             case 'camera':
-                key = booking.camera?.name || 'Unknown';
+                key = cameraMap.get(booking.camera_id) || 'Unknown';
                 break;
             case 'month':
                 key = booking.start_date.substring(0, 7);
