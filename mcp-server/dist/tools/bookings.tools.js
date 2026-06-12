@@ -163,7 +163,7 @@ export async function createBooking(fields) {
         deposit_amount: fields.deposit_amount || 100,
         final_payment_amount: fields.total_amount,
         status: 'pending',
-        booking_status: 'confirmed',
+        booking_status: 'pending_approval',
         pickup_method: fields.pickup_method || 'pickup',
         pickup_address: fields.pickup_address || null,
         delivery_fee: fields.delivery_fee || 0,
