@@ -65,40 +65,40 @@ export declare const cameraCreateSchema: z.ZodObject<{
     notes: z.ZodOptional<z.ZodString>;
     specifications: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
 }, "strip", z.ZodTypeAny, {
-    type: "action" | "mirrorless" | "dslr" | "compact";
-    is_available: boolean;
     name: string;
+    brand: string;
+    model: string;
+    type: "action" | "mirrorless" | "dslr" | "compact";
     daily_rate: number;
     deposit_amount: number;
+    discount_threshold: number;
+    is_available: boolean;
     display_order: number;
     condition: "excellent" | "good" | "fair" | "needs_repair";
-    brand: string;
-    model: string;
-    discount_threshold: number;
-    notes?: string | undefined;
-    description?: string | undefined;
     weekly_rate?: number | undefined;
     monthly_rate?: number | undefined;
-    image_url?: string | undefined;
+    description?: string | undefined;
     location?: string | undefined;
+    notes?: string | undefined;
+    image_url?: string | undefined;
     specifications?: Record<string, unknown> | undefined;
 }, {
-    type: "action" | "mirrorless" | "dslr" | "compact";
     name: string;
-    daily_rate: number;
     brand: string;
     model: string;
-    is_available?: boolean | undefined;
-    notes?: string | undefined;
-    deposit_amount?: number | undefined;
-    display_order?: number | undefined;
-    description?: string | undefined;
-    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
+    type: "action" | "mirrorless" | "dslr" | "compact";
+    daily_rate: number;
     weekly_rate?: number | undefined;
     monthly_rate?: number | undefined;
+    deposit_amount?: number | undefined;
     discount_threshold?: number | undefined;
-    image_url?: string | undefined;
+    description?: string | undefined;
+    is_available?: boolean | undefined;
+    display_order?: number | undefined;
+    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
     location?: string | undefined;
+    notes?: string | undefined;
+    image_url?: string | undefined;
     specifications?: Record<string, unknown> | undefined;
 }>;
 export declare const cameraUpdateSchema: z.ZodObject<{
@@ -119,33 +119,33 @@ export declare const cameraUpdateSchema: z.ZodObject<{
     specifications: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodUnknown>>;
 }, "strip", z.ZodTypeAny, {
     camera_id: string;
-    is_available?: boolean | undefined;
     name?: string | undefined;
-    notes?: string | undefined;
-    daily_rate?: number | undefined;
-    display_order?: number | undefined;
-    description?: string | undefined;
-    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
     brand?: string | undefined;
+    daily_rate?: number | undefined;
     weekly_rate?: number | undefined;
     discount_threshold?: number | undefined;
-    image_url?: string | undefined;
+    description?: string | undefined;
+    is_available?: boolean | undefined;
+    display_order?: number | undefined;
+    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
     location?: string | undefined;
+    notes?: string | undefined;
+    image_url?: string | undefined;
     specifications?: Record<string, unknown> | undefined;
 }, {
     camera_id: string;
-    is_available?: boolean | undefined;
     name?: string | undefined;
-    notes?: string | undefined;
-    daily_rate?: number | undefined;
-    display_order?: number | undefined;
-    description?: string | undefined;
-    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
     brand?: string | undefined;
+    daily_rate?: number | undefined;
     weekly_rate?: number | undefined;
     discount_threshold?: number | undefined;
-    image_url?: string | undefined;
+    description?: string | undefined;
+    is_available?: boolean | undefined;
+    display_order?: number | undefined;
+    condition?: "excellent" | "good" | "fair" | "needs_repair" | undefined;
     location?: string | undefined;
+    notes?: string | undefined;
+    image_url?: string | undefined;
     specifications?: Record<string, unknown> | undefined;
 }>;
 export declare const cameraAvailabilitySchema: z.ZodObject<{
@@ -184,6 +184,8 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     special_requests: z.ZodOptional<z.ZodString>;
     booking_source: z.ZodDefault<z.ZodOptional<z.ZodEnum<["website", "phone", "whatsapp", "walk-in", "manual"]>>>;
 }, "strip", z.ZodTypeAny, {
+    daily_rate: number;
+    deposit_amount: number;
     start_date: string;
     end_date: string;
     camera_id: string;
@@ -191,9 +193,7 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     customer_phone: string;
     customer_name: string;
     total_days: number;
-    daily_rate: number;
     total_amount: number;
-    deposit_amount: number;
     pickup_method: "pickup" | "delivery";
     delivery_fee: number;
     booking_source: "website" | "phone" | "whatsapp" | "walk-in" | "manual";
@@ -205,6 +205,7 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     pickup_address?: string | undefined;
     special_requests?: string | undefined;
 }, {
+    daily_rate: number;
     start_date: string;
     end_date: string;
     camera_id: string;
@@ -212,20 +213,21 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     customer_phone: string;
     customer_name: string;
     total_days: number;
-    daily_rate: number;
     total_amount: number;
     pickup_method: "pickup" | "delivery";
+    deposit_amount?: number | undefined;
     customer_whatsapp?: string | undefined;
     customer_address?: string | undefined;
     customer_id_number?: string | undefined;
     emergency_contact_name?: string | undefined;
     emergency_contact_phone?: string | undefined;
-    deposit_amount?: number | undefined;
     pickup_address?: string | undefined;
     delivery_fee?: number | undefined;
     booking_source?: "website" | "phone" | "whatsapp" | "walk-in" | "manual" | undefined;
     special_requests?: string | undefined;
 }>, {
+    daily_rate: number;
+    deposit_amount: number;
     start_date: string;
     end_date: string;
     camera_id: string;
@@ -233,9 +235,7 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     customer_phone: string;
     customer_name: string;
     total_days: number;
-    daily_rate: number;
     total_amount: number;
-    deposit_amount: number;
     pickup_method: "pickup" | "delivery";
     delivery_fee: number;
     booking_source: "website" | "phone" | "whatsapp" | "walk-in" | "manual";
@@ -247,6 +247,7 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     pickup_address?: string | undefined;
     special_requests?: string | undefined;
 }, {
+    daily_rate: number;
     start_date: string;
     end_date: string;
     camera_id: string;
@@ -254,15 +255,14 @@ export declare const bookingCreateSchema: z.ZodEffects<z.ZodObject<{
     customer_phone: string;
     customer_name: string;
     total_days: number;
-    daily_rate: number;
     total_amount: number;
     pickup_method: "pickup" | "delivery";
+    deposit_amount?: number | undefined;
     customer_whatsapp?: string | undefined;
     customer_address?: string | undefined;
     customer_id_number?: string | undefined;
     emergency_contact_name?: string | undefined;
     emergency_contact_phone?: string | undefined;
-    deposit_amount?: number | undefined;
     pickup_address?: string | undefined;
     delivery_fee?: number | undefined;
     booking_source?: "website" | "phone" | "whatsapp" | "walk-in" | "manual" | undefined;

@@ -66,14 +66,15 @@ class MCPClient:
         env["SUPABASE_URL"] = SB_URL
         self.process = await asyncio.create_subprocess_exec(
             "node", MCP_JS,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
             env=env,
+            limit=8 * 1024 * 1024,  # 8MB line buffer; large tool responses exceed asyncio's 64KB default
         )
         self._req_id = 0
         await self._request("initialize", {
             "protocolVersion": "2024-11-05",
             "capabilities": {},
-            "clientInfo": {"name": "captura_bot", "version": "3.0"},
+            "clientInfo": {"name": "captura_bot", "version": "3.1"},
         })
         await self._read()
         self.process.stdin.write(b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
@@ -103,17 +104,30 @@ class MCPClient:
     async def call_tool(self, name: str, args: Optional[dict] = None) -> Any:
         async with self._lock:
             await self._ensure()
-            await self._request("tools/call", {"name": name, "arguments": args or {}})
-            result = await self._read()
+            try:
+                await self._request("tools/call", {"name": name, "arguments": args or {}})
+                result = await self._read()
+            except (asyncio.TimeoutError, ConnectionError, RuntimeError, BrokenPipeError, ValueError) as e:
+                # Desynced/dead subprocess or oversized line (ValueError from StreamReader) — kill so next call restarts cleanly
+                log.warning(f"MCP call '{name}' failed ({e}); resetting subprocess")
+                self._kill_process()
+                raise
             if isinstance(result, dict) and "content" in result:
                 for item in result["content"]:
                     if item.get("type") == "text":
                         return json.loads(item["text"])
             return result
 
-    def shutdown(self):
+    def _kill_process(self):
         if self.process and self.process.returncode is None:
-            self.process.kill()
+            try:
+                self.process.kill()
+            except Exception:
+                pass
+        self.process = None
+
+    def shutdown(self):
+        self._kill_process()
 
 
 mcp = MCPClient()
@@ -236,22 +250,34 @@ async def find_camera(query: str) -> Optional[dict]:
 
 
 # ── Supabase Layer ─────────────────────────────────────
+# Shared HTTP client with connection pooling (created lazily on first use)
+_http_client: Optional[httpx.AsyncClient] = None
+
+def get_http_client() -> httpx.AsyncClient:
+    global _http_client
+    if _http_client is None or _http_client.is_closed:
+        _http_client = httpx.AsyncClient(
+            timeout=15,
+            limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+        )
+    return _http_client
+
 async def supabase_get(path: str, params: Optional[dict] = None) -> list:
-    async with httpx.AsyncClient(timeout=15) as client:
-        resp = await client.get(f"{SB_URL}/rest/v1/{path}", headers=HEADERS, params=params)
-        resp.raise_for_status()
-        return resp.json()
+    client = get_http_client()
+    resp = await client.get(f"{SB_URL}/rest/v1/{path}", headers=HEADERS, params=params)
+    resp.raise_for_status()
+    return resp.json()
 
 async def supabase_patch(table: str, body: dict, conditions: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as client:
-        qs = "&".join(f"{k}=eq.{v}" for k, v in conditions.items())
-        resp = await client.patch(f"{SB_URL}/rest/v1/{table}?{qs}", headers=HEADERS, json=body)
-        resp.raise_for_status()
+    client = get_http_client()
+    qs = "&".join(f"{k}=eq.{v}" for k, v in conditions.items())
+    resp = await client.patch(f"{SB_URL}/rest/v1/{table}?{qs}", headers=HEADERS, json=body)
+    resp.raise_for_status()
 
 async def supabase_insert(table: str, body: dict) -> None:
-    async with httpx.AsyncClient(timeout=10) as client:
-        resp = await client.post(f"{SB_URL}/rest/v1/{table}", headers=HEADERS, json=body)
-        resp.raise_for_status()
+    client = get_http_client()
+    resp = await client.post(f"{SB_URL}/rest/v1/{table}", headers=HEADERS, json=body)
+    resp.raise_for_status()
 
 
 # ── Booking Queries ────────────────────────────────────
@@ -423,7 +449,7 @@ async def get_customer_bookings(customer_id: str, limit: int = 15) -> list:
 
 
 # ── Unified Stats ──────────────────────────────────────
-async def gather_stats(force_refresh: bool = False) -> dict:
+async def gather_stats() -> dict:
     """Fetch dashboard stats. Uses direct DB as primary source (MCP has date-filter bugs)."""
     today_str = date_today()
     start_of_month = datetime.now().strftime("%Y-%m-01")
@@ -554,6 +580,12 @@ async def send_direct(app, chat_id: int, text: str, **kwargs):
 # ── Action Helpers ─────────────────────────────────────
 async def approve_booking(booking_id: str) -> Optional[dict]:
     """Approve via MCP tool. Sends WhatsApp notification. Returns booking or None."""
+    existing = await get_booking(booking_id)
+    if existing:
+        current = existing.get("booking_status", existing.get("status", ""))
+        if not validate_transition(current, "confirmed"):
+            log.warning(f"APPROVE rejected: {booking_id} is {current}")
+            return None
     n = utc_now()
     try:
         result = await mcp.call_tool("captura.bookings.admin.approve", {"booking_id": booking_id})
@@ -715,6 +747,127 @@ async def cancel_booking(booking_id: str) -> Optional[dict]:
     return await get_booking(booking_id)
 
 
+# ── Payment / Invoice / Inventory Helpers ──────────────
+def booking_balance(booking: dict) -> float:
+    """Compute outstanding balance: total minus what's already paid.
+    No explicit balance column exists, so derive from paid flags."""
+    total = float(booking.get("total_amount", 0) or 0)
+    deposit = float(booking.get("deposit_amount", 0) or 0)
+    paid = 0.0
+    if booking.get("deposit_paid"):
+        paid += deposit
+    if booking.get("final_payment_paid"):
+        # Final payment covers the remainder (total excludes refundable deposit)
+        paid += max(total - deposit, 0) if deposit and deposit < total else total
+    return round(max(total - paid, 0), 2)
+
+
+async def record_payment(booking_id: str, payment_type: str, amount: float,
+                         method: str = "cash") -> Optional[dict]:
+    """Record a payment via MCP. Returns result dict or None."""
+    try:
+        result = await mcp.call_tool("captura.payments.admin.record", {
+            "booking_id": booking_id,
+            "payment_type": payment_type,
+            "amount": amount,
+            "payment_method": method,
+            "notes": "Recorded via Telegram bot",
+        })
+        log.info(f"PAYMENT {payment_type} RM{amount} for {booking_id}: {result}")
+        invalidate_cache("all")
+        return result
+    except Exception as e:
+        log.error(f"record_payment failed for {booking_id}: {e}")
+        return None
+
+
+async def refund_deposit(booking_id: str, amount: Optional[float] = None) -> Optional[dict]:
+    try:
+        args = {"booking_id": booking_id, "refund_notes": "Refunded via Telegram bot"}
+        if amount is not None:
+            args["refund_amount"] = amount
+        result = await mcp.call_tool("captura.payments.admin.mark_deposit_refunded", args)
+        log.info(f"REFUND deposit for {booking_id}: {result}")
+        invalidate_cache("all")
+        return result
+    except Exception as e:
+        log.error(f"refund_deposit failed for {booking_id}: {e}")
+        return None
+
+
+async def generate_invoice(booking_id: str) -> Optional[dict]:
+    try:
+        result = await mcp.call_tool("captura.invoices.admin.generate", {"booking_id": booking_id})
+        log.info(f"INVOICE for {booking_id}: {result}")
+        return result
+    except Exception as e:
+        log.error(f"generate_invoice failed for {booking_id}: {e}")
+        return None
+
+
+async def set_camera_availability(camera_id: str, is_available: bool) -> Optional[dict]:
+    try:
+        result = await mcp.call_tool("captura.cameras.admin.set_availability", {
+            "camera_id": camera_id,
+            "is_available": is_available,
+            "notes": "Toggled via Telegram bot",
+        })
+        invalidate_cache("all")
+        log.info(f"CAMERA {camera_id} availability={is_available}")
+        return result
+    except Exception as e:
+        log.error(f"set_camera_availability failed for {camera_id}: {e}")
+        return None
+
+
+async def update_camera_rate(camera_id: str, daily_rate: float) -> Optional[dict]:
+    try:
+        result = await mcp.call_tool("captura.cameras.admin.update", {
+            "camera_id": camera_id,
+            "daily_rate": daily_rate,
+        })
+        invalidate_cache("all")
+        log.info(f"CAMERA {camera_id} daily_rate={daily_rate}")
+        return result
+    except Exception as e:
+        log.error(f"update_camera_rate failed for {camera_id}: {e}")
+        return None
+
+
+def reminder_message(booking: dict, kind: str) -> str:
+    """Build a WhatsApp reminder message for a booking."""
+    cam = camera_display(booking)
+    name = customer_display(booking)
+    start = booking.get("start_date", "?")
+    end = booking.get("end_date", "?")
+    bal = booking_balance(booking)
+    if kind == "pickup":
+        return (f"🎥 *CAPTURA* — Pickup Reminder 📦\n"
+                f"Hi {name}, your rental is ready!\n"
+                f"📸 {cam}\n📅 Pickup: {start}\n"
+                f"See you soon 🙌")
+    if kind == "return":
+        return (f"🎥 *CAPTURA* — Return Reminder 🔙\n"
+                f"Hi {name}, a friendly reminder to return:\n"
+                f"📸 {cam}\n📅 Due: {end}\n"
+                f"Thanks for renting with us!")
+    if kind == "overdue":
+        return (f"🎥 *CAPTURA* — Overdue Notice ⚠️\n"
+                f"Hi {name}, your rental was due {end}.\n"
+                f"📸 {cam}\n"
+                f"Please arrange return as soon as possible 🙏")
+    if kind == "payment":
+        return (f"🎥 *CAPTURA* — Payment Reminder 💰\n"
+                f"Hi {name}, a friendly reminder of your balance.\n"
+                f"📸 {cam}\n💳 Outstanding: RM{bal}\n"
+                f"Thank you!")
+    return f"Hi {name}, this is a reminder about your booking ({cam})."
+
+
+# Pending text-input state: chat_id -> {"action": str, "booking_id"/"camera_id": str, ...}
+_pending_input: dict[int, dict] = {}
+
+
 # ── Inline Keyboard Builders ───────────────────────────
 def make_main_menu(stats: Optional[dict] = None) -> InlineKeyboardMarkup:
     pending_label = "📋 Pending"
@@ -732,7 +885,10 @@ def make_main_menu(stats: Optional[dict] = None) -> InlineKeyboardMarkup:
          InlineKeyboardButton("🔙 Returns (3d)", callback_data="returns")],
         [InlineKeyboardButton("📸 Active Rentals", callback_data="active"),
          InlineKeyboardButton("🕐 Recent 5", callback_data="recent")],
-        [InlineKeyboardButton("🔍 Search Customer", callback_data="search_prompt")],
+        [InlineKeyboardButton("🗓️ Schedule", callback_data="schedule"),
+         InlineKeyboardButton("📨 Reminders", callback_data="reminders")],
+        [InlineKeyboardButton("🔍 Search Customer", callback_data="search_prompt"),
+         InlineKeyboardButton("📷 Cameras", callback_data="cameras")],
         [InlineKeyboardButton("📊 Dashboard", callback_data="dashboard"),
          InlineKeyboardButton("📈 Analytics", callback_data="analytics")],
         [InlineKeyboardButton("🔄 Refresh", callback_data="home")],
@@ -762,6 +918,14 @@ def make_booking_actions(booking: dict, back_cb: str = "menu") -> InlineKeyboard
         buttons.append([InlineKeyboardButton("🔙 Mark Returned", callback_data=f"rt:{bid}")])
         buttons.append([InlineKeyboardButton("⚡ Mark Completed", callback_data=f"complete:{bid}")])
 
+    # Payment + invoice actions (not for pending/rejected/cancelled)
+    if status in ("confirmed", "active", "completed"):
+        buttons.append([
+            InlineKeyboardButton("💰 Record Payment", callback_data=f"pay:{bid}"),
+            InlineKeyboardButton("🧾 Invoice", callback_data=f"inv:{bid}"),
+        ])
+        buttons.append([InlineKeyboardButton("📨 Send Reminder", callback_data=f"remind:{bid}")])
+
     if cust_id:
         buttons.append([InlineKeyboardButton("📋 Customer History", callback_data=f"ch:{cust_id}")])
     if phone:
@@ -775,6 +939,58 @@ def make_confirm_keyboard(action: str, target_id: str, label: str = "", back_cb:
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(f"⚠️ Yes, {label}", callback_data=f"do_{action}:{target_id}")],
         [InlineKeyboardButton("❌ Cancel", callback_data=back_cb)],
+    ])
+
+def make_payment_type_keyboard(bid: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("💵 Deposit", callback_data=f"payt:{bid}:deposit"),
+         InlineKeyboardButton("💰 Final", callback_data=f"payt:{bid}:final")],
+        [InlineKeyboardButton("↩️ Refund", callback_data=f"payt:{bid}:refund")],
+        [InlineKeyboardButton("◀ Back", callback_data=f"dt:{bid}"),
+         InlineKeyboardButton("🏠 Home", callback_data="home")],
+    ])
+
+def make_payment_method_keyboard(bid: str, ptype: str) -> InlineKeyboardMarkup:
+    # Short method codes keep callback_data well under Telegram's 64-byte limit
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("💵 Cash", callback_data=f"paym:{bid}:{ptype}:c"),
+         InlineKeyboardButton("🏦 Transfer", callback_data=f"paym:{bid}:{ptype}:b")],
+        [InlineKeyboardButton("🌐 Online", callback_data=f"paym:{bid}:{ptype}:o")],
+        [InlineKeyboardButton("◀ Back", callback_data=f"pay:{bid}"),
+         InlineKeyboardButton("🏠 Home", callback_data="home")],
+    ])
+
+PAYMENT_METHODS = {"c": "cash", "b": "bank_transfer", "o": "online"}
+
+def make_reminder_keyboard(bid: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📦 Pickup", callback_data=f"remk:{bid}:pickup"),
+         InlineKeyboardButton("🔙 Return", callback_data=f"remk:{bid}:return")],
+        [InlineKeyboardButton("⚠️ Overdue", callback_data=f"remk:{bid}:overdue"),
+         InlineKeyboardButton("💰 Payment", callback_data=f"remk:{bid}:payment")],
+        [InlineKeyboardButton("◀ Back", callback_data=f"dt:{bid}"),
+         InlineKeyboardButton("🏠 Home", callback_data="home")],
+    ])
+
+def make_camera_list_keyboard(cameras: list) -> InlineKeyboardMarkup:
+    buttons = []
+    for cam in cameras:
+        dot = "🟢" if cam.get("is_available") else "🔴"
+        label = f"{dot} {cam.get('name', '?')} · RM{cam.get('daily_rate', '?')}"
+        buttons.append([InlineKeyboardButton(label[:60], callback_data=f"cam:{cam['id']}")])
+    buttons.append(make_back_row("menu"))
+    return InlineKeyboardMarkup(buttons)
+
+def make_camera_detail_keyboard(cam: dict) -> InlineKeyboardMarkup:
+    cid = cam["id"]
+    avail = cam.get("is_available")
+    toggle_label = "🔴 Set Unavailable" if avail else "🟢 Set Available"
+    new_state = "0" if avail else "1"
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(toggle_label, callback_data=f"camtoggle:{cid}:{new_state}")],
+        [InlineKeyboardButton("✏️ Edit Daily Rate", callback_data=f"camrate:{cid}")],
+        [InlineKeyboardButton("◀ Back", callback_data="cameras"),
+         InlineKeyboardButton("🏠 Home", callback_data="home")],
     ])
 
 def make_numbered_customer_keyboard(customers: list, chat_id: int) -> InlineKeyboardMarkup:
@@ -1004,6 +1220,20 @@ async def show_analytics(update: Update) -> None:
             all_completed = 0
             all_revenue = 0
 
+        # Revenue report (F6) — from MCP, best-effort
+        rev_line = ""
+        try:
+            rep = await mcp.call_tool("captura.admin.revenue_report", {"period": "month"})
+            report = rep.get("report", rep) if isinstance(rep, dict) else {}
+            gross = report.get("gross_revenue", report.get("total_revenue"))
+            deposits = report.get("deposits_held", report.get("outstanding"))
+            if gross is not None:
+                rev_line = f"\n*Revenue Report (Month)*\n  💵 Gross: *{format_currency(gross)}*\n"
+                if deposits is not None:
+                    rev_line += f"  🔒 Deposits/Outstanding: *{format_currency(deposits)}*\n"
+        except Exception as e:
+            log.warning(f"revenue_report failed: {e}")
+
         text = (
             "📈 *Analytics*\n"
             "━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -1016,7 +1246,8 @@ async def show_analytics(update: Update) -> None:
             "*All-Time*\n"
             f"  💰 Revenue:  *{format_currency(all_revenue)}*\n"
             f"  🏁 Completed: *{all_completed}* bookings\n"
-            f"  📸 Active:    *{stats['active']}*\n\n"
+            f"  📸 Active:    *{stats['active']}*\n"
+            f"{rev_line}\n"
             "━━━━━━━━━━━━━━━━━━━━━━\n"
             "_v3.1 · MCP · Owner_"
         )
@@ -1078,6 +1309,110 @@ async def show_customer_detail(update: Update, customer: dict) -> None:
     await reply_text(update, text, reply_markup=kb)
 
 
+# ── Schedule (next actions) ────────────────────────────
+async def show_schedule(update: Update) -> None:
+    """Prioritized 'what needs doing' screen built from next_actions."""
+    if not _camera_cache:
+        await fetch_cameras()
+    try:
+        na = await mcp.call_tool("captura.bookings.next_actions", {})
+    except Exception as e:
+        await reply_text(update, f"⚠️ Could not load schedule: {e}", reply_markup=make_main_menu())
+        return
+
+    overdue = await get_overdue_bookings(use_cache=False)
+    pickups = await get_pickups_window(3)
+    returns = await get_returns_window(3)
+    pending = await get_pending_bookings(use_cache=False)
+
+    lines = ["🗓️ *Schedule — What Needs Doing*", "━━━━━━━━━━━━━━━━━━━"]
+    lines.append(f"⚠️ Overdue: *{len(overdue)}*")
+    lines.append(f"📦 Pickups (3d): *{len(pickups)}*")
+    lines.append(f"🔙 Returns (3d): *{len(returns)}*")
+    lines.append(f"⏳ Pending approval: *{len(pending)}*")
+
+    buttons = []
+    if overdue:
+        buttons.append([InlineKeyboardButton(f"⚠️ Overdue ({len(overdue)})", callback_data="overdue")])
+    if pickups:
+        buttons.append([InlineKeyboardButton(f"📦 Pickups ({len(pickups)})", callback_data="pickups")])
+    if returns:
+        buttons.append([InlineKeyboardButton(f"🔙 Returns ({len(returns)})", callback_data="returns")])
+    if pending:
+        buttons.append([InlineKeyboardButton(f"⏳ Pending ({len(pending)})", callback_data="pending")])
+    buttons.append(make_back_row("menu"))
+    await reply_text(update, "\n".join(lines), reply_markup=InlineKeyboardMarkup(buttons))
+
+
+# ── Reminders ──────────────────────────────────────────
+async def show_reminders(update: Update) -> None:
+    """List bookings needing a nudge; tap one to choose a reminder type."""
+    if not _camera_cache:
+        await fetch_cameras()
+    overdue = await get_overdue_bookings(use_cache=False)
+    pickups = await get_pickups_window(3)
+    returns = await get_returns_window(3)
+
+    # Dedupe by booking id, preserving priority overdue > returns > pickups
+    seen = {}
+    for b in overdue + returns + pickups:
+        seen.setdefault(b["id"], b)
+    bookings = list(seen.values())
+
+    chat_id = (update.callback_query.message.chat_id if update.callback_query
+               else update.message.chat_id if update.message else 0)
+    _search_sessions[f"reminders:{chat_id}"] = bookings
+
+    if not bookings:
+        await reply_text(update, "✨ *No reminders needed right now.* ☕", reply_markup=make_main_menu())
+        return
+
+    lines = [f"📨 *Reminders ({len(bookings)})* — tap a booking to nudge:", ""]
+    buttons = []
+    row = []
+    for i, b in enumerate(bookings):
+        lines.append(f"{i + 1}. {customer_display(b)} · {camera_display(b)} · due {b.get('end_date', '?')}")
+        row.append(InlineKeyboardButton(str(i + 1), callback_data=f"remind:{b['id']}"))
+        if len(row) == 5:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    buttons.append(make_back_row("menu"))
+    await reply_text(update, "\n".join(lines), reply_markup=InlineKeyboardMarkup(buttons))
+
+
+# ── Cameras (inventory) ────────────────────────────────
+async def show_cameras(update: Update) -> None:
+    cameras = await fetch_cameras(force=True)
+    if not cameras:
+        await reply_text(update, "⚠️ No cameras found.", reply_markup=make_main_menu())
+        return
+    avail = sum(1 for c in cameras if c.get("is_available"))
+    text = (f"📷 *Camera Inventory ({len(cameras)})*\n"
+            f"🟢 {avail} available · 🔴 {len(cameras) - avail} unavailable\n\n"
+            f"_Tap a camera to manage._")
+    await reply_text(update, text, reply_markup=make_camera_list_keyboard(cameras))
+
+
+async def show_camera_detail(update: Update, camera_id: str) -> None:
+    cameras = await fetch_cameras()
+    cam = next((c for c in cameras if c["id"] == camera_id), None)
+    if not cam:
+        await reply_text(update, "❌ Camera not found.", reply_markup=make_main_menu())
+        return
+    dot = "🟢 Available" if cam.get("is_available") else "🔴 Unavailable"
+    text = (
+        f"📷 *{cam.get('name', '?')}*\n"
+        f"━━━━━━━━━━━━━━━━━━━\n"
+        f"🏷️ Brand: {cam.get('brand', '—')}\n"
+        f"💵 Daily: RM{cam.get('daily_rate', '?')}\n"
+        f"📅 Weekly: RM{cam.get('weekly_rate', '—')}\n"
+        f"📌 {dot}"
+    )
+    await reply_text(update, text, reply_markup=make_camera_detail_keyboard(cam))
+
+
 # ── Callback Handler ───────────────────────────────────
 async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     query = update.callback_query
@@ -1108,7 +1443,7 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 ])
                 await reply_text(update, text, reply_markup=kb)
             else:
-                await reply_text(update, "❌ Booking not found.", reply_markup=make_main_menu())
+                await reply_text(update, "⚠️ Could not approve — booking not found or already processed.", reply_markup=make_main_menu())
 
         # ── Confirm reject ──
         elif data.startswith("confirm_rj:"):
@@ -1259,6 +1594,162 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         elif data == "search_prompt":
             await show_search_prompt(update)
 
+        # ── Payments (F1) ──
+        elif data.startswith("pay:"):
+            booking_id = data.split(":", 1)[1]
+            booking = await get_booking(booking_id)
+            bal = booking_balance(booking) if booking else 0
+            await reply_text(
+                update,
+                f"💰 *Record Payment*\nOutstanding balance: *RM{bal}*\n\nChoose payment type:",
+                reply_markup=make_payment_type_keyboard(booking_id),
+            )
+
+        elif data.startswith("payt:"):
+            _, booking_id, ptype = data.split(":", 2)
+            await reply_text(
+                update,
+                f"💳 *{ptype.title()}* — choose method:",
+                reply_markup=make_payment_method_keyboard(booking_id, ptype),
+            )
+
+        elif data.startswith("paym:"):
+            _, booking_id, ptype, method_code = data.split(":", 3)
+            method = PAYMENT_METHODS.get(method_code, "cash")
+            booking = await get_booking(booking_id)
+            default_amt = booking_balance(booking) if booking else 0
+            if ptype == "deposit" and booking:
+                default_amt = float(booking.get("deposit_amount", 0) or 0)
+            chat_id = query.message.chat_id if query.message else 0
+            _pending_input[chat_id] = {
+                "action": "payment_amount",
+                "booking_id": booking_id,
+                "ptype": ptype,
+                "method": method,
+            }
+            await reply_text(
+                update,
+                f"💰 Enter the *{ptype}* amount in RM (e.g. `{default_amt or 100}`).\n"
+                f"Send `ok` to use the suggested RM{default_amt}.\nSend `cancel` to abort.",
+            )
+
+        elif data.startswith("do_recordpay:"):
+            booking_id = data.split(":", 1)[1]
+            chat_id = query.message.chat_id if query.message else 0
+            details = _pending_input.pop(chat_id, None)
+            if not details or details.get("action") != "confirm_payment" or details.get("booking_id") != booking_id:
+                await reply_text(update, "⚠️ Payment session expired. Start again from the booking.", reply_markup=make_main_menu())
+            else:
+                ptype = details["ptype"]
+                method = details["method"]
+                amount = details["amount"]
+                if ptype == "refund":
+                    result = await refund_deposit(booking_id, amount)
+                else:
+                    result = await record_payment(booking_id, ptype, amount, method)
+                if result:
+                    amount_s = str(amount)
+                    kb = InlineKeyboardMarkup([
+                        [InlineKeyboardButton("📤 Send Receipt", callback_data=f"receipt:{booking_id}:{ptype}:{amount_s}")],
+                        [InlineKeyboardButton("📄 Booking", callback_data=f"dt:{booking_id}")],
+                        make_back_row("menu"),
+                    ])
+                    await reply_text(update, f"✅ Recorded *{ptype}* RM{amount} ({method}).", reply_markup=kb)
+                else:
+                    await reply_text(update, "⚠️ Could not record payment. Check logs.", reply_markup=make_main_menu())
+
+        elif data.startswith("receipt:"):
+            _, booking_id, ptype, amount_s = data.split(":", 3)
+            booking = await get_booking(booking_id)
+            if not booking:
+                await reply_text(update, "❌ Booking not found.", reply_markup=make_main_menu())
+            else:
+                cust = booking.get("customer") or {}
+                phone = cust.get("whatsapp") or cust.get("phone", "")
+                msg = (f"🎥 *CAPTURA* — Payment Receipt 🧾\n"
+                       f"Hi {customer_display(booking)},\n"
+                       f"We received your {ptype} of RM{amount_s}.\n"
+                       f"📸 {camera_display(booking)}\nThank you!")
+                if phone and await send_whatsapp(phone, msg):
+                    await reply_text(update, "📤 Receipt sent via WhatsApp.", reply_markup=make_main_menu())
+                else:
+                    await reply_text(update, "⚠️ No phone on file or send failed.", reply_markup=make_main_menu())
+
+        # ── Invoice (F3) ──
+        elif data.startswith("inv:"):
+            booking_id = data.split(":", 1)[1]
+            kb = make_confirm_keyboard("inv", booking_id, "Generate Invoice", f"dt:{booking_id}")
+            await reply_text(update, "🧾 *Generate an invoice for this booking?*", reply_markup=kb)
+
+        elif data.startswith("do_inv:"):
+            booking_id = data.split(":", 1)[1]
+            result = await generate_invoice(booking_id)
+            invoice = (result or {}).get("invoice") if isinstance(result, dict) else None
+            if invoice:
+                num = invoice.get("invoice_number", "?")
+                url = invoice.get("pdf_url") or invoice.get("url") or ""
+                text = f"🧾 *Invoice {num} generated.*"
+                buttons = []
+                if url:
+                    buttons.append([InlineKeyboardButton("🔗 Open Invoice", url=url)])
+                buttons.append([InlineKeyboardButton("📄 Booking", callback_data=f"dt:{booking_id}")])
+                buttons.append(make_back_row("menu"))
+                await reply_text(update, text, reply_markup=InlineKeyboardMarkup(buttons))
+            else:
+                await reply_text(update, "⚠️ Could not generate invoice. Check logs.", reply_markup=make_main_menu())
+
+        # ── Reminders (F2) ──
+        elif data == "reminders":
+            await show_reminders(update)
+
+        elif data.startswith("remind:"):
+            booking_id = data.split(":", 1)[1]
+            await reply_text(update, "📨 *Choose a reminder type:*", reply_markup=make_reminder_keyboard(booking_id))
+
+        elif data.startswith("remk:"):
+            _, booking_id, kind = data.split(":", 2)
+            booking = await get_booking(booking_id)
+            if not booking:
+                await reply_text(update, "❌ Booking not found.", reply_markup=make_main_menu())
+            else:
+                preview = reminder_message(booking, kind)
+                kb = make_confirm_keyboard("sendrem", f"{booking_id}|{kind}", "Send Reminder", f"dt:{booking_id}")
+                await reply_text(update, f"📨 *Preview:*\n\n{preview}", reply_markup=kb)
+
+        elif data.startswith("do_sendrem:"):
+            payload = data.split(":", 1)[1]
+            booking_id, kind = payload.split("|", 1)
+            booking = await get_booking(booking_id)
+            cust = (booking or {}).get("customer") or {}
+            phone = cust.get("whatsapp") or cust.get("phone", "")
+            if booking and phone and await send_whatsapp(phone, reminder_message(booking, kind)):
+                await reply_text(update, f"📨 Reminder sent to {customer_display(booking)}.", reply_markup=make_main_menu())
+            else:
+                await reply_text(update, "⚠️ No phone on file or send failed.", reply_markup=make_main_menu())
+
+        # ── Cameras (F4) ──
+        elif data == "cameras":
+            await show_cameras(update)
+
+        elif data.startswith("cam:"):
+            camera_id = data.split(":", 1)[1]
+            await show_camera_detail(update, camera_id)
+
+        elif data.startswith("camtoggle:"):
+            _, camera_id, state = data.split(":", 2)
+            is_available = state == "1"
+            result = await set_camera_availability(camera_id, is_available)
+            if result:
+                await show_camera_detail(update, camera_id)
+            else:
+                await reply_text(update, "⚠️ Could not update camera. Check logs.", reply_markup=make_main_menu())
+
+        elif data.startswith("camrate:"):
+            camera_id = data.split(":", 1)[1]
+            chat_id = query.message.chat_id if query.message else 0
+            _pending_input[chat_id] = {"action": "camera_rate", "camera_id": camera_id}
+            await reply_text(update, "✏️ Send the new *daily rate* in RM (e.g. `120`).\nSend `cancel` to abort.")
+
         # ── Views ──
         elif data == "overdue":
             await show_overdue(update)
@@ -1266,6 +1757,8 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await show_active(update)
         elif data == "recent":
             await show_recent(update)
+        elif data == "schedule":
+            await show_schedule(update)
         elif data == "pickups":
             await show_pickups(update)
         elif data == "returns":
@@ -1303,11 +1796,16 @@ async def show_help(update: Update) -> None:
         "📊 `/dashboard` — live KPIs\n"
         "📈 `/analytics` — all-time & monthly stats\n"
         "🌅 `/brief` — morning brief on demand\n\n"
+        "*Workflow*\n"
+        "🗓️ `/schedule` — what needs doing now\n"
+        "📨 `/reminders` — send WhatsApp nudges\n"
+        "📷 `/cameras` — inventory & rates\n\n"
         "*Actions*\n"
         "🔍 `/search <name>` — find customers\n"
         "✅ `/approve <name>` / ❌ `/reject <name>`\n"
         "📦 `/pickup <name>` / 🔙 `/return <name>`\n"
         "🚫 `/cancel <name>`\n\n"
+        "_From a booking: 💰 record payment · 🧾 invoice · 📨 reminder_\n"
         "_MCP-connected · Owner-only_"
     )
     await reply_text(update, text, reply_markup=make_main_menu())
@@ -1382,6 +1880,22 @@ async def cmd_recent(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     await show_recent(update)
 
 
+async def cmd_schedule(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_owner(update):
+        return
+    await show_schedule(update)
+
+async def cmd_reminders(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_owner(update):
+        return
+    await show_reminders(update)
+
+async def cmd_cameras(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not is_owner(update):
+        return
+    await show_cameras(update)
+
+
 # ── Text Message Handler ───────────────────────────────
 def is_owner(update: Update) -> bool:
     if not OWNER:
@@ -1402,7 +1916,70 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     if not update.message or not update.message.text:
         return
 
-    text = update.message.text.strip().lower()
+    chat_id = update.message.chat_id
+    raw = update.message.text.strip()
+
+    # ── Pending text-input flows (payment amount, camera rate) ──
+    pending = _pending_input.get(chat_id)
+    if pending:
+        low = raw.lower()
+        if low == "cancel":
+            _pending_input.pop(chat_id, None)
+            await reply_text(update, "❌ Cancelled.", reply_markup=make_main_menu())
+            return
+
+        if pending["action"] == "payment_amount":
+            booking = await get_booking(pending["booking_id"])
+            default_amt = booking_balance(booking) if booking else 0
+            if pending["ptype"] == "deposit" and booking:
+                default_amt = float(booking.get("deposit_amount", 0) or 0)
+            if low == "ok":
+                amount = default_amt
+            else:
+                try:
+                    amount = round(float(raw.replace("rm", "").replace("RM", "").strip()), 2)
+                except ValueError:
+                    await reply_text(update, "⚠️ Not a valid number. Try again or send `cancel`.")
+                    return
+            if amount <= 0:
+                await reply_text(update, "⚠️ Amount must be greater than 0. Try again or send `cancel`.")
+                return
+            # Stash full details in state; keep callback_data short (Telegram 64-byte limit)
+            _pending_input[chat_id] = {
+                "action": "confirm_payment",
+                "booking_id": pending["booking_id"],
+                "ptype": pending["ptype"],
+                "method": pending["method"],
+                "amount": amount,
+            }
+            kb = make_confirm_keyboard("recordpay", pending["booking_id"], f"Record RM{amount}", f"dt:{pending['booking_id']}")
+            await reply_text(
+                update,
+                f"💰 *Confirm payment*\nType: {pending['ptype']}\nMethod: {pending['method']}\nAmount: *RM{amount}*",
+                reply_markup=kb,
+            )
+            return
+
+        if pending["action"] == "camera_rate":
+            try:
+                rate = round(float(raw.replace("rm", "").replace("RM", "").strip()), 2)
+            except ValueError:
+                await reply_text(update, "⚠️ Not a valid number. Try again or send `cancel`.")
+                return
+            if rate <= 0:
+                await reply_text(update, "⚠️ Rate must be greater than 0. Try again or send `cancel`.")
+                return
+            camera_id = pending["camera_id"]
+            _pending_input.pop(chat_id, None)
+            result = await update_camera_rate(camera_id, rate)
+            if result:
+                await reply_text(update, f"✅ Daily rate updated to RM{rate}.")
+                await show_camera_detail(update, camera_id)
+            else:
+                await reply_text(update, "⚠️ Could not update rate. Check logs.", reply_markup=make_main_menu())
+            return
+
+    text = raw.lower()
     parts = text.split()
     command = parts[0] if parts else ""
 
@@ -1495,6 +2072,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         elif command == "analytics":
             await show_analytics(update)
+
+        elif command == "schedule":
+            await show_schedule(update)
+
+        elif command == "reminders":
+            await show_reminders(update)
+
+        elif command in ("cameras", "inventory"):
+            await show_cameras(update)
 
         else:
             await reply_text(update, "Type `menu` for options.", reply_markup=make_main_menu())
@@ -1678,6 +2264,26 @@ async def verify_schema() -> bool:
         return False
 
 
+async def mcp_health_loop(interval: int = 120):
+    """Periodically ping the MCP subprocess so a dead/hung process is detected
+    and restarted proactively, before a user request hits it."""
+    consecutive_failures = 0
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            await asyncio.wait_for(mcp.call_tool("captura.cameras.list", {"filter": "all"}), timeout=25)
+            if consecutive_failures:
+                log.info("MCP health check recovered")
+            consecutive_failures = 0
+        except Exception as e:
+            consecutive_failures += 1
+            log.warning(f"MCP health check failed ({consecutive_failures}): {e}")
+            # call_tool already kills the subprocess on failure; force reset after repeats
+            if consecutive_failures >= 2:
+                mcp._kill_process()
+                log.warning("MCP subprocess reset by health loop")
+
+
 # ── Main ───────────────────────────────────────────────
 def main():
     app = Application.builder().token(TOKEN).build()
@@ -1695,13 +2301,18 @@ def main():
     app.add_handler(CommandHandler("returns", cmd_returns))
     app.add_handler(CommandHandler("analytics", cmd_analytics))
     app.add_handler(CommandHandler("brief", cmd_brief))
-
+    app.add_handler(CommandHandler("schedule", cmd_schedule))
+    app.add_handler(CommandHandler("reminders", cmd_reminders))
+    app.add_handler(CommandHandler("cameras", cmd_cameras))
     # Callback + message handlers
     app.add_handler(CallbackQueryHandler(on_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Schema verification on startup
     asyncio.get_event_loop().create_task(verify_schema())
+
+    # MCP health-check loop (proactive restart of dead/hung subprocess)
+    asyncio.get_event_loop().create_task(mcp_health_loop())
 
     # Push alerts
     if OWNER:
@@ -1718,6 +2329,11 @@ def main():
         raise
     finally:
         mcp.shutdown()
+        if _http_client and not _http_client.is_closed:
+            try:
+                asyncio.get_event_loop().run_until_complete(_http_client.aclose())
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":

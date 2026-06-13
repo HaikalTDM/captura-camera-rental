@@ -2,7 +2,17 @@ import { getSupabaseAdmin, logQueryError } from '../supabase/client.js';
 import { NotFoundError } from '../errors/handler.js';
 export async function listCameras(filter, sortBy) {
     const supabase = getSupabaseAdmin();
-    let query = supabase.from('cameras').select('*');
+    // Lean text-only column set for list views. Excludes image_url (base64 data
+    // URIs) and specifications (large JSON) which previously bloated the payload
+    // to ~270KB and broke the bot's stdio reader. Use cameras.get for full detail.
+    const LIST_COLUMNS = [
+        'id', 'name', 'brand', 'model', 'type',
+        'daily_rate', 'weekly_rate', 'monthly_rate', 'deposit_amount',
+        'discount_threshold', 'description', 'is_available',
+        'total_quantity', 'available_quantity', 'display_order',
+        'condition', 'location', 'status',
+    ].join(', ');
+    let query = supabase.from('cameras').select(LIST_COLUMNS);
     if (filter === 'available_only') {
         query = query.eq('is_available', true);
     }
