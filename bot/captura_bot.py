@@ -49,6 +49,39 @@ BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 MCP_JS    = os.path.join(BASE_DIR, "..", "mcp-server", "dist", "index.js")
 CHAT_FILE = os.path.join(BASE_DIR, ".chat_id")
 
+# Branding: Captura logo (1024x1024). Square asset works for both the bot's
+# profile photo and photo-card banners on entry screens.
+LOGO_PATH      = os.path.join(BASE_DIR, "..", "public", "images", "captura_logo_big.png")
+LOGO_FALLBACK  = os.path.join(BASE_DIR, "..", "public", "icons", "icon-512x512.png")
+# Cached Telegram file_id for the banner so we upload the bytes only once, then
+# reuse the id for every subsequent photo card (faster, less bandwidth).
+_logo_file_id: Optional[str] = None
+_profile_photo_set = False
+
+def banner_source() -> Optional[str]:
+    """Resolve the banner image to display on entry cards.
+    Priority: BOT_BANNER env (local path or http URL) -> bundled Captura logo.
+    Returns a path/URL Telegram can accept, or None if nothing is available."""
+    if BANNER:
+        # Remote URL: Telegram fetches it directly.
+        if BANNER.startswith("http://") or BANNER.startswith("https://"):
+            return BANNER
+        # Local path: absolute, or relative to the bot dir.
+        if os.path.isabs(BANNER) and os.path.exists(BANNER):
+            return BANNER
+        rel = os.path.join(BASE_DIR, BANNER)
+        if os.path.exists(rel):
+            return rel
+        log.warning(f"BOT_BANNER set but not found: {BANNER}; falling back to logo")
+    for p in (LOGO_PATH, LOGO_FALLBACK):
+        if os.path.exists(p):
+            return p
+    return None
+
+# Backwards-compatible alias (profile photo uses the same source).
+def logo_file() -> Optional[str]:
+    return banner_source()
+
 # ── MCP Client ─────────────────────────────────────────
 class MCPClient:
     """Manages a persistent JSON-RPC subprocess to the MCP server."""
@@ -553,6 +586,24 @@ async def reply_text(update: Update, text: str, **kwargs):
     if not target:
         return
 
+    # A photo/media message has no editable text body — editing it into a text
+    # message fails. Detect that and send a fresh message instead so navigation
+    # from the branded welcome/brief cards stays smooth. Strip the buttons off
+    # the old photo card first so we don't leave a second, stale menu behind.
+    if is_edit and (getattr(target, "photo", None) or getattr(target, "caption", None) is not None):
+        try:
+            await target.edit_reply_markup(reply_markup=None)
+        except Exception:
+            pass
+        try:
+            await target.reply_text(text, parse_mode=PARSE_MODE, **kwargs)
+        except Exception:
+            try:
+                await target.reply_text(text, **kwargs)
+            except Exception:
+                pass
+        return
+
     try:
         if is_edit:
             await target.edit_text(text, parse_mode=PARSE_MODE, **kwargs)
@@ -575,6 +626,78 @@ async def send_direct(app, chat_id: int, text: str, **kwargs):
             await app.bot.send_message(chat_id, text, **kwargs)
         except Exception:
             pass
+
+
+# ── Branding Helpers ───────────────────────────────────
+async def set_bot_profile_photo(bot) -> None:
+    """One-time: set the bot's profile photo to the Captura logo so it appears
+    beside every message. Idempotent within a process run."""
+    global _profile_photo_set
+    if _profile_photo_set:
+        return
+    path = logo_file()
+    if not path:
+        log.warning("Logo not found; skipping profile photo")
+        return
+    if not hasattr(bot, "set_my_profile_photo"):
+        log.info("PTB build lacks set_my_profile_photo; skipping")
+        _profile_photo_set = True
+        return
+    try:
+        with open(path, "rb") as f:
+            await bot.set_my_profile_photo(photo=f.read())
+        _profile_photo_set = True
+        log.info("Bot profile photo set to Captura logo")
+    except Exception as e:
+        # Non-fatal: branding is cosmetic, never block startup
+        log.warning(f"Could not set profile photo: {e}")
+        _profile_photo_set = True  # don't retry every loop
+
+
+async def send_logo_card(target, caption: str, reply_markup=None) -> bool:
+    """Send the Captura logo as a photo with a caption. Reuses a cached
+    file_id after the first upload. Returns True on success.
+
+    `target` is anything exposing reply_photo (a Message) — used for fresh
+    entry screens (welcome, morning brief), NOT for in-place navigation."""
+    global _logo_file_id
+    if len(caption) > 1024:  # Telegram caption hard limit
+        caption = caption[:1010] + "..."
+    photo = _logo_file_id or logo_file()
+    if not photo:
+        return False
+    try:
+        if hasattr(target, "reply_photo"):
+            msg = await target.reply_photo(photo=photo, caption=caption,
+                                           parse_mode=PARSE_MODE, reply_markup=reply_markup)
+        else:  # a Bot instance + chat_id pattern handled by caller wrapper
+            return False
+        # Cache the uploaded file_id for reuse
+        if msg and msg.photo:
+            _logo_file_id = msg.photo[-1].file_id
+        return True
+    except Exception as e:
+        log.warning(f"send_logo_card failed: {e}")
+        return False
+
+
+async def send_logo_card_direct(bot, chat_id: int, caption: str, reply_markup=None) -> bool:
+    """Like send_logo_card but for push messages (no incoming Message)."""
+    global _logo_file_id
+    if len(caption) > 1024:
+        caption = caption[:1010] + "..."
+    photo = _logo_file_id or logo_file()
+    if not photo:
+        return False
+    try:
+        msg = await bot.send_photo(chat_id, photo=photo, caption=caption,
+                                   parse_mode=PARSE_MODE, reply_markup=reply_markup)
+        if msg and msg.photo:
+            _logo_file_id = msg.photo[-1].file_id
+        return True
+    except Exception as e:
+        log.warning(f"send_logo_card_direct failed: {e}")
+        return False
 
 
 # ── Action Helpers ─────────────────────────────────────
@@ -1075,8 +1198,12 @@ async def render_numbered_booking_list(
 
 
 # ── Home / Start ───────────────────────────────────────
-async def show_home(update: Update, app=None) -> None:
-    """Render the polished home screen with live KPIs in a card layout."""
+async def show_home(update: Update, app=None, as_card: bool = False) -> None:
+    """Render the polished home screen with live KPIs in a card layout.
+
+    When as_card is True (e.g. /start), the Captura logo is sent as a photo
+    with the KPIs as its caption for a branded welcome. Otherwise a text
+    message is used so in-place button navigation can edit it smoothly."""
     try:
         stats = await gather_stats()
     except Exception:
@@ -1102,6 +1229,10 @@ async def show_home(update: Update, app=None) -> None:
         "_v3.1 · MCP · Owner_"
     )
     kb = make_main_menu(stats)
+
+    if as_card and update.message:
+        if await send_logo_card(update.message, caption, reply_markup=kb):
+            return
     await reply_text(update, caption, reply_markup=kb)
 
 
@@ -1852,7 +1983,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
                 f.write(str(update.message.chat_id))
         except Exception:
             pass
-    await show_home(update, context.application)
+    await show_home(update, context.application, as_card=True)
 
 async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_owner(update):
@@ -2200,8 +2331,13 @@ async def send_morning_brief(app, chat_id: int):
         [InlineKeyboardButton("📊 Dashboard", callback_data="dashboard"),
          InlineKeyboardButton("🏠 Home", callback_data="home")],
     ]
-    await send_direct(app, chat_id, "\n".join(lines),
-                      reply_markup=InlineKeyboardMarkup(kb_buttons))
+    brief_text = "\n".join(lines)
+    kb = InlineKeyboardMarkup(kb_buttons)
+    # Brand with the logo card when the brief fits Telegram's caption limit;
+    # otherwise fall back to text (the profile photo still shows the logo).
+    if len(brief_text) <= 1024 and await send_logo_card_direct(app.bot, chat_id, brief_text, reply_markup=kb):
+        return
+    await send_direct(app, chat_id, brief_text, reply_markup=kb)
 
 
 # ── Booking Lifecycle State Validation ────────────────
@@ -2285,8 +2421,13 @@ async def mcp_health_loop(interval: int = 120):
 
 
 # ── Main ───────────────────────────────────────────────
+async def _on_post_init(app) -> None:
+    """Runs once after the bot is initialized: apply Captura branding."""
+    await set_bot_profile_photo(app.bot)
+
+
 def main():
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).post_init(_on_post_init).build()
 
     # Command handlers
     app.add_handler(CommandHandler("start", cmd_start))
