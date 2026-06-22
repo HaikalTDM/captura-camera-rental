@@ -7,6 +7,7 @@ MCP-wired · owner-gated · dynamic inline keyboards · confirmation flows
 import os, sys, asyncio, json, re, logging, subprocess
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Any
+from urllib.parse import quote
 import httpx
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -48,6 +49,51 @@ PARSE_MODE = "Markdown"
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 MCP_JS    = os.path.join(BASE_DIR, "..", "mcp-server", "dist", "index.js")
 CHAT_FILE = os.path.join(BASE_DIR, ".chat_id")
+DAILY_MSG_FILE = os.path.join(BASE_DIR, ".daily_messages.json")
+
+# ── Daily chat cleanup ──────────────────────────────────
+def _load_daily_msgs() -> dict:
+    try:
+        with open(DAILY_MSG_FILE) as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def _save_daily_msgs(data: dict):
+    try:
+        with open(DAILY_MSG_FILE, "w") as f:
+            json.dump(data, f)
+    except Exception:
+        pass
+
+async def _track_msg(chat_id: int, msg_id: int):
+    today = date_today()
+    data = _load_daily_msgs()
+    key = str(chat_id)
+    data.setdefault(key, {}).setdefault(today, []).append(msg_id)
+    _save_daily_msgs(data)
+
+async def cleanup_old_messages(app, chat_id: int):
+    """Delete all bot-sent messages from previous days so chat starts clean."""
+    today = date_today()
+    data = _load_daily_msgs()
+    key = str(chat_id)
+    old_dates = [d for d in data.get(key, {}) if d < today]
+    if not old_dates:
+        return
+    deleted = 0
+    for d in old_dates:
+        for mid in data[key].get(d, []):
+            try:
+                await app.bot.delete_message(chat_id, mid)
+                deleted += 1
+            except Exception:
+                pass
+    for d in old_dates:
+        data.get(key, {}).pop(d, None)
+    _save_daily_msgs(data)
+    if deleted:
+        log.info(f"Chat cleanup: deleted {deleted} messages from {old_dates}")
 
 # Branding: Captura logo (1024x1024). Square asset works for both the bot's
 # profile photo and photo-card banners on entry screens.
@@ -96,12 +142,15 @@ class MCPClient:
             return
         env = os.environ.copy()
         env["SUPABASE_SERVICE_ROLE_KEY"] = SB_KEY
-        env["SUPABASE_URL"] = SB_URL
+        env["NEXT_PUBLIC_SUPABASE_URL"] = SB_URL
+        env["PATH"] = "/Users/admin/.local/bin:/usr/local/bin:" + env.get("PATH", "/usr/bin")
+        log.info("Starting MCP subprocess: node %s", MCP_JS)
         self.process = await asyncio.create_subprocess_exec(
             "node", MCP_JS,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             env=env,
-            limit=8 * 1024 * 1024,  # 8MB line buffer; large tool responses exceed asyncio's 64KB default
+            cwd=os.path.dirname(MCP_JS),
+            limit=8 * 1024 * 1024,
         )
         self._req_id = 0
         await self._request("initialize", {
@@ -193,6 +242,9 @@ _overdue_cache_ts: float = 0
 # Session state for numbered customer search results
 _search_sessions: dict[int, list] = {}  # chat_id -> [customer dicts]
 
+_home_data_cache: dict[int, dict] = {}  # chat_id -> fetched booking data
+_home_data_cache_ts: dict[int, float] = {}
+
 CACHE_TTL_SHORT = 30   # seconds for pending/overdue
 CACHE_TTL_LONG  = 300  # seconds for camera list
 
@@ -235,7 +287,8 @@ def camera_display(booking: dict) -> str:
     for cam in _camera_cache:
         if cam.get("id") == booking.get("camera_id"):
             return cam.get("name", "???")
-    return (booking.get("camera_id") or "???")[:8]
+    cid = booking.get("camera_id") or ""
+    return f"📷 {cid[-4:]}" if cid else "???"
 
 def format_booking_line(booking: dict) -> str:
     icon = status_icon(booking.get("booking_status", ""))
@@ -416,13 +469,23 @@ async def get_recent_bookings(count: int = 5) -> list:
 async def get_pickups_window(days: int = 3) -> list:
     td = date_today()
     d_end = date_days_out(days)
-    return await supabase_get(
+    rows = await supabase_get(
         f"bookings?select=*,customer:customers(id,name,full_name,email,phone,whatsapp)"
         f"&booking_status=eq.confirmed"
         f"&equipment_picked_up=eq.false"
         f"&pickup_date=gte.{td}&pickup_date=lte.{d_end}"
         f"&order=pickup_date.asc&limit=30"
     )
+    if not rows:
+        # Fallback: pickup_date may be null — use start_date instead
+        rows = await supabase_get(
+            f"bookings?select=*,customer:customers(id,name,full_name,email,phone,whatsapp)"
+            f"&booking_status=eq.confirmed"
+            f"&equipment_picked_up=eq.false"
+            f"&start_date=gte.{td}&start_date=lte.{d_end}"
+            f"&order=start_date.asc&limit=30"
+        )
+    return rows
 
 async def get_returns_window(days: int = 3) -> list:
     td = date_today()
@@ -430,6 +493,7 @@ async def get_returns_window(days: int = 3) -> list:
     return await supabase_get(
         f"bookings?select=*,customer:customers(id,name,full_name,email,phone,whatsapp)"
         f"&booking_status=eq.confirmed"
+        f"&equipment_picked_up=eq.true"
         f"&equipment_returned=eq.false"
         f"&end_date=gte.{td}&end_date=lte.{d_end}"
         f"&order=end_date.asc&limit=30"
@@ -566,9 +630,12 @@ async def send_whatsapp(phone: str, message: str) -> bool:
     except Exception:
         return False
 
-def whatsapp_link(phone: str) -> str:
+def whatsapp_link(phone: str, text: str = "") -> str:
     num = clean_phone(phone)
-    return f"https://wa.me/{num}"
+    url = f"https://wa.me/{num}"
+    if text:
+        url += f"?text={quote(text)}"
+    return url
 
 
 # ── Message Helpers ────────────────────────────────────
@@ -596,10 +663,12 @@ async def reply_text(update: Update, text: str, **kwargs):
         except Exception:
             pass
         try:
-            await target.reply_text(text, parse_mode=PARSE_MODE, **kwargs)
+            msg = await target.reply_text(text, parse_mode=PARSE_MODE, **kwargs)
+            await _track_msg(target.chat_id, msg.message_id)
         except Exception:
             try:
-                await target.reply_text(text, **kwargs)
+                msg = await target.reply_text(text, **kwargs)
+                await _track_msg(target.chat_id, msg.message_id)
             except Exception:
                 pass
         return
@@ -608,22 +677,26 @@ async def reply_text(update: Update, text: str, **kwargs):
         if is_edit:
             await target.edit_text(text, parse_mode=PARSE_MODE, **kwargs)
         else:
-            await target.reply_text(text, parse_mode=PARSE_MODE, **kwargs)
+            msg = await target.reply_text(text, parse_mode=PARSE_MODE, **kwargs)
+            await _track_msg(target.chat_id, msg.message_id)
     except Exception:
         try:
             if is_edit:
                 await target.edit_text(text, **kwargs)
             else:
-                await target.reply_text(text, **kwargs)
+                msg = await target.reply_text(text, **kwargs)
+                await _track_msg(target.chat_id, msg.message_id)
         except Exception:
             pass
 
 async def send_direct(app, chat_id: int, text: str, **kwargs):
     try:
-        await app.bot.send_message(chat_id, text, parse_mode=PARSE_MODE, **kwargs)
+        msg = await app.bot.send_message(chat_id, text, parse_mode=PARSE_MODE, **kwargs)
+        await _track_msg(chat_id, msg.message_id)
     except Exception:
         try:
-            await app.bot.send_message(chat_id, text, **kwargs)
+            msg = await app.bot.send_message(chat_id, text, **kwargs)
+            await _track_msg(chat_id, msg.message_id)
         except Exception:
             pass
 
@@ -847,7 +920,7 @@ async def mark_completed(booking_id: str) -> Optional[dict]:
         await supabase_patch("bookings", {
             "equipment_returned": True, "equipment_return_date": n,
             "booking_status": "completed", "status": "completed",
-            "deposit_paid": False, "deposit_paid_date": n,
+            "deposit_paid": True, "deposit_paid_date": n,
             "updated_at": n,
         }, {"id": booking_id})
     log.info(f"COMPLETE {booking_id}")
@@ -1040,6 +1113,9 @@ def make_booking_actions(booking: dict, back_cb: str = "menu") -> InlineKeyboard
     elif status == "active":
         buttons.append([InlineKeyboardButton("🔙 Mark Returned", callback_data=f"rt:{bid}")])
         buttons.append([InlineKeyboardButton("⚡ Mark Completed", callback_data=f"complete:{bid}")])
+        buttons.append([InlineKeyboardButton("⚠️ Report Issue", callback_data=f"confirm_rp:{bid}")])
+    elif status == "completed":
+        buttons.append([InlineKeyboardButton("⭐ Request Review", callback_data=f"confirm_rev:{bid}")])
 
     # Payment + invoice actions (not for pending/rejected/cancelled)
     if status in ("confirmed", "active", "completed"):
@@ -1052,7 +1128,12 @@ def make_booking_actions(booking: dict, back_cb: str = "menu") -> InlineKeyboard
     if cust_id:
         buttons.append([InlineKeyboardButton("📋 Customer History", callback_data=f"ch:{cust_id}")])
     if phone:
-        buttons.append([InlineKeyboardButton("💬 WhatsApp", url=whatsapp_link(phone))])
+        if status == "confirmed":
+            buttons.append([InlineKeyboardButton("📦 Send Pickup Info", url=whatsapp_link(phone, reminder_message(booking, "pickup")))])
+        elif status == "active":
+            buttons.append([InlineKeyboardButton("🔙 Send Return Reminder", url=whatsapp_link(phone, reminder_message(booking, "return")))])
+        else:
+            buttons.append([InlineKeyboardButton("💬 WhatsApp", url=whatsapp_link(phone))])
 
     buttons.append([InlineKeyboardButton("🔄 Refresh", callback_data=f"dt:{bid}")])
     buttons.append(make_back_row(back_cb))
@@ -1198,37 +1279,534 @@ async def render_numbered_booking_list(
 
 
 # ── Home / Start ───────────────────────────────────────
-async def show_home(update: Update, app=None, as_card: bool = False) -> None:
-    """Render the polished home screen with live KPIs in a card layout.
-
-    When as_card is True (e.g. /start), the Captura logo is sent as a photo
-    with the KPIs as its caption for a branded welcome. Otherwise a text
-    message is used so in-place button navigation can edit it smoothly."""
-    try:
-        stats = await gather_stats()
-    except Exception:
-        stats = {}
-
-    try:
-        overdue = await get_overdue_bookings(use_cache=False)
-        stats["overdue"] = len(overdue)
-    except Exception:
-        stats["overdue"] = 0
-
-    caption = (
-        "*📸 C A P T U R A*\n"
-        "  _Camera Rental · Studio_\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        "📊 *Today at a Glance*\n\n"
-        f"⏳ `{stats.get('pending', 0):>3}` Pending   ⚠️ `{stats.get('overdue', 0):>3}` Overdue\n"
-        f"📦 `{stats.get('pickups', 0):>3}` Pickups   🔙 `{stats.get('returns', 0):>3}` Returns\n"
-        f"📸 `{stats.get('active', 0):>3}` Active    🏁 `{stats.get('completed', 0):>3}` Done\n\n"
-        "━━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"💰 Today:  *{format_currency(stats.get('revenue_today', 0))}*\n"
-        f"📅 Month:  *{format_currency(stats.get('revenue_month', 0))}*\n\n"
-        "_v3.1 · MCP · Owner_"
+async def _fetch_home_data(force: bool = False) -> dict:
+    """Fetch all booking data for the glance card. Cached 30s per polling loop."""
+    now_ts = asyncio.get_event_loop().time()
+    if not force and _home_data_cache and (now_ts - _home_data_cache_ts.get(0, 0)) < 30:
+        return _home_data_cache.get(0, {})
+    await fetch_cameras()
+    pending, overdue, pickups, returns, active = await asyncio.gather(
+        get_pending_bookings(use_cache=False),
+        get_overdue_bookings(use_cache=False),
+        get_pickups_window(3),
+        get_returns_window(3),
+        get_active_bookings(),
     )
-    kb = make_main_menu(stats)
+    data = {
+        "pending": pending, "overdue": overdue,
+        "pickups": pickups, "returns": returns, "active": active,
+    }
+    _home_data_cache[0] = data
+    _home_data_cache_ts[0] = now_ts
+    return data
+
+
+_rev_cache: dict = {}
+_rev_cache_ts: float = 0
+
+
+async def _fetch_rev_snapshot(force: bool = False) -> dict:
+    """Fetch revenue snapshot + completed count. Cached 60s. Falls back to Supabase."""
+    global _rev_cache, _rev_cache_ts
+    now_ts = asyncio.get_event_loop().time()
+    if not force and _rev_cache and (now_ts - _rev_cache_ts) < 60:
+        return _rev_cache
+    rev = {"month": 0, "all_time": 0, "completed": 0}
+
+    # Try MCP first (with 5s timeout)
+    try:
+        m = await asyncio.wait_for(
+            mcp.call_tool("captura.admin.dashboard_summary", {"period": "month"}),
+            timeout=5,
+        )
+        if isinstance(m, dict):
+            rev["month"] = m.get("metrics", {}).get("total_revenue_rm", 0)
+            rev["completed"] = m.get("metrics", {}).get("total_completed", 0)
+    except Exception:
+        pass
+    try:
+        a = await asyncio.wait_for(
+            mcp.call_tool("captura.admin.dashboard_summary", {"period": "all"}),
+            timeout=5,
+        )
+        if isinstance(a, dict):
+            rev["all_time"] = a.get("metrics", {}).get("total_revenue_rm", 0)
+    except Exception:
+        pass
+
+    # Supabase fallback: count completed bookings directly
+    if not rev["completed"]:
+        try:
+            comp = await supabase_get("bookings", {
+                "select": "id,booking_status,status",
+                "or": "(booking_status.eq.completed,status.eq.completed)",
+                "limit": "500",
+            })
+            rev["completed"] = len(comp) if comp else 0
+        except Exception:
+            pass
+
+    # Supabase fallback: sum all completed booking amounts for all-time
+    if not rev["all_time"]:
+        try:
+            rows = await supabase_get("bookings", {
+                "select": "total_amount,booking_status,status",
+                "or": "(booking_status.eq.completed,status.eq.completed)",
+                "limit": "500",
+            })
+            rev["all_time"] = sum(float(r.get("total_amount", 0) or 0) for r in (rows or []))
+        except Exception:
+            pass
+
+    # Supabase fallback: month revenue from completed bookings this month
+    if not rev["month"]:
+        try:
+            start_of_month = datetime.now().strftime("%Y-%m-01")
+            rows = await supabase_get("bookings", {
+                "select": "total_amount,start_date,booking_status,status",
+                "order": "start_date.desc",
+                "limit": "500",
+            })
+            rev["month"] = sum(
+                float(r.get("total_amount", 0) or 0) for r in (rows or [])
+                if (r.get("start_date", "") or "").startswith(start_of_month[:7])
+            )
+        except Exception:
+            pass
+
+    _rev_cache = rev
+    _rev_cache_ts = now_ts
+    return rev
+
+
+def _build_detail_suggestion(booking: dict) -> str:
+    """Build a suggested next step line based on booking status."""
+    status = booking.get("booking_status", "")
+    bal = booking_balance(booking)
+    name = customer_display(booking)
+    cam = camera_display(booking)
+
+    if status == "pending_approval":
+        return f"Check availability and approve {name}'s booking."
+    if status == "confirmed":
+        if bal > 0:
+            return f"Prepare {cam} and collect {format_currency(bal)} before handover."
+        return f"Prepare {cam} for pickup."
+    if status == "active":
+        end = booking.get("end_date", "?")
+        overdue = end < date_today()
+        if overdue:
+            return f"⚠️ Overdue! Contact {name} now to confirm return."
+        if bal > 0:
+            return f"Inspect {cam} on return. Outstanding: {format_currency(bal)}."
+        return f"Inspect {cam} on return, then mark complete."
+    if status in ("completed",):
+        return "Generate invoice or request a customer review."
+    return ""
+
+
+# ── Dashboard Helpers ──────────────────────────────────
+
+def _normalize_dash_data(data: dict) -> dict:
+    """Map raw MCP/fetch data to a safe normalized shape."""
+    pending  = data.get("pending", []) or []
+    overdue  = data.get("overdue", []) or []
+    pickups  = data.get("pickups", []) or []
+    returns  = data.get("returns", []) or []
+    active   = data.get("active", []) or []
+    today    = date_today()
+
+    today_pu = [b for b in pickups if (b.get("pickup_date") or "") == today]
+    today_re = [b for b in returns if (b.get("end_date") or "") == today]
+
+    # Outstanding balance across active + pending
+    outstanding = sum(booking_balance(b) for b in active)
+    outstanding += sum(booking_balance(b) for b in pending)
+
+    # Today's collected: sum of total_amount for active bookings (proxy)
+    collected = sum(float(b.get("total_amount", 0) or 0) for b in active)
+
+    next_pu  = today_pu[0] if today_pu else None
+    next_re  = today_re[0] if today_re else None
+    top_od   = overdue[0] if overdue else None
+
+    return {
+        "collected_today": collected,
+        "pending_payment": outstanding,
+        "active_rentals": len(active),
+        "pickups_today": len(today_pu),
+        "returns_today": len(today_re),
+        "pickups_3d": len(pickups),
+        "returns_3d": len(returns),
+        "overdue_rentals": len(overdue),
+        "unpaid_bookings": sum(1 for b in list(active) + list(pending) if booking_balance(b) > 0),
+        "pending_approval": len(pending),
+        "next_pickup": next_pu,
+        "next_return": next_re,
+        "top_overdue": top_od,
+    }
+
+
+def _get_dash_status(norm: dict) -> str:
+    if norm["overdue_rentals"] > 0:
+        return "🔴 Needs attention"
+    if norm["pending_payment"] > 0 or norm["pickups_today"] > 0 or norm["returns_today"] > 0:
+        return "🟡 Action needed"
+    if norm["active_rentals"] > 0:
+        return "🔵 Rentals active"
+    return "🟢 Quiet today"
+
+
+def _build_dash_alerts(norm: dict) -> list:
+    lines = []
+    if norm["overdue_rentals"] > 0:
+        name = ""
+        top = norm.get("top_overdue")
+        if top:
+            name = f" ({customer_display(top)} — {camera_display(top)})"
+        lines.append(f"⚠️ {norm['overdue_rentals']} overdue{name}")
+    if norm["pending_payment"] > 0:
+        lines.append(f"💰 {format_currency(norm['pending_payment'])} pending payment")
+    if norm["returns_today"] > 0:
+        lines.append(f"📦 {norm['returns_today']} return(s) due today")
+    if norm["pickups_today"] > 0:
+        lines.append(f"📸 {norm['pickups_today']} pickup(s) scheduled today")
+    if not lines:
+        lines.append("✨ No urgent alerts")
+    return lines
+
+
+def _get_dash_next_action(norm: dict) -> str:
+    top = norm.get("top_overdue")
+    if norm["overdue_rentals"] > 0 and top:
+        return f"Review overdue: {customer_display(top)} — {camera_display(top)}"
+    if norm["overdue_rentals"] > 0:
+        return "Review overdue rentals now."
+
+    nre = norm.get("next_return")
+    if norm["returns_today"] > 0 and nre:
+        return f"Prepare return: {customer_display(nre)} — {camera_display(nre)}"
+    if norm["returns_today"] > 0:
+        return "Prepare for today's return(s)."
+
+    npu = norm.get("next_pickup")
+    if norm["pickups_today"] > 0 and npu:
+        return f"Prepare pickup: {customer_display(npu)} — {camera_display(npu)}"
+    if norm["pickups_today"] > 0:
+        return "Prepare camera pickup(s)."
+
+    if norm["pending_payment"] > 0:
+        return f"Follow up {format_currency(norm['pending_payment'])} pending payment."
+
+    return "No urgent action right now."
+
+
+# ── Action Queue ─────────────────────────────────────
+
+ACTION_SIGNALS = {
+    "overdue":  "⚠️ contact",
+    "pickup":   "",
+    "return":   "",
+    "payment":  "💰 unpaid",
+    "approval": "",
+}
+
+ACTION_LABELS = {
+    "overdue":  "overdue",
+    "return":   "return",
+    "pickup":   "pickup",
+    "payment":  "payment",
+    "approval": "approve",
+}
+
+ACTION_PRIORITY = {
+    "overdue":  1,
+    "return":   2,
+    "pickup":   3,
+    "payment":  4,
+    "approval": 5,
+}
+
+_action_item_cache: list = []
+_action_item_cache_ts: float = 0
+
+
+def _build_action_items(data: dict) -> list:
+    """Convert raw bookings into a priority-sorted list of ActionItems."""
+    global _action_item_cache, _action_item_cache_ts
+    now_ts = asyncio.get_event_loop().time()
+    if _action_item_cache and (now_ts - _action_item_cache_ts) < 30:
+        return _action_item_cache
+
+    today = date_today()
+    tomorrow = date_tomorrow()
+    horizon = date_days_out(3)
+    items = []
+
+    pending  = data.get("pending", []) or []
+    overdue  = data.get("overdue", []) or []
+    pickups  = data.get("pickups", []) or []
+    returns  = data.get("returns", []) or []
+    active   = data.get("active", []) or []
+
+    def _sort_key(b):
+        return (b.get("start_date") or "", b.get("end_date") or "")
+
+    # 1. Overdue (always shown, even outside horizon)
+    for b in sorted(overdue, key=_sort_key):
+        end_d = b.get("end_date", "?")
+        items.append({"booking": b, "type": "overdue",
+                       "date_label": end_d, "priority": ACTION_PRIORITY["overdue"]})
+
+    # 2. Returns today & within horizon (only for bookings where equipment has been picked up)
+    for b in sorted(returns, key=_sort_key):
+        if not b.get("equipment_picked_up"):
+            continue
+        end_d = b.get("end_date", "") or ""
+        if end_d < today:
+            continue
+        if end_d == today:
+            label = "Today"
+            prio = ACTION_PRIORITY["return"]
+        elif end_d == tomorrow:
+            label = "Tomorrow"
+            prio = ACTION_PRIORITY["return"] + 1
+        elif end_d <= horizon:
+            label = datetime.strptime(end_d, "%Y-%m-%d").strftime("%a, %d %b")
+            prio = ACTION_PRIORITY["return"] + 3
+        else:
+            continue
+        items.append({"booking": b, "type": "return",
+                       "date_label": label, "priority": prio})
+
+    # 3. Pickups today & within horizon
+    for b in sorted(pickups, key=_sort_key):
+        pu_d = b.get("pickup_date", "") or b.get("start_date", "") or ""
+        if pu_d == today:
+            label = "Today"
+            prio = ACTION_PRIORITY["pickup"]
+        elif pu_d == tomorrow:
+            label = "Tomorrow"
+            prio = ACTION_PRIORITY["pickup"] + 1
+        elif pu_d <= horizon:
+            label = datetime.strptime(pu_d, "%Y-%m-%d").strftime("%a, %d %b")
+            prio = ACTION_PRIORITY["pickup"] + 3
+        else:
+            continue
+        items.append({"booking": b, "type": "pickup",
+                       "date_label": label, "priority": prio})
+
+    # 4. Payment tasks (active bookings with unpaid balance in horizon)
+    for b in sorted(active, key=_sort_key):
+        bal = booking_balance(b)
+        if bal <= 0:
+            continue
+        end_d = b.get("end_date", "") or ""
+        if end_d == today:
+            label = "Today"
+            prio = ACTION_PRIORITY["payment"]
+        elif end_d == tomorrow:
+            label = "Tomorrow"
+            prio = ACTION_PRIORITY["payment"] + 1
+        elif end_d <= horizon:
+            label = datetime.strptime(end_d, "%Y-%m-%d").strftime("%a, %d %b")
+            prio = ACTION_PRIORITY["payment"] + 3
+        else:
+            continue
+        items.append({"booking": b, "type": "payment",
+                       "date_label": label, "priority": prio,
+                       "amount": bal})
+
+    # 5. Pending approvals
+    for b in sorted(pending, key=_sort_key):
+        start_d = b.get("start_date", "") or ""
+        if start_d == today:
+            label = "Today"
+            prio = ACTION_PRIORITY["approval"]
+        elif start_d == tomorrow:
+            label = "Tomorrow"
+            prio = ACTION_PRIORITY["approval"] + 1
+        elif start_d <= horizon:
+            label = datetime.strptime(start_d, "%Y-%m-%d").strftime("%a, %d %b")
+            prio = ACTION_PRIORITY["approval"] + 3
+        else:
+            continue
+        items.append({"booking": b, "type": "approval",
+                       "date_label": label, "priority": prio})
+
+    items.sort(key=lambda x: (x["priority"], x["date_label"]))
+    _action_item_cache = items[:6]  # max 6 visible
+    _action_item_cache_ts = now_ts
+    return _action_item_cache
+
+
+def _render_action_line(item: dict, idx: int) -> str:
+    """Render one compact action line: [N] Customer — action | camera | date | signal."""
+    b = item["booking"]
+    typ = item["type"]
+    name = customer_display(b)
+    cam = camera_display(b)
+    signal = ACTION_SIGNALS.get(typ, "")
+    label = ACTION_LABELS.get(typ, typ)
+
+    if typ == "overdue":
+        return f"[{idx}] {name} — {label} | {cam} | {item['date_label']} | {signal}"
+    if typ in ("pickup", "return"):
+        pu = b.get("pickup_method") or ""
+        extra = f"🚚 {pu}" if pu == "delivery" else "" if pu == "pickup" else ""
+        if typ == "return":
+            extra = extra or ""
+        line = f"[{idx}] {name} — {label} | {cam} | {item['date_label']}"
+        if extra:
+            line += f" | {extra}"
+        if signal:
+            line += f" | {signal}"
+        return line
+    if typ == "payment":
+        amt = item.get("amount", booking_balance(b))
+        return f"[{idx}] {name} — {label} | {cam} | RM{amt:.0f} due"
+    if typ == "approval":
+        start = b.get("start_date", "?")
+        end = b.get("end_date", "?")
+        return f"[{idx}] {name} — {label} | {cam} | {start}"
+    return f"[{idx}] {name} — {cam}"
+
+
+def _build_queue_section(items: list) -> list:
+    """Build the '3-Day Work Queue' caption lines grouped by date label."""
+    if not items:
+        return ["👀 *3-Day Work Queue*", "No actions in the next 3 days."]
+    lines = ["👀 *3-Day Work Queue*", ""]
+    seen_label = None
+    for i, item in enumerate(items):
+        label = item["date_label"]
+        if label != seen_label:
+            lines.append(f"📅 *{label}*")
+            seen_label = label
+        lines.append(_render_action_line(item, i + 1))
+    return lines
+
+
+def _make_queue_keyboard(items: list) -> InlineKeyboardMarkup:
+    """Build a numbered keyboard from action items, or quiet mode layout."""
+    if items:
+        row = []
+        buttons = []
+        for i, item in enumerate(items):
+            bid = item["booking"]["id"]
+            row.append(InlineKeyboardButton(str(i + 1), callback_data=f"task:{bid}"))
+            if len(row) == 4:
+                buttons.append(row)
+                row = []
+        if row:
+            buttons.append(row)
+        # Bottom row: secondary
+        buttons.append([
+            InlineKeyboardButton("📈 Analytics", callback_data="analytics"),
+            InlineKeyboardButton("⋯ More", callback_data="more_menu"),
+        ])
+        return InlineKeyboardMarkup(buttons)
+
+    # Quiet mode: no actions
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("📷 Cameras", callback_data="cameras"),
+         InlineKeyboardButton("📈 Analytics", callback_data="analytics")],
+        [InlineKeyboardButton("🔍 Search", callback_data="search_prompt"),
+         InlineKeyboardButton("⋯ More", callback_data="more_menu")],
+    ])
+
+
+def _build_dashboard_caption(data: dict, rev: dict = None) -> str:
+    """Build the full owner dashboard text with action queue."""
+    norm = _normalize_dash_data(data)
+    items = _build_action_items(data)
+    now = datetime.now()
+
+    # Status line with action count
+    total = len(items)
+    if total:
+        if norm["overdue_rentals"] > 0:
+            status = f"🔴 {total} action(s) · next 3 days"
+        elif norm["returns_today"] > 0 or norm["pickups_today"] > 0:
+            status = f"🟡 {total} action(s) · next 3 days"
+        else:
+            status = f"🔵 {total} action(s) · next 3 days"
+    else:
+        if norm["active_rentals"] > 0:
+            status = "🔵 Rentals active · quiet queue"
+        else:
+            status = "🟢 Quiet today"
+
+    lines = [
+        "*📸 C A P T U R A*",
+        "_Camera Rental · Studio_",
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        f"📅 {now.strftime('%a, %d %b %Y')}",
+        status,
+        "",
+    ]
+
+    # 3-Day Work Queue
+    lines.extend(_build_queue_section(items))
+    lines.append("")
+
+    # Money snapshot (compact, with month and all-time)
+    rev = rev or {}
+    lines.append("💰 *Money*")
+    parts = [f"Today: {format_currency(norm['collected_today'])}"]
+    parts.append(f"Month: {format_currency(rev['month'])}")
+    parts.append(f"All: {format_currency(rev['all_time'])}")
+    parts.append(f"Pending: {format_currency(norm['pending_payment'])}")
+    lines.append("  ·  ".join(parts))
+
+    # Summary counts
+    lines.append("")
+    lines.append("📦 *Summary*")
+    lines.append(f"Active: {norm['active_rentals']}  ·  Pickups: {norm['pickups_3d']}  ·  Returns: {norm['returns_3d']}")
+    lines.append(f"Overdue: {norm['overdue_rentals']}  ·  Pending: {norm['pending_approval']}")
+    lines.append(f"Completed: {rev.get('completed', 0)}")
+
+    lines.extend([
+        "",
+        "━━━━━━━━━━━━━━━━━━━━",
+        "_v3.2 · MCP · Owner_",
+    ])
+    return "\n".join(lines)
+
+
+# ── Dashboard Keyboard ─────────────────────────────────
+
+def _make_dashboard_keyboard(data: dict) -> InlineKeyboardMarkup:
+    """Dashboard keyboard — numbered task buttons when actions exist, quiet mode otherwise."""
+    items = _build_action_items(data)
+    return _make_queue_keyboard(items)
+
+
+def _make_more_menu() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("🔍 Search Customer", callback_data="search_prompt"),
+         InlineKeyboardButton("📷 Cameras", callback_data="cameras")],
+        [InlineKeyboardButton("🔔 Reminders", callback_data="reminders"),
+         InlineKeyboardButton("📅 Schedule", callback_data="schedule")],
+        [InlineKeyboardButton("📈 Analytics", callback_data="analytics"),
+         InlineKeyboardButton("📊 Dashboard(old)", callback_data="dashboard")],
+        [InlineKeyboardButton("⬅️ Back to Dashboard", callback_data="home")],
+    ])
+
+
+# ── Show Home ──────────────────────────────────────────
+
+async def show_home(update: Update, app=None, as_card: bool = False) -> None:
+    """Owner dashboard — text-first, action-focused.
+
+    When as_card is True (/start), the Captura logo photo is sent once as a
+    branded welcome. Normal dashboard refresh is text-only, editing the existing
+    message in-place so the chat stays clean."""
+    data = await _fetch_home_data()
+    rev = await _fetch_rev_snapshot()
+    caption = _build_dashboard_caption(data, rev)
+    kb = _make_dashboard_keyboard(data)
 
     if as_card and update.message:
         if await send_logo_card(update.message, caption, reply_markup=kb):
@@ -1253,8 +1831,24 @@ async def show_booking_detail(update: Update, booking_id: str, back_cb: str = "m
         return
     cust = booking.get("customer") or {}
     status = booking.get("booking_status", "?")
+
+    # Determine task type for contextual header
+    task_header = ""
+    if status == "pending_approval":
+        task_header = "🟣 *Pending Approval*"
+    elif status == "confirmed":
+        task_header = "📸 *Pickup Preparation*"
+    elif status == "active":
+        end_d = booking.get("end_date", "")
+        if end_d and end_d < date_today():
+            task_header = "⚠️ *Overdue Rental*"
+        else:
+            task_header = "📦 *Active Rental*"
+    elif status == "completed":
+        task_header = "🏁 *Completed*"
+
     text = (
-        f"📷 *Booking Detail*\n"
+        f"{task_header}\n"
         f"━━━━━━━━━━━━━━━━━━━\n"
         f"👤 *{customer_display(booking)}*\n"
         f"📸 {camera_display(booking)}\n"
@@ -1267,6 +1861,26 @@ async def show_booking_detail(update: Update, booking_id: str, back_cb: str = "m
         f"{' · ' + booking.get('pickup_address', '') if booking.get('pickup_address') else ''}\n"
         f"📧 {cust.get('email', '?')} | 📱 {cust.get('phone', '?')}"
     )
+
+    # Suggested next step
+    suggestion = _build_detail_suggestion(booking)
+    if suggestion:
+        text += f"\n\n✅ *Suggested Next Step*\n{suggestion}"
+
+    # Prep checklist for confirmed bookings
+    if status == "confirmed":
+        text += ("\n\n🧰 *Prepare*\n"
+                 "• Camera body + lens · Battery + charger\n"
+                 "• Memory card · Camera bag\n"
+                 "• Check condition before handover")
+
+    # Return checklist for active bookings
+    if status == "active":
+        text += ("\n\n🧰 *Check on Return*\n"
+                 "• Camera body + lens caps\n"
+                 "• Battery + charger · Accessories\n"
+                 "• Physical condition")
+
     kb = make_booking_actions(booking, back_cb)
     await reply_text(update, text, reply_markup=kb)
 
@@ -1558,6 +2172,20 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         if data == "home":
             await show_home(update)
 
+        # ── Page navigation (backward-compat: old keyboards may still have these) ──
+        elif data in ("page_next", "page_prev", "noop"):
+            await show_home(update)
+
+        # ── Task from action queue ──
+        elif data.startswith("task:"):
+            booking_id = data.split(":", 1)[1]
+            await show_booking_detail(update, booking_id, back_cb="home")
+
+        # ── More menu ──
+        elif data == "more_menu":
+            caption = "⋯ *More Tools*\n\n_Tap a tool below._"
+            await reply_text(update, caption, reply_markup=_make_more_menu())
+
         # ── Pending ──
         elif data == "pending":
             await show_pending(update)
@@ -1649,6 +2277,42 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     log.error(f"rvall failed for {b['id']}: {e}")
             await reply_text(update, f"⚡ *{count}/{len(bookings)} returned!*", reply_markup=make_main_menu())
 
+        # ── Report issue ──
+        elif data.startswith("confirm_rp:"):
+            booking_id = data.split(":", 1)[1]
+            kb = make_confirm_keyboard("rp", booking_id, "Report Issue", f"dt:{booking_id}")
+            await reply_text(update, "⚠️ *Report an issue with this rental?*\nThis will log a maintenance flag.", reply_markup=kb)
+
+        elif data.startswith("do_rp:"):
+            booking_id = data.split(":", 1)[1]
+            n = utc_now()
+            await supabase_patch("bookings", {
+                "equipment_condition_return": "needs_repair",
+                "admin_notes": "Issue reported via bot",
+                "updated_at": n,
+            }, {"id": booking_id})
+            await reply_text(update, "⚠️ *Issue reported.* Equipment flagged for inspection.", reply_markup=make_main_menu())
+
+        # ── Request review ──
+        elif data.startswith("confirm_rev:"):
+            booking_id = data.split(":", 1)[1]
+            booking = await get_booking(booking_id)
+            phone = ""
+            if booking:
+                cust = booking.get("customer") or {}
+                phone = cust.get("whatsapp") or cust.get("phone", "")
+            if phone:
+                name = customer_display(booking) if booking else "there"
+                rev_text = f"Hi {name}, thanks for renting with CAPTURA! We'd love your feedback. Leave us a review ⭐"
+                kb = InlineKeyboardMarkup([[
+                    InlineKeyboardButton("📲 Send Review Request", url=whatsapp_link(phone, rev_text)),
+                ], [
+                    InlineKeyboardButton("⬅️ Back", callback_data=f"dt:{booking_id}"),
+                ]])
+                await reply_text(update, f"⭐ *Request a review from {name}?*", reply_markup=kb)
+            else:
+                await reply_text(update, "⚠️ No WhatsApp number for this customer.", reply_markup=make_main_menu())
+
         # ── Booking detail ──
         elif data.startswith("dt:"):
             booking_id = data.split(":", 1)[1]
@@ -1675,6 +2339,28 @@ async def on_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         # ── Mark completed (one-tap pickup+return+refund) ──
         elif data.startswith("complete:"):
+            booking_id = data.split(":", 1)[1]
+            booking = await get_booking(booking_id)
+            if not booking:
+                await reply_text(update, "⚠️ Cannot complete — booking not found.", reply_markup=make_main_menu())
+                return
+            bal = booking_balance(booking)
+            warnings = []
+            if not booking.get("deposit_paid"):
+                warnings.append(f"Deposit RM{booking.get('deposit_amount', 0):.0f} not recorded")
+            if not booking.get("final_payment_paid"):
+                warnings.append(f"Final payment not recorded")
+            if warnings:
+                text = f"⚠️ *Mark completed?* \n\nThis will close the booking.\n\n" + "\n".join(f"• ❌ {w}" for w in warnings) + f"\n\nOutstanding: *{format_currency(bal)}*"
+            else:
+                text = f"⚡ *Mark completed?*\n\nAll payments recorded.\n{customer_display(booking)} — {camera_display(booking)}"
+            kb = InlineKeyboardMarkup([
+                [InlineKeyboardButton(f"⚠️ Yes, complete ({format_currency(bal)} outstanding)" if bal else "✅ Yes, complete", callback_data=f"do_complete:{booking_id}")],
+                [InlineKeyboardButton("❌ Cancel", callback_data=f"dt:{booking_id}")],
+            ])
+            await reply_text(update, text, reply_markup=kb)
+
+        elif data.startswith("do_complete:"):
             booking_id = data.split(":", 1)[1]
             booking = await mark_completed(booking_id)
             if booking:
@@ -1971,6 +2657,7 @@ async def cmd_brief(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not is_owner(update):
         return
     await reply_text(update, "🌅 *Generating brief...*")
+    await cleanup_old_messages(context.application, OWNER or update.message.chat_id)
     await send_morning_brief(context.application, OWNER or update.message.chat_id)
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -2199,6 +2886,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         elif command == "brief":
             await reply_text(update, "🌅 *Generating brief...*")
+            await cleanup_old_messages(context.application, OWNER or update.message.chat_id)
             await send_morning_brief(context.application, OWNER or update.message.chat_id)
 
         elif command == "analytics":
@@ -2381,6 +3069,7 @@ async def poll_loop(application, owner_chat_id: int):
 
             # Morning brief at 8-10 AM
             if alert_tracker.should_send_morning_brief():
+                await cleanup_old_messages(application, owner_chat_id)
                 await send_morning_brief(application, owner_chat_id)
                 alert_tracker.mark_brief_sent()
 

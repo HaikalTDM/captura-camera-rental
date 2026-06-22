@@ -103,16 +103,22 @@ export async function getDashboardSummary(period) {
     if (newError) {
         logQueryError('admin.dashboard.new', newError);
     }
-    // Revenue this period
+    // Revenue this period — match website: fully paid bookings by final_payment_paid_date
     const { data: revenueData, error: revenueError } = await supabase
         .from('bookings')
-        .select('total_amount')
-        .gte('created_at', dateFrom)
-        .not('booking_status', 'in', '("cancelled","rejected")');
+        .select('total_amount, deposit_amount, final_payment_amount')
+        .eq('deposit_paid', true)
+        .eq('final_payment_paid', true)
+        .gte('final_payment_paid_date', dateFrom);
     if (revenueError) {
         logQueryError('admin.dashboard.revenue', revenueError);
     }
-    const totalRevenue = (revenueData || []).reduce((sum, b) => sum + Number(b.total_amount || 0), 0);
+    const totalRevenue = (revenueData || []).reduce((sum, b) => {
+        const depAmt = Number(b.deposit_amount || 0);
+        if (depAmt === 100)
+            return sum + Number(b.final_payment_amount || 0);
+        return sum + Number(b.total_amount || 0) - depAmt;
+    }, 0);
     // Available cameras
     const { count: availableCameras, error: camerasError } = await supabase
         .from('cameras')
@@ -144,18 +150,23 @@ export async function getDashboardSummary(period) {
 }
 export async function getRevenueReport(startDate, endDate, groupBy) {
     const supabase = getSupabaseAdmin();
+    // Match website dashboard: only fully paid bookings, grouped by final_payment_paid_date
     const { data: bookings, error } = await supabase
         .from('bookings')
         .select(`
       id,
       total_amount,
+      deposit_amount,
+      final_payment_amount,
+      final_payment_paid_date,
       start_date,
       camera_id,
       booking_status
     `)
-        .gte('created_at', startDate)
-        .lte('created_at', endDate)
-        .not('booking_status', 'in', '("cancelled","rejected")');
+        .eq('deposit_paid', true)
+        .eq('final_payment_paid', true)
+        .gte('final_payment_paid_date', startDate)
+        .lte('final_payment_paid_date', endDate);
     if (error) {
         logQueryError('admin.revenueReport', error);
         throw new Error('Failed to generate revenue report');
@@ -172,6 +183,14 @@ export async function getRevenueReport(startDate, endDate, groupBy) {
             cameraMap.set(c.id, c.name);
         }
     }
+    // Website revenue formula: deposit_amount===100 ? final_payment_amount : total_amount - deposit_amount
+    function getRevenue(b) {
+        const depAmt = Number(b.deposit_amount || 0);
+        if (depAmt === 100) {
+            return Number(b.final_payment_amount || 0);
+        }
+        return Number(b.total_amount || 0) - depAmt;
+    }
     const grouped = {};
     for (const booking of bookings || []) {
         let key;
@@ -180,16 +199,16 @@ export async function getRevenueReport(startDate, endDate, groupBy) {
                 key = cameraMap.get(booking.camera_id) || 'Unknown';
                 break;
             case 'month':
-                key = booking.start_date.substring(0, 7);
-                break;
             default:
-                key = booking.start_date.substring(0, 7);
+                // Group by final_payment_paid_date month
+                key = (booking.final_payment_paid_date || '').substring(0, 7);
+                break;
         }
         if (!grouped[key]) {
             grouped[key] = { count: 0, revenue: 0 };
         }
         grouped[key].count++;
-        grouped[key].revenue += Number(booking.total_amount || 0);
+        grouped[key].revenue += getRevenue(booking);
     }
     const breakdown = Object.entries(grouped).map(([key, value]) => ({
         label: key,

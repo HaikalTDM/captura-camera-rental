@@ -9,6 +9,26 @@ const BOOKING_SELECT = `
 
 const CUSTOMER_SELECT = 'id, name, full_name, email, phone, whatsapp, address, id_number';
 
+async function enrichWithCameras(supabase: ReturnType<typeof getSupabaseAdmin>, bookings: Booking[]): Promise<Booking[]> {
+  if (bookings.length === 0) return bookings;
+
+  const cameraIds = [...new Set(bookings.map(b => b.camera_id).filter(Boolean))];
+  if (cameraIds.length === 0) return bookings;
+
+  const { data: cameras, error } = await supabase
+    .from('cameras')
+    .select('id, name, brand, model, type, daily_rate')
+    .in('id', cameraIds);
+
+  if (error) return bookings;
+
+  const cameraMap = new Map((cameras || []).map(c => [c.id, c as Camera]));
+  return bookings.map(b => ({
+    ...b,
+    camera: cameraMap.get(b.camera_id) || undefined,
+  })) as Booking[];
+}
+
 export async function listBookings(filters: {
   status?: string;
   date_from?: string;
@@ -43,7 +63,7 @@ export async function listBookings(filters: {
     throw new Error('Failed to fetch bookings');
   }
 
-  return data as Booking[];
+  return enrichWithCameras(supabase, data as Booking[]);
 }
 
 export async function getBooking(bookingId: string): Promise<Booking> {
@@ -63,7 +83,8 @@ export async function getBooking(bookingId: string): Promise<Booking> {
     throw new Error('Failed to fetch booking');
   }
 
-  return data as Booking;
+  const enriched = await enrichWithCameras(supabase, [data as Booking]);
+  return enriched[0];
 }
 
 export async function searchBookings(query: string): Promise<Booking[]> {
@@ -113,7 +134,7 @@ export async function searchBookings(query: string): Promise<Booking[]> {
     }
   }
 
-  return bookings.slice(0, 50);
+  return enrichWithCameras(supabase, bookings.slice(0, 50));
 }
 
 export async function getTodayReturns(): Promise<Booking[]> {
@@ -134,7 +155,7 @@ export async function getTodayReturns(): Promise<Booking[]> {
     throw new Error('Failed to fetch today\'s returns');
   }
 
-  return data as Booking[];
+  return enrichWithCameras(supabase, data as Booking[]);
 }
 
 export async function createBooking(fields: Record<string, unknown>): Promise<{ booking: Booking; customer: Customer }> {
@@ -381,7 +402,7 @@ export async function getOverduePayments(limit: number): Promise<Booking[]> {
     throw new Error('Failed to fetch overdue payments');
   }
 
-  return (data || []) as Booking[];
+  return enrichWithCameras(supabase, (data || []) as Booking[]);
 }
 
 export async function getNextActions(limit: number): Promise<{
@@ -423,10 +444,10 @@ export async function getNextActions(limit: number): Promise<{
   ]);
 
   return {
-    pending_approvals: (pending.data || []) as Booking[],
-    todays_pickups: (pickups.data || []) as Booking[],
-    todays_returns: (returns.data || []) as Booking[],
-    overdue_payments: (overdue.data || []) as Booking[],
+    pending_approvals: await enrichWithCameras(supabase, (pending.data || []) as Booking[]),
+    todays_pickups: await enrichWithCameras(supabase, (pickups.data || []) as Booking[]),
+    todays_returns: await enrichWithCameras(supabase, (returns.data || []) as Booking[]),
+    overdue_payments: await enrichWithCameras(supabase, (overdue.data || []) as Booking[]),
   };
 }
 

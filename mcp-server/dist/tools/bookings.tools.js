@@ -5,6 +5,24 @@ const BOOKING_SELECT = `
   customer:customers(id, name, full_name, email, phone, whatsapp)
 `;
 const CUSTOMER_SELECT = 'id, name, full_name, email, phone, whatsapp, address, id_number';
+async function enrichWithCameras(supabase, bookings) {
+    if (bookings.length === 0)
+        return bookings;
+    const cameraIds = [...new Set(bookings.map(b => b.camera_id).filter(Boolean))];
+    if (cameraIds.length === 0)
+        return bookings;
+    const { data: cameras, error } = await supabase
+        .from('cameras')
+        .select('id, name, brand, model, type, daily_rate')
+        .in('id', cameraIds);
+    if (error)
+        return bookings;
+    const cameraMap = new Map((cameras || []).map(c => [c.id, c]));
+    return bookings.map(b => ({
+        ...b,
+        camera: cameraMap.get(b.camera_id) || undefined,
+    }));
+}
 export async function listBookings(filters) {
     const supabase = getSupabaseAdmin();
     let query = supabase.from('bookings').select(BOOKING_SELECT);
@@ -26,7 +44,7 @@ export async function listBookings(filters) {
         logQueryError('bookings.list', error);
         throw new Error('Failed to fetch bookings');
     }
-    return data;
+    return enrichWithCameras(supabase, data);
 }
 export async function getBooking(bookingId) {
     const supabase = getSupabaseAdmin();
@@ -42,7 +60,8 @@ export async function getBooking(bookingId) {
         logQueryError('bookings.get', error);
         throw new Error('Failed to fetch booking');
     }
-    return data;
+    const enriched = await enrichWithCameras(supabase, [data]);
+    return enriched[0];
 }
 export async function searchBookings(query) {
     const supabase = getSupabaseAdmin();
@@ -84,7 +103,7 @@ export async function searchBookings(query) {
             }
         }
     }
-    return bookings.slice(0, 50);
+    return enrichWithCameras(supabase, bookings.slice(0, 50));
 }
 export async function getTodayReturns() {
     const supabase = getSupabaseAdmin();
@@ -100,7 +119,7 @@ export async function getTodayReturns() {
         logQueryError('bookings.todayReturns', error);
         throw new Error('Failed to fetch today\'s returns');
     }
-    return data;
+    return enrichWithCameras(supabase, data);
 }
 export async function createBooking(fields) {
     const supabase = getSupabaseAdmin();
@@ -305,7 +324,7 @@ export async function getOverduePayments(limit) {
         logQueryError('bookings.overdue', error);
         throw new Error('Failed to fetch overdue payments');
     }
-    return (data || []);
+    return enrichWithCameras(supabase, (data || []));
 }
 export async function getNextActions(limit) {
     const supabase = getSupabaseAdmin();
@@ -339,10 +358,10 @@ export async function getNextActions(limit) {
             .limit(limit),
     ]);
     return {
-        pending_approvals: (pending.data || []),
-        todays_pickups: (pickups.data || []),
-        todays_returns: (returns.data || []),
-        overdue_payments: (overdue.data || []),
+        pending_approvals: await enrichWithCameras(supabase, (pending.data || [])),
+        todays_pickups: await enrichWithCameras(supabase, (pickups.data || [])),
+        todays_returns: await enrichWithCameras(supabase, (returns.data || [])),
+        overdue_payments: await enrichWithCameras(supabase, (overdue.data || [])),
     };
 }
 export async function completeBookingWorkflow(bookingId, options) {
