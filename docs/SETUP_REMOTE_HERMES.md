@@ -1,4 +1,4 @@
-# Hermes MCP Setup — Remote PC Instructions
+so# Hermes MCP Setup — Remote PC Instructions
 
 Copy everything below and paste to Hermes on the other PC.
 
