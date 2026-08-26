@@ -419,16 +419,16 @@ export const portfolioServices: PortfolioService[] = [
     items: [
       {
         id: 'grad-1',
-        title: 'Cap Toss Session',
-        description: 'Solo portraits with the cap toss in slow motion',
-        thumbnail: img('photo-1523050854058-8df90110c9f1'),
+        title: 'Pre Convo Session',
+        description: 'Solo portraits before the big day',
+        thumbnail: '/images/preconvo-graduation-photo.jpg',
         // TODO: replace with a real graduation shoot
         videoUrl: sv('ForBiggerFun'),
         testimonial: '',
-        clientName: 'Founder Grad #1',
-        clientRole: 'Could be you',
+        clientName: 'Usamah & Friends',
+        clientRole: 'Pre Convo Shoot',
         rating: 5,
-        tags: ['Portraits'],
+        tags: ['Pre Convo'],
         year: '2026',
         location: 'Malaysia',
       },
@@ -838,6 +838,6 @@ export const weddingFaqs: WeddingFaq[] = [
   },
   {
     q: 'Can we add extra coverage hours?',
-    a: 'Yes, extra hours are RM 200/hour on any package, subject to availability. We recommend booking them in advance so we can plan the day properly.',
+    a: 'Yes, extra hours are RM 100/hour on any package, subject to availability. We recommend booking them in advance so we can plan the day properly.',
   },
 ];

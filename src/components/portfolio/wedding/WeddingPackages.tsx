@@ -160,7 +160,7 @@ export default function WeddingPackages({ accent, accentSoft }: WeddingPackagesP
         </motion.div>
 
         <p className="text-center text-white/35 text-xs mt-8">
-          Extra hours RM 200/hr &middot; Drone add-on RM 300 (Fun Highlight+) &middot; Travel outside KL &amp; Selangor at cost
+          Extra hours RM 100/hr &middot; Drone add-on RM 300 (Fun Highlight+) &middot; Travel outside KL &amp; Selangor: RM 0.80/km
         </p>
       </div>
     </section>

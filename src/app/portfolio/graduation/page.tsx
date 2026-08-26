@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, MapPin, Clock3, PackageCheck } from 'lucide-react';
 import PortfolioNav from '@/components/portfolio/PortfolioNav';
 import ServiceHero from '@/components/portfolio/service/ServiceHero';
 import FounderDeal from '@/components/portfolio/service/FounderDeal';
-import ServiceGallery from '@/components/portfolio/service/ServiceGallery';
+import BeforeYouBook from '@/components/portfolio/service/BeforeYouBook';
 import ServicePackages from '@/components/portfolio/service/ServicePackages';
 import HowItWorks from '@/components/portfolio/service/HowItWorks';
 import ServiceFaq from '@/components/portfolio/service/ServiceFaq';
@@ -15,9 +15,6 @@ import PortfolioFooter from '@/components/portfolio/service/PortfolioFooter';
 import { getServiceById, graduationPackages } from '@/data/portfolioData';
 
 const service = getServiceById('graduation');
-
-const g = (id: string) =>
-  `https://images.unsplash.com/${id}?w=900&q=80&auto=format&fit=crop`;
 
 const heroConfig = {
   headingFont: 'font-bungee',
@@ -52,15 +49,49 @@ const dealConfig = {
   dealCtaLabel: 'Claim My Grad Spot',
 };
 
-const gallery = {
-  eyebrow: 'the shots we live for',
-  heading: ['Mom will cry.', 'In a good way.'] as [string, string],
-  photos: [
-    { src: g('photo-1523050854058-8df90110c9f1'), title: 'the cap toss' },
-    { src: g('photo-1523580494863-6f3031224c94'), title: 'the ceremony' },
-    { src: g('photo-1627556704290-2b1f5853ff78'), title: 'the hero portrait' },
-    { src: g('photo-1541339907198-e08756dedf3f'), title: 'the campus walk' },
+const beforeYouBook = {
+  eyebrow: 'before you book!',
+  heading: ['The fine print,', 'but make it fun.'] as [string, string],
+  intro:
+    'To give every client the best experience, here are a few things to know before securing your booking. We would rather be upfront than surprise you with terms and conditions. This is the terms and conditions. But friendly.',
+  blocks: [
+    {
+      icon: CalendarCheck,
+      title: 'Booking',
+      lines: [
+        'A non-refundable booking fee reserves your date. Non-refundable because by then, we are already emotionally committed.',
+        'The remaining balance is settled before the session or event begins. We are nice about it. But we do check.',
+      ],
+    },
+    {
+      icon: MapPin,
+      title: 'Travel',
+      lines: [
+        'Based in Kuala Lumpur & Selangor. Available throughout Malaysia. If there is a story, we will travel for it.',
+        'Travel charge: RM0.80 per km, round trip. Fair, transparent, and somehow still cheaper than therapy.',
+        'Locations beyond 200 km: hotel accommodation may apply. We are dedicated, not superhuman.',
+      ],
+    },
+    {
+      icon: Clock3,
+      title: 'Additional Coverage',
+      lines: [
+        'Additional hours: RM100/hour. The best-value overtime in this industry.',
+        'Custom quotations for extended events, multiple venues, or unique requirements. If you can dream it, we can quote it.',
+      ],
+    },
+    {
+      icon: PackageCheck,
+      title: 'Delivery',
+      lines: [
+        'Wedding galleries: 1 to 3 weeks.',
+        'Portrait & graduation sessions: 7 to 14 days.',
+        'Pixieset gallery available for 1 week, full-resolution Google Drive album for 1 month. You get the shots, we keep the shelf space.',
+      ],
+    },
   ],
+  outro:
+    'Moodboards, reference links, and "I want this exact vibe" texts are always welcome. We will judge you with love.',
 };
 
 const steps = [
@@ -121,18 +152,9 @@ export default function GraduationPage() {
     <div className="min-h-screen bg-[#0d0d0d]">
       <PortfolioNav />
 
-      {/* Hero — full-width banner */}
-      <ServiceHero
-        config={{ ...heroConfig, mediaItem: service.items[0] }}
-        accent={service.accent}
-        waMessage={dealConfig.waMessage}
-        waSource={dealConfig.waSource}
-        ctaLabel={dealConfig.heroCtaLabel}
-      />
-
       {/* Back to all work */}
-      <div className="bg-[#0d0d0d] px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto -mt-6 pb-2">
+      <div className="bg-[#0d0d0d] px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        <div className="max-w-7xl mx-auto">
           <Link
             href="/portfolio"
             className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
@@ -142,6 +164,15 @@ export default function GraduationPage() {
           </Link>
         </div>
       </div>
+
+      {/* Hero — full-width banner */}
+      <ServiceHero
+        config={{ ...heroConfig, mediaItem: service.items[0] }}
+        accent={service.accent}
+        waMessage={dealConfig.waMessage}
+        waSource={dealConfig.waSource}
+        ctaLabel={dealConfig.heroCtaLabel}
+      />
 
       <TickerMarquee accent={service.accent} items={tickerItems} />
 
@@ -159,13 +190,15 @@ export default function GraduationPage() {
         ctaLabel={dealConfig.dealCtaLabel}
       />
 
-      <ServiceGallery
+      <BeforeYouBook
         headingFont={heroConfig.headingFont}
         handwritingFont={heroConfig.handwritingFont}
         accent={service.accent}
-        eyebrow={gallery.eyebrow}
-        heading={gallery.heading}
-        photos={gallery.photos}
+        eyebrow={beforeYouBook.eyebrow}
+        heading={beforeYouBook.heading}
+        intro={beforeYouBook.intro}
+        blocks={beforeYouBook.blocks}
+        outro={beforeYouBook.outro}
       />
 
       <ServicePackages
@@ -177,7 +210,7 @@ export default function GraduationPage() {
         heading={['Pick your', 'grad pack.'] as [string, string]}
         note="these are our normal prices. founder grads pm us for the special one!"
         packages={graduationPackages}
-        footnote="Extra location RM 50 &middot; Extra hour RM 100"
+        footnote="Extra hour RM 100/hr &middot; Custom quotes for multiple venues &amp; extended events"
       />
 
       <HowItWorks

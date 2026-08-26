@@ -40,17 +40,9 @@ export default function WeddingFilmsPage() {
     <div className="min-h-screen bg-[#0d0d0d] font-friendly">
       <PortfolioNav />
 
-      {/* Showreel hero */}
-      <WeddingHero
-        reel={weddingShowreel}
-        accent={weddings.accent}
-        accentSoft={weddings.accentSoft}
-        onOpen={setSelectedItem}
-      />
-
       {/* Back to all work */}
-      <div className="bg-[#0d0d0d] px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto -mt-6 pb-2">
+      <div className="bg-[#0d0d0d] px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+        <div className="max-w-7xl mx-auto">
           <Link
             href="/portfolio"
             className="inline-flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm"
@@ -60,6 +52,14 @@ export default function WeddingFilmsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Showreel hero */}
+      <WeddingHero
+        reel={weddingShowreel}
+        accent={weddings.accent}
+        accentSoft={weddings.accentSoft}
+        onOpen={setSelectedItem}
+      />
 
       {/* Ticker */}
       <TickerMarquee accent={weddings.accent} items={tickerItems} />
