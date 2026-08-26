@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getServiceById } from '@/data/portfolioData';
+import JsonLd from '@/components/portfolio/seo/JsonLd';
 
 const events = getServiceById('events');
 
@@ -9,6 +10,10 @@ const pageDescription =
 export const metadata: Metadata = {
   title: 'Event Coverage | CAPTURA Production',
   description: pageDescription,
+  keywords: [
+    'event videography Malaysia', 'conference video', 'event coverage Kuala Lumpur',
+    'concert videography', 'gala video', 'event aftermovie',
+  ],
   alternates: {
     canonical: '/portfolio/events',
   },
@@ -71,6 +76,17 @@ export default function EventsLayout({
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://capturarentals.com' },
+            { '@type': 'ListItem', position: 2, name: 'Portfolio', item: 'https://capturarentals.com/portfolio' },
+            { '@type': 'ListItem', position: 3, name: 'Events', item: 'https://capturarentals.com/portfolio/events' },
+          ],
+        }}
       />
       {children}
     </>

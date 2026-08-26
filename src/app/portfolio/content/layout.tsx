@@ -1,4 +1,8 @@
 import type { Metadata } from 'next';
+import JsonLd from '@/components/portfolio/seo/JsonLd';
+import { getServiceById } from '@/data/portfolioData';
+
+const content = getServiceById('content');
 
 const pageDescription =
   'Content creation from a studio whose TikTok is their portfolio. The first 5 brands get the founder rate.';
@@ -6,6 +10,10 @@ const pageDescription =
 export const metadata: Metadata = {
   title: 'Content Creation | CAPTURA Production',
   description: pageDescription,
+  keywords: [
+    'content creation Malaysia', 'social media content', 'video marketing TikTok',
+    'reels editing', 'content creator', 'product showcase video',
+  ],
   alternates: {
     canonical: '/portfolio/content',
   },
@@ -18,7 +26,7 @@ export const metadata: Metadata = {
     siteName: 'CAPTURA',
     images: [
       {
-        url: '/images/captura_logo_big.png',
+        url: content.items[0].thumbnail,
         width: 1200,
         height: 630,
         alt: 'CAPTURA content creation',
@@ -29,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Content Creation | CAPTURA',
     description: pageDescription,
-    images: ['/images/captura_logo_big.png'],
+    images: [content.items[0].thumbnail],
   },
 };
 
@@ -38,5 +46,20 @@ export default function ContentLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <>{children}</>;
+  return (
+    <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://capturarentals.com' },
+            { '@type': 'ListItem', position: 2, name: 'Portfolio', item: 'https://capturarentals.com/portfolio' },
+            { '@type': 'ListItem', position: 3, name: 'Content Creation', item: 'https://capturarentals.com/portfolio/content' },
+          ],
+        }}
+      />
+      {children}
+    </>
+  );
 }

@@ -1,4 +1,8 @@
 import type { Metadata } from 'next';
+import JsonLd from '@/components/portfolio/seo/JsonLd';
+import { getServiceById } from '@/data/portfolioData';
+
+const corporate = getServiceById('corporate');
 
 const pageDescription =
   'Corporate & brand videos from a studio with zero corporate videos so far and everything to prove. The first 5 brands get the founder price.';
@@ -6,6 +10,10 @@ const pageDescription =
 export const metadata: Metadata = {
   title: 'Corporate & Brand Videos | CAPTURA Production',
   description: pageDescription,
+  keywords: [
+    'corporate video Malaysia', 'brand video Kuala Lumpur', 'product launch video',
+    'corporate videography', 'company profile video', 'social media campaign video',
+  ],
   alternates: {
     canonical: '/portfolio/corporate',
   },
@@ -18,7 +26,7 @@ export const metadata: Metadata = {
     siteName: 'CAPTURA',
     images: [
       {
-        url: '/images/captura_logo_big.png',
+        url: corporate.items[0].thumbnail,
         width: 1200,
         height: 630,
         alt: 'CAPTURA corporate & brand videos',
@@ -29,7 +37,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Corporate & Brand Videos | CAPTURA',
     description: pageDescription,
-    images: ['/images/captura_logo_big.png'],
+    images: [corporate.items[0].thumbnail],
   },
 };
 
@@ -38,5 +46,20 @@ export default function CorporateLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <>{children}</>;
+  return (
+    <>
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://capturarentals.com' },
+            { '@type': 'ListItem', position: 2, name: 'Portfolio', item: 'https://capturarentals.com/portfolio' },
+            { '@type': 'ListItem', position: 3, name: 'Corporate & Brand', item: 'https://capturarentals.com/portfolio/corporate' },
+          ],
+        }}
+      />
+      {children}
+    </>
+  );
 }

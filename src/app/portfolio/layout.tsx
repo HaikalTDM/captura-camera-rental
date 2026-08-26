@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { portfolioServices } from '@/data/portfolioData';
+import JsonLd from '@/components/portfolio/seo/JsonLd';
 
 const pageDescription =
   'From intimate weddings to corporate campaigns. Explore Captura\u2019s production portfolio across wedding films, corporate & brand videos, event coverage and content creation in Malaysia.';
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
   },
 };
 
-// Structured data: VideoGallery of the showcased work
+// Structured data: VideoGallery of the showcased work + breadcrumb
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'VideoGallery',
@@ -61,6 +62,15 @@ const jsonLd = {
   ),
 };
 
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://capturarentals.com' },
+    { '@type': 'ListItem', position: 2, name: 'Portfolio', item: 'https://capturarentals.com/portfolio' },
+  ],
+};
+
 export default function PortfolioLayout({
   children,
 }: Readonly<{
@@ -72,6 +82,7 @@ export default function PortfolioLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <JsonLd data={breadcrumbLd} />
       {children}
     </>
   );

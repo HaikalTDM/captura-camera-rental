@@ -169,6 +169,25 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <meta name="google" content="notranslate" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'LocalBusiness',
+              '@id': 'https://capturarentals.com/#organization',
+              name: 'CAPTURA',
+              url: 'https://capturarentals.com',
+              image: 'https://capturarentals.com/images/captura_logo_big.png',
+              telephone: '+60 17-746 4121',
+              email: 'hello@capturarentals.com',
+              priceRange: '$$',
+              areaServed: ['Kuala Lumpur', 'Selangor', 'Malaysia'],
+              sameAs: ['https://www.tiktok.com/@itsaintreal', 'https://www.tiktok.com/@captura.my'],
+              openingHours: 'Mo-Su 09:00-21:00',
+            }),
+          }}
+        />
       </head>
       <body
         suppressHydrationWarning

@@ -1,14 +1,19 @@
 import type { Metadata } from 'next';
-import { getServiceById, weddingShowreel } from '@/data/portfolioData';
+import { getServiceById, weddingShowreel, weddingFaqs } from '@/data/portfolioData';
+import JsonLd from '@/components/portfolio/seo/JsonLd';
 
 const weddings = getServiceById('weddings');
 
 const pageDescription =
-  'Fun-style wedding films in Malaysia — three to four minutes of your best day, captured like a mockumentary. Showreel, launch packages, kind words and FAQs.';
+  'Fun-style wedding films in Malaysia. Three to four minutes of your best day, captured like a mockumentary. Showreel, launch packages, kind words and FAQs.';
 
 export const metadata: Metadata = {
-  title: 'Wedding Films — CAPTURA Production',
+  title: 'Wedding Films | CAPTURA Production',
   description: pageDescription,
+  keywords: [
+    'wedding videography', 'wedding video Malaysia', 'wedding videographer Kuala Lumpur',
+    'fun wedding film', 'highlight video wedding', 'wedding cinematography',
+  ],
   alternates: {
     canonical: '/portfolio/weddings',
   },
@@ -16,7 +21,7 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_MY',
     url: 'https://capturarentals.com/portfolio/weddings',
-    title: 'Wedding Films — CAPTURA',
+    title: 'Wedding Films | CAPTURA',
     description: pageDescription,
     siteName: 'CAPTURA',
     images: [
@@ -30,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Wedding Films — CAPTURA',
+    title: 'Wedding Films | CAPTURA',
     description: pageDescription,
     images: [weddings.items[0].thumbnail],
   },
@@ -61,6 +66,27 @@ const jsonLd = {
   })),
 };
 
+// Breadcrumb + FAQ rich results
+const breadcrumbLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://capturarentals.com' },
+    { '@type': 'ListItem', position: 2, name: 'Portfolio', item: 'https://capturarentals.com/portfolio' },
+    { '@type': 'ListItem', position: 3, name: 'Wedding Films', item: 'https://capturarentals.com/portfolio/weddings' },
+  ],
+};
+
+const faqLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: weddingFaqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.q,
+    acceptedAnswer: { '@type': 'Answer', text: faq.a },
+  })),
+};
+
 export default function WeddingFilmsLayout({
   children,
 }: Readonly<{
@@ -72,6 +98,8 @@ export default function WeddingFilmsLayout({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <JsonLd data={breadcrumbLd} />
+      <JsonLd data={faqLd} />
       {children}
     </>
   );
