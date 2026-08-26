@@ -61,6 +61,8 @@ const nextConfig = {
   // Redirects from old /photography routes to new /studio routes
   async redirects() {
     return [
+      // /studio is currently hidden — services & contact live inside the portfolio sections
+      { source: '/studio/:path*', destination: '/portfolio', permanent: false },
       { source: '/photography', destination: '/studio/photography', permanent: true },
       { source: '/photography/packages', destination: '/studio/photography/packages', permanent: true },
       { source: '/photography/gallery', destination: '/studio/photography/gallery', permanent: true },

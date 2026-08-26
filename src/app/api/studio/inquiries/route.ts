@@ -1,21 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
+type ServiceType =
+  | 'photography'
+  | 'videography'
+  | 'weddings'
+  | 'corporate'
+  | 'events'
+  | 'content'
+  | 'graduation';
+
 interface InquiryPayload {
-  serviceType: 'photography' | 'videography';
+  serviceType: ServiceType;
   clientName: string;
   clientPhone: string;
   clientEmail?: string;
-  eventType: string;
+  eventType?: string;
   eventDate?: string;
   eventTime?: string;
-  venue: string;
+  venue?: string;
   coverageDuration?: string;
   guestCount?: string;
   shooterSetup?: string;
   finalVideoLength?: string;
   droneNeeded?: string;
   stylePreference?: string;
+  projectTimeline?: string;
+  budgetRange?: string;
+  contentType?: string;
+  uploadFrequency?: string;
   specialRequests?: string;
 }
 
@@ -24,7 +37,12 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as InquiryPayload;
 
     // Validate required fields
-    if (!body.serviceType || !body.clientName || !body.clientPhone || !body.eventType || !body.venue) {
+    if (
+      !body.serviceType ||
+      !body.clientName ||
+      !body.clientPhone ||
+      (!body.eventType && !body.contentType)
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -40,16 +58,20 @@ export async function POST(req: NextRequest) {
         client_name: body.clientName,
         client_phone: body.clientPhone,
         client_email: body.clientEmail || null,
-        event_type: body.eventType,
+        event_type: body.eventType || body.contentType || 'General inquiry',
         event_date: body.eventDate || null,
         event_start_time: body.eventTime || null,
-        venue: body.venue,
+        venue: body.venue || '—',
         coverage_duration: body.coverageDuration || null,
         guest_count: body.guestCount || null,
         shooter_setup: body.shooterSetup || null,
         final_video_length: body.finalVideoLength || null,
         drone_needed: body.droneNeeded || null,
         style_preference: body.stylePreference || null,
+        project_timeline: body.projectTimeline || null,
+        budget_range: body.budgetRange || null,
+        content_type: body.contentType || null,
+        upload_frequency: body.uploadFrequency || null,
         special_requests: body.specialRequests || null,
         status: 'new',
         source: 'website',

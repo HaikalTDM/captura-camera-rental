@@ -3,12 +3,17 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { Film } from 'lucide-react';
+import PortfolioNav from '@/components/portfolio/PortfolioNav';
 
 export default function GatewayHome() {
   // Loading state removed for immediate render
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Shared navbar */}
+      <PortfolioNav />
+
       {/* Header */}
       <header className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12">
         <div className="max-w-7xl mx-auto text-center">
@@ -74,8 +79,8 @@ export default function GatewayHome() {
               </div>
             </Link>
 
-            {/* Photography Service */}
-            <Link href="/photography" className="group">
+            {/* Production Services */}
+            <Link href="/portfolio" className="group">
               <div className="relative bg-white border-2 border-gray-200 rounded-3xl p-8 sm:p-12 overflow-hidden h-80 sm:h-96 flex flex-col justify-between transition-all duration-700 hover:scale-[1.02] hover:shadow-2xl hover:border-[#d4af37] touch-manipulation active:scale-[0.98]">
 
                 {/* Background Pattern */}
@@ -88,23 +93,21 @@ export default function GatewayHome() {
                 {/* Content */}
                 <div className="relative z-10">
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-black/5 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-[#d4af37]/10 transition-all duration-300">
-                    <svg className="w-8 h-8 sm:w-10 sm:h-10 text-black group-hover:text-[#d4af37] transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
+                    <Film className="w-8 h-8 sm:w-10 sm:h-10 text-black group-hover:text-[#d4af37] transition-colors duration-300" strokeWidth={2} />
                   </div>
 
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-3 sm:mb-4 font-serif">
-                    Photography Services
+                    Production Services
                   </h2>
                   <p className="text-base sm:text-lg text-gray-700 mb-6 sm:mb-8">
-                    Capturing life's most precious moments with artistic excellence
+                    Wedding Films, Corporate Videos, Event Coverage &amp; Content
                   </p>
                 </div>
 
                 {/* CTA */}
                 <div className="relative z-10">
                   <div className="inline-flex items-center text-black font-semibold group-hover:text-[#d4af37] transition-colors">
-                    <span className="text-base sm:text-lg mr-3">View Portfolio</span>
+                    <span className="text-base sm:text-lg mr-3">Explore Portfolio</span>
                     <svg className="w-5 h-5 sm:w-6 sm:h-6 transform group-hover:translate-x-2 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>

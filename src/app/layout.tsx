@@ -1,5 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import {
+  Geist,
+  Geist_Mono,
+  Playfair_Display,
+  Caveat,
+  Nunito,
+  Space_Grotesk,
+  Kalam,
+  Bebas_Neue,
+  Poppins,
+  Shadows_Into_Light,
+  Bungee,
+} from "next/font/google";
 import "./globals.css";
 import "../styles/terms-modal.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -20,6 +32,62 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
   weight: ["400", "700", "900"],
+  display: 'swap',
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: 'swap',
+});
+
+const nunito = Nunito({
+  variable: "--font-nunito",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: 'swap',
+});
+
+const kalam = Kalam({
+  variable: "--font-kalam",
+  subsets: ["latin"],
+  weight: ["300", "400", "700"],
+  display: 'swap',
+});
+
+const bebas = Bebas_Neue({
+  variable: "--font-bebas",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: 'swap',
+});
+
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: 'swap',
+});
+
+const shadows = Shadows_Into_Light({
+  variable: "--font-shadows",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: 'swap',
+});
+
+const bungee = Bungee({
+  variable: "--font-bungee",
+  subsets: ["latin"],
+  weight: ["400"],
   display: 'swap',
 });
 
@@ -104,7 +172,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${caveat.variable} ${nunito.variable} ${spaceGrotesk.variable} ${kalam.variable} ${bebas.variable} ${poppins.variable} ${shadows.variable} ${bungee.variable} antialiased`}
       >
         <ErrorBoundary>
           <DOMSafetyPatch />

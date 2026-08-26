@@ -32,6 +32,47 @@ input[type="radio"] {
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
+/* Handwritten / doodle font (Caveat) for playful accents */
+.font-handwriting {
+  font-family: var(--font-caveat), "Comic Sans MS", cursive;
+  letter-spacing: 0.01em;
+}
+
+/* Friendly rounded sans (Nunito) for the fun editorial sections */
+.font-friendly {
+  font-family: var(--font-nunito), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+/* Corporate & Brand — Space Grotesk + Kalam */
+.font-space-grotesk {
+  font-family: var(--font-space-grotesk), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.font-kalam {
+  font-family: var(--font-kalam), "Comic Sans MS", cursive;
+}
+
+/* Events — Bebas Neue + Caveat */
+.font-bebas {
+  font-family: var(--font-bebas), "Arial Narrow", Impact, sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Content Creation — Poppins + Shadows Into Light */
+.font-poppins {
+  font-family: var(--font-poppins), var(--font-geist-sans), system-ui, sans-serif;
+}
+
+.font-shadows {
+  font-family: var(--font-shadows), "Comic Sans MS", cursive;
+}
+
+/* Graduation — Bungee (arcade display) + Caveat */
+.font-bungee {
+  font-family: var(--font-bungee), "Arial Black", Impact, sans-serif;
+  letter-spacing: 0.01em;
+}
+
 /* Gold accent color */
 :root {
   --gold: #d4af37;
